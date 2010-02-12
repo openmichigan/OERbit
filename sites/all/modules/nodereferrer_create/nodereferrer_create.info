@@ -1,0 +1,17 @@
+name = "Nodereferrer Create"
+description = "Allow site architects to add tabs to nodes for creating new related nodes"
+dependencies[] = nodereferrer
+package = CCK
+core = 6.x
+
+; Information added by drupal.org packaging script on 2007-08-30
+version = "6.x-1.x-dev"
+project = "nodereferrer_create"
+datestamp = "1188432365"
+
+; Information added by drupal.org packaging script on 2008-10-20
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "nodereferrer_create"
+datestamp = "1224504526"
+

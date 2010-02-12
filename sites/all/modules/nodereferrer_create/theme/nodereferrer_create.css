@@ -1,0 +1,87 @@
+/*
+ * Styling for the inline menu
+ */
+img.nodereferrer-create-down {
+  cursor: pointer;
+}
+
+div.nodereferrer-create-items {
+  margin-left: 25px;
+  margin-top: -22px;
+  
+  border: 1px solid #444;
+  background: #DDD;
+}
+
+div.nodereferrer-create-items ul {
+  padding: 0;
+  margin: 0;
+}
+
+div.nodereferrer-create-items ul li {
+  list-style-image: none;
+  list-style-type: none;
+  list-style-position: outside;
+  background-image: none;
+  padding: 0;
+  margin: 0;
+}
+
+div.nodereferrer-create-items ul li:hover {
+  background: #CCC;
+}
+
+div.nodereferrer-create-items ul li a {
+  text-decoration: none;
+  color: #000;
+  font-size: 1.1em;
+}
+
+div.nodereferrer-create-items ul li a:hover {
+  text-decoration: none;
+}
+
+/*
+ * Styline for the page menu
+ */
+div.nodereferrer-create-title {
+  border: 1px solid #444;
+  color: #000;
+}
+
+div.nodereferrer-create-menu div.nodereferrer-create-items {
+  margin-left: 0px;
+  margin-top: 0px;
+}
+
+div.nodereferrer-create-menu ul.nodereferrer-create-top-level {
+  padding: 0;
+  margin: 0;
+}
+
+div.nodereferrer-create-menu ul.nodereferrer-create-top-level > li {
+  list-style-image: none;
+  list-style-type: none;
+  list-style-position: outside;
+  background-image: none;
+  padding: 0;
+  margin: 0 8px 0 0;
+  
+  background: #DDD;
+}
+
+div.nodereferrer-create-menu ul.nodereferrer-create-top-level li:hover {
+  background: #CCC;
+  cursor: pointer;
+}
+
+div.nodereferrer-create-title img {
+  margin-top: -3px;
+  vertical-align: middle;
+}
+
+#nodereferrer-create-main-menu {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #444;
+}
+

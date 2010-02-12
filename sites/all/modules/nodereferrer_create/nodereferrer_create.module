@@ -1,0 +1,351 @@
+<?php
+// $Id: nodereferrer_create.module,v 1.2.4.5 2008/10/10 13:02:53 anselmheaton Exp $
+
+require_once './' . drupal_get_path('module', 'nodereferrer_create') . "/helper.php";
+require_once './' . drupal_get_path('module', 'nodereferrer_create') . "/admin.php";
+require_once './' . drupal_get_path('module', 'nodereferrer_create') . "/create_referrer.php";
+require_once './' . drupal_get_path('module', 'nodereferrer_create') . "/add_to_referrer.php";
+require_once './' . drupal_get_path('module', 'nodereferrer_create') . "/create_reference.php";
+require_once './' . drupal_get_path('module', 'nodereferrer_create') . "/add_reference.php";
+
+/**
+ * Implementation of hook_menu().
+ */
+function nodereferrer_create_menu() {
+  $items = array();
+  
+  // Admin page
+  $items = $items + _nodereferrer_create_admin_menu();
+  
+  // Create a referrer items
+  $items = $items + _nodereferrer_create_create_menu();
+
+  // Add to an existing referrer items
+  $items = $items + _nodereferrer_create_add_menu();
+  
+  // Create a new reference items
+  $items = $items + _nodereferrer_create_create_reference_menu();  
+  
+  // Add to an existing reference items
+  $items = $items + _nodereferrer_create_add_reference_menu();
+  
+  // Local task to create content
+  $items['node/%node/nodereferrer_create_content'] = array(
+    'title' => variable_get('nodereferrer_create_localtask_label', 'Create related content'),
+    'description' => 'Lets you create/link items of related content',
+    'page callback' => 'nodereferrer_create_local_task',
+    'page arguments' => array(1),
+    'access callback' => 'nodereferrer_create_local_task_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+
+/**
+ * hook_nodeapi implementation.
+ *
+ * We use this both to add the list of referers to a node a load time,
+ * and to insert the content when requirerd.
+ *
+ */
+function nodereferrer_create_nodeapi(&$node, $op, $a3 = null, $a4 = null) {
+  if ( ($op != 'load' && $op != 'view' && $op != 'insert') || !_nodereferrer_create_alter_node($node)) {
+    return;
+  }
+  
+  switch($op) {
+    case 'load':
+      return _nodereferrer_create_nodeapi_load($node);
+      break;
+    case 'view':
+      return _nodereferrer_create_nodeapi_view($node, $a3, $a4);
+      break;
+    case 'insert':
+      return _nodereferrer_create_nodeapi_insert($node);
+      break;
+  }
+}
+
+/**
+ * hook_nodeapi insert
+ *
+ */
+function _nodereferrer_create_nodeapi_insert(&$node) {
+  _nodereferrer_create_reference_insert($node);
+}
+
+/**
+ * hook_nodeapi load
+ *
+ * Add the list of refererres to the node
+ * Add the list of reference fields to the node
+ */
+function _nodereferrer_create_nodeapi_load(&$node) {
+  $node->referrers = _nodereferrer_create_get_referrers($node);
+  $node->reference_fields = _nodereferrer_create_get_reference_fields($node);
+}
+
+/**
+ * hook_nodeapi view
+ *
+ * Add the forms/fields
+ */
+function _nodereferrer_create_nodeapi_view(&$node, $teaser, $page) {
+  if ($teaser || !$page) {
+    return;
+  }
+  
+  if (!nodereferrer_create_local_task_access($node)) {
+    return;
+  }
+  
+  // Apply changes for referrer fields
+  $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, $teaser, $page);
+  
+  // Apply changes for reference fields
+  $menu_items = array_merge($menu_items, _nodereferrer_create_nodeapi_view_reference($node, $teaser, $page));
+  
+  // Insert main menu
+  _nodereferrer_create_insert_main_menu($node, $menu_items);
+}
+
+/**
+ * hook_nodeapi view for referer fields
+ *
+ * Add the forms/fields
+ */
+function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
+  $menu_items = array();
+  foreach($node->referrers as $i => $ref) {
+    $items = array();
+    
+    foreach ($ref['referrence'] as $type => $nf) {
+      $type_info = content_types($type);
+      if (count($nf) == 1) {
+        $text = t(variable_get('nodereferrer_create_label', 'Create new @type'),
+          array('@type' => $type_info['name']));
+        $url = 'node/'.$node->nid.'/create_referrer/'.$i.'/'.$type.'/0';
+        $items[] = l($text, $url);
+        if ($nf[0]['multiple'] == 1) {
+          $text = t(variable_get('nodereferrer_create_add_label', 'Add to existing @type'),
+            array('@type' => $type_info['name']));
+          $url = 'node/'.$node->nid.'/add_referrer/'.$i.'/'.$type.'/0';
+          $items[] = l($text, $url);
+        }
+      } else {
+        foreach($nf as $nfr_index => $nfr) {
+          $nfr_name = $type_info['name'].'('.$nfr['widget']['label'].')';
+          $text = t(variable_get('nodereferrer_create_label', 'Create new @type'),
+            array('@type' => $nfr_name));
+          $url = 'node/'.$node->nid.'/create_referrer/'.$i.'/'.$type.'/'.$nfr_index;
+          $items[] = l($text, $url);
+          if ($nf[0]['multiple'] == 1) {
+            $text = t(variable_get('nodereferrer_create_add_label', 'Add to existing @type'),
+              array('@type' => $nfr_name));
+            $url = 'node/'.$node->nid.'/add_referrer/'.$i.'/'.$type.'/'.$nfr_index;
+            $items[] = l($text, $url);
+          }
+        }
+      }
+    }
+    
+    $field_name = $ref['field']['field_name'];
+    $has_values = !empty($node->$field_name);
+    
+    // Add to main menu
+    $menu_items[] = array('title' => $ref['field']['widget']['label'], 
+                          'items' => $items);
+    
+    // Make inline menu if requried
+    if (variable_get('nodereferrer_create_inline', 1) &&
+        $has_values) {
+      $new_field = $node->content[$field_name];
+      unset($node->content[$field_name]);
+      
+      $new_weight = $new_field['#weight'];
+      $new_field['#weight'] = 0;
+      
+      $node->content['nodereferrer_create_'.$field_name] = array(
+        '#weight' => $new_weight,
+        'children' => array(
+          $new_field,
+          array('#weight' => 10, 
+                '#value' => theme('nodereferrer_create_inline_menu', 
+                  $ref['field']['widget']['label'],
+                  $items)
+          ),
+        ),
+      );
+    }
+  }
+  
+  return $menu_items;
+}
+
+
+/**
+ * hook_nodeapi view for reference fields
+ *
+ * Add the forms/fields
+ */
+function _nodereferrer_create_nodeapi_view_reference(&$node, $teaser, $page) {
+  $menu_items = array();
+  
+  foreach($node->reference_fields as $i => $ref) {
+    $multiple = $ref['multiple'] == 1;
+    $items = array();
+    
+    foreach (array_filter($ref['referenceable_types']) as $referenceable_type) {
+      $type_info = content_types($referenceable_type);
+      if ($multiple) {
+        if (node_access('create', $referenceable_type)) {
+          $text = t(variable_get('nodereferrer_create_reference_label', 'Create new @type'),
+            array('@type' => $type_info['name']));
+          $url = 'node/'.$node->nid.'/create_reference/'.$i.'/'.$referenceable_type;
+          $items[] = l($text, $url);
+        }
+        
+        $text = t(variable_get('nodereferrer_create_reference_label_add', 'Add existing @type'),
+          array('@type' => $type_info['name']));
+        $url = 'node/'.$node->nid.'/add_reference/'.$i.'/'.$referenceable_type;
+        $items[] = l($text, $url);
+      } else {
+        if (node_access('create', $referenceable_type)) {
+          $text = t(variable_get('nodereferrer_create_reference_label_single', 'Replace with new @type'),
+            array('@type' => $type_info['name']));
+          $url = 'node/'.$node->nid.'/create_reference/'.$i.'/'.$referenceable_type;
+          $items[] = l($text, $url);
+        }
+        
+        $text = t(variable_get('nodereferrer_create_reference_label_add_single', 'Replace with existing @type'),
+          array('@type' => $type_info['name']));
+        $url = 'node/'.$node->nid.'/add_reference/'.$i.'/'.$referenceable_type;
+        $items[] = l($text, $url);
+      }
+    }
+    
+    $field_name = $ref['field_name'];
+    $has_values = !empty($node->$field_name);
+    
+    // Add to main menu
+    $menu_items[] = array('title' => $ref['widget']['label'], 
+                          'items' => $items);
+    
+    // Make inline menu if requried
+    if (variable_get('nodereferrer_create_inline', 1) &&
+        $has_values) {
+      $new_field = $node->content[$field_name];
+      unset($node->content[$field_name]);
+      
+      $new_weight = $new_field['#weight'];
+      $new_field['#weight'] = 0;
+      
+      $node->content['nodereferrer_create_'.$field_name] = array(
+        '#weight' => $new_weight,
+        'children' => array(
+          $new_field,
+          array('#weight' => 10, 
+                '#value' => theme('nodereferrer_create_inline_menu', 
+                  $ref['field']['widget']['label'],
+                  $items)
+          ),
+        ),
+      );
+    }
+  }
+  
+  return $menu_items;
+}
+
+/**
+ * Inserts the main creation menu at the top of the page
+ *
+ */
+function _nodereferrer_create_insert_main_menu(&$node, $menu_items) {  
+  if (!count($menu_items)) {
+    return;
+  }
+  
+  if (_nodereferrer_use_js()) {
+    if (variable_get('nodereferrer_create_effect', 'slide') == 'slide') {
+      $effect = 'slideToggle("'.variable_get('nodereferrer_create_effect_speed', 'normal').'")';
+    } else {
+      $effect = 'toggle()';
+    }
+    drupal_add_js('
+      $(document).ready(function() {
+        $("a[href$=node/'.arg(1).'/nodereferrer_create_content]").click(function(event) {
+          $("#nodereferrer-create-main-menu").'.$effect.';
+          event.preventDefault();
+        });
+      });
+    ', 'inline');
+    
+    
+    $node->content['nodereferrer_create_menu'] = array(
+      '#value' => "<div id='nodereferrer-create-main-menu' style='display:none;'>"
+                  .theme('nodereferrer_create_menu', $menu_items)
+                  ."</div>",
+      '#weight' => -200,
+    );
+  } else if (arg(2) == 'nodereferrer_create_content') {
+    $node->content['nodereferrer_create_menu'] = array(
+      '#value' => "<div id='nodereferrer-create-main-menu'>"
+                  .theme('nodereferrer_create_menu', $menu_items)
+                  ."</div>",
+      '#weight' => -200,
+    );
+  }
+}
+
+/**
+ * Check whether we can see the local task
+ */
+function nodereferrer_create_local_task_access($node) {
+  if (!node_access('update', $node) &&
+    variable_get('nodereferrer_create_access_if_local_node', 0)) {
+    return false;
+  }
+  return !empty($node->referrers) || !empty($node->reference_fields);
+}
+
+/**
+ * Local task page ; for people without javascript
+ */
+function nodereferrer_create_local_task($node) {
+  return node_view($node, false, true, true);
+}
+
+/**
+ * Hook form alter implementation
+ */
+function nodereferrer_create_form_alter(&$form, $form_state, $form_id) {
+  // For referrer forms
+  _nodereferrer_create_referrer_alter($form, $form_state, $form_id);
+  
+  // For reference forms
+  _nodereferrer_create_reference_alter($form, $form_state, $form_id);
+}
+
+
+/**
+ * Hook theme implementation
+ *
+ * To theme the items that get added to the page
+ *
+ */
+function nodereferrer_create_theme() {
+  return array(
+    'nodereferrer_create_menu' => array(
+      'template' => 'theme/nodereferrer-create-menu',
+      'arguments' => array('items' => array()),
+    ),
+    'nodereferrer_create_inline_menu' => array(
+      'template' => 'theme/nodereferrer-create-inline-menu',
+      'arguments' => array('title' => '', 'items' => array())),
+  );
+}
+
