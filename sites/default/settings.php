@@ -1,0 +1,1 @@
+../oer.switchbackcms.com/settings.php
