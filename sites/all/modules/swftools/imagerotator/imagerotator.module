@@ -1,0 +1,274 @@
+<?php
+// $Id: imagerotator.module,v 1.5.2.2 2009/04/22 21:39:33 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - Jeroen Wijering's Flash Players
+ *
+ * Enables the use of Jeroen Wijering's Flash Media and Flash Image
+ * Rotator files, branded forms of which ship with SWF Tools module.
+ *
+ * Author's Site.
+ * http://jeroenwijering.com
+ */
+
+define('WIJERING_IMAGEROTATOR', 'wijering_imagerotator'); // 'player', can display images.
+define('IMAGEROTATOR_DOWNLOAD', 'http://www.jeroenwijering.com/?item=jw_image_rotator');
+
+/**
+ * Implementation of swftools_methods hook
+ * Report methods back to SWF Tools
+ */
+function imagerotator_swftools_methods() {
+
+  $methods = array();
+  // And with rotator
+  $image_rotator = array(
+    'name'        => WIJERING_IMAGEROTATOR,
+    'module'      => 'imagerotator',
+    'file'        => 'file', // Define which flashvar to assign a 'file to play' variable.
+    'version'     => '7',
+    'shared_file' => 'flash_image_rotator/imagerotator.swf',
+    'title'       => t('JW Image Rotator 3'),
+    'download'    => IMAGEROTATOR_DOWNLOAD,
+    'width'       => '400',
+    'height'      => '320',
+  );
+  $methods[SWFTOOLS_IMAGE_DISPLAY_LIST][WIJERING_IMAGEROTATOR] = $image_rotator;
+
+  return $methods;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function imagerotator_menu() {
+
+  $items = array();
+
+    //$items['admin/media/swf/imagerotator'] = array(
+    $items['admin/settings/swftools/imagerotator'] = array(
+      'title' => 'JW Image Rotator 3',
+      'description' => 'Plug-in for '. l('Jeroen Wijering\'s Image Rotator 3', IMAGEROTATOR_DOWNLOAD) .'.',
+      'access arguments' => array('administer flash'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('imagerotator_admin_form'),
+      'file' => 'imagerotator.admin.inc',
+      'file path' => drupal_get_path('module', 'imagerotator'),
+    );
+
+  return $items;
+}
+
+
+/**
+ * These are the default settings as they are stored in the database and displayed
+ * on the settings page.
+ */
+function _imagerotator_settings($player) {
+  $opts = _imagerotator_options();
+
+  switch ($player) {
+    case WIJERING_IMAGEROTATOR:
+      // Define the settings list.
+      $defaults['boolean'] = array(
+        'shuffle'             => 'default',
+        'shownavigation'      => 'default',
+        'linkfromdisplay'     => 'default',
+        'showicons'           => 'default',
+        'enablejs'            => 'default',
+      );
+      $defaults['color'] = array(
+        'backcolor'           => '',
+        'frontcolor'          => '',
+        'lightcolor'          => '',
+      );
+      $defaults['url'] = array(
+        'logo'                => '',
+        'link'                => '',
+      );
+      $defaults['integer'] = array(
+        'width'               => '400',
+        'height'              => '320',
+        'rotatetime'          => '3',
+      );
+      $defaults['other'] = array(
+        'transition'          => 'default',
+        'linktarget'          => 'default',
+        'overstretch'         => 'default',
+      );
+      $saved_settings = variable_get('swftools_'. WIJERING_IMAGEROTATOR, array());
+      break;
+  }
+
+  // Overwrite initialised variables with those that might be already saved.
+  foreach ($defaults AS $category => $vars) {
+    foreach ($vars AS $key => $setting) {
+      if (isset($saved_settings[$key])) {
+        $defaults[$category][$key] = $saved_settings[$key];
+      }
+    }
+  }
+
+  return $defaults;
+}
+
+/**
+ * Implementation of swftools_flashvars hook.
+ * Return an array of flashvars.
+ */
+function imagerotator_swftools_flashvars($action, &$methods, &$vars) {
+
+  // Pad out the user parameters (like those passed through swf(), with our
+  // configured defaults, allowing the user parameters to dominate.
+  $saved_settings = _imagerotator_flashvars($methods->player['name']);
+
+  $saved = array();
+  foreach ($saved_settings AS $category => $settings) {
+    $saved = array_merge($saved, $settings);
+  }
+  $flashvars = array_merge($saved, $vars->flashvars);
+  if (isset($flashvars['image']) && !valid_url($flashvars['image'], TRUE)) {
+    $flashvars['image'] = swftools_get_media_url(swftools_get_media_path() . $flashvars['image']);
+  }
+
+  if ($vars->params['width']) {$flashvars['width'] = $vars->params['width'];}
+  if ($vars->params['height']) {$flashvars['height'] = $vars->params['height'];}
+
+  // Return an array of flash variables
+  return $flashvars;
+}
+
+/**
+ * This function is called from imagerotator_swftools_flashvars() which is called from swf()
+ * It will return the default flashvar configuration, just prior to any overrides
+ * passed into swf(). We start with the settings defined on admin/swf/imagerotator
+ * which are returned by _imagerotator_settings(). Then we prepare these values for output
+ * to html (eg. '1' become 'true') and we unset undefined flashvars to prevent their output.
+ *
+ */
+function _imagerotator_flashvars($this_player) {
+  // Cache this.
+  static $flashvars = array();
+  if (!count($flashvars)) {
+
+    // Media Player
+    foreach (array(WIJERING_IMAGEROTATOR) AS $player) {
+
+      // Get saved settings for this method.
+      $defaults = _imagerotator_settings($player);
+      foreach ($defaults AS $category => $vars) {
+        foreach ($vars AS $key => $setting) {
+          if (!$setting || $setting == 'default') {
+            unset($defaults[$category][$key]);
+          }
+          else {
+            switch ($category) {
+              case 'color':
+                $defaults['color'][$key] = str_replace('#', '0x', $defaults['color'][$key]);
+                break;
+              case 'boolean':
+                $defaults['boolean'][$key] = _swftools_tf($defaults['boolean'][$key]);
+                break;
+            }
+          }
+        }
+      }
+
+      // Not the same as width/height. This determines the extended width OR height
+      // past the main view area where the actual playlist file names can be found.
+      // Setting both together is not supported.
+      if ($defaults['integer']['displaywidth']) {
+        unset($defaults['integer']['displayheight']);
+      }
+      else {
+        unset($defaults['integer']['displaywidth']);
+      }
+
+      $flashvars[$player] = $defaults;
+    }
+  }
+
+  return $flashvars[$this_player];
+}
+
+/**
+ * flashvar and param option arrays. These are used for options settings in the
+ * configuration screen.
+ *
+ */
+function _imagerotator_options() {
+  $options['overstretch'] = array('default' => 'default', 'false' => 'false', 'true' => 'true', 'fit' => 'fit', 'none' => 'none', );
+  $options['repeat'] = array('default' => 'default', 'false' => 'false', 'true' => 'true', 'list' => 'list', );
+  $options['linktarget'] = array('default' => 'default', '_self' => '_self', '_blank' => '_blank', );
+  $options['transition'] = array('default' => 'default', 'fade' => 'fade', 'bgfade' => 'bgfade', 'blocks' => 'blocks', 'bubbles' => 'bubbles', 'circles' => 'circles', 'flash' => 'flash', 'fluids' => 'fluids', 'lines' => 'lines', 'slowfade' => 'slowfade', 'random' => 'random', );
+  $options['bool'] = array('default' => 'default', 'true' => 'true', 'false' => 'false');
+  return $options;
+}
+
+
+function imagerotator_wijering_imagerotator_swftools_playlist($xml_data, &$method, &$vars) {
+
+  $xml = '<playlist version="1" xmlns="http://xspf.org/ns/0/">
+            <title>'. $xml_data['header']['title'] .'</title>
+            <info></info>
+            <annotation></annotation>
+            <trackList>
+            ';
+
+  foreach($xml_data['playlist'] AS $track => $details) {
+    
+    $xml .= "<track>\n";
+    $xml .= "<title>". $details['title'] ."</title>\n";
+    $xml .= "<creator></creator>\n";
+    $xml .= "<location>". $details['fileurl'] ."</location>\n";
+    $xml .= "<info>". $details['fileurl'] ."</info>\n";
+    $xml .= "</track>\n";
+  }
+  $xml .= '</trackList>
+           </playlist>';
+
+  return $xml;
+}
+
+
+/*
+ * Implementation of hook_swftools_variable_mapping.
+ *
+ */
+function imagerotator_swftools_variable_mapping() {
+  return array(
+    WIJERING_IMAGEROTATOR => array(
+      'shuffle'         => 'flashvars',
+      'shownavigation'  => 'flashvars',
+      'linkfromdisplay' => 'flashvars',
+      'showicons'       => 'flashvars',
+      'enablejs'        => 'flashvars',
+      'backcolor'       => 'flashvars',
+      'frontcolor'      => 'flashvars',
+      'lightcolor'      => 'flashvars',
+      'logo'            => 'flashvars',
+      'link'            => 'flashvars',
+      'rotatetime'      => 'flashvars',
+      'transition'      => 'flashvars',
+      'linktarget'      => 'flashvars',
+      'overstretch'     => 'flashvars',
+    ),
+  );
+}
+
+
+/**
+ * Implementation of hook_help
+ */
+function imagerotator_help($path, $arg) {
+  switch ($path) {
+    case 'admin/settings/swftools/imagerotator':
+      return '<p>'.t('These are the settings for Jeroen Wijering\'s imagerotator.swf
+                      and correspond (by category and order) to the
+                      <a href="@imagerotator">Media Player and Image Rotator read me</a>.
+                      It is possible that you do not need to change any of
+                      these settings and blank values will defer to friendly
+                      defaults. Note that the label in (<em>brackets</em>)
+                      is the actual flashvar name and corresponds to the read me.', array('@imagerotator' => 'http://jeroenwijering.com/extras/readme.html')).'</p>';
+  }
+}

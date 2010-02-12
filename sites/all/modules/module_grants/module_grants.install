@@ -1,0 +1,66 @@
+<?php
+// $Id: module_grants.install,v 1.8 2009/12/16 03:40:11 rdeboer Exp $
+
+/**
+ * @file
+ * Install and uninstall hooks for Module Grants module
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function module_grants_install() {
+/*
+  _set_default_permissions('authenticated user', module_grants_monitor_perm());
+  if (variable_get('smart_tabs_include_pages', '*') == '*') {
+    // Initially restrict Smart tabs to Accessible content page only
+    variable_set('smart_tabs_include_pages', "accessible-content\raccessible-content/*");
+  }
+ */
+}
+
+/**
+ * Implementation of hook_uninstall().
+ * I'm not convinced that deleting these is a good thing, as these will have
+ * to be flicked back on when re-installing.
+ */
+function module_grants_uninstall() {
+  variable_del('module_grants_lenient');
+  variable_del('module_grants_OR_modules');
+  variable_del('show_taxonomy_terms');
+}
+
+function _set_default_permissions($role_name, $permissions) {
+  if (!is_array($permissions)) {
+    return;
+  }
+  $role = db_fetch_object(db_query("SELECT p.rid, perm FROM {permission} p INNER JOIN {role} r ON p.rid=r.rid WHERE r.name='%s'", $role_name));
+  if ($role) {
+    $added_perms = $role->perm;
+    foreach ($permissions as $perm) {
+      if (strpos($role->perm, $perm) === FALSE) {
+        $added_perms .= ", $perm";
+      }
+    }
+    if ($added_perms != $role->perm) { // some perms added
+      db_query("UPDATE {permission} SET perm='%s' WHERE rid=%d", $added_perms, $role->rid);
+    }
+  }
+}
+
+/**
+ * Rename permissions. Core doesn't support apostrophes so strip these out and
+ * capitalise the permission name for readibility.
+ * See [#566290], [#572804].
+ */
+function module_grants_update_6207() {
+  $ret = array();
+  // permission.perm column contains a comma-separated string of permissions
+  $result = db_query("SELECT rid,perm FROM {permission} WHERE perm LIKE '%access \'%\' tab%'");
+  while ($permissions = db_fetch_object($result)) {
+    $sanitized_permissions = preg_replace("/access \'([A-Z a-z]+)\' tab/e",
+      "'access '. ucwords('$1') .' tab'", $permissions->perm);
+    $ret[] = update_sql("UPDATE {permission} SET perm='". db_escape_string($sanitized_permissions) ."' WHERE rid=$permissions->rid");
+  }
+  return $ret;
+}

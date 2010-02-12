@@ -1,0 +1,122 @@
+<?php
+// $Id: swfobject2.module,v 1.4.2.1 2009/04/21 22:01:11 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - SWFObject2
+ *
+ * Enables the use of swfobject.js which provides image replacement
+ * for Flash content. swfobject.js must be downloaded separately. (Add
+ * the contents of the zip file to swftools/shared/swfobject2)
+ * This module produces standards compliant mark that will pass W3C
+ * validation
+ *
+ */
+
+function swfobject2_swftools_methods() {
+  $methods = array();
+  $methods[SWFTOOLS_EMBED_METHOD]['swfobject2_replace'] = array(
+    'name'        => 'swfobject2_replace',
+    'module'      => 'swfobject2',
+    'shared_file' => 'swfobject2/swfobject.js',
+    'title'       => t('SWFObject 2 - JavaScript'),
+    'download'    => 'http://code.google.com/p/swfobject/',
+  );
+  return $methods;
+}
+
+/**
+ * Implementation of swftools_embed hook
+ * Returns the markup for the page, plus set necessary javascript.
+ *
+ * $methods and $vars should never be empty - unless the only reason for this call
+ * is to push the javascript into the header of the page in which case you don't
+ * add any paramters as all. This is useful for filtered nodes where the body is
+ * not regenerated every time.
+ */
+function swfobject2_swftools_embed($action = 'add_js', $methods = FALSE, $vars = FALSE, $html_alt = '') {
+
+  // Set flag to indicate if the javascript has been added to the header
+  static $swfobject2_has_run;
+
+  // Output javascript to the header to load the SWF Object code
+  if (!$swfobject2_has_run) {
+    // Add swfobject.js
+    drupal_add_js(swftools_get_player_path() . '/swfobject2/swfobject.js');
+    $swfobject2_has_run = TRUE;
+    if ($action == 'add_js') {
+      // Exit early having put the javascript in the header.
+      return;
+    }
+  }
+
+  // Initialise a counter to give each div a unique id
+  static $unique_id = 0;
+  $unique_id++;
+
+  // Construct a unique id for each div by using time() combined with $unique_id
+  // This is necessary to prevent clashes between cached content
+  $id = time() . $unique_id;
+  
+  // Anything in $vars->params will be output - we don't want src_path
+  unset($vars->params['src_path']);
+
+  // Unset flashvars string - we can use the array format and let drupal_to_js handle things
+  unset($vars->params['flashvars']);
+  
+  // See if we should make the player accessible
+  $accessible_html = swfobject2_wijering4_accessible($methods->player['name'], $vars, 'swf'.$id);
+ 
+  // Generate js string ready for output to the page header
+  // swfObject takes parameters swfURL, id, width, height, version, expressinstall, flashvars, params, attributes
+  // At the moment expressInstall isn't enabled
+  $swf_js = t('swfobject.embedSWF("!url", "!id", "!width", "!height", "!version", "", !flashvars, !params, !attributes);', array(
+    '!url' => $vars->params['src'],
+    '!id' => 'swfobject2-id-'. $id,
+    '!width' => $vars->params['width'],
+    '!height' => $vars->params['height'],
+    '!version' => $vars->params['version'],
+    '!flashvars' => drupal_to_js($vars->flashvars),
+    '!params' => drupal_to_js($vars->params),
+    '!attributes' => drupal_to_js(array('id' => 'swf'.$id)),
+  ));
+  
+  // Generate the html markup ready to receive the substitution
+  $html  = '<div id="swfobject2-id-'. $id .'" class="swftools swfobject2">' . "\n";
+  $html .= $html_alt . "\n";
+  $html .= '</div>' . "\n";
+
+  // Although SWF Object 2 recommends adding js to the page header that will prevent cached filters being used
+  // So we add js to the page body in order that it gets cached too
+  $html .= '<script type="text/javascript">' . "\n";
+  $html .= $swf_js . "\n";
+  $html .= '</script>'  . "\n";
+  $html .= $accessible_html;
+
+  // Return html markup
+  return $html;
+}
+
+
+/**
+ * Determine if accessible links should be added below the Wijering player.
+ * 
+ * @param $player
+ *   The name of the player being rendered.
+ * @param $vars
+ *   The array of variables being processed.
+ * @param $id
+ *   The id for the object being added.
+ * @return
+ *   An empty string, or markup containing the accessible links.
+ */
+function swfobject2_wijering4_accessible($player, &$vars, $id) {
+
+  // If not wijering4_mediaplayer then just return
+  if ($player != 'wijering4_mediaplayer') {
+    return '';
+  }  
+
+  // Call wijering4 to get accessible result
+  return wijering4_accessible($vars, $id);
+  
+}

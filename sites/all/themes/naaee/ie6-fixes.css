@@ -1,0 +1,215 @@
+/**
+ * Waffles
+ */
+
+/****************************/
+/* IE6 FIXES                */
+/****************************/
+
+/* remove rounded bottom png for IE6 */
+#primary-menu ul.menu li ul {
+  background: #e1e1e1;
+}
+
+/* set minimum height */
+#preface {
+  height: 1px;
+}
+
+/* prevent dropdown menus from disappearing behind preface blocks */
+#preface div.block {
+  position: static;
+}
+
+#preface-wrapper div.block {
+  position: inherit;
+}
+
+/* prevent line jumping on page refresh */
+#preface-wrapper h2.block-title,
+#preface-wrapper div.block ul li {
+  line-height: 125%;
+}
+
+body.layout-first-main #content-wrapper {
+  width: 700px;
+}
+
+#content-wrapper {
+overflow:hidden;
+width: 70%;
+}
+
+h1.title {
+width: auto;
+}
+
+#content-inner .teaser {
+  height: 1%;
+}
+
+body.layout-main-last #sidebar-last ul li,
+#content-bottom ul li {
+  background-position: left 0.5em;
+}
+
+/* adjust pager spacing */
+#main-wrapper .item-list ul.pager li {
+  margin: 0 2px;
+}
+
+#main-wrapper .item-list .pager a.active {
+  padding: 1px 0 2px 3px;
+}
+
+#search-box {
+  padding: 8px 0 8px 8px;
+  width: 255px;
+}
+
+#search-box .search_submit {
+  padding: 2px 0 0;
+}
+
+input.form-submit,
+input.teaser-button {
+  border: 1px solid #225A82;
+  padding: 4px;
+}
+
+/* limit width of form inputs */
+body.layout-first-main-last #content-inner textarea, 
+body.layout-first-main-last #content-inner input.form-text,
+body.layout-first-main-last #content-inner .form-item .resizable-textarea,
+body.layout-first-main-last #content-inner .form-item .resizable-textarea .grippie {
+  width: 300px;
+}
+
+/* adjust openid link */
+html.js #user-login-form li.openid-processed, 
+html.js #user-login li.openid-processed {
+  margin-left: 0;
+  padding-left: 8px;
+}
+
+/* group the block-icon layout styles together */
+.block-blog .block-icon,
+.block-comment .block-icon,
+.block-forum .block-icon,
+.block-search .block-icon,
+.block-menu .block-icon,
+.comments-block-icon,
+.block-user .block-icon,
+#block-blog-0 .block-icon,
+#block-book-0 .block-icon,
+#block-menu-devel .block-icon,
+#block-user-0 .block-icon,
+#block-views-archive-block .block-icon,
+#block-views-comments_recent-block .block-icon {
+  top: -5px;
+}
+
+/* fix extra rounded graphic at bottom */
+div.rounded-block-bottom-left,
+div.rounded-block-bottom-right,
+div.rounded-outside,
+div.rounded-inside {
+  position: relative;
+}
+
+/* make views edit links more visible */
+div.view div.views-admin-links {
+  margin-top: -1.5em;
+}
+
+div.view div.views-admin-links-hover ul li a {
+  color: #000;
+}
+
+/* admin page - keep right admin column from wrapping below left admin column */
+div.admin .left,
+div.admin .right {
+  margin-left: 0;
+  width: 45%;
+}
+
+/**************************/
+/* ALPHA TRANSPARENCY FIX */
+/**************************/
+div.pngfix,
+h2.pngfix { 
+  behavior: url(/sites/all/themes/waffles/iepngfix.htc);   /* change path here and in iepngfix.htc to match theme location */ 
+} 
+
+
+/******************/
+/* HELPER CLASSES */
+/******************/
+.clearfix {                                       /* add .clearfix class to clear floats after an element */
+  display: block;
+  height: 1%;
+}
+
+
+div#content-tabs,                                 /* fix tab layout */
+div#content-tabs ul.primary,
+div#content-tabs ul.secondary {
+  display: block;
+  float: none;
+  height: 1%;
+}
+
+
+/***************/
+/* BREADCRUMBS */
+/***************/
+
+#breadcrumb {
+  height: 33px;
+  display: block;
+  width: expression((document.documentElement.clientWidth || document.body.clientWidth) < 200? "200px": "auto");
+  margin-bottom: 24px;
+  background: url(images/bdback.png) repeat-x;
+  border-bottom: 1px solid #DDDDDD;
+  border-top: 1px solid #DDDDDD;
+  overflow: hidden;
+  float: left;
+}
+
+#breadcrump_image {
+  background: url(images/bdleftie.png) no-repeat 0 0;
+  height: 35px;
+  width: 40px;
+  margin-top: 10px;
+  float: left;
+}
+
+.breadcrumbown {
+width: 100%;
+height: 35px;
+background: url(images/bdright.png) no-repeat 100% -1px;
+}
+
+#breadcrumb a {
+color: #666666;
+text-decoration: none;
+font-size: 11px;
+font-weight:bold;
+text-shadow: 2px 2px 1px #FFFFFF;
+background: url(images/bdto.png) no-repeat top left;
+height: 35px;
+display: block;
+float: left;
+padding: 8px 15px 0 30px;
+}
+
+#breadcrumb a:hover {
+color: #333333;
+text-decoration: none;
+}
+
+#breadcrump_over {
+height: 45px;
+overflow: hidden;
+display: block;
+}

@@ -1,0 +1,165 @@
+# Slovak translation of Nice Menus (all releases)
+# Copyright (c) 2008 by the Slovak translation team
+# Generated from files:
+#  nice_menus.module,v 1.35.2.6 2008/02/09 17:38:48 add1sun
+#  nice_menus.module,v 1.35.2.14 2008/09/17 18:18:11 add1sun
+#  nice_menus.info,v 1.6 2007/11/14 04:30:26 add1sun
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Nice Menus (all releases)\n"
+"POT-Creation-Date: 2008-11-26 18:24+0100\n"
+"PO-Revision-Date: 2008-11-26 15:29+0100\n"
+"Language-Team: Slovak\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((n==1)?(0):(((n>=2)&&(n<=4))?(1):2));\n"
+
+#: nice_menus.module:175,152,178
+msgid "Navigation"
+msgstr "Navigácia"
+
+#: nice_menus.module:15,16,15
+msgid ""
+"Make drop down css/javascript menus for site navigation and admin "
+"menus."
+msgstr ""
+"Vyrába vysúvacie css/javascript menu pre navigáciu na stránke a "
+"menu administrácie"
+
+#: nice_menus.module:18,19,18
+msgid ""
+"<p>This is a simple module that enables the site to have drop down "
+"css/javascript menus for site navigation and admin "
+"navigation.</p><p>Remember to activate and configure the menus in "
+"!link</p>"
+msgstr ""
+"<p>Toto je jednoduchý modul, ktorý dovoľuje mať na stránke a v "
+"administrácii vysúvacie css/javascript menu. </p><p>Nezabudnite "
+"aktivovať a nastaviť menu na !link</p>"
+
+#: nice_menus.module:44,45,44,47
+msgid "Path to custom Nice Menus CSS file"
+msgstr "Cesta k vlastnému Nice Menus CSS súboru"
+
+#: nice_menus.module:45,46,45,48
+msgid ""
+"To override the default Nice Menus CSS layout, enter the path to your "
+"custom CSS file.  It should be a relative path from the root of your "
+"Drupal install (e.g. sites/all/themes/example/mymenu.css)."
+msgstr ""
+"Na prepísanie štandardného Nice Meunus CSS vzhľadu, zadajte cestu "
+"k vášmu vlastnému CSS súboru. Mala by to byť relatívna cesta z "
+"rootu vašej inštalácie Drupalu (napr. "
+"sites/all/themes/example/mymenu.css)."
+
+#: nice_menus.module:108,85,104
+msgid "Number of Nice Menus"
+msgstr "Počet Nice Menus"
+
+#: nice_menus.module:109,86,105
+msgid "The total number of independent nice menus (blocks) you want."
+msgstr ""
+"Celkový počet nezávislých nice menu (blokov), ktoré chcete "
+"použiť."
+
+#: nice_menus.module:135,112,138,134
+msgid "Menu Name"
+msgstr "Meno menu"
+
+#: nice_menus.module:140,117,143,139
+msgid "Source Menu Tree"
+msgstr "Strom zdrojového menu"
+
+#: nice_menus.module:141,118,144,140
+msgid "The menu tree from which to show a nice menu."
+msgstr "Strom menu, z ktorého sa má zobraziť nice menu."
+
+#: nice_menus.module:147,124,150,146
+msgid "Menu Style"
+msgstr "Štýl menu"
+
+#: nice_menus.module:148,125,151,147
+msgid ""
+"right: menu items are listed on top of each other and expand to the "
+"right"
+msgstr ""
+"pravé: položky menu sú zobrazené nad sebou a rozbaľujú sa "
+"doprava"
+
+#: nice_menus.module:148,125,151,147
+msgid ""
+"left: menu items are listed on top of each other and expand to the "
+"left"
+msgstr ""
+"ľavé: položky menu sú zobrazené nad sebou a rozbaľujú sa "
+"doľava"
+
+#: nice_menus.module:148,125,151,147
+msgid "down: menu items are listed side by side and expand down"
+msgstr "dolné: položky menu sú zobrazené vedľa seba a rozbaľujú sa dolu"
+
+#: nice_menus.module:89,67,85,69; nice_menus.info:0,0
+msgid "Nice Menus"
+msgstr "Nice Menus"
+
+#: nice_menus.module:90,68,86,70
+msgid "Configure Nice Menus."
+msgstr "Nastaviť Nice Menus."
+
+#: nice_menus.module:0,0
+msgid "nice_menus"
+msgstr "nice_menus"
+
+#: nice_menus.info:0,0
+msgid ""
+"CSS/jQuery drop-down, drop-right and drop-left menus to be placed in "
+"blocks"
+msgstr ""
+"CSS/jQuery vysúvacie menu, ktoré sa vysúvajú dole, doprava, "
+"doľava pre vloženie do blokov"
+
+#: nice_menus.module:18
+msgid "Make drop down/flyout CSS menus for site and admin menus."
+msgstr "Vytvorí rozbalovacie CSS ponuky pre stránku a jej administráciu."
+
+#: nice_menus.module:21
+msgid ""
+"<p>This is a simple module that enables the site to have drop "
+"down/flyout CSS menus for site and admin navigation.</p><p>Remember to "
+"activate and configure the menu blocks in !link</p>"
+msgstr ""
+"<p>Tento jednoduchý modul umožňuje na stránke použiť "
+"rozbalovacie CSS ponuky pre navigáciu a administráciu "
+"stránky.</p><p>Nezabudnite aktivovať a nakonfigurovať menu bloky v "
+"!link</p>"
+
+#: nice_menus.module:87
+msgid ""
+"The total number of independent Nice menus blocks you want. Enter a "
+"number between 0 and 99. If you set this to 0, you will have no blocks "
+"created but you can still use the Nice menus theme functions directly "
+"in your theme."
+msgstr ""
+"Celkový počet nezávislých Nice menus blokov, ktoré chcete "
+"používať. Zadajte číslo od 0 do 99. Ak nastavíte 0, nevytvorí "
+"sa síce žiaden blok ale stále bude môcť použiť funkcie Nice "
+"menus priamo vo vašom vzhľade."
+
+#: nice_menus.module:111,93
+msgid "Enable IE support"
+msgstr "Zapnúť podporu IE"
+
+#: nice_menus.module:112,94
+msgid ""
+"This will add necessary JavaScript for Nice Menus to work properly in "
+"Internet Explorer."
+msgstr ""
+"Toto pridá potrebný JavaScript pre správnu funkciu Nice Menus v "
+"Internet Exploreri."
+
+#: nice_menus.module:111
+msgid "You must enter a number from 0 to 99."
+msgstr "Musíte zadať číslo od 0 do 99"
+

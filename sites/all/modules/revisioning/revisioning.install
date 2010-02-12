@@ -1,0 +1,35 @@
+<?php
+// $Id: revisioning.install,v 1.9 2010/01/04 00:47:48 rdeboer Exp $
+
+/**
+ * @file
+ * Install and uninstall hooks for Revisioning module
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function revisioning_install() {
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function revisioning_uninstall() {
+  variable_del('revisioning_view_callback');
+  variable_del('revisioning_edit_callback');
+  variable_del('revisioning_block_num_pending');
+  variable_del('revisioning_block_order');
+  variable_del('revisioning_content_summary_page');
+  // Remove 'revision_moderation' from all node_options_<content_type> variables
+  foreach (node_get_types() as $type) {
+    // Maybe these 2 vars should be used in array, like 'revision_moderation'?
+    variable_del('revisioning_auto_publish_'. $type->type);
+    variable_del('new_revisions_'. $type->type);
+    $variable_name = 'node_options_'. $type->type;
+    if ($node_options = variable_get($variable_name, NULL)) {
+      $node_options = array_diff($node_options, array('revision_moderation'));
+      variable_set($variable_name, $node_options);
+    }
+  }
+}

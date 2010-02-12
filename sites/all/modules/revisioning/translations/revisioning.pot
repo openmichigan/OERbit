@@ -1,0 +1,261 @@
+# $Id: revisioning.pot,v 1.2 2009/04/07 05:49:39 rdeboer Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  revisioning_triggers_actions.inc,v 1.1.2.1 2009/03/25 23:22:47 rdeboer
+#  revisioning.module,v 1.1.2.1 2009/03/25 23:22:47 rdeboer
+#  revisioning.info,v 1.1.2.1 2009/03/25 23:22:47 rdeboer
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-03-26 18:32+0100\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: revisioning_triggers_actions.inc:20
+msgid "When publishing a pending revision"
+msgstr ""
+
+#: revisioning_triggers_actions.inc:23
+msgid "When reverting to an old revision"
+msgstr ""
+
+#: revisioning_triggers_actions.inc:26
+msgid "When unpublishing the current revision"
+msgstr ""
+
+#: revisioning_triggers_actions.inc:51;83 revisioning.module:275;300
+msgid "view"
+msgstr ""
+
+#: revisioning_triggers_actions.inc:65
+msgid "Publish the most recent pending revision."
+msgstr ""
+
+#: revisioning_triggers_actions.inc:50;82 revisioning.module:0
+msgid "revisioning"
+msgstr ""
+
+#: revisioning_triggers_actions.inc:50
+msgid "%op trigger is actioning @aids"
+msgstr ""
+
+#: revisioning_triggers_actions.inc:82
+msgid "Executing publish_latest_revision action for @type %title"
+msgstr ""
+
+#: revisioning.module:18
+msgid "To edit, publish or delete one of the revisions below, click on its saved date."
+msgstr ""
+
+#: revisioning.module:134;147
+msgid "New revisions in moderation"
+msgstr ""
+
+#: revisioning.module:164
+msgid "Initial revision created and published."
+msgstr ""
+
+#: revisioning.module:167
+msgid "Initial revision created, pending publication."
+msgstr ""
+
+#: revisioning.module:180
+msgid "Please note there is one revision more recent than the one you are about to edit."
+msgstr ""
+
+#: revisioning.module:183
+msgid "Please note there are !count revisions more recent than the one you are about to edit."
+msgstr ""
+
+#: revisioning.module:212
+msgid "Your changes are now current as moderation is switched off for this content."
+msgstr ""
+
+#: revisioning.module:233
+msgid "Are you sure you want to publish this revision of %title?"
+msgstr ""
+
+#: revisioning.module:235
+msgid "Publishing this revision will make it visible to the public."
+msgstr ""
+
+#: revisioning.module:236
+msgid "Publish"
+msgstr ""
+
+#: revisioning.module:236;262
+msgid "Cancel"
+msgstr ""
+
+#: revisioning.module:259
+msgid "Are you sure you want to unpublish %title?"
+msgstr ""
+
+#: revisioning.module:261
+msgid "Unpublishing will remove this content from public view."
+msgstr ""
+
+#: revisioning.module:262
+msgid "Unpublish"
+msgstr ""
+
+#: revisioning.module:274
+msgid "%title has been unpublished."
+msgstr ""
+
+#: revisioning.module:299
+msgid "Revision has been published."
+msgstr ""
+
+#: revisioning.module:324
+msgid "\"!title\" has no pending revision to be published."
+msgstr ""
+
+#: revisioning.module:335
+msgid "There is a pending revision. Are you sure you want to revert to an older revision?"
+msgstr ""
+
+#: revisioning.module:413
+msgid "Revisions of %title"
+msgstr ""
+
+#: revisioning.module:422
+msgid "Unpublish current revision"
+msgstr ""
+
+#: revisioning.module:425
+msgid "Delete all revisions"
+msgstr ""
+
+#: revisioning.module:428
+msgid "Revision"
+msgstr ""
+
+#: revisioning.module:430
+msgid "Term"
+msgstr ""
+
+#: revisioning.module:432
+msgid "Status"
+msgstr ""
+
+#: revisioning.module:438
+msgid " Saved !date by !username"
+msgstr ""
+
+#: revisioning.module:446
+msgid "current revision (published)"
+msgstr ""
+
+#: revisioning.module:446
+msgid "current revision (unpublished)"
+msgstr ""
+
+#: revisioning.module:454
+msgid "pending moderation"
+msgstr ""
+
+#: revisioning.module:454;573
+msgid "old"
+msgstr ""
+
+#: revisioning.module:572
+msgid "current, published"
+msgstr ""
+
+#: revisioning.module:572
+msgid "current, unpublished"
+msgstr ""
+
+#: revisioning.module:573
+msgid "pending"
+msgstr ""
+
+#: revisioning.module:577
+msgid "Displaying %current revision of %title, last modified by !author on @date"
+msgstr ""
+
+msgid "Displaying pending revision of %title, last modified by !author on @date"
+msgstr ""
+
+msgid "Displaying old revision of %title, last modified by !author on @date"
+msgstr ""
+
+#: revisioning.module:591
+msgid "Compare revisions"
+msgstr ""
+
+#: revisioning.module:596
+msgid "Edit this revision"
+msgstr ""
+
+#: revisioning.module:601
+msgid "Publish this revision"
+msgstr ""
+
+#: revisioning.module:604
+msgid "Revert to this revision"
+msgstr ""
+
+#: revisioning.module:607
+msgid "Unpublish this revision"
+msgstr ""
+
+#: revisioning.module:611
+msgid "Delete this revision"
+msgstr ""
+
+#: revisioning.module:614
+msgid "Show all revisions"
+msgstr ""
+
+#: revisioning.module:275;300
+msgid "content"
+msgstr ""
+
+#: revisioning.module:275
+msgid "Unpublished @type %title"
+msgstr ""
+
+#: revisioning.module:300
+msgid "Published rev #%revision of @type %title"
+msgstr ""
+
+#: revisioning.module:418
+msgid "This content has only one revision"
+msgid_plural "This content has @count revisions."
+msgstr[0] ""
+msgstr[1] ""
+
+#: revisioning.module:120
+msgid "edit revisions"
+msgstr ""
+
+#: revisioning.module:120
+msgid "publish revisions"
+msgstr ""
+
+#: revisioning.module:120
+msgid "unpublish current revision"
+msgstr ""
+
+#: revisioning.module:34
+msgid "Pending"
+msgstr ""
+
+#: revisioning.info:0
+msgid "Revisioning"
+msgstr ""
+
+#: revisioning.info:0
+msgid "Allows content to be created and edited while remaining invisible to the public until reviewed and accepted by a moderator"
+msgstr ""

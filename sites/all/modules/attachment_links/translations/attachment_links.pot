@@ -1,0 +1,73 @@
+# $Id: attachment_links.pot,v 1.1.2.1 2010/01/06 18:06:13 shannonlucas Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  attachment_links.module,v 1.1.2.2 2010/01/05 23:12:20 toddnienkerk
+#  attachment_links.info,v 1.1.2.1 2010/01/05 23:12:20 toddnienkerk
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-01-06 13:03-0500\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: attachment_links.module:51
+msgid "Attachments must be enabled in order for attachment links to appear."
+msgstr ""
+
+#: attachment_links.module:54;67;301 attachment_links.info:0
+msgid "Attachment links"
+msgstr ""
+
+#: attachment_links.module:57
+msgid "Disabled"
+msgstr ""
+
+#: attachment_links.module:57
+msgid "Enabled"
+msgstr ""
+
+#: attachment_links.module:68
+msgid "Attachment links provide permanent links for files attached to this node. The \"preferred\" version is the first file attachment listed above. Click and drag the handles to the left of each file to reorder them."
+msgstr ""
+
+#: attachment_links.module:79
+msgid "Attachment links will be created after you save the node."
+msgstr ""
+
+#: attachment_links.module:262
+msgid "Preferred version: !link"
+msgstr ""
+
+#: attachment_links.module:270
+msgid "Newest version: !link"
+msgstr ""
+
+#: attachment_links.module:97
+msgid "Authoritative Attachment"
+msgstr ""
+
+#: attachment_links.module:98
+msgid "The canonical or \"lightest\" attached file."
+msgstr ""
+
+#: attachment_links.module:107
+msgid "Latest Attachment"
+msgstr ""
+
+#: attachment_links.module:108
+msgid "The most recently attached file."
+msgstr ""
+
+#: attachment_links.info:0
+msgid "Creates permalinks to the latest and/or cannonical version of a node's attached file."
+msgstr ""
+

@@ -1,0 +1,79 @@
+<?php
+// $Id: lutman.module,v 1.4.2.1 2009/03/31 21:21:26 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - Luke Lutman Flash Replacement
+ *
+ * Enables the use of Luke Lutman's jquery.flash.js which ships with
+ * the SWF Tools module. jquery.flash.js provides Flash replacement
+ * techniques.
+ *
+ * Author's Site.
+ * http://jquery.lukelutman.com/plugins/flash/
+ */
+
+function lutman_swftools_methods() {
+  $methods = array();
+  $methods[SWFTOOLS_EMBED_METHOD]['lutman_replace'] = array (
+    'name'        => 'lutman_replace',
+    'module'      => 'lutman',
+    'shared_file' => 'lutman/jquery.flash.js',
+    'title'       => t('jQuery Flash plugin - JavaScript'),
+    'download'    => 'http://jquery.lukelutman.com/plugins/flash/',
+  );
+  return $methods;
+}
+
+/**
+ * Implementation of swftools_embed hook
+ * Returns the markup for the page, plus set necessary javascript.
+ */
+function lutman_swftools_embed($action = 'add_js', $methods = FALSE, $vars = FALSE, $html_alt = '') {
+
+  static $lutman_has_run;
+
+  // Output javascript to the header
+  if (!$lutman_has_run) {
+    // Add jquery.flash.js
+    drupal_add_js(swftools_get_player_path() .'/lutman/jquery.flash.js');
+    drupal_add_js(_lutman_header_js(), 'inline', 'header');
+    $lutman_has_run = TRUE;
+    if ($action == 'add_js') {
+      // Exit early having put the javascript in the header.
+      return;
+    }
+  }
+
+  // Initialise a counter to give each div a unique id
+  static $unique_id = 0;
+  $unique_id++;
+
+  // Construct a unique id for each div by using time() combined with $unique_id
+  // This is necessary to prevent clashes between cached content
+  $id = time() . $unique_id;
+
+  // Use time() to prevent caching issues.
+  $html = '<div id="swfobject-id-' . $id . '" class="swftools lutman" ' .
+           swftools_json_params($vars->params, 'swftools') . ' ' . ">\n" .
+           $html_alt .
+           '</div>';
+  return $html;
+}
+
+/**
+ * The jQuery code that will try to replace all elements after the page loads.
+ * This parses the JSON out of the 'data' attribute of all swftools-embed divs.
+ *
+ */
+function _lutman_header_js() {
+  $js = "
+    $(document).ready(function(){
+      $('.lutman').flash(null, {version:7}, function(htmlOptions) {
+        htmlOptions = Drupal.parseJson($(this).attr('swftools'));
+        $(this).parent().prepend($.fn.flash.transform(htmlOptions));
+        $(this).remove();
+      });
+    });
+    ";
+  return $js;
+}

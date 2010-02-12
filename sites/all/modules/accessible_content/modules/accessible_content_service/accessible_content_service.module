@@ -1,0 +1,66 @@
+<?php // $Id: accessible_content_service.module,v 1.1.2.1 2009/12/15 17:51:44 kevee Exp $
+
+/**
+*  @file
+*  The Accessible Content Service module exposes common testing methods
+*  as services through the Service module
+*/
+/**
+*  Implemenation of hook_service
+*/
+
+function accessible_content_service_service() {
+  return array(
+    array(
+      //accessibility.check
+      '#method'           => 'accessibility.check',
+      '#callback'         => 'accessible_content_service_check',
+      '#access callback'  => 'accessible_content_service_access',
+      '#file'             => array('file' => 'inc', 'module' => 'accessible_content_service'),
+      '#args'             => array(
+        array(
+          '#name'           => 'html',
+          '#type'           => 'string',
+          '#description'    => t('The HTML code to check.')),
+        array(
+          '#name'           => 'guideline',
+          '#type'           => 'int',
+          '#description'    => t('The guideline to run the HTML against.'))),
+      '#return'           => 'struct',
+      '#help'             => t('Returns an array of accessibility information.')),
+
+   array(
+      //accessibility.guidelines
+      '#method'           => 'accessibility.guidelines',
+      '#callback'         => 'accessible_content_service_get_guidelines',
+      '#access callback'  => 'accessible_content_service_access',
+      '#file'             => array('file' => 'inc', 'module' => 'accessible_content_service'),
+      '#args'             => array(),
+      '#return'           => 'struct',
+      '#help'             => t('Returns an array of accessibility guidelines keyed by node id.')),
+   array(
+      //accessibility.tests
+      '#method'           => 'accessibility.tests',
+      '#callback'         => 'accessible_content_service_get_tests',
+      '#access callback'  => 'accessible_content_service_access',
+      '#file'             => array('file' => 'inc', 'module' => 'accessible_content_service'),
+      '#args'             => array(),
+      '#return'           => 'struct',
+      '#help'             => t('Returns an array of accessibility tests keyed by node id.')),
+    );
+
+}
+
+
+/**
+*  Access callback for accessibility services
+*/
+function accessible_content_service_access() {
+  return user_access('use accessibility service');
+}
+/**
+*  Implementation of hook_perm
+*/
+function accessible_content_service_perm() {
+  return array('use accessibility service');
+}

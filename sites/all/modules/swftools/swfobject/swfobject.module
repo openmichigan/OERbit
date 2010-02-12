@@ -1,0 +1,84 @@
+<?php
+// $Id: swfobject.module,v 1.2 2008/09/07 19:42:15 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - SWFObject
+ *
+ * Enables the use of 's swfobject.js which provides image replacement
+ * for Flash content. swfobject.js must be downloaded separately. (Add
+ * the contents of the zip file to swftools/shared/
+ *
+ * Author's Site.
+ * http://www.airtightinteractive.com/simpleviewer/
+ */
+
+function swfobject_swftools_methods() {
+  $methods = array();
+  $methods[SWFTOOLS_EMBED_METHOD]['swfobject_replace'] = array(
+    'name'        => 'swfobject_replace',
+    'module'      => 'swfobject',
+    'shared_file' => 'swfobject/swfobject.js',
+    'title'       => t('SWFObject 1.5 - JavaScript'),
+    'download'    => 'http://blog.deconcept.com/swfobject/#download',
+  );
+  return $methods;
+}
+
+/**
+ * Implementation of swftools_embed hook
+ * Returns the markup for the page, plus set necessary javascript.
+ *
+ * $methods and $vars should never be empty - unless the only reason for this call
+ * is to push the javascript into the header of the page in which case you don't
+ * add any paramters as all. This is useful for filtered nodes where the body is
+ * not regenerated every time.
+ */
+function swfobject_swftools_embed($action = 'add_js', $methods = FALSE, $vars = FALSE, $html_alt = '') {
+
+  static $swfobject_has_run;
+  static $swfobject_id = 0;
+
+  // Output javascript to the header
+  if (!$swfobject_has_run) {
+    // Add swfobject.js
+    drupal_add_js(swftools_get_player_path() .'/swfobject/swfobject.js');
+    drupal_add_js(_swfobject_header_js(), 'inline', 'header');
+    $swfobject_has_run = TRUE;
+    if ($action == 'add_js') {
+      // Exit early having put the javascript in the header.
+      return;
+    }
+  }
+  static $unique_id = 0;
+  $unique_id++;
+
+  // SWFObject needs an id so that the replacement script can take it as a parameter.
+  // Use time() to prevent caching issues.
+  $html = '<div id="swfobject-id-'. time() . $unique_id .'" class="swftools swfobject" '.
+           swftools_json_params($vars->params, 'swftools') .' '.">\n".
+           $html_alt .
+           '</div>';
+  return $html;
+}
+
+/**
+ * The jQuery code that will try to replace all elements after the page loads.
+ * This parses the JSON out of the 'swftools' attribute of all class="swfobject" divs.
+ *
+ */
+function _swfobject_header_js() {
+  $js = "
+  $(document).ready(function(){
+    $('.swfobject').each(function(i){
+      params = Drupal.parseJson($(this).attr('swftools'));
+	    var so = new SWFObject(params['src'], '', params['width'], params['height'], params['version'], params['bgcolor']);
+      for (p in params) {
+        so.addParam(p, params[p]);
+      }
+      so.addVariable('flashvars', '&'+ params['flashvars']);
+      so.write(this.id);
+    });
+  });
+  ";
+  return $js;
+}

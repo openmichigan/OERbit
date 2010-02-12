@@ -1,0 +1,978 @@
+<?php
+// $Id: accessible_content.module,v 1.1.2.16 2010/01/30 22:16:15 kevee Exp $
+
+/**
+*  @file
+*  The main Accessible Content module
+*/
+
+/**
+*  Loads the quail library and any ancillary include files that are needed to run accessibility tests.
+*
+*/
+function accessible_content_include_library() {
+  $result = @include_once('quail/quail.php');
+  if ($result) {
+    module_load_include('inc', 'accessible_content', 'accessible_content.quail');
+    module_load_include('inc', 'accessible_content', 'accessible_content.theme');
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+*  Implementation of hook_theme()
+*/
+function accessible_content_theme() {
+  return array(
+      'accessible_content_report_error' => array(
+      'arguments' => array('error' => NULL, 'field' => NULL),
+      ),
+  );
+}
+/**
+*  Implementation of hook_menu()
+*/
+function accessible_content_menu() {
+  $items = array();
+
+  $items['admin/settings/accessible_content'] = array(
+    'title' => 'Accessible Content Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('accessible_content_admin_form'),
+    'access arguments' => array('administer site settings'),
+    'file' => 'accessible_content.admin.inc',
+  );
+  
+  $items['admin/settings/accessible_content/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/settings/accessible_content/check'] = array(
+    'title' => 'Check Existing Content',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('accessible_content_admin_check_form'),
+    'access arguments' => array('administer site settings'),
+    'file' => 'accessible_content.admin.inc',
+    'weight' => 4,
+  );
+
+  $items['node/%node/accessibility'] = array(
+    'type' => MENU_LOCAL_TASK,
+    'title' => 'Accessibility',
+    'page callback' => 'drupal_get_form',
+    'file' => 'accessible_content.pages.inc',
+    'access callback' => 'accessible_content_node_page_access',
+    'access arguments' => array(1),
+    'page arguments' => array('accessible_content_accessibility_tab_form'),
+  );
+
+  $items['node/%node/accessibility/highlight'] = array(
+    'type' => MENU_LOCAL_TASK,
+    'title' => 'Highlight Errors',
+    'page callback' => 'accessible_content_accessibility_demo_tab',
+    'file' => 'accessible_content.pages.inc',
+    'access callback' => 'accessible_content_node_page_access',
+    'access arguments' => array(1),
+    'page arguments' => array(1),
+  );
+
+  $items['node/%node/accessibility/tip'] = array(
+    'type' => MENU_CALLBACK,
+    'title' => 'Beauty Tip Callback',
+    'page callback' => 'accessible_content_accessibility_beauty_tip',
+    'file' => 'accessible_content.pages.inc',
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'page arguments' => array(1),
+  );
+
+  return $items;
+}
+
+/**
+*  Access callback for the node/%node/accessibility menu item
+*/
+function accessible_content_node_page_access($node) {
+  return (user_access('view accessibility information') && variable_get($node->type .'_ac_enable', 0));
+}
+
+/**
+*  Implemenation of hook_form_alter
+*  We're adding the accessibility test list of the guideline fields.
+*/
+function accessible_content_form_alter(&$form, $form_state, $form_id) {
+  if (isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form_id) {
+    if (variable_get($form['type']['#value'] .'_ac_enable', 0)) {
+      $form['#validate'][] = '_accessible_content_node_form_validate';
+    }
+  }
+    if ($form_id == 'node_type_form' && isset($form['identity']['type'])) {
+      accessible_content_include_library();
+      $type = $form['identity']['type']['#default_value'];
+      //The node type form
+      $form['accessible_content'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Accessibility Checking'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $form['accessible_content']['ac_enabled'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable checking for accessibility'),
+        '#description' => t('When checked, nodes of this type will be checked against accessibility guidelines whenever they are saved.'),
+        '#default_value' => variable_get($type .'_ac_enable', 0),
+      );
+      $form['accessible_content']['ac_ignore_cms_off'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Ignore errors that involve document or header-related information.'),
+        '#description' => t('Some tests included with this module check for things like style sheets, document information, and other content which is not usually included in a node. If this is checked, these test results will be ignored.'),
+        '#default_value' => variable_get($type .'_ac_ignore_cms_off', 1),
+      );
+      $form['accessible_content']['ac_after_filter'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Apply filters before checking accessibility.'),
+        '#description' => t('When checked, the accessibility of the node will only be checked after input filters are applied.'),
+        '#default_value' => variable_get($type .'_ac_after_filter', 0),
+      );
+      
+      $form['accessible_content']['ac_fail'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Stop node submission of severe errors exist'),
+        '#description' => t('Prevents a node from being saved until no "severe" errors exist.'),
+        '#default_value' => variable_get($type .'_ac_fail', 0),
+      );
+      
+      $form['accessible_content']['ac_display_level'] = array(
+        '#type' => 'checkboxes',
+        '#title' => 'Enabled Severity Levels',
+        '#options' => array(
+          QUAIL_TEST_SEVERE => 'Severe',
+          QUAIL_TEST_MODERATE => 'Moderate',
+          QUAIL_TEST_SUGGESTION => 'Suggestion',
+          ),
+        '#default_value' => variable_get($type .'_ac_display_level', 
+                        array(QUAIL_TEST_SEVERE => 1, 
+                            QUAIL_TEST_MODERATE => 1, 
+                            QUAIL_TEST_SUGGESTION => 1)
+                        ),
+      );
+
+      $form['accessible_content']['accessibility_guideline'] = array(
+        '#title' => t('Guideline'),
+        '#type' => 'select',
+        '#options' => accessible_content_get_guidelines(),
+        '#description' => t('The accessibility guideline to use on this node type.'),
+        '#default_value' => variable_get($type .'_accessibility_guideline_nid', 0),
+      );
+      $form['#submit'][] = 'accessible_content_node_type_submit';
+    }
+    if ($form_id == 'content_field_edit_form'/* && $form['#field']['type'] == 'text'*/) {
+      $existing = variable_get('ac_field', array());
+      $form['submit']['#weight'] = 4;
+      $form['widget']['accessibility_checking'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable accessibility checking'),
+        '#description' => 'If accessibility checking for this node type is enabled, run checking on this field as well.',
+        '#default_value' => $existing[$form['#field']['field_name']],
+      );
+      $form['#submit'][] = 'accessible_content_cck_field_form_submit';
+    }
+}
+
+/**
+*  Form callback for adding accessibility checking to cck fields
+*
+*/
+function accessible_content_cck_field_form_submit(&$form, $form_submit) {
+  $existing = variable_get('ac_field', array());
+  $existing[$form_submit['values']['field_name']] = $form_submit['values']['accessibility_checking'];
+  variable_set('ac_field', $existing);
+}
+/**
+*  Form callback from the override of the node type form
+*
+*/
+function accessible_content_node_type_submit(&$form, $form_state) {
+  $type = $form_state['values']['type'];
+  variable_set($type .'_ac_enable', $form_state['values']['ac_enabled']);
+  variable_set($type .'_ac_fail', $form_state['values']['ac_fail']);
+  variable_set($type .'_accessibility_guideline_nid', $form_state['values']['accessibility_guideline']);
+  variable_set($type .'_ac_ignore_cms_off', $form_state['values']['ac_ignore_cms_off']);
+  variable_set($type .'_ac_after_filter', $form_state['values']['ac_after_filter']);
+  variable_set($type .'_ac_display_level', $form_state['values']['ac_display_level']);
+}
+/**
+*  Implementation of hook_node_type()
+*
+*/
+function accessible_content_node_type($op, $info) {
+  if ($op == 'delete') {
+    variable_del($info->type .'_ac_enable');
+    variable_del($info->type .'_ac_fail');
+    variable_del($info->type .'_accessibility_guideline_nid');
+  }
+}
+/**
+*  Adds a list of all accessibility tests to a given node form
+*  @param array The current form array
+*  @param object The node object
+*/
+function _accessible_content_add_guideline_form_elements(&$form, &$node) {
+  $form['accessibility_tests'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Accessibility Tests'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $tests = db_query('SELECT nid FROM {node} WHERE type = "accessibility_test" ORDER BY title');
+  $options = array();
+  while ($test_nid = db_result($tests)) {
+    $test = node_load($test_nid);
+    if (node_access('view', $test)) {
+      $options[$test->nid] = check_plain($test->title) .' - ';
+      $options[$test->nid] .= l('More', 'node/'. $test->nid, array('attributes' => array('target' => '_blank')));
+    }
+  }
+  $default = ($node->accessibility_tests)
+        ? array_keys($node->accessibility_tests)
+        : array();
+  $form['accessibility_tests']['accessibility_tests'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Available Tests'),
+    '#options' => $options,
+    '#default_value' => $default,
+  );
+}
+
+/**
+*  Adds form elements to nodes checked as tests
+*  @param array The current form array
+*  @param object The node object
+*/
+function _accessible_content_add_test_form_elements(&$form, &$node) {
+  $form['accessibility_tests'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Accessibility Tests'),
+
+  );
+  $form['accessibility_tests']['ac_severity'] = array(
+    '#type' => 'select',
+    '#title' => t('Severity Level'),
+    '#options' => array(1 => 'Severe',
+              2 => 'Moderate',
+              3 => 'Suggestion'),
+    '#default_value' => $node->ac_severity,
+  );
+
+  $form['accessibility_tests']['ac_function_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Class Name'),
+    '#default_value' => $node->ac_function_name,
+  );
+}
+
+/**
+*  Implementation of hook_node_info()
+*  We are defining two node types: accessibility_guideline and accessibility_test
+*/
+function accessible_content_node_info() {
+return array(
+    'accessibility_guideline' => array(
+      'name' => t('Accessibility Guideline'),
+      'module' => 'accessible_content',
+      'description' => t("A guideline is a collection of accessibility tests."),
+      'has_title' => TRUE,
+      'title_label' => t('Guideline Name'),
+      'has_body' => TRUE,
+      'body_label' => t('Guideline Description'),
+    ),
+    'accessibility_test' => array(
+      'name' => t('Accessibility Test'),
+      'module' => 'accessible_content',
+      'description' => t("A single test to check a document for accessibility standards."),
+      'has_title' => TRUE,
+      'title_label' => t('Test Name'),
+      'has_body' => TRUE,
+      'body_label' => t('How to pass this test'),
+    ),
+  );
+}
+
+/**
+*  Implementation of hook_insert()
+*/
+function accessible_content_insert($node) {
+  if ($node->type == 'accessibility_guideline' && property_exists($node, 'accessibility_tests')) {
+    foreach ($node->accessibility_tests as $test => $state) {
+      if ($state) {
+        db_query('INSERT INTO {accessible_content_guideline_test} VALUES (%d, %d, %d)',
+             $node->nid, $node->vid, $test);
+      }
+    }
+    accessible_content_get_guidelines(TRUE);
+  }
+  if ($node->type == 'accessibility_test') {
+    db_query('INSERT INTO {accessible_content_node_test} VALUES (%d, "%s", %d)', 
+             $node->nid, $node->ac_function_name, $node->ac_severity);
+  }
+}
+
+/**
+*  Implementation of hook_update();
+*/
+function accessible_content_update($node) {
+  if ($node->type == 'accessibility_guideline') {
+    if (!$node->revision) {
+        //If we are not adding a new revision, delete the tests so we can rebuild them
+        db_query('DELETE FROM {accessible_content_guideline_test} WHERE guideline_nid = %d ',
+             $node->nid);
+    }
+    foreach ($node->accessibility_tests as $test => $state) {
+      if ($state) {
+        db_query('INSERT INTO {accessible_content_guideline_test} VALUES (%d, %d, %d)',
+             $node->nid, $node->vid, $test);
+      }
+    }
+    accessible_content_get_guidelines(TRUE);
+  }
+  if ($node->type == 'accessibility_test') { 
+    db_query('UPDATE {accessible_content_node_test} SET severity = %d, test_name = "%s" WHERE nid = %d', 
+             $node->ac_severity, $node->ac_function_name, $node->nid);
+  }
+}
+
+/**
+*  Implementation of hook_load()
+*/
+function accessible_content_load($node) {
+  if ($node->type == 'accessibility_guideline') {
+  //We are loading a guideline, add the appropriate tests
+      $result = db_query('SELECT test_nid FROM {accessible_content_guideline_test} WHERE guideline_nid = %d AND guideline_vid = %d',
+                $node->nid,
+                $node->vid);
+      $additions = new stdClass();
+      $additions->accessibility_tests = array();
+      while ($test_nid = db_result($result)) {
+        $test = node_load($test_nid);
+        if ($test && node_access('view', $test)) {
+          $additions->accessibility_tests[$test->nid] = $test->ac_function_name;
+        }
+      }
+    }
+    if ($node->type == 'accessibility_test') {
+      //We are loading a test, add the function name and severity
+      $result = db_query('SELECT test_name as ac_function_name, severity FROM {accessible_content_node_test} WHERE nid = %d', $node->nid);
+      $additions = db_fetch_object($result);
+    }
+      return $additions;
+}
+
+/**
+*  Implementation of hook_delete()
+*/
+function accessible_content_delete($node) {
+  if ($node->type == 'accessibility_guideline') {
+    db_query('DELETE FROM {accessible_content_guideline_test} WHERE guideline_nid = %d', $node->nid);
+    accessible_content_get_guidelines(TRUE);
+  }
+  if ($node->type == 'accessibility_test') {
+    db_query('DELETE FROM {accessible_content_node_test} WHERE nid = %d', $node->nid);
+  }
+}
+
+/**
+*  Implemenation of hook_view()
+*/
+function accessible_content_view($node, $teaser, $page) {
+  if ($node->type == 'accessibility_guideline') {
+     $node = node_prepare($node, $teaser);
+
+    if ($page) {
+       $node->content['body'] = array(
+          '#value' => $node->body,
+          '#weight' => -4,
+        );
+      $node->content['accessibility_test'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Accessibility Tests'),
+          '#collapsible' => TRUE,
+          '#collapsed' => TRUE,
+          '#weight' =>  4,
+        );
+
+        foreach ($node->accessibility_tests as $test_nid => $function_name) {
+          $test = node_load($test_nid);
+          if (node_access('view', $test)) {
+            $node->content['accessibility_test']['test_'. $test->nid] = array(
+              '#value' => '<div class="accessibility-test"><h4>'.
+                      l($test->title, 'node/'. $test->nid) .'</h4></div>',
+            );
+      }
+        }
+
+    }
+    if ($teaser) {
+       $node->content['teaser'] = array(
+        '#value' => $node->teaser,
+        '#weight' => -4,
+      );
+    }
+      return $node;
+  }
+  if ($node->type == 'accessibility_test') {
+     $node = node_prepare($node, $teaser);
+
+    if ($page) {
+       $node->content['body'] = array(
+          '#value' => $node->body,
+          '#weight' => -4,
+        );
+
+    }
+    if ($teaser) {
+       $node->content['teaser'] = array(
+        '#value' => $node->teaser,
+        '#weight' => -4,
+      );
+    }
+      return $node;
+  }
+}
+
+/**
+*  Implementation of hook_form()
+*/
+function accessible_content_form(&$node) {
+  $type = node_get_types('type', $node);
+
+  if ($type->has_title) {
+    $form['title'] = array(
+      '#type' => 'textfield',
+      '#title' => $type->title_label,
+      '#required' => TRUE,
+      '#default_value' => $node->title,
+      '#weight' => -5,
+    );
+  }
+  if ($type->has_body) {
+    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+  }
+
+  if ($node->type == 'accessibility_guideline') {
+    _accessible_content_add_guideline_form_elements($form, $node);
+  }
+  if ($node->type == 'accessibility_test') {
+    _accessible_content_add_test_form_elements($form, $node);
+  }
+
+  return $form;
+}
+
+/**
+*  Implementation of hook_access()
+*/
+function accessible_content_access($op, $node, $account) {
+
+  if ($node == 'accessibility_test' || $node->type == 'accessibility_test') {
+    if ($op == 'view' && user_access('access accessibility tests', $account)) {
+      return TRUE;
+    }
+    if ($op == 'create' && user_access('create accessibility tests', $account)) {
+      return TRUE;
+    }
+    if ($op == 'update' && user_access('edit accessibility tests', $account)) {
+      return TRUE;
+    }
+    if ($op == 'delete' && user_access('delete accessibility tests', $account)) {
+      return TRUE;
+    }
+  }
+  if ($node == 'accessibility_guideline' || $node->type == 'accessibility_guideline') {
+    if ($op == 'view' && user_access('access accessibility guidelines', $account)) {
+      return TRUE;
+    }
+    if ($op == 'create' && user_access('create accessibility guidelines', $account)) {
+      return TRUE;
+    }
+    if ($op == 'update' && user_access('edit accessibility guidelines', $account)) {
+      return TRUE;
+    }
+    if ($op == 'delete' && user_access('delete accessibility guidelines', $account)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+/**
+*  Implementation of hook_nodeapi()
+*
+*/
+function accessible_content_nodeapi(&$node, $op, $a3, $a4) {
+
+  if (($op == 'insert' || $op == 'update') && variable_get($node->type .'_ac_enable', 0)) {
+    if (is_array($node->accessibility_results)) {
+    //Inserting/updating a new node who's type can be tested. If it's a new revision,
+    //Insert more info for that vid, if not, delete the node's info and rewrite
+      if (!$node->revision) {
+        db_query('DELETE FROM {accessible_content_node_totals} WHERE nid = %d AND vid = %d',
+              $node->nid,
+              $node->vid);
+      }
+    
+      foreach ($node->accessibility_results as $result) {
+        if (is_array($result)) {
+          $totals[QUAIL_TEST_SEVERE] += $result[QUAIL_TEST_SEVERE]['total'];
+          $totals[QUAIL_TEST_MODERATE] += $result[QUAIL_TEST_MODERATE]['total'];
+          $totals[QUAIL_TEST_SUGGESTION] += $result[QUAIL_TEST_SUGGESTION]['total'];
+        }
+      }
+      db_query('INSERT INTO {accessible_content_node_totals} '.
+       '(nid, vid, severe_total, moderate_total, suggestion_total) VALUES (%d, %d, %d, %d, %d)',
+        $node->nid,
+        $node->vid,
+        $totals[QUAIL_TEST_SEVERE],
+        $totals[QUAIL_TEST_MODERATE],
+        $totals[QUAIL_TEST_SUGGESTION]);
+    }
+  }
+  if ($op == 'load') {
+    if (variable_get($node->type .'_ac_enable', 0)) {
+      //We are loading a node who is covered under tests, add accessibility metrics
+      $result = db_query('SELECT severe_total as severe, moderate_total as moderate, suggestion_total as suggestion FROM '.
+                  '{accessible_content_node_totals} WHERE nid = %d AND vid = %d',
+                $node->nid,
+                $node->vid);
+      $node->accessibility_totals = db_fetch_array($result);
+    }
+  }
+
+}
+
+/**
+*  Determines if a node type is either an accessibility guideline or test
+*  @param string The provided node type
+*  @param string The type of node to check against, either guideline or test
+*  @return bool Whether this node type is actually applied to the type of accessibility node
+*/
+function accessible_content_is_type($node_type, $ac_type = 'guideline') {
+  if ($ac_type == 'guideline') {
+    return in_array($node_type, variable_get('accessibility_guideline_node_types', array('accessibility_guideline')));
+  }
+  if ($ac_type == 'test') {
+    return in_array($node_type, variable_get('accessibility_test_node_types', array('accessibility_test')));
+  }
+}
+
+/**
+*  Validate callback for node forms for nodes which have AC enabled
+*/
+function _accessible_content_node_form_validate($form, &$form_state) {
+  if (variable_get($form['#node']->type .'_ac_enable', 0)) {
+    $fields = variable_get('ac_field', array());
+    $body = (variable_get($form['#node']->type .'_ac_after_filter', 0))
+            ? check_markup($form_state['values']['format'])
+            : $form_state['values']['body'];
+    $results['body'] = accessible_content_check_string($body,
+          variable_get($form['#node']->type .'_accessibility_guideline_nid', 0),
+          'AccessibleContent',
+          variable_get($node->type .'_ac_ignore_cms_off', 1),
+        variable_get($node->type .'_ac_display_level', 
+                  array(QUAIL_TEST_SEVERE => 1, 
+                      QUAIL_TEST_MODERATE => 1, 
+                      QUAIL_TEST_SUGGESTION => 1)
+                  )
+          );
+    _accessible_content_node_form_submit_error($results, 'Body', $form['#node']->type);
+    foreach ($fields as $field => $check) {
+      if ($check && $form_state['values'][$field]) {
+        foreach ($form_state['values'][$field] as $k => $submitted_field) {
+          if ($submitted_field['format']) {
+            $field_value = (variable_get($form['#node']->type .'_ac_after_filter', 0))
+                       ? check_markup($submitted_field['value'], $submitted_field['format'])
+                       : $submitted_field['value'];
+            $results[$field . $k] = accessible_content_check_string($field_value,
+                    variable_get($form['#node']->type .'_accessibility_guideline_nid', 0),
+                    'AccessibleContent',
+                    variable_get($node->type .'_ac_ignore_cms_off', 1),
+                  variable_get($node->type .'_ac_display_level', 
+                            array(QUAIL_TEST_SEVERE => 1, 
+                                QUAIL_TEST_MODERATE => 1, 
+                                QUAIL_TEST_SUGGESTION => 1)
+                            )
+                    );
+             _accessible_content_node_form_submit_error($results[$field], $field, $form['#node']->type);
+
+          }
+        }
+      }
+    }
+    _accessible_content_remove_overriden_tests($form['#node']->nid, $results);
+    $form_state['values']['accessibility_results'] = $results;
+  }
+}
+
+/**
+*  A helper function for the node form validate function which formats all the errors
+*  and throws a form_set_error if the node type has the option to prevent saving nodes
+*  if severe errors are found and gives a list of all errors broken down by field.
+*  @param array $result The results given by accessible_content_check_string()
+*  @param string $field The name of the field
+*  @param string $node_type The node type
+*/
+function _accessible_content_node_form_submit_error($result, $field, $node_type) {
+  if (!is_array($result)) {
+    return NULL;
+  }
+  if ($result[QUAIL_TEST_SEVERE]['total'] == 0 || !variable_get($node_type .'_ac_fail', 0)) {
+    return NULL;
+  }
+  $severe_errors = array();
+  foreach ($result[QUAIL_TEST_SEVERE] as $name => $test ) {
+    $problems = array();
+    if (is_array($test['problems'])) {
+      foreach ($test['problems'] as $problem) {
+        if ($problem['element']) {
+          $problems[] = $problem['element'];
+        }
+      }
+      $severe_errors[] = '<h4>'. $test['body'] .'</h4>'. theme('item_list', $problems);
+    }
+
+
+  }
+  if ($field != 'Body') {
+    $content_field = content_fields($field);
+    $field = $content_field['widget']['label'];
+  }
+
+  form_set_error($field, '<h3>The following critical errors in '. $field .' must be resolved:</h3>'.
+          theme('item_list', $severe_errors));
+}
+
+/**
+*  Helper function to remove overriden tests from a node submit form
+*  @param nid The node ID
+*  @param results The accessibility results from QUAIL
+*/
+function _accessible_content_remove_overriden_tests($nid, &$results) {
+  if (!$nid) {
+    //Empty node ids indicate a new node, so just ignore
+    return $results;
+  }
+  foreach ($results as $fieldname => $field) {
+    if (is_array($field)) {
+      foreach ($field as $severity => $tests) {
+        if (is_array($tests)) {
+          foreach ($tests as $testname => $errors) {
+            if (accessible_content_test_is_overriden($nid, $testname, $errors, $fieldname, $severity)) {
+              //The test is overriden, remove the test from the totals
+              if ($errors['problems']['pass'] === FALSE) {
+                $results[$fieldname][$severity]['total']--;
+              }
+              else {
+                $elements = 0;
+                foreach ($errors['problems'] as $problem) {
+                  if ($problem['element']) {
+                    $elements++;
+                  }
+                }
+                $results[$fieldname][$severity]['total'] -= $elements;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+/**
+*  Runs a guideline against a string
+*  @param string string The string of HTML
+*  @param guideline_nid The node ID of the guideline to run the string against
+*  @param string reporter The name of the Quail reporter to use
+*  @return mixed The result of the reporter
+*/
+function accessible_content_check_string($string, $guideline_nid, $reporter = 'AccessibleContent', $cms_mode = FALSE, $display_level = FALSE) {
+  accessible_content_include_library();
+  if (!$display_level) {
+    $display_level = array(
+      QUAIL_TEST_SEVERE  => TRUE,
+      QUAIL_TEST_MODERATE => TRUE,
+      QUAIL_TEST_SUGGESTION => TRUE,
+    );
+  }
+  $cache_id = 'ac_string_'. md5($string) . $guideline_nid . $reporter . intval($cms_mode) . serialize($display_level);
+  $cache = cache_get($cache_id);
+  if ($cache) {
+    return $cache->data;
+  }
+  $guideline = node_load($guideline_nid);
+  $quail = new quail($string, 'accessible_content', 'string', $reporter);
+  $quail->setOption('cms_mode', $cms_mode);
+  $quail->addCSS(accessible_content_get_css_files());
+  $quail->runCheck(array('ac_module_guideline' => $guideline, 'display_level' => $display_level));
+  $result = $quail->getReport();
+  $quail->cleanup();
+  cache_set($cache_id, $result, 'cache', time() + (60 * 60 * 24));
+  return $result;
+}
+
+/**
+*  Overrides a test for a node
+*  @param nid The node ID being overriden
+*  @param tid The Test node ID
+*  @param errors All the errors found to make a unique hash id
+*/
+function accessible_content_override_test($nid, $test_name, $errors, $field = 'body') {
+  accessible_content_remove_override($nid, $test_name, $errors, $field);
+  db_query('INSERT INTO {accessible_content_node_override} '.
+         '(nid, test_name, hash, field) VALUES (%d, "%s", "%s", "%s")',
+             $nid,
+             $test_name,
+             _accessible_content_override_generate_hash($errors),
+             $field);
+}
+
+/**
+*  Removes the override for a test
+*  @param nid The node ID being overriden
+*  @param tid The Test node ID
+*  @param errors All the errors found to make a unique hash id
+*/
+function accessible_content_remove_override($nid, $test_name, $errors, $field = 'body') {
+  db_query('DELETE FROM {accessible_content_node_override} '.
+           'WHERE nid = %d AND test_name = "%s" AND hash = "%s" AND field = "%s"',
+               $nid,
+               $test_name,
+               _accessible_content_override_generate_hash($errors),
+               $field);
+
+}
+/**
+*  Returns whether or not the test has been overriden for this node
+*  @param nid The node id
+*  @param test_name The name of the test
+*  @param errors All the errors to use for looking up in the table
+*  @param field The field that we are looking at
+*  @return bool TRUE for the test has been overriden, FALSE if it is not
+*/
+function accessible_content_test_is_overriden($nid, $test_name, $errors, $field = 'body') {
+   $field = ($field)
+            ? $field
+            : 'body';
+   $result = db_result(db_query('SELECT nid FROM {accessible_content_node_override} '.
+                    'WHERE nid = %d AND test_name = "%s" AND hash = "%s" AND field = "%s"',
+                  $nid,
+                  $test_name,
+                  _accessible_content_override_generate_hash($errors),
+                  $field));
+  if ($result) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+*  Generates a unique hash for override functions
+*  @param errors The error array
+*  @return string The hash for lookup and generating overrides
+*/
+function _accessible_content_override_generate_hash($errors) {
+  if ($errors['pass']) {
+       return 1;
+  }
+  $text = '';
+  if (is_array($errors['problems'])) {
+    foreach ($errors['problems'] as $problem) {
+     $text .= $problem['element'];
+    }
+  }
+  return md5($text);
+}
+
+/**
+*  Returns an array of all the CSS files currently prepared for the page load.
+*  This is for the list of CSS files for quail to check against.
+*  @return array An array of CSS files
+*/
+function accessible_content_get_css_files() {
+  $css = array();
+  $css_files = drupal_add_css();
+  if (is_array($css_files['all']['module'])) {
+    foreach ($css_files['all']['module'] as $path => $enabled) {
+      if ($enabled) {
+        $css[] = $path;
+      }
+    }
+  }
+  if (is_array($css_files['all']['theme'])) {
+    foreach ($css_files['all']['theme'] as $path => $enabled) {
+      if ($enabled) {
+        $css[] = $path;
+      }
+    }
+  }
+  $base = str_replace(drupal_get_path('module', 'accessible_content'), '', dirname(__FILE__));
+  foreach ($css as $k => $c) {
+    $css[$k] = $base . $c;
+  }
+
+  return $css;
+}
+
+/**
+*  Implementation of hook_block()
+*/
+function accessible_content_block($op = 'view', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+    $block = array();
+    $block[0]['info'] = 'Page Accessibility Overview';
+    return $block;
+  }
+  if ($op == 'view') {
+    switch ($delta) {
+      case 0:
+        module_load_include('inc', 'accessible_content', 'accessible_content.blocks');
+        return accessible_content_block_node_overview();
+        break;
+    }
+  }
+}
+/**
+*  Takes an array from the accessible_content quail reporter and returns a nice form
+*  @param array An array from the quail reporter "AccessibleContent"
+*  @return array A fully formatted Drupal form array
+*/
+function accessible_content_accessibility_report($results, $prefix = NULL, $header = NULL, $field = NULL, $highlight = TRUE) {
+  $node = menu_get_object();
+  $form = array();
+  if ($header) {
+    $form[$prefix .'header'] = array(
+      '#value' => '<h3>'. $header .'</h3>',
+    );
+  }
+  if (!is_array($results)) {
+    $form[$prefix .'none'] = array(
+      '#value' => 'No results',
+    );
+    return $form;
+  }
+  $total = ($results[QUAIL_TEST_SEVERE]['total']) ? $results[QUAIL_TEST_SEVERE]['total'] : 0;
+  $form[$prefix .'errors_'. QUAIL_TEST_SEVERE] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Severe Errors') .' ('. $total .')',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $total = ($results[QUAIL_TEST_MODERATE]['total']) ? $results[QUAIL_TEST_MODERATE]['total'] : 0;
+  $form[$prefix .'errors_'. QUAIL_TEST_MODERATE] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Moderate Errors') .' ('. $total .')',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $total = ($results[QUAIL_TEST_SUGGESTION]['total']) ? $results[QUAIL_TEST_SUGGESTION]['total'] : 0;
+  $form[$prefix .'errors_'. QUAIL_TEST_SUGGESTION] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Suggestions') .' ('. $total .')',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  if (is_array($results)) {
+    foreach ($results as $severity => $errors) {
+      if (count($errors)) {
+        foreach ($errors as $testname => $error) {
+          if ($testname != 'total') {
+            if (count($error['problems']) > 0 && user_access('manually override tests')) {
+            $form[$prefix .'errors_'. $severity]['override['. $prefix .']['. $testname .']'] = array(
+              '#type' => 'checkbox',
+              '#title' => t('Override test'),
+              '#default_value' => accessible_content_test_is_overriden($node->nid, $testname, $error, $field['field']),
+            );
+            }
+            $form[$prefix .'errors_'. $severity][$testname] = array(
+              '#value' => theme('accessible_content_report_error', $error, $field, $highlight),
+            );
+            if (!user_access('manually override tests') &&
+                accessible_content_test_is_overriden($node->nid, $testname, $error, $field['field'])) {
+              //If the test is overriden, but the user does not have access to override,
+              //then add an override div and note to the test
+              $form[$prefix .'errors_'. $severity][$testname]['#prefix'] = '<div class="test-overriden"><h6>Test overriden</h6>';
+              $form[$prefix .'errors_'. $severity][$testname]['#suffix'] = '</div>';
+            }
+          }
+        }
+      }
+    }
+  }
+  return $form;
+}
+
+/**
+*  Returns an associative array of guideline nodes. Useful for select lists
+*  @param bool Reset the cache of guidelines
+*  @return array An array where the key is the node id and the value is the node title
+*/
+function accessible_content_get_guidelines($reset = FALSE) {
+  if (!$reset && $cache = cache_get('ac_guideline_list')) {
+    return $cache->data;
+  }
+  $guidelines = array();
+  $results = db_query('SELECT nid, title FROM {node} WHERE type = "accessibility_guideline" AND status = 1');
+  while ($row = db_fetch_object($results)) {
+    $guidelines[$row->nid] = $row->title;
+  }
+  cache_set('ac_guideline_list', $guidelines, 'cache', time() + (60 * 60 * 24));
+  return $guidelines;
+}
+
+/**
+*  Implementation of hook_views_api()
+*/
+function accessible_content_views_api() {
+  return array('api' => 2);
+}
+
+/**
+*  Implementation of hook_menu_alter()
+*  This is to support modules which implment the hook_accessible_content_install_tests()
+*  We're calling this hook because it is called after modules are installed.
+*/
+function accessible_content_menu_alter($menu) {
+  accessible_content_include_library();
+  $tests = module_invoke_all('accessible_content_install_tests');
+  foreach ($tests as $test_name => $test) {
+    $existing = db_result(db_query('SELECT nid FROM {accessible_content_node_test} WHERE test_name = "%s"',
+                $test_name));
+    if (!$existing) {
+      $node = new stdClass();
+      $node->type = 'accessibility_test';
+      $node->uid = $user->uid;
+      $node->title = $test['title'];
+      $node->body = $test['body'];
+      $node->ac_severity = $test['severity'];
+      $node->ac_function_name = $test_name;
+      node_save($node);
+    }
+  }
+}
+
+/**
+*  Implementation of hook_perm
+*/
+function accessible_content_perm() {
+
+  return array('access accessibility guidelines',
+           'access accessibility tests',
+           'create accessibility guidelines',
+           'edit accessibility guidelines',
+           'delete accessibility guidelines',
+           'delete accessibility tests',
+           'create accessibility tests',
+           'edit accessibility tests',
+           'view accessibility information',
+           'manually override tests');
+}

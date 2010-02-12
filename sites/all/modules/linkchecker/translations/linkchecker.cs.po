@@ -1,0 +1,637 @@
+# $Id: linkchecker.cs.po,v 1.1.2.2 2009/11/24 19:06:04 hass Exp $
+#
+# Czech translation of Linkchecker
+# Copyleft 2009 Tomas Capek <soulcharmer@gmail.com>
+# Generated from files:
+#  linkchecker.admin.inc,v 1.1.2.30 2009/03/25 22:59:52 hass
+#  linkchecker.module,v 1.7.2.58 2009/03/25 22:59:52 hass
+#  linkchecker.info,v 1.2.2.2 2009/01/25 23:41:02 hass
+#  linkchecker.install,v 1.2.2.14 2009/03/24 22:43:54 hass
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-11-22 15:16+0100\n"
+"PO-Revision-Date: 2009-11-24 09:30+0100\n"
+"Last-Translator: Tomáš Čapek <charmer@solnet.cz>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((n==1)?(0):(((n>=2)&&(n<=4))?(1):2));\n"
+
+#: linkchecker.module:64
+msgid "This module provides an aid to finding broken links on your site. It periodically checks contents of all public nodes, tries to find any html links and check for their validity. It reports broken links through the admin interface. For more information about status codes see <a href=\"@rfc\">Status Code Definitions</a>."
+msgstr "Tento modul pomáhá nacházet neplatné odkazy na Vašem webu. Pravidelně prochází obsah všech veřejně přístupných stránek (uzlů), hledá v nich hypertextové odkazy a kontroluje jejich správnost. Neplatné odkazy přidává do zprávy přístupné z Administrace. Podrobnější informace o stavových kódech HTTP najdete v dokumentu <a href=\"@rfc\">Status Code Definitions</a> (anglicky)."
+
+#: linkchecker.module:246;250
+msgid "Changed permanently moved link in %node from %src to %dst."
+msgstr "Byl změněn trvale přesunutý odkaz v uzlu %node z %src na %dst."
+
+#: linkchecker.module:300;306;324;82;91
+msgid "Broken links"
+msgstr "Neplatné odkazy"
+
+#: linkchecker.module:416
+msgid "Preview"
+msgstr "Ukázka"
+
+#: linkchecker.module:1215
+msgid "n/a"
+msgstr "--"
+
+#: linkchecker.module:250;271;295;300;306;324;1366
+msgid "linkchecker"
+msgstr "kontrola odkazů"
+
+#: linkchecker.module:271
+msgid "Changed permanently moved link in comment %comment from %src to %dst."
+msgstr "Byl změněn trvale přesunutý odkaz v komentáři %comment z %src na %dst."
+
+#: linkchecker.module:295
+msgid "Changed permanently moved link in box %bid from %src to %dst."
+msgstr "Byl změněn trvale přesunutý odkaz v bloku %bid z %src na %dst."
+
+#: linkchecker.module:300
+msgid "Link %link has changed and needs to be updated."
+msgstr "Odkaz %link byl změněn je nutné jej aktualizovat."
+
+#: linkchecker.module:306
+msgid "Broken link %link has been found."
+msgstr "Byl nalezen neplatný odkaz %link."
+
+#: linkchecker.module:324
+msgid "Method HEAD is not allowed for link %link. Method has been changed to GET."
+msgstr "Metoda HEAD není pro odkaz %link povolena. Metoda byla změněna na GET."
+
+#: linkchecker.module:1366
+msgid "Set @type %title to unpublished."
+msgstr "@type %title byl(a) stažen(a) z webu. (zrušen příznak 'publikovat')"
+
+#: linkchecker.module:361;402;421
+msgid "Link check of <a href=\"@url\">@url</a> failed once (status code: @code)."
+msgid_plural "Link check of <a href=\"@url\">@url</a> failed @count times (status code: @code)."
+msgstr[0] "Kontrola odkazu <a href=\"@url\">@url</a> selhala jednou (stavový kód: @code)."
+msgstr[1] "Kontrola odkazu <a href=\"@url\">@url</a> selhala @count x (stavový kód: @code)."
+msgstr[2] "Kontrola odkazu <a href=\"@url\">@url</a> selhala @count x (stavový kód: @code)."
+
+#: linkchecker.module:55
+msgid "access broken links report"
+msgstr "přístup ke zprávám neplatných odkazů"
+
+#: linkchecker.module:55
+msgid "access own broken links report"
+msgstr "přístup k vlastním zprávám neplatných odkazů"
+
+#: linkchecker.module:55
+msgid "administer linkchecker"
+msgstr "spravovat kontrolu odkazů"
+
+#: linkchecker.module:55
+msgid "edit link settings"
+msgstr "měnit nastavení odkazů"
+
+#: linkchecker.module:74
+#: linkchecker.info:0
+msgid "Link checker"
+msgstr "Kontrola odkazů"
+
+#: linkchecker.module:75
+msgid "Configure the link checker settings."
+msgstr "Nastavení pro modul Kontrola odkazů"
+
+#: linkchecker.module:83;92
+msgid "Shows a list of broken links in content."
+msgstr "Zobrazí seznam neplatných odkazů v obsahu webu."
+
+#: linkchecker.module:101
+#: includes/linkchecker.pages.inc:122
+msgid "Edit link settings"
+msgstr "Měnit nastavení odkazů"
+
+#: (duplicate) linkchecker.install:185
+msgid "HTTP request status"
+msgstr "Stav HTTP požadavku"
+
+#: (duplicate) linkchecker.install:186
+msgid "Fails"
+msgstr "Selhání"
+
+#: (duplicate) linkchecker.install:188
+msgid "Your system or network configuration does not allow Drupal to access web pages, resulting in reduced functionality. This could be due to your webserver configuration or PHP settings, and should be resolved in order to download information about available updates, fetch aggregator feeds, sign in via OpenID, or use other network-dependent services."
+msgstr "Váš systém nebo síťové nastavení neumožňuje Drupalu přístup k webovým stránkám, výsledkem jsou omezené funkce. To může být způsobeno nastavením webového serveru nebo nastavením PHP. Omezení se projeví v získávání informací o dostupných aktualizacích, načítání zpráv z RSS, přihlašování přes OpenID nebo použití jiných služeb závislých na síti."
+
+#: (duplicate) linkchecker.install:196
+msgid "MySQL database"
+msgstr "MySQL databáze"
+
+#: (duplicate) linkchecker.install:199
+msgid "Your MySQL Server is too old. Link Checker requires at least MySQL %version."
+msgstr "Váš server MySQL je zastaralý. Kontrola odkazů vyžaduje alespoň verzi MySQL %version."
+
+#: linkchecker.info:0
+msgid "Periodically checks for broken links in node types, blocks and cck fields and reports the results."
+msgstr "Pravidelně kontroluje neplatné odkazy v uzlech, komentářích a blocích a poskytuje výsledné zprávy."
+
+#: includes/linkchecker.admin.inc:13
+msgid "General settings"
+msgstr "Hlavní nastavení"
+
+#: includes/linkchecker.admin.inc:18
+msgid "Scan node types for links"
+msgstr "Procházet uzly typu:"
+
+#: includes/linkchecker.admin.inc:21
+msgid "Enable link checking for the selected node type(s)."
+msgstr "Povolit kontrolu odkazů u uzlů zvolených typů."
+
+#: includes/linkchecker.admin.inc:25
+msgid "Depends on: !dependencies"
+msgstr "Závisí na: !dependencies"
+
+#: includes/linkchecker.admin.inc:25
+msgid "@module (<span class=\"admin-enabled\">enabled</span>)"
+msgstr "@module (<span class=\"admin-enabled\">povolen</span>)"
+
+#: includes/linkchecker.admin.inc:25
+msgid "@module (<span class=\"admin-disabled\">disabled</span>)"
+msgstr "@module (<span class=\"admin-disabled\">nepovolen</span>)"
+
+#: includes/linkchecker.admin.inc:31
+msgid "Scan comments for links"
+msgstr "Procházet odkazy v komentářích"
+
+#: includes/linkchecker.admin.inc:32
+msgid "Enable this checkbox if links in comments of the above selected node type(s) should be checked."
+msgstr "Pokud je povoleno, budou se kontrolovat odkazy v komentářích u uzlů výše zvolených typů."
+
+#: includes/linkchecker.admin.inc:38
+msgid "Scan blocks for links"
+msgstr "Procházet odkazy v blocích"
+
+#: includes/linkchecker.admin.inc:39
+msgid "Enable this checkbox if links in blocks should be checked."
+msgstr "Pokud je povoleno, budou se kontrolovat odkazy v blocích."
+
+#: includes/linkchecker.admin.inc:44
+msgid "Check full qualified domain names only"
+msgstr "Kontrolovat pouze plně kvalifikovaná doménová jména"
+
+#: includes/linkchecker.admin.inc:45
+msgid "Enable this checkbox if only full qualified URLs (http://example.com/foo/bar) should be checked. If unchecked, all internal (/node/123) and external (http://example.com/foo/bar) URLs will be checked."
+msgstr "Pokud je povoleno, budou se kontrolovat jen odkazy v podobě plně kvalifikovaného URL (http://priklad.cz/menu/soubor). V opačném případě se budou kontrolovat všechna externí (http://priklad.cz/menu/soubor) i interní (/node/123) URL."
+
+#: includes/linkchecker.admin.inc:50
+msgid "Link extraction"
+msgstr "Získávání odkazů"
+
+#: includes/linkchecker.admin.inc:56
+msgid "Extract links in <code>&lt;a&gt;</code> and <code>&lt;area&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;a&gt;</code> a <code>&lt;area&gt;</code>"
+
+#: includes/linkchecker.admin.inc:57
+msgid "Enable this checkbox if normal hyperlinks should be extracted. The anchor element defines a hyperlink, the named target destination for a hyperlink, or both. The area element defines a hot-spot region on an image, and associates it with a hypertext link."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat běžné odkazy. Značka <code>&lt;a&gt;</code> (anchor, kotva) definuje hypertextový odkaz, pojmenovaný cíl ve stránce, nebo obojí. Značka <code>&lt;area&gt;</code> definuje ohraničenou oblast v obrázku a spojuje ji s hypertextovým odkazem."
+
+#: includes/linkchecker.admin.inc:62
+msgid "Extract links in <code>&lt;audio&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;audio&gt;</code>"
+
+#: includes/linkchecker.admin.inc:63
+msgid "Enable this checkbox if links in audio tags should be extracted. The audio element is used to embed sound content."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat odkazy ve značkách audio. Tato značka slouží ke vkládání zvukových souborů."
+
+#: includes/linkchecker.admin.inc:68
+msgid "Extract links in <code>&lt;embed&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;embed&gt;</code>"
+
+#: includes/linkchecker.admin.inc:69
+msgid "Enable this checkbox if links in embed tags should be extracted. This is an obsolete and non-standard element that was used for embedding plugins in past and should no longer used in modern websites."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat odkazy ve značkách embed. Tato značka je zastaralá, neodpovídá současným standardům a používala se ke vkládání pluginů. Na moderních webech by se již neměla používat."
+
+#: includes/linkchecker.admin.inc:74
+msgid "Extract links in <code>&lt;iframe&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;iframe&gt;</code>"
+
+#: includes/linkchecker.admin.inc:75
+msgid "Enable this checkbox if links in iframe tags should be extracted. The iframe element is used to embed another HTML page into a page."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat odkazy ve značkách iframe. Tato značka slouží ke vkládání celých HTML stránek do jiné HTML stránky."
+
+#: includes/linkchecker.admin.inc:80
+msgid "Extract links in <code>&lt;img&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;img&gt;</code>"
+
+#: includes/linkchecker.admin.inc:81
+msgid "Enable this checkbox if links in image tags should be extracted. The img element is used to add images to the content."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat odkazy ve značkách img. Tato značka slouží ke vkládání obrázků do obsahu stránky."
+
+#: includes/linkchecker.admin.inc:86
+msgid "Extract links in <code>&lt;object&gt;</code> and <code>&lt;param&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;object&gt;</code> a <code>&lt;param&gt;</code>"
+
+#: includes/linkchecker.admin.inc:87
+msgid "Enable this checkbox if multimedia and other links in object and their param tags should be extracted. The object tag is used for flash, java, quicktime and other applets."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat odkazy ve značkách object a podřazených značkách param. Tyto značky zpřístupňují ve stránce aplikační doplňky typu quicktime, flash, java apod."
+
+#: includes/linkchecker.admin.inc:92
+msgid "Extract links in <code>&lt;source&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;source&gt;</code>"
+
+#: includes/linkchecker.admin.inc:93
+msgid "Enable this checkbox if links in source tags should be extracted. The source element is used to specify multiple media resources for audio and video elements."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat odkazy ve značkách source. Tato značka slouží ke specifikaci vícečetných zdrojů pro elementy audio nebo video."
+
+#: includes/linkchecker.admin.inc:98
+msgid "Extract links in <code>&lt;video&gt;</code> tags"
+msgstr "Získávat odkazy ze značek <code>&lt;video&gt;</code>"
+
+#: includes/linkchecker.admin.inc:99
+msgid "Enable this checkbox if links in video tags should be extracted. The video element is used in to embed video content."
+msgstr "Pokud je povoleno, budou se ke kontrole získávat odkazy ve značkách video. Tato značka slouží ke vkládání video souborů."
+
+#: includes/linkchecker.admin.inc:110
+msgid "Filters disabled for link extraction"
+msgstr "Při kontrole odkazů vypnout filtry"
+
+#: includes/linkchecker.admin.inc:113
+msgid "If a filter has been enabled for an input format it runs first and afterwards the link extraction. This helps the link checker module to find all links normally created by custom filters (e.g. Markdown filter, Bbcode). All filters used as an inline references (e.g. Weblink filter <code>[link: id]</code>) to other content and filters only wasting processing time (e.g. Line break converter) should be disabled. This setting does not have any effect on how content is shown on a page. This feature optimizes the internal link extraction process for link checker and prevents false alarms about broken links in content not having the real data of a link."
+msgstr "Filtr povolený pro vstupní formát se aplikuje ještě před kontrolou odkazů. To pomáhá při kontrole nalézt všechny odkazy, které mohou vytvořit externí moduly jako Markdown filter nebo Bbcode. Všechny filtry, které produkují reference uvnitř textu (např. <code>[link: id]</code> u filtru Weblink), a filtry, které spíše jen zpomalují nahrávání stránky (např. Zlom konců řádek), by měly být vypnuty. Tato volba neovlivňuje, jak se obsah zobrazuje ve stránce, ale optimalizuje sběr odkazů ke kontrole a brání nacházení falešných neplatných odkazů tam, kde skutečná data odkaz neobsahují.   "
+
+#: includes/linkchecker.admin.inc:118
+msgid "Check settings"
+msgstr "Nastavení kontrol"
+
+#: includes/linkchecker.admin.inc:124
+msgid "User-Agent"
+msgstr "Uživatelský klient"
+
+#: includes/linkchecker.admin.inc:125
+msgid "Defines the user agent that will be used for checking links on remote sites. If someone blocks the standard Drupal user agent you can try with a more common browser."
+msgstr "Definuje aplikaci, která bude kontrolovat externí odkazy. Pokud je blokován standardní klient Drupalu, lze použít jiný z některého běžného prohlížeče. "
+
+#: includes/linkchecker.admin.inc:145
+msgid "Check interval for links"
+msgstr "Interval pro kontroly"
+
+#: includes/linkchecker.admin.inc:146
+msgid "This interval setting defines how often cron will re-check the status of links."
+msgstr "Nastavení tohoto intervalu určuje, jak často bude cron kontrolovat stav odkazů."
+
+#: includes/linkchecker.admin.inc:153
+msgid "Do not check the link status of links containing these URLs"
+msgstr "Nekontrolovat stav odkazů, které obsahují tyto URL"
+
+#: includes/linkchecker.admin.inc:154
+msgid "By default this list contains the domain names reserved for use in documentation and not available for registration. See <a href=\"@rfc-2606\">RFC 2606</a>, Section 3 for more information. URLs on this list are still extracted, but the link setting <em>Check link status</em> becomes automatically disabled to prevent false alarms. If you change this list you need to clear all link data and re-analyze your content. Otherwise this setting will only affect new links added after the configuration change."
+msgstr "Implicitně obsahuje tento seznam doménová jména určená pro použití v dokumentaci, která není možné si registrovat. Podrobnější informace najdete v <a href=\"@rfc-2606\">RFC 2606</a>, v sekci 3 (anglicky). URL z tohoto seznamu se i přesto zaznamenávají, ale jejich příznak <em>Kontrolovat stav odkazu</em> je automaticky zablokován, aby se předešlo falešným poplachům. Pokud tento seznam změníte, bude potřeba vyčistit a znovu zkontrolovat všechen obsah, jinak toto nastavení ovlivní pouze odkazy, které budou přidány po této změně nastavení."
+
+#: includes/linkchecker.admin.inc:160
+msgid "Error handling"
+msgstr "Vyhodnocování chyb"
+
+#: includes/linkchecker.admin.inc:161
+msgid "Defines error handling and custom actions to be executed if specific HTTP requests are failing."
+msgstr "Definuje, jak se bude nakládat s chybami a jaké akce se budou spouštět v případě selhání žádostí HTTP."
+
+#: includes/linkchecker.admin.inc:165
+msgid "Update permanently moved links"
+msgstr "Aktualizovat trvale přesunuté odkazy"
+
+#: includes/linkchecker.admin.inc:166
+msgid "If enabled, outdated links in content providing a status <em>Moved Permanently</em> (status code 301) are automatically updated to the most recent URL. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily change. This feature trust sites to provide a valid permanent redirect. A new node revision is automatically created on link updates if <em>create new revision</em> is enabled in the <a href=\"@node_types\">node type</a> workflow settings. It is recommended to create new revisions for all link checker enabled node types. Link updates are nevertheless always logged in <a href=\"@dblog\">recent log entries</a>."
+msgstr "Pokud je povoleno, zastaralé odkazy, které jsou trvale přesunuté (stavový kód 301 <em>Moved Permanently</em>), se automaticky změní na nejaktuálnější URL. Doporučená hodnota je <em>po třech neúspěšných kontrolách</em>, aby se vyloučily případy dočasných změn. Tato funkce předpokládá, že vzdálený server poskytne platné URL pro přesměrování. Pokud má odpovídající <a href=\"@node_types\">typ uzlu</a> nastaveno vytváření nových revizí,  Změny se zapíší do seznamu <a href=\"@dblog\">Nejnovější záznamy v logu</a>."
+
+#: includes/linkchecker.admin.inc:170;184
+msgid "Disabled"
+msgstr "Vypnuto"
+
+#: includes/linkchecker.admin.inc:171
+msgid "After one failed check"
+msgstr "Po jedné neúspěšné kontrole"
+
+#: includes/linkchecker.admin.inc:172
+msgid "After two failed checks"
+msgstr "Po dvou neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:173
+msgid "After three failed checks"
+msgstr "Po třech neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:174
+msgid "After five failed checks"
+msgstr "Po pěti neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:175
+msgid "After ten failed checks"
+msgstr "Po deseti neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:179
+msgid "Unpublish node on file not found error"
+msgstr "\"Odvydat\" uzel s neplatnými odkazy"
+
+#: includes/linkchecker.admin.inc:180
+msgid "If enabled, a node with one or more broken links (status code 404) will be unpublished and moved to moderation queue for review after the number of specified fails. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily error."
+msgstr "Pokud je povoleno a dojde k nastavenému počtu neúspěšných kontrol, uzel s jedním nebo více neplatnými odkazy (stavový kód 404 <em>File Not Found</em>) bude stažen z webu a přesunut do fronty k revizi. Doporučená hodnota je <em>po třech neúspěšných kontrolách</em> aby se vyloučily případy dočasných změn."
+
+#: includes/linkchecker.admin.inc:185
+msgid "After one file not found error"
+msgstr "Po jedné neúspěšné kontrole"
+
+#: includes/linkchecker.admin.inc:186
+msgid "After two file not found errors"
+msgstr "po dvou neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:187
+msgid "After three file not found errors"
+msgstr "po třech neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:188
+msgid "After five file not found errors"
+msgstr "po pěti neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:189
+msgid "After ten file not found errors"
+msgstr "po deseti neúspěšných kontrolách"
+
+#: includes/linkchecker.admin.inc:195
+msgid "Don't treat these response codes as errors"
+msgstr "Následující stavové kódy nepovažovat za chybu:"
+
+#: includes/linkchecker.admin.inc:196
+msgid "One HTTP status code per line, e.g. 403."
+msgstr "Na každý řádek patří jeden stavový kód, např. 403."
+
+#: includes/linkchecker.admin.inc:201
+msgid "These actions will either clear all link checker tables in the database and/or analyze all selected node types, blocks and cck fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost!"
+msgstr "Tyto akce vyčistí všechny tabulky v databázi obsahující data kontroly odkazů a/nebo zkontrolují všechny zvolené typy uzlů, bloky a pole CCK (viz výše) na nové/aktualizované/smazané odkazy. Obvykle není potřeba tyto funkce používat. Použijte je pouze jako prostředek pro vynucení rychlého resetu odkazů v databázových tabulkách. Mějte na paměti, že všechna uživatelská nastavení konkrétních odkazů budou ztracena!"
+
+#: includes/linkchecker.admin.inc:202
+msgid "<strong>Note</strong>: These functions ONLY collect the links, they do not evaluate the HTTP response codes, this will be done during normal cron runs."
+msgstr "<strong>Poznámka</strong>: Tyto funkce POUZE zaevidují odkazy, nebudou vyhodnocovat stavové kódy HTTP. Toto vyhodnocení se provede až při běžném běhu cronu."
+
+#: includes/linkchecker.admin.inc:206
+msgid "Clear link data"
+msgstr "Mazání dat o odkazech"
+
+#: includes/linkchecker.admin.inc:213
+msgid "Analyze content for links"
+msgstr "Najít odkazy v obsahu webu"
+
+#: includes/linkchecker.admin.inc:218
+msgid "Clear link data and analyze content for links"
+msgstr "Vymazat data o odkazech a najít odkazy v obsahu webu"
+
+#: includes/linkchecker.admin.inc:222
+#: includes/linkchecker.pages.inc:228
+msgid "Save configuration"
+msgstr "Uložit nastavení"
+
+#: includes/linkchecker.admin.inc:223
+#: includes/linkchecker.pages.inc:229
+msgid "Reset to defaults"
+msgstr "Zpět k výchozím"
+
+#: includes/linkchecker.admin.inc:234
+msgid "Invalid response code %code found."
+msgstr "Zaznamenán neplatný návratový kód %code."
+
+#: includes/linkchecker.batch.inc:26;70;114;165;214;262
+msgid "Scanning for links"
+msgstr "Hledám odkazy"
+
+#: includes/linkchecker.batch.inc:42;179
+msgid "Node: @title"
+msgstr "Uzel: @title"
+
+#: includes/linkchecker.batch.inc:50
+msgid "Scanning for links in nodes have failed with an error."
+msgstr "Hledám odkazy v uzlech, kde se dříve vyskytla chyba."
+
+#: includes/linkchecker.batch.inc:86;227
+msgid "Comment: @title"
+msgstr "Komentář: @title"
+
+#: includes/linkchecker.batch.inc:94
+msgid "Scanning for links in comments have failed with an error."
+msgstr "Hledám odkazy v komentářích, kde se dříve vyskytla chyba."
+
+#: includes/linkchecker.batch.inc:130;276
+msgid "Block: @title"
+msgstr "Blok: @title"
+
+#: includes/linkchecker.batch.inc:138
+msgid "Scanning for links in blocks have failed with an error."
+msgstr "Hledám odkazy v blocích, kde se dříve vyskytla chyba."
+
+#: includes/linkchecker.batch.inc:166;215;263
+msgid "Remaining @remaining of @total scans."
+msgstr "Zbývá @remaining z @total záznamů."
+
+#: includes/linkchecker.batch.inc:187
+msgid "Recurring scanning for links in node @nid have failed with an error."
+msgstr "Opakované hledání odkazů v uzlu @nid skončilo chybou."
+
+#: includes/linkchecker.batch.inc:235
+msgid "Recurring scanning for links in comment @cid have failed with an error."
+msgstr "Opakované hledání odkazů v komentáři @cid skončilo chybou."
+
+#: includes/linkchecker.batch.inc:284
+msgid "Recurring scanning for links in block @bid have failed with an error."
+msgstr "Opakované hledání odkazů v bloku @bid skončilo chybou."
+
+#: includes/linkchecker.batch.inc:47
+msgid "One node has been scanned."
+msgid_plural "@count nodes have been scanned."
+msgstr[0] "Byl prohledán jeden uzel."
+msgstr[1] "Bylo prohledáno @count uzlů."
+msgstr[2] "Bylo prohledáno @count uzlů."
+
+#: includes/linkchecker.batch.inc:91
+msgid "One comment has been scanned."
+msgid_plural "@count comments have been scanned."
+msgstr[0] "Byl prohledán jeden komentář."
+msgstr[1] "Bylo prohledáno @count komentářů."
+msgstr[2] "Bylo prohledáno @count komentářů."
+
+#: includes/linkchecker.batch.inc:135
+msgid "One block has been scanned."
+msgid_plural "@count blocks have been scanned."
+msgstr[0] "Byl prohledán jeden blok."
+msgstr[1] "Bylo prohledáno @count bloků."
+msgstr[2] "Bylo prohledáno @count bloků."
+
+#: includes/linkchecker.batch.inc:184
+msgid "Node @nid has been re-scanned once to collect all links."
+msgid_plural "Node @nid has been re-scanned @count times to collect all links."
+msgstr[0] "V uzlu @nid byly 1 krát znovu zkontrolovány odkazy."
+msgstr[1] "V uzlu @nid byly @count krát znovu zkontrolovány odkazy."
+msgstr[2] "V uzlu @nid byly @count krát znovu zkontrolovány odkazy."
+
+#: includes/linkchecker.batch.inc:232
+msgid "Comment @cid has been re-scanned once to collect all links."
+msgid_plural "Comment @cid has been re-scanned @count times to collect all links."
+msgstr[0] "V komentáři @cid byly 1 krát znovu zkontrolovány odkazy."
+msgstr[1] "V komentáři @cid byly @count krát znovu zkontrolovány odkazy."
+msgstr[2] "V komentáři @cid byly @count krát znovu zkontrolovány odkazy."
+
+#: includes/linkchecker.batch.inc:281
+msgid "Block @bid has been re-scanned once to collect all links."
+msgid_plural "Block @bid has been re-scanned @count times to collect all links."
+msgstr[0] "V bloku @bid byly 1 krát znovu zkontrolovány odkazy."
+msgstr[1] "V bloku @bid byly @count krát znovu zkontrolovány odkazy."
+msgstr[2] "V bloku @bid byly @count krát znovu zkontrolovány odkazy."
+
+#: includes/linkchecker.pages.inc:103
+msgid "URL"
+msgstr "URL"
+
+#: includes/linkchecker.pages.inc:104
+msgid "Response"
+msgstr "Kód"
+
+#: includes/linkchecker.pages.inc:105
+msgid "Error"
+msgstr "Chyba"
+
+#: includes/linkchecker.pages.inc:106
+msgid "Operations"
+msgstr "Akce"
+
+#: includes/linkchecker.pages.inc:137
+msgid "Edit node @node"
+msgstr "Upravit uzel @node"
+
+#: includes/linkchecker.pages.inc:151
+msgid "Edit comment @comment"
+msgstr "Upravit komentář @comment"
+
+#: includes/linkchecker.pages.inc:158
+msgid "Edit block @block"
+msgstr "Upravit blok @block"
+
+#: includes/linkchecker.pages.inc:164
+msgid "Create redirection"
+msgstr "Nastavit přesměrování"
+
+#: includes/linkchecker.pages.inc:177
+msgid "No broken links have been found."
+msgstr "Nebyly nalezeny žádné neplatné odkazy."
+
+#: includes/linkchecker.pages.inc:189
+msgid "Settings"
+msgstr "Nastavení"
+
+#: includes/linkchecker.pages.inc:191
+msgid "The link <a href=\"@url\">@url</a> has been checked lastly at @last_checked and failed @fail_count times."
+msgstr "Odkaz <a href=\"@url\">@url</a> byl naposledy zkontrolován v @last_checked a selhal @fail_count krát."
+
+#: includes/linkchecker.pages.inc:199
+msgid "Select request method"
+msgstr "Metoda kontroly"
+
+#: includes/linkchecker.pages.inc:202
+msgid "HEAD"
+msgstr "HEAD"
+
+#: includes/linkchecker.pages.inc:203
+msgid "GET"
+msgstr "GET"
+
+#: includes/linkchecker.pages.inc:205
+msgid "Select the request method used for link checks of this link. If you encounter issues like status code 500 errors with the HEAD request method you should try the GET request method before ignoring a link."
+msgstr "Zvolte metodu, která se použije ke kontrole tohoto odkazu. Pokud narazíte například na problém s chybovým kódem 500 při použití HEAD, měly byste vyzkoušet GET dříve, než si odkazu přestanete všímat."
+
+#: includes/linkchecker.pages.inc:211
+msgid "Check link status"
+msgstr "Kontrolovat stav odkazu"
+
+#: includes/linkchecker.pages.inc:212
+msgid "Disable this checkbox if you don't like to get informed any longer about this broken link. Use this setting only as the very last option if there is no other way to solve a failed link check."
+msgstr "Zrušte tuto volbu, pokud již nechcete být informováni o tomto neplatném odkazu. Toto nastavení používejte jen v krajních případech, kdy není jiná možnost, jak vyřešit kontrolu neplatného odkazu."
+
+#: includes/linkchecker.pages.inc:217
+msgid "Maintenance"
+msgstr "Údržba"
+
+#: includes/linkchecker.pages.inc:224
+msgid "Re-check link status on next cron run"
+msgstr "Zkontrolovat stav odkazu při dalším běhu cronu."
+
+#: includes/linkchecker.pages.inc:225
+msgid "Enable this checkbox if you need an immediate re-check of the link and cannot wait until the next scheduled check at @date."
+msgstr "Povolte, pokud potřebujete znovu zkontrolovat odkaz co nejdříve a nemůžete čekat na příští naplánovanou kontrolu @date."
+
+#: includes/linkchecker.pages.inc:238
+msgid "The link %url will be checked again on the next cron run."
+msgstr "Odkaz %url bude znovu zkontrolován při příštím běhu cronu."
+
+#: includes/linkchecker.pages.inc:244
+msgid "The link settings for %url have been saved and the fail counter has been reset."
+msgstr "Nastavení odkazu %url bylo uloženo a počítadlo neúspěšných kontrol bylo vynulováno."
+
+#: includes/linkchecker.pages.inc:249
+msgid "The link settings for %url have been saved."
+msgstr "Nastavení odkazu %url bylo uloženo."
+
+#: includes/linkchecker.pages.inc:96
+msgid "There is 1 unchecked link of about @links_all links in the database. Please be patient until all links have been checked via cron."
+msgid_plural "There are @count unchecked links of about @links_all links in the database. Please be patient until all links have been checked via cron."
+msgstr[0] "Zbývá zkontrolovat 1 odkaz z @links_all, které jsou v databázi. Počkejte prosím, dokud cron nezkontroluje všechny odkazy."
+msgstr[1] "Zbývá zkontrolovat @count odkazů z @links_all, které jsou v databázi. Počkejte prosím, dokud cron nezkontroluje všechny odkazy."
+msgstr[2] "Zbývá zkontrolovat @count odkazů z @links_all, které jsou v databázi. Počkejte prosím, dokud cron nezkontroluje všechny odkazy."
+
+#~ msgid "Link checker configuration."
+#~ msgstr "Nastavení kontroly odkazů"
+#~ msgid "Pathfilter module support"
+#~ msgstr "Podpora pro modul Pathfilter"
+#~ msgid ""
+#~ "Enable this checkbox for <a href=\"@pathfilter\">pathfilter</a> module "
+#~ "support."
+#~ msgstr ""
+#~ "Pokud je povoleno, bude aktivní podpora pro modul <a href=\"@pathfilter"
+#~ "\">Pathfilter</a>."
+#~ msgid ""
+#~ "For simultaneous link checks it is highly recommended to install the <a "
+#~ "href=\"@curl\">cURL</a> library. This may be <strong>necessary</strong> "
+#~ "on larger sites with very many links, but may still improve (speed up), "
+#~ "link checking performance on smaller sites."
+#~ msgstr ""
+#~ "Pro kontrolu mnoha odkazů najednou je doporučeno nainstalovat knihovnu <a "
+#~ "href=\"@curl\">cURL</a>. Na velkých webech s tisíci odkazy může být její "
+#~ "používání <strong>nezbytné</strong>, ale i na menších webech může pomoci "
+#~ "snížit zátěž serveru při kontrole odkazů."
+#~ msgid "Cleanup interval for unused links"
+#~ msgstr "Interval pro čištění nepoužívaných odkazů"
+#~ msgid ""
+#~ "This interval setting defines how often cron will clean up unused links."
+#~ msgstr ""
+#~ "Nastavení tohoto intervalu určuje, jak často bude cron mazat ze seznamu "
+#~ "nepoužívané odkazy."
+#~ msgid ""
+#~ "Before using either of these options to clear link data, use the <em>Save "
+#~ "configuration</em> button below to save any changes you may have made "
+#~ "above."
+#~ msgstr ""
+#~ "Před použitím některé z těchto funkcí nezapomeňte uložit změny v "
+#~ "nastavení ve formuláři výše tlačítkem <em>Uložit nastavení</em>"
+#~ msgid "Scanning comments for links"
+#~ msgstr "Hledám odkazy v komentářích."
+#~ msgid "Scanning blocks for links"
+#~ msgstr "Hledám odkazy v blocích"
+#~ msgid "Wiped out obsolete links."
+#~ msgstr "Zastaralé odkazy byly odstraněny."
+#~ msgid "access linkchecker"
+#~ msgstr "přístup ke kontrole odkazů"
+#~ msgid "Job queue"
+#~ msgstr "Pracovní fronta"
+#~ msgid "Not found"
+#~ msgstr "Nenalezeno"
+#~ msgid ""
+#~ "Install job_queue module if you have a node, comment or block with more "
+#~ "than 100 links. Without the job_queue module only the first 100 links "
+#~ "will be checked!"
+#~ msgstr ""
+#~ "Pokud máte na svém webu uzel, komentář nebo blok s více než 100 odkazy, "
+#~ "nainstalujte modul Pracovní fronta (job_queue). Bez tohoto modulu se bude "
+#~ "kontrolovat pouze prvních 100 odkazů!"
+

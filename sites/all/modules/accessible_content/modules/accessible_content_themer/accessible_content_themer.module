@@ -1,0 +1,141 @@
+<?php // $Id: accessible_content_themer.module,v 1.1.2.1 2009/12/22 21:31:19 kevee Exp $
+
+/**
+*  @file
+*  Provides a widget for theme designers to check the accessiblity of any page.
+*/
+/**
+*  Implementation of hook_menu()
+*/
+function accessible_content_themer_menu() {
+  $items = array();
+
+  $items['accessible_content_themer/toggle'] = array(
+    'title' => 'Toggle themer',
+    'page callback' => 'accessible_content_themer_toggle',
+    'access arguments' => array('use accessibility themer'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/settings/accessibility_themer'] = array(
+    'title' => 'Accessibility Themer',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('accessible_content_themer_admin_form'),
+    'access arguments' => array('administer site settings'),
+  );
+
+  return $items;
+}
+
+/**
+*  Administration form. This lets the admin set the guideline that can be used
+*  for the themer module
+*/
+function accessible_content_themer_admin_form() {
+  $form = array();
+    $guidelines = array();
+    $results = db_query('SELECT nid, title FROM {node} WHERE type = "accessibility_guideline"');
+    while ($row = db_fetch_object($results)) {
+      $guidelines[$row->nid] = $row->title;
+    }
+
+    $form['ac_themer_sitewide_guideline'] = array(
+      '#title' => t('Site-wide Guideline'),
+      '#type' => 'select',
+      '#options' => $guidelines,
+        '#default_value' => variable_get('ac_themer_sitewide_guideline', 0),
+    );
+
+  return system_settings_form($form);
+}
+
+/**
+*  Page callback for accessible_content_themer/toggle. This sets the session
+*  variable to enable or disable accessibility checking.
+*/
+function accessible_content_themer_toggle() {
+  $_SESSION['accessible_content_theme_enable'] = !$_SESSION['accessible_content_theme_enable'];
+  drupal_goto($_REQUEST['destination']);
+}
+/**
+*  Implementation of hook_perm()
+*/
+function accessible_content_themer_perm() {
+  return array('use accessibility themer');
+}
+
+/**
+*  Implementation of hook_init()
+*/
+function accessible_content_init() {
+  if (user_access('use accessibility themer')) {
+    drupal_add_css(drupal_get_path('module', 'accessible_content_themer') .'/accessible_content_themer.css');
+    if ($_SESSION['accessible_content_theme_enable'] && $_REQUEST['q'] != 'accessible_content_themer/toggle') {
+      if (variable_get('ac_themer_sitewide_guideline', 0)) {
+        if (module_exists('beautytips')) {
+          $options['ac_themer_view'] = array(
+            'area' => '.highlight-link',
+            'ajaxPath' => array(0 => "$(this).attr('href')", 1 => '.node .content'),
+            'trigger' => array(0 => 'mouseover', 1 => 'click'),
+            'width' => 350,
+          );
+          beautytips_add_beautytips($options);
+        }
+        ob_start();
+      }
+      else {
+        drupal_set_message('Site-wide guideline not set. Please '.
+          l('set the site-wide guideline first', 'admin/settings/accessibility_themer') .'.', 'error');
+      }
+    }
+    $link = ($_SESSION['accessible_content_theme_enable'])
+        ? l('Disable Accessibility Checks', 'accessible_content_themer/toggle',
+          array('query' => array('destination' => $_REQUEST['q'])))
+        : l('Enable Accessibility Checks', 'accessible_content_themer/toggle',
+          array('query' => array('destination' => $_REQUEST['q'])));
+    drupal_add_js('$(document).ready(function() { $(\'body\').prepend(\'<div id="ac-themer-toggle">'. $link .'</div>\'); });', 'inline');
+  }
+}
+
+/**
+*  Implementation of hook_exit()
+*  @todo This is a silly way to get page output...
+*/
+function accessible_content_exit() {
+  if ($_SESSION['accessible_content_theme_enable'] && user_access('use accessibility themer')) {
+    if (ob_get_length()) {
+      $output = ob_get_clean();
+      //do stuff with output
+        global $base_url;
+        global $base_root;
+        accessible_content_include_library();
+        $quail = new quail($output, 'accessible_content', 'string', 'AccessibleContentHighlight');
+        $guideline = node_load(variable_get('ac_themer_sitewide_guideline', 0));
+        if ($guideline) {
+
+          $quail->setUri($base_root);
+          $quail->runCheck(array('ac_module_guideline' => $guideline));
+          print $quail->getReport(array('image_url' => array(
+          QUAIL_TEST_SEVERE => $base_url .'/'. 
+            variable_get('ac_ui_icon_severe', 
+              drupal_get_path('module', 'accessible_content') .'/images/test-demo-severe.png'),
+          QUAIL_TEST_MODERATE => $base_url .'/'. 
+            variable_get('ac_ui_icon_moderate', 
+              drupal_get_path('module', 'accessible_content') .'/images/test-demo-moderate.png'),
+          QUAIL_TEST_SUGGESTION => $base_url .'/'. 
+            variable_get('ac_ui_icon_suggestion', 
+              drupal_get_path('module', 'accessible_content') .'/images/test-demo-suggestion.png'),
+              ),
+              'highlight_classes' => array(
+                QUAIL_TEST_SEVERE => variable_get('ac_ui_class_severe', 'accessibility-error-severe'),
+                QUAIL_TEST_MODERATE => variable_get('ac_ui_class_moderate', 'accessibility-error-moderate'),
+                QUAIL_TEST_SUGGESTION => variable_get('ac_ui_class_severe', 'accessibility-error-suggestion'),
+              ),
+              ));
+      }
+      else {
+        print $output;
+      }
+    }
+  }
+}

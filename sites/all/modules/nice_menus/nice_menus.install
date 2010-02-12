@@ -1,0 +1,12 @@
+<?php
+// $Id: nice_menus.install,v 1.1.2.2 2008/09/17 18:18:11 add1sun Exp $
+
+/**
+ * Implementation of hook_update_N().
+ */
+function nice_menus_update_6000() {
+  // Existing blocks need to be set to no caching.
+  $ret = array();
+  $ret[] = update_sql("UPDATE {blocks} SET cache = -1 WHERE module = 'nice_menus'");
+  return $ret;
+}

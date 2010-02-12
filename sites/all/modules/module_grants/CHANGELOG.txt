@@ -1,0 +1,81 @@
+$Id: CHANGELOG.txt,v 1.24 2010/01/13 00:35:36 rdeboer Exp $
+
+Changelog for Module Grants module for drupal 6.
+
+6.x-1.0
+=======
+Initial drupal 6 release.
+
+6.x-1.1
+=======
+o Improved translatability.
+o Removed spurious debug message
+
+6.x-1.2
+=======
+o Added German translations and .pot file [thanks: rastatt].
+
+6.x-2.0
+=======
+o Prevent roles that don't have "view revisions" permission from sneakily
+  viewing unpublished content by finding out the URL to the node [patch by 
+  Orgredude].
+o Also made code more robust for case where a module doesn't return grants
+  (although it implements hook_node_grants() [thanks: 2440media2].
+  
+6.x-2.1
+=======
+o Remove debug info.
+
+6.x-2.2
+=======
+o Made theming more flexible.
+
+6.x-2.3
+=======
+o Use module_grants.css
+
+6.x-2.4
+=======
+o #453436 Lenient option when AND-ing node access grants across modules [thanks: mcarbone]
+
+6.x-2.5
+=======
+o Added 'Creator' column to 'My content' summary
+o More tabs to filter content accessible to the logged-in user:
+Top row: "I created" | "I last modified" | "I can edit" | "I can view"
+Second row: "Published" | "Unpublished | "All"
+o The presence/absence of each of the content filtering tabs on the 
+  Accessible content page is configurable per role. See User management>>Permissions.
+o [#497920]: Wrong datatype for second argument module_grants.module on line 366
+o [#470964]: AND/OR toggle when combining access grants across modules
+o Feature: More tabs to filter content accessible to the logged-in user:
+Top row: "I created" | "I last modified" | "I can edit" | "I can view"
+Second row: "Published" | "Unpublished | "All"
+o [#433412]: Sortable columns
+
+6.x-2.6
+=======
+o Bug fix: [#526158]
+
+6.x-3.3
+=======
+o Refactored module into two: Module Grants and Module Grants Monitor
+o Updated README.txt accordingly, also [#550988]
+o Support Revisioning's "view revisions of any/own content type" permissions [#549414]
+o Fix [#575610]
+o Added missing t(): [#540904]
+o Fix in display of vocabulary terms of Accessible content page
+o Added "show_taxonomy_terms" toggle as a Site Configuration setting [#654606]
+o Introduced dependency on Smart tabs to properly fix [#567968].
+o [#601064]: Consistent behaviour for node listings [thanks: mcarbone]
+o French translation (new)
+o German translation (updated)
+o Fix for deletion of unpublished nodes when using Workflow [#611904]
+o Fix [#601064], comment #9.
+
+6.x-3.4
+=======
+Fix [#675596]
+Fix [#678348]
+Refactored for better efficiency and integratability, see [#642962]

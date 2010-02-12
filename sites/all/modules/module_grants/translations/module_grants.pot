@@ -1,0 +1,92 @@
+# $Id: module_grants.pot,v 1.1 2009/03/29 22:08:44 rdeboer Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  module_grants.module,v 1.1.2.1 2009/03/25 23:09:22 rdeboer
+#  module_grants.info,v 1.1.2.1 2009/03/25 23:09:22 rdeboer
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-03-27 18:47+0100\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: module_grants.module:283
+msgid "Title"
+msgstr ""
+
+#: module_grants.module:283
+msgid "Type"
+msgstr ""
+
+#: module_grants.module:283
+msgid "Last updated"
+msgstr ""
+
+#: module_grants.module:283
+msgid "By"
+msgstr ""
+
+#: module_grants.module:283
+msgid "Published?"
+msgstr ""
+
+#: module_grants.module:287
+msgid "Term"
+msgstr ""
+
+#: module_grants.module:290
+msgid "Workflow state"
+msgstr ""
+
+#: module_grants.module:300
+msgid "Yes"
+msgstr ""
+
+#: module_grants.module:300
+msgid "No"
+msgstr ""
+
+#: module_grants.module:306
+msgid "No state"
+msgstr ""
+
+#: module_grants.module:312
+msgid "No content found."
+msgstr ""
+
+#: module_grants.module:19
+msgid "access content summary"
+msgstr ""
+
+#: module_grants.module:33
+msgid "My content"
+msgstr ""
+
+#: module_grants.module:39
+msgid "Editable"
+msgstr ""
+
+#: module_grants.module:45
+msgid "Viewable"
+msgstr ""
+
+#: module_grants.module:0
+msgid "module_grants"
+msgstr ""
+
+#: module_grants.info:0
+msgid "Module Grants"
+msgstr ""
+
+#: module_grants.info:0
+msgid "Enables access control for unpublished content and allows modules that operate on access grants to work together in the expected way."
+msgstr ""

@@ -1,0 +1,15 @@
+/* $Id: accessible_content_wysiwyg.css,v 1.1 2009/12/02 16:34:45 kevee Exp $ */
+a.ac_wysiwyg_link {
+	font-weight: bold;
+	padding-left: 20px;
+	background-position: left top;
+	background-image: url(images/check.png);
+	background-repeat: no-repeat;
+}
+a.ac_wysiwyg_link_highlight {
+	font-weight: bold;
+	padding-left: 20px;
+	background-position: left top;
+	background-image: url(images/highlight.png);
+	background-repeat: no-repeat;
+}

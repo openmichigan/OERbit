@@ -1,0 +1,229 @@
+# $Id: fr.po,v 1.2 2009/12/16 03:40:11 rdeboer Exp $
+#
+# French translation of module_grants module for Drupal (general)
+# Copyright 2009 Charles-Hubert MOINDRON <chmoindron@gmail.com>
+# Generated from files:
+#  module_grants_theme.inc,v 1.8 2009/07/03 06:37:27 rdeboer
+#  module_grants.module,v 1.30 2009/07/22 03:54:27 rdeboer
+#  module_grants.info,v 1.5 2009/06/01 01:14:28 rdeboer
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Drupal module_grants v6.x-2.6\n"
+"POT-Creation-Date: 2009-10-06 15:03+0200\n"
+"PO-Revision-Date: 2009-10-06 15:12+0200\n"
+"Last-Translator: Charles-Hubert MOINDRON <chmoindron@gmail.com>\n"
+"Language-Team: French <chmoindron@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: module_grants_theme.inc:44
+msgid "Title"
+msgstr "Titre"
+
+#: module_grants_theme.inc:45
+msgid "Type"
+msgstr "Type"
+
+#: module_grants_theme.inc:46
+msgid "Creator"
+msgstr "Créateur"
+
+#: module_grants_theme.inc:47
+msgid "Last updated"
+msgstr "Dernière mise à jour"
+
+#: module_grants_theme.inc:48
+msgid "By"
+msgstr "Par"
+
+#: module_grants_theme.inc:49
+msgid "Published?"
+msgstr "Publié"
+
+#: module_grants_theme.inc:54
+msgid "Term"
+msgstr "Terme"
+
+#: module_grants_theme.inc:57
+msgid "Workflow state"
+msgstr "État du workflow"
+
+#: module_grants_theme.inc:68
+msgid "Yes"
+msgstr "Oui"
+
+#: module_grants_theme.inc:68
+msgid "No"
+msgstr "Non"
+
+#: module_grants_theme.inc:74
+msgid "No state"
+msgstr "Pas d'état"
+
+#: module_grants_theme.inc:81
+msgid "No content found."
+msgstr "Aucun contenu trouvé."
+
+#: module_grants.module:25
+msgid "Showing all content <em>you created</em> and still have at least view access to, filtered by publication status."
+msgstr "Affichage de tout le contenu que <em>vous avez créé</em> et que vous pouvez encore voir, filtré par statut de publication."
+
+#: module_grants.module:28
+msgid "Showing all content <em>you created</em> and still have at least view access to."
+msgstr "Affichage de tout le contenu que <em>vous avez créé</em> et que vous pouvez encore voir."
+
+#: module_grants.module:34
+msgid "Showing all content <em>you last modified</em> and still have at least view access to, filtered by publication status."
+msgstr "Affichage de tout le contenu que <em>vous êtes le (la) dernier(ère) à avoir modifié</em> et que vous pouvez encore voir, filtré par statut de publication."
+
+#: module_grants.module:37
+msgid "Showing all content <em>you last modified</em> and still have at least view access to."
+msgstr "Affichage de tout le contenu que <em>vous êtes le (la) dernier(ère) à avoir modifié</em> et que vous pouvez encore voir."
+
+#: module_grants.module:43
+msgid "Showing all content you can <em>edit</em>, filtered by publication status."
+msgstr "Affichage de tout le contenu que vous pouvez <em>éditer</em>, filtré par statut de publication."
+
+#: module_grants.module:46
+msgid "Showing all content you can <em>edit</em>."
+msgstr "Affichage de tout le contenu que vous pouvez <em>éditer</em>."
+
+#: module_grants.module:51
+msgid "Showing all content you have at least <em>view</em> access to, filtered by publication status."
+msgstr "Affichage de tout le contenu que vous pouvez <em>voir</em>, filtré par statut de publication."
+
+#: module_grants.module:54
+msgid "Showing all content you have at least <em>view</em> access to."
+msgstr "Affichage de tout le contenu que vous pouvez <em>voir</em>."
+
+#: module_grants.module:312
+msgid "Configure behaviour when multiple content access modules are enabled"
+msgstr "Configurer le comportement lorsque plusieurs modules d'accès au contenu sont activés"
+
+#: module_grants.module:316
+msgid "Interpret absence of access grants as a \"don't care\", rather than a \"deny access\"."
+msgstr "Interpréter l'absence de droits d'accès comme \"ignorer\" plutôt que comme \"interdire l'accès\"."
+
+#: module_grants.module:318
+msgid "Only applies when two or more content access modules are enabled and one of the modules makes no statement about a node that is about to be accessed. If this box is checked, then a content access module saying nothing (via the node_access table) about the node in question will be deemed to be ok with the user having access to it. If not checked (i.e. \"strict\"), then a module saying nothing will be taken as a \"deny access\"."
+msgstr "S'applique seulement lorsque deux (ou plus) modules d'accès au contnu sont activés et que l'un des modules ne donne aucune information sur un noeud auquel on va accéder. Si cette case est cochée, si un module d'accès au contenu ne donne aucune information (par la table node_access) à propos du noeud en question, on considère qu'il autorise l'utilisateur à y accéder. Si elle n'est pas cochée (\"stricte\"), si un module ne donne aucune information, cela sera interprété comme \"interdire l'accès\"."
+
+#: module_grants.module:322
+msgid "OR rather than AND the access grants from multiple modules, i.e. behave like core does (for published content)."
+msgstr "Pour le contenu publié, se comporter comme le noyau, c'est à dire que les droits d'accès venant de plusieurs modules sont gérés avec un OU au lieu d'un ET."
+
+#: module_grants.module:324
+msgid "Note that normally core behaviour is <strong>not</strong> what you want -- it is the reason Module Grants was written in the first place."
+msgstr "Veuillez noter que le comportement par défaut du noyau n'est <em>pas</em> ce que vous voulez -- c'est la raison pour laquelle Module Grants a été écrite à la base."
+
+#: module_grants.module:719
+msgid "You have permission to publish content of types: %moderated_types."
+msgstr "Vous avez le droit de publier du contenu de types : %moderated_types."
+
+#: module_grants.module:724
+msgid "You have permission to <em>unpublish</em> content of types: %moderated_types."
+msgstr "Vous avez le droit de <em>dépublier</em> du contenu de types : %moderated_types."
+
+#: module_grants.module:727
+msgid "You have permission to <em>(re)publish</em> content of types: %moderated_types."
+msgstr "Vous avez le droit de <em>(re)publier</em> du contenu de types : %moderated_types."
+
+#: module_grants.module:772
+msgid "View current"
+msgstr "Voir l'actuel"
+
+#: module_grants.module:772
+msgid "View"
+msgstr "Voir"
+
+#: module_grants.module:776
+msgid "Edit current"
+msgstr "Éditer l'actuel"
+
+#: module_grants.module:776
+msgid "Edit"
+msgstr "Éditer"
+
+#: module_grants.module:64
+msgid "access I Created tab"
+msgstr "accéder à l'onglet 'J'ai créé'"
+
+#: module_grants.module:64
+msgid "access I Last Modified tab"
+msgstr "accéder à l'onglet 'Je suis le (la) dernier(ère) à avoir modifié"
+
+#: module_grants.module:64
+msgid "access I Can Edit tab"
+msgstr "accéder à l'onglet 'Je peux éditer'"
+
+#: module_grants.module:64
+msgid "access I Can View tab"
+msgstr "accéder à l'onglet 'Je peux voir'"
+
+#: module_grants.module:65
+msgid "access Published tab"
+msgstr "accéder à l'onglet 'Publié'"
+
+#: module_grants.module:65
+msgid "access Unpublished tab"
+msgstr "accéder à l'onglet 'Non publié'"
+
+#: module_grants.module:65
+msgid "access All tab"
+msgstr "accéder à l'onglet 'Tout'"
+
+#: module_grants.module:448
+msgid "accessible-content"
+msgstr "accessible-content"
+
+#: module_grants.module:81
+msgid "Accessible content"
+msgstr "Contenu accessible"
+
+#: module_grants.module:91
+msgid "I created"
+msgstr "J'ai créé"
+
+#: module_grants.module:100;138;175;212
+msgid "Published"
+msgstr "Publié"
+
+#: module_grants.module:109;146;183;220
+msgid "Unpublished"
+msgstr "Non publié"
+
+#: module_grants.module:118;155;192;229
+msgid "All"
+msgstr "Tout"
+
+#: module_grants.module:129
+msgid "I last modified"
+msgstr "Je suis le (la) dernier(ère) à avoir modifié"
+
+#: module_grants.module:166
+msgid "I can edit"
+msgstr "Je peux éditer"
+
+#: module_grants.module:203
+msgid "I can view"
+msgstr "Je peux voir"
+
+#: module_grants.module:239
+msgid "Module grants"
+msgstr "Module grants"
+
+#: module_grants.module:240
+msgid "Configure how node access modules interact."
+msgstr "Configurer comment modules d'accès aux noeuds interagissent."
+
+#: module_grants.info:0
+msgid "Module Grants"
+msgstr "Module Grants"
+
+#: module_grants.info:0
+msgid "Enables access control for unpublished content and allows modules that operate on access grants to work together in the expected way."
+msgstr "Autorise le contrôle d'accès pour le contenu non publié et permet aux modules qui opèrent sur les droits d'accès d'agir de la manière attendue."

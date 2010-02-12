@@ -1,0 +1,394 @@
+<?php
+// $Id: flowplayer3.module,v 1.19.2.7 2009/04/22 21:59:44 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - FlowPlayer 3
+ *
+ * Enables the use of FlowPlayer 3 for media files.
+ * http://flowplayer.org
+ */
+
+/**
+ * Define constants that can be used to reference aspects relating to FlowPlayer3
+ */
+define('FLOWPLAYER3_MEDIAPLAYER', 'flowplayer3_mediaplayer');
+define('FLOWPLAYER3_MEDIAPLAYER_FILE', 'flowplayer-3.0.7.swf');
+define('FLOWPLAYER3_MEDIAPLAYER_STREAM_PLUGIN', 'flowplayer.rtmp-3.0.2.swf');
+define('FLOWPLAYER3_DOWNLOAD', 'http://flowplayer.org/');
+
+/**
+ * Implementation of hook_swftools_methods().
+ */
+function flowplayer3_swftools_methods() {
+
+  // Initialise an array to hold the results
+  $methods = array();
+
+  /**
+   * Define the FlowPlayer3 media player
+   *   name         internal name used to refer to this player
+   *   module       name of the module that provides this player
+   *   file         name of flash variable to assign the name of the file to be played
+   *   version      minimum version of flash needed to use this player
+   *   shared_file  path to the shared file (relative to swftools/shared/
+   *   title        human readable name of this player
+   *   download     download path to the player (used to help users obtain the player)
+   */
+  $media_player = array(
+    'name'        => FLOWPLAYER3_MEDIAPLAYER,
+    'module'      => 'flowplayer3',
+    'file'        => '', // Return nothing - do not make a file assignment
+    'version'     => '9',
+    'shared_file' => 'flowplayer3/' . variable_get('flowplayer3_mediaplayer_file', FLOWPLAYER3_MEDIAPLAYER_FILE),
+    'title'       => t('FlowPlayer 3'),
+    'download'    => FLOWPLAYER3_DOWNLOAD,
+    'width'       => '500',
+    'height'      => '375',
+  );
+
+  
+  /**
+   * Define actions that the player can support by returning an array with keys
+   * [action][name_of_player][player_details]
+   */
+  $methods[SWFTOOLS_FLV_DISPLAY][FLOWPLAYER3_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_FLV_DISPLAY_LIST][FLOWPLAYER3_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MP3_DISPLAY][FLOWPLAYER3_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MP3_DISPLAY_LIST][FLOWPLAYER3_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MEDIA_DISPLAY][FLOWPLAYER3_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MEDIA_DISPLAY_LIST][FLOWPLAYER3_MEDIAPLAYER] = $media_player;
+
+  // Return the method results
+  return $methods;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function flowplayer3_menu() {
+
+  $items = array();
+
+  $items['admin/settings/swftools/flowplayer3'] = array(
+    'title' => 'FlowPlayer 3',
+    'description' => 'Settings for ' . l('FlowPlayer 3', FLOWPLAYER3_DOWNLOAD) . '.',
+    'access arguments' => array('administer flash'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('flowplayer3_admin_settings'),
+    'file' => 'flowplayer3.admin.inc',
+    'file path' => drupal_get_path('module', 'flowplayer3'),
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implementation of swftools_flashvars hook().
+ * Note that $methods and $vars are passed by reference, so the player module
+ * can manipulate them directly if necessary.
+ 
+ * @param $action
+ *   String defining the action that is to be performed, eg SWFTOOLS_FLV_DISPLAY
+ * @param &$methods
+ *   Object containing two keys - player and method. Each consists of an array
+ *   that defines the details of the resolved player and embedding method that
+ *   is being used for this file.
+ * @param &$vars
+ *   Object containing three keys - othervars, flashvars and params. These are
+ *   arrays containing key/value pairs that contain all the data assigned to this
+ *   file so far. Refer to swf() for more details about the $vars array.
+ * @return
+ *   Return an array of flashvars needed to allow the player to work.
+ */
+function flowplayer3_swftools_flashvars($action, &$methods, &$vars) {
+  
+  // Initialise array of FlowPlayer3 configuration settings
+  $flowplayer = array();
+
+  // Initialise array to hold data
+  $playlist = array();
+
+  // Initialise flag to show it this content is being streamed
+  $stream = FALSE;
+  
+  // Is this file to be streamed? Check for the stream variable being set
+  if (isset($vars->othervars['stream'])) {
+    
+    // Set stream flag to true
+    $stream = TRUE;
+    
+  }
+  
+  // If an image was supplied to be the splash then put this first in the list
+  // This code doesn't seem to be working - the player objects to { url: '' }
+  if (isset($vars->othervars['image'])) {
+    $playlist[] = array(
+      // Get url, checking for file existence, and using a relative url if possible.
+      'url' => swftools_get_media_url(swftools_get_media_path() . $vars->othervars['image']),
+      'autoPlay' => 'true',
+    );
+  }
+
+  // If the passed variables includes 'playlist_data' we have a playlist
+  if (isset($vars->othervars['playlist_data'])) {
+   
+    // Get file paths out of the playlist_data array and add to FlowPlayer playlist
+    foreach ($vars->othervars['playlist_data']['playlist'] as $play) {
+      
+      // If this is a streamed playlist, use filename, otherwise use fileurl  
+      if ($stream) {
+        $playlist[]['url'] = $play['filename'];
+      }
+      else {
+        $playlist[]['url'] = $play['fileurl'];
+      }
+    }
+  }
+
+  else {
+    // Not a playlist, so populate FlowPlayer3 playlist with the file_url
+    $playlist[]['url'] = $vars->othervars['file_url'];
+  }
+
+  // Attach the completed playlist to flowplayer array
+  $flowplayer['playlist'] = $playlist;
+
+  // Retrieve the current FlowPlayer3 settings
+  $saved_settings = _flowplayer3_settings();
+   
+  // Scan through each setting to see if it is over-ridden in $vars->othervars
+  // Unset properties that are blank to keep the resulting code 'tidy'
+  foreach ($saved_settings as $category => $data) {
+    foreach ($data as $property => $value) {
+      if (isset($vars->othervars[$property])) {
+        $saved_settings[$category][$property] = $vars->othervars[$property];
+      }
+      if (!$saved_settings[$category][$property]) {
+        unset($saved_settings[$category][$property]);
+      }
+    }
+  }
+  
+  // If the object doesn't have a width set then assign one
+  if (!isset($vars->params['width'])) {
+    $vars->params['width'] = $saved_settings['canvas']['width'];
+  }
+
+  // If the object doesn't have a height set then assign one
+  if (!isset($vars->params['height'])) {
+    $vars->params['height'] = $saved_settings['canvas']['height'];
+  }
+
+  // Add the properties to the flowplayer array ready for rendering
+  $flowplayer['canvas'] = $saved_settings['canvas'];
+  $flowplayer['clip'] = $saved_settings['clip'];
+  $flowplayer['plugins']['controls'] = $saved_settings['controls'];
+
+  // If we are streaming this file, add the stream plugin
+  if (isset($vars->othervars['stream'])) {
+
+    // Define the clip provider as 'stream'
+    $flowplayer['clip']['provider'] = 'stream';
+    
+    // Get the name of the stream plugin
+    $flowplayer['plugins']['stream']['url'] = variable_get('flowplayer3_mediaplayer_stream_plugin', FLOWPLAYER3_MEDIAPLAYER_STREAM_PLUGIN);
+    
+    // Set the path to the source of the stream
+    $flowplayer['plugins']['stream']['netConnectionUrl'] = $vars->othervars['stream'];
+    
+  }
+  
+  // Add product key if it has been set
+  if (variable_get('flowplayer3_product_key', '')) {
+    $flowplayer['key'] = variable_get('flowplayer3_product_key', '');
+  }
+  
+  // Convert flowplayer array to JSON, and assign to a flashvar called config
+  $flashvars['config'] = drupal_to_js($flowplayer);
+
+  // Replace " with ', and remove quotes from around true and false, to satisfy FlowPlayer
+  $flashvars['config'] = str_replace(array('"', "'false'", "'true'", "'[", "]'"), array("'", "false", "true", "[", "]"), $flashvars['config']);
+
+  // The ' has been escaped, so reverse it where it occurs in the playlist (it gets escaped again later!)
+  //$flashvars['config'] = str_replace(array("\'"), array("'"), $flashvars['config']);
+  
+  // Return the finished array of flash variables
+  return $flashvars;
+}
+
+
+/**
+ * Implementation of hook_{player}_swftools_playlist().
+ * This function builds the content needed to write to an xml playlist. In the
+ * case of FlowPlayer3 it is not actually necessary to produce an xml playlist,
+ * but we must support this hook as SWF Tools uses its presence to detect that
+ * the player is capable of supporting playlists.
+ * DO WE NEED TO DO THIS? IF THE PLAYER DOESN'T SUPPORT LIST ACTIONS THEN WE ALREADY KNOW THIS?
+ *
+ * @param $xml_data
+ *   Array of data that can be used to build the xml playlist. Contains keys
+ *     [header][title]  Title data that can be used for the playlist
+ *     [playlist][key][filepath]  The filepath to the file
+ *     [playlist][key][filename]  The filename of the file
+ *     [playlist][key][fileurl]   The url of the file
+ *     [playlist][key][title]     The title of the file
+ *     [action]  The action to be performed by this playlist (e.g. SWFTOOLS_MP3_DISPLAY_LIST)
+ * @param $method
+ *   Object containing two keys - player and method. Each consists of an array
+ *   that defines the details of the resolved player and embedding method that
+ *   is being used for this file.   
+ * @param $vars
+ *   Object containing three keys - othervars, flashvars and params. These are
+ *   arrays containing key/value pairs that contain all the data assigned to this
+ *   file so far. THE ARRAY othervars CONTAINS A KEY playlist_data THAT APPEARS
+ *   TO REPEAT THE CONTENTS OF xml_data. IS IT NECESSARY TO PASS BOTH?
+ * @return
+ *   String of text that be written to the xml file defining the playlist.
+ */
+function flowplayer3_flowplayer3_mediaplayer_swftools_playlist($xml_data, &$method, &$vars) {
+ 
+  // For FlowPlayer3 return nothing and let the handler create an empty xml file
+  return;
+
+}
+
+
+/*
+ * Implementation of hook_swftools_variable_mapping().
+ *
+ * @return
+ *   Array of data describing how parameters passed to the player should be
+ *   mapped. The first keys describe the name of the player, and this contains 
+ *   a sub-array that consists of key/value pairs. The key describes the name
+ *   of the parameter, the value describes what it maps to, e.g. flashvars
+ */
+function flowplayer3_swftools_variable_mapping() {
+  
+  // FlowPlayer3 doesn't need to make any variable mappings
+  return array(
+    FLOWPLAYER3_MEDIAPLAYER => array(),
+  );
+}
+
+
+/**
+ * Return player configurations settings that will be used if not over-ridden.
+ * 
+ * @return
+ *   Because there are so many settings for FlowPlayer3 the defaults are defined
+ *   in the array returned by this function. The function initialises an array
+ *   of defaults, merges settings from the configuration page, and returns the
+ *   result.
+ */
+function _flowplayer3_settings() {
+
+  // Define the settings list
+  $defaults['clip'] = array(
+    'autoPlay' => 'false',
+    'autoBuffering' => 'false',
+    'scaling' => 'scale',
+    'start' => '',
+    'duration' => '',
+    'accelerated' => 'false',
+    'bufferLength' => '',
+    'provider' => '',
+    'fadeInSpeed' => '',
+    'fadeOutSpeed' => '',
+    'linkUrl' => '',
+    'linkWindow' => '_blank',
+    'live' => 'false',
+    'cuePointMultiplier' => '',
+  );
+
+  $defaults['controls'] = array(
+    'backgroundColor' => '#000000',
+    'timeColor' => '#01DAFF',
+    'durationColor' => '#FFFFFF',
+    'progressColor' => '#015B7A',
+    'backgroundGradient' => 'medium',
+    'progressGradient' => 'medium',
+    'bufferColor' => '#6C9CBC',
+    'bufferGradient' => 'none',
+    'sliderColor' => '#000000',
+    'sliderGradient' => 'none',
+    'buttonColor' => '#889AA4',
+    'buttonOverColor' => '#92B2BD',
+    'autoHide' => 'fullscreen',
+    'play' => 'true',
+    'volume' => 'true',
+    'mute' => 'true',
+    'time' => 'true',
+    'stop' => 'false',
+    'playlist' => 'false',
+    'fullscreen' => 'true',
+    'scrubber' => 'true',
+    'top' => '',
+    'left' => '',
+    'bottom' => '',
+    'right' => '',
+    'opacity' => '',
+  );
+  
+  $defaults['canvas'] = array(
+    'width' => 500,
+    'height' => 375,
+    'backgroundColor' => '#000000',
+    'backgroundImage' => '',
+    'backgroundRepeat' => 'repeat',
+    'backgroundGradient' => 'low',
+    'border' => '',
+    'borderRadius' => '',
+  );
+
+  // Retrieve settings from database, if available
+  $saved_settings = variable_get(FLOWPLAYER3_MEDIAPLAYER, array());
+  $saved_colors = variable_get('flowplayer3_palette', array());
+  
+  if ($saved_colors) {
+    // Move background color to canvas
+    $saved_settings['canvas']['backgroundColor'] = $saved_colors['backgroundColor'];
+    
+    // Move control bar background color to controls
+    $saved_colors['backgroundColor'] = $saved_colors['controlbarbackgroundColor'];
+    unset($saved_colors['controlbarbackgroundColor']);
+
+    $saved_settings['controls'] += $saved_colors;
+  }
+  
+  // Merge the two sets together
+  $defaults = array_merge($defaults, $saved_settings);
+
+  // Return resulting defaults
+  return $defaults;
+}
+
+
+/**
+ * Implementation of hook_help().
+ */
+function flowplayer3_help($path, $arg) {
+  switch ($path) {
+    case 'admin/settings/swftools/flowplayer3':
+      return '<p>' . t('These are the settings for the FlowPlayer 3 media player.
+                      For details of what each parameter does refer to the
+                      <a href="@flowplayer">FlowPlayer 3 documentation</a>.
+                      It is possible that you do not need to change any of
+                      these settings and blank values will use FlowPlayer
+                      defaults.
+                      If content is embedded using the SWF Tools filter then each parameter
+                      can be over-ridden by specifying a new value in the filter string.', array('@flowplayer' => 'http://flowplayer.org/documentation/configuration')) . '</p>';
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function flowplayer3_theme() {
+  return array(
+    'flowplayer3_scheme_form' => array(
+      'arguments' => array('form' => NULL),
+      'file' => 'flowplayer3.admin.inc',
+    ),
+  );
+}

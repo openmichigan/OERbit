@@ -1,0 +1,13 @@
+; $Id: wijering4.info,v 1.2 2008/09/07 19:42:15 stuartgreenfield Exp $
+name =  JW Media Player 4
+description = Enables support for JW Media Player 4.
+package = SWF Tools
+dependencies[] = swftools
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-04-27
+version = "6.x-2.5"
+core = "6.x"
+project = "swftools"
+datestamp = "1240829764"
+

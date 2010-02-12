@@ -1,0 +1,88 @@
+# $Id: ja.po,v 1.1 2007/05/01 09:21:17 imagine Exp $
+# -----------------------------------------------------------------------------
+# Japanese translation of Drupal (nice_menus.module)
+#
+# Copyright (c) 2006-2007  Drupal Japan  ( http://drupal.jp/ )  /
+#                          Drupal Nippon ( http://drupon.org/ ) /
+#                          Takafumi      ( jp.drupal@imagine **reverse order**)
+#
+# Generated from file:
+#  nice_menus.module,v 1.16.2.3 2007/04/30 16:08:16 add1sun
+#  nice_menus.info,v 1.2.2.1 2007/04/26 19:25:40 add1sun
+#
+# -----------------------------------------------------------------------------
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2007-05-01 17:48+0900\n"
+"Last-Translator: Takafumi <jp.drupal@imagine **reverse order**>\n"
+"Language-Team: Drupal Japan / Drupal Nippon\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: nice_menus.module:15
+msgid "Make drop down css/javascript menus for site navigation and admin menus."
+msgstr "サイトのナビゲーションメニューや管理メニューに、cssやjavascriptを使ったドロップダウンメニューが作れるようになります。"
+
+#: nice_menus.module:18
+msgid "<p>This is a simple module that enables the site to have drop down css/javascript menus for site navigation and admin navigation.</p><p>Remember to activate and configure the menus in !link</p>"
+msgstr "<p>このモジュールは、cssやjavascriptを使ったドロップダウンメニューを、サイトのナビゲーションメニューや管理メニューに提供するシンプルなモジュールです。</p><p>!link でメニューの有効化と設定を忘れずに行ってください。</p>"
+
+#: nice_menus.module:45 nice_menus.info:0
+msgid "Nice Menus"
+msgstr "ナイスメニュー"
+
+#: nice_menus.module:46
+msgid "Configure Nice Menus."
+msgstr "ナイスメニューの設定を行います。"
+
+#: nice_menus.module:64
+msgid "Number of Nice Menus"
+msgstr "ナイスメニューの数"
+
+#: nice_menus.module:65
+msgid "The total number of independent nice menus (blocks) you want."
+msgstr "使用したいナイスメニュー（ブロック）の合計数を入力してください。"
+
+#: nice_menus.module:91
+msgid "Menu Name"
+msgstr "メニュー名"
+
+#: nice_menus.module:96
+msgid "Source Menu Tree"
+msgstr "メニューツリーの起点"
+
+#: nice_menus.module:97
+msgid "The menu tree from which to show a nice menu."
+msgstr "ナイスメニューに表示したいメニューツリーの起点を指定してください。"
+
+#: nice_menus.module:103
+msgid "Menu Style"
+msgstr "メニュースタイル"
+
+#: nice_menus.module:104
+msgid "right: menu items are listed on top of each other and expand to the right"
+msgstr "right： メニュー項目が上下に並んで表示され、サブメニューが右側に展開されます。"
+
+#: nice_menus.module:104
+msgid "left: menu items are listed on top of each other and expand to the left"
+msgstr "left： メニュー項目が上下に並んで表示され、サブメニューが左側に展開されます。"
+
+#: nice_menus.module:104
+msgid "down: menu items are listed side by side and expand down"
+msgstr "down： メニュー項目が左右に並んで表示され、サブメニューが下方に展開されます。"
+
+# ----------
+#: nice_menus.module:127;127
+#msgid "Navigation"
+#msgstr "ナビゲーション"
+
+#: nice_menus.module:0 nice_menus.info:0
+msgid "nice_menus"
+msgstr "nice_menus"
+
+#: nice_menus.info:0
+msgid "CSS/jQuery drop-down, drop-right and drop-left menus to be placed in blocks"
+msgstr "ブロックに配置する、CSS/jQueryによるドロップダウン、ドロップライト、ドロップレフトメニューです。"
+

@@ -1,0 +1,278 @@
+<?php 
+// $Id: accessible_content.install,v 1.1.2.6 2010/01/08 20:07:26 kevee Exp $
+/**
+*   @file
+*   Install file for Accessible Content
+*/
+
+/**
+ * Implementation of hook_requirements
+ */
+
+function accessible_content_requirements($phase) {
+  if ($phase == 'install') {
+    $requirements = array();
+    include_once dirname(__FILE__) .'/accessible_content.module';
+    if (accessible_content_include_library()) {
+      //Library exists and we're all good
+      $requirements['accessible_content']['severity'] = REQUIREMENT_OK;
+    }
+    else {
+      //Library does not exist and we throw an error with a link to download
+      $requirements['accessible_content']['severity'] = REQUIREMENT_ERROR;
+      $requirements['accessible_content']['description'] = 'Accessible content module requires the Quail library. Please download and from '. 
+      l('http://code.google.com/p/quail-lib', 'http://code.google.com/p/quail-lib') .
+      ' and place the "quail" directory in the accessible_content directory';
+
+    }
+    if (!class_exists('DOMDocument')) {
+      //There is no support for DOMDocument
+      $requirements['accessible_content_dom']['severity'] = REQUIREMENT_ERROR;
+      $requirements['accessible_content_dom']['description'] = 'Accessible content module requires DOMDocument to be available.';
+    }
+    return $requirements;
+  }
+}
+
+/**
+*  Implementation of hook_schema()
+*
+*/
+function accessible_content_schema() {
+  $schema['accessible_content_node_totals'] = array(
+    'description' => 'Stores the results of accessibility tests',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node ID this record relates to',
+        'type' => 'int', 
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'auto_increment' => FALSE,
+      ),
+      'vid' => array(
+        'description' => 'The node version number this record relates to',
+        'type' => 'int', 
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'auto_increment' => FALSE,
+      ),
+      'severe_total' => array(
+        'description' => 'The total number of severe errors',
+        'type' => 'int',
+        'length' => 4,
+      ),
+      'moderate_total' => array(
+        'description' => 'The total number of moderate errors',
+        'type' => 'int',
+        'length' => 4,
+      ),
+      'suggestion_total' => array(
+        'description' => 'The total number of suggestions',
+        'type' => 'int',
+        'length' => 4,
+      ),
+      'data' => array(
+        'description' => 'Additional feedback information about the tests run on this node',
+        'type' => 'text',
+        'default' => '',
+      ),
+      
+    ),
+    'unique_keys' => array(
+      'nid_vid' => array('nid', 'vid'),
+    ),
+  );
+  $schema['accessible_content_node_test'] = array(
+    'description' => 'Stores information about the quail tests and how they relate to test nodes',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node ID this record relates to',
+        'type' => 'int', 
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'test_name' => array(
+        'description' => 'The quail test class name',
+        'type' => 'varchar',
+        'length' => 250,
+        'not null' => TRUE,
+      ),
+      'severity' => array(
+        'description' => 'The severity level of this test',
+        'type' => 'int',
+        'length' => 4,
+      ),
+    ),
+    'primary_key' => array('nid'),
+  );
+  $schema['accessible_content_guideline_test'] = array(
+    'description' => 'Stores the relationship between a guideline node and a test node',
+    'fields' => array(
+      'guideline_nid' => array(
+        'description' => 'The node ID this record relates to',
+        'type' => 'int', 
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'guideline_vid' => array(
+        'description' => 'The node version number this record relates to',
+        'type' => 'int', 
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'test_nid' => array(
+        'description' => 'The node ID of the test',
+        'type' => 'int', 
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'unique keys' => array(
+      'guideline_test' => array(
+        'guideline_nid',
+        'guideline_vid',
+        'test_nid',
+      ),
+    ),
+  );
+  $schema['accessible_content_node_override'] = array(
+    'description' => 'Stores overridden test results',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node ID this record relates to',
+        'type' => 'int', 
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'test_name' => array(
+        'description' => 'The quail test class name',
+        'type' => 'varchar',
+        'length' => 250,
+        'not null' => TRUE,
+      ),
+      'hash' => array(
+        'description' => 'Unique hash of the test for future purposes',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'field' => array(
+        'description' => 'The field of the node this text was stored in',
+        'type' => 'varchar',
+        'length' => 250,
+        'not null' => TRUE,
+      ),
+    ),
+  );
+  
+  return $schema;
+}
+/**
+ * Implementation of hook_install
+ */
+
+function accessible_content_install() {
+  drupal_install_schema('accessible_content');
+  module_invoke('accessible_content', 'node_info');
+  _accessible_content_define_default_types();
+  _accessible_content_create_guidelines();
+  if (!module_exists('beautytips')) {
+    drupal_set_message('For more helpful accessibility views, install the '. 
+                     l('BeautyTips module', 'http://drupal.org/project/beautytips') .'.');
+  }
+  $allowed_html = variable_get("allowed_html_". variable_get('filter_default_format', 1), '');
+  if (strpos($allowed_html, '<h4>') === FALSE || 
+     strpos($allowed_html, '<h5>') === FALSE ||
+     strpos($allowed_html, '<code>') === FALSE ) {
+    drupal_set_message('Accessibility tests are marked up with the following tags. Please consider enabling these HTML codes in your default input filter: &lt;h4&gt; &lt;h5&gt; &lt;code&gt;');
+  }
+}
+
+/*
+
+/*
+*  Walks through Quail's default set of tests and creates a node for each one.
+*  As each node is created we also insert a record of its nid relationship to a test class
+*  name in quail so we can use it later.
+*/
+function _accessible_content_define_default_types() {
+  $csv = fopen(dirname(__FILE__) .'/quail/guidelines/translations/en.txt', 'r');
+  global $user;
+  if ($csv) {
+    while (($test = fgetcsv($csv)) !== FALSE ) {
+        if (count($test) == 4) {
+          $node = new stdClass();
+          $node->type = 'accessibility_test';
+          $node->uid = $user->uid;
+          $node->title = $test[1];
+          $node->body = $test[2];
+          node_save($node);
+          db_query('INSERT INTO {accessible_content_node_test} (nid, test_name, severity) VALUES(%d, "%s", %d)',
+            $node->nid,
+             $test[0],
+             $test[3]);   
+    }
+    }
+  }
+  fclose($csv);
+}
+
+/**
+*  Loads the default guidelines defined by QUAIL and creates accessibility_guideline nodes for them.
+*/
+function  _accessible_content_create_guidelines() {
+  global $user;
+  accessible_content_include_library();
+  $csv = fopen(dirname(__FILE__) .'/install/guidelines.csv', 'r');
+  $test_query = db_query('SELECT nid, test_name FROM {accessible_content_node_test}');
+  $tests = array();
+  while ($row = db_fetch_object($test_query)) {
+    $tests[$row->test_name] = $row->nid;
+  }
+  if ($csv) {
+    while ($guideline = fgetcsv($csv)) {
+        $node = new stdClass();
+        $node->type = 'accessibility_guideline';
+        $node->uid = $user->uid;
+        $node->title = $guideline[1];
+        node_save($node);
+        require_once(dirname(__FILE__) .'/quail/guidelines/'. strtolower($guideline[0]) .'.php');
+        $FALSE = FALSE;
+        $guideline_object = new $guideline[2]($FALSE, $FALSE, $FALSE);
+        $guideline_tests = $guideline_object->getTests();
+        foreach ($guideline_tests as $test) {
+          $check = db_query('SELECT COUNT(*) as total FROM {accessible_content_guideline_test} WHERE guideline_nid = %d AND guideline_vid = %d AND test_nid = %d',
+                     $node->nid,
+                     $node->vid,
+                     $tests[$test]);
+          $check_total = db_result($check);
+          if ($check_total == 0) {
+            db_query('INSERT INTO {accessible_content_guideline_test} (guideline_nid, guideline_vid, test_nid) VALUES (%d, %d, %d)',
+                 $node->nid,
+                 $node->vid,
+                 $tests[$test]);
+      }
+    }      
+    }
+  }
+  fclose($csv);  
+}
+
+/**
+ * Implementation of hook_uninstall
+ */
+function accessible_content_uninstall() {
+  $nodes = db_query('SELECT nid FROM {node} WHERE type = "accessibility_test" OR type = "accessibility_guideline"');
+  while ($nid = db_result($nodes)) {
+    node_delete($nid);
+  }
+  drupal_uninstall_schema('accessible_content');
+}
+

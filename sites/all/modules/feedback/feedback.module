@@ -1,0 +1,238 @@
+<?php
+// $Id: feedback.module,v 1.75.2.3 2010/01/27 22:37:36 davereid Exp $
+
+/**
+ * @file
+ * Allows site visitors and users to report issues about this site.
+ */
+
+/**
+ * Implementation of hook_perm().
+ */
+function feedback_perm() {
+  return array('access feedback form', 'view feedback messages');
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function feedback_theme() {
+  return array(
+    'feedback_admin_view_form' => array(
+      'arguments' => array('form' => array()),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function feedback_menu() {
+  $items['admin/reports/feedback'] = array(
+    'title' => 'Feedback messages',
+    'description' => 'View feedback messages.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('feedback_admin_view_form'),
+    'access arguments' => array('view feedback messages'),
+    'file' => 'feedback.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function feedback_init() {
+  if (user_access('access feedback form')) {
+    $path = drupal_get_path('module', 'feedback');
+    drupal_add_css($path . '/feedback.css');
+    drupal_add_js($path . '/feedback.js');
+  }
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function feedback_block($op = 'list', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+    $blocks['form'] = array('info' => t('Feedback form'));
+    return $blocks;
+  }
+  else if ($op == 'view') {
+    $block = array();
+    switch($delta) {
+      case 'form':
+        if (!user_access('access feedback form') || $_GET['q'] == 'admin/reports/feedback') {
+          break;
+        }
+        $block['subject'] = '<span class="feedback-link">' . t('Feedback') . '</span>';
+        $block['content'] = drupal_get_form('feedback_form');
+        break;
+    }
+    return $block;
+  }
+}
+
+/**
+ * Implementation of hook_footer().
+ */
+function feedback_footer($main = 0) {
+  if (user_access('access feedback form') && $_GET['q'] != 'admin/reports/feedback') {
+    $block = (object)module_invoke('feedback', 'block', 'view', 'form');
+    $block->module = 'feedback';
+    $block->delta = 'form';
+    $block->region = 'footer';
+    return theme('block', $block);
+  }
+}
+
+/**
+ * Form builder function for a user feedback form.
+ */
+function feedback_form() {
+  $form['#attributes']['class'] = 'feedback-form';
+
+  // Store the path on which this form is displayed.
+  $form['location'] = array('#type' => 'value', '#value' => $_GET['q']);
+  // Allow the form to be submitted via AJAX.
+  $form['ajax'] = array('#type' => 'hidden', '#default_value' => 0);
+
+  $form['help'] = array(
+    '#prefix' => '<div class="feedback-help">',
+    '#value' => t('If you experience a bug or would like to see an addition on the current page, feel free to leave us a message.'),
+    '#suffix' => '</div>',
+  );
+  if (user_access('view feedback messages')) {
+    if (arg(0) != 'node') {
+      $feedbacks = feedback_load(array('status' => 0, 'location_masked' => feedback_mask_path($_GET['q'])));
+    }
+    else {
+      $feedbacks = feedback_load(array('status' => 0, 'location' => $_GET['q']));
+    }
+    if ($feedbacks) {
+      $rows = '';
+      foreach ($feedbacks as $feedback) {
+        $rows .= '<div class="feedback-submitted">'. theme('username', $feedback) .' '. format_date($feedback->timestamp, 'small') .':</div>';
+        $rows .= '<div class="feedback-body">'. feedback_format_message($feedback) .'</div>';
+      }
+      $form['messages'] = array(
+        '#prefix' => '<div class="feedback-messages">',
+        '#value' => $rows,
+        '#suffix' => '</div>',
+      );
+    }
+  }
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#attributes' => array('class' => 'feedback-message'),
+    '#title' => t('Message'),
+    '#required' => TRUE,
+    '#wysiwyg' => FALSE,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Send'),
+    '#id' => 'feedback-submit',
+    '#prefix' => '<div id="feedback-throbber">',
+    '#suffix' => '</div>',
+  );
+
+  return $form;
+}
+
+function feedback_form_submit($form, &$form_state) {
+  feedback_add_entry($form_state['values']['message'], $form_state['values']['location']);
+  $message = t('Thanks for your feedback!');
+  if ($form_state['values']['ajax']) {
+    echo drupal_to_js(array('message' => $message));
+    exit;
+  }
+  else {
+    drupal_set_message($message);
+  }
+}
+
+/**
+ * Format a feedback entry.
+ *
+ * @param $entry
+ *   A feedback object.
+ */
+function feedback_format_message($entry) {
+  $message = check_plain($entry->message);
+  if (!empty($entry->useragent)) {
+    if (module_exists('browscap')) {
+      $browserinfo = browscap_get_browser($entry->useragent);
+      $browser = ($browserinfo['parent'] ? $browserinfo['parent'] .' / '. $browserinfo['platform'] : $browserinfo['useragent']);
+      $message .= '<div class="browserinfo">(' . check_plain($browser) . ')</div>';
+    }
+    else {
+      $message .= '<div class="browserinfo">(' . check_plain($entry->useragent) . ')</div>';
+    }
+  }
+  return $message;
+}
+
+/**
+ * Load feedback entries from the database.
+ *
+ * @param $array
+ *   A keyed array of optional where clause conditions.
+ */
+function feedback_load($array) {
+  $where = $args = array();
+  if (!empty($array)) {
+    foreach ($array as $column => $value) {
+      $where[] = 'f.'. $column .' = '. (is_numeric($value) ? '%d' : "'%s'");
+      $args[] = $value;
+    }
+  }
+  $sql = "SELECT f.*, u.name FROM {feedback} f INNER JOIN {users} u ON f.uid = u.uid";
+  if (!empty($where)) {
+    $sql .= ' WHERE '. implode(' AND ', $where);
+  }
+  $result = db_query($sql, $args);
+  $entries = array();
+  while ($entry = db_fetch_object($result)) {
+    $entries[$entry->fid] = $entry;
+  }
+  return $entries;
+}
+
+/**
+ * 'Mask' a path, i.e. replace all numeric arguments in a path with '%' placeholders.
+ *
+ * Please note that only numeric arguments with a preceding slash will be
+ * replaced.
+ *
+ * @param $path
+ *   An internal Drupal path, f.e. 'user/123/edit'.
+ * @return
+ *   A 'masked' path, for above example 'user/%/edit'.
+ */
+function feedback_mask_path($path) {
+  return preg_replace('@/\d+@', '/%', $path);
+}
+
+/**
+ * Store a new feedback entry in the database.
+ *
+ * @param string $message
+ *   A feedback message text entered by an user.
+ * @param string $location
+ *   The path on which the feedback message was entered.
+ */
+function feedback_add_entry($message, $location) {
+  global $user;
+
+  db_query("INSERT INTO {feedback} (uid, message, location, location_masked, url, timestamp, useragent) VALUES (%d, '%s', '%s', '%s', '%s', %d, '%s')", $user->uid, trim($message), $location, feedback_mask_path($location), url($location, array('absolute' => TRUE)), time(), $_SERVER['HTTP_USER_AGENT']);
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function feedback_user($op, &$edit, &$account) {
+  if ($op == 'delete') {
+    db_query('UPDATE {feedback} SET uid = 0 WHERE uid = %d', $account->uid);
+  }
+}

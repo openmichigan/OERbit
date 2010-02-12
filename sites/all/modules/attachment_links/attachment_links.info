@@ -1,0 +1,12 @@
+; $Id: attachment_links.info,v 1.1.2.1 2010/01/05 23:12:20 toddnienkerk Exp $
+name           = Attachment links
+description    = "Creates permalinks to the latest and/or cannonical version of a node's attached file."
+dependencies[] = upload
+core           = 6.x
+
+; Information added by drupal.org packaging script on 2010-02-11
+version = "6.x-1.0"
+core = "6.x"
+project = "attachment_links"
+datestamp = "1265902504"
+

@@ -1,0 +1,563 @@
+22 April 2009
+-------------
+#424866 - Wijering 4 module will now check to see if either the viral, or the
+non-viral players are present, and it will use either (with preference for
+viral). This should make the download process easier since viral is the default
+download offered on the longtail video website.
+#408072 - JW Image Rotator controls can be set to hidden as a default from the
+settings page. It can be over-ridden on a player basis by using shownavigation
+in the input filter.
+#395854 - Documentation links fixed for FP2 and FP3.
+
+21 April 2009
+-------------
+#414708 - Request to add accessible controls to the Wijering player. An example
+of how to do this is available at 
+www.longtailvideo.com/support/tutorials/Making-Video-Accessible, which uses
+anchor tags to trigger some JavaScript to render the player accessible. I've
+done a rough and ready implementation of this just to check it works. The
+feature is enabled from the Wijering 4 settings page, and it relies on using
+SWF Object 2 for embedding the content since it has to know the player id.
+
+21 April 2009
+-------------
+#432188 - Modified code to automatically stop other onepixelout players if
+there are multiple players on a page. The code from onepixelout has been
+adapted to avoid using a fairly inelegant use of setInterval to keep triggering
+the registration of players.
+
+20 April 2009
+-------------
+Discovered simpleviewer had stopped working. The filepaths in the xml were
+wrong as they included the partial path to the files directory. Not sure if
+this was introduced by the fix on March 30. Patched to make it work again, but
+should probably follow up March 30 change in more detail to check. Checked -
+the issue was that CCK passes a partial path (sites/default/files/image.jpg)
+and this is what causes the error. A filter construct (files="image.jpg") was
+ok. So the fix is good since it is necessary to support CCK.
+
+19 April 2009
+-------------
+#424378 - When using the CCK formatters it is now possible to specify an
+alternate handler for the case of a single file being passed to a playlist.
+This is primarily of use when handling images where a single image can now be
+displayed as a plain image, instead of being placed in a slideshow.
+FlowPlayer3 setteings changed so cache is only cleared if new settings are
+submitted.
+
+18 April 2009
+-------------
+#411348 - FlowPlayer3 canvas size is now configurable on the settings page
+and can also be set through an input filter.
+The available embedding methods are now cached, rather than having to be built
+from scratch. This should improve performance quite a bit, especially when
+JavaScript is being added to every page.
+Caches now flushed when FlowPlayer3 settings page is seen so that changes to
+player configuration are reflected.
+
+31 March 2009
+-------------
+#418254 by Mark Theunissen: Fix generation of unique id in lutman.module.
+Try #351725 by glorinand in order to fix #401140.
+
+30 March 2009
+-------------
+#418550 - Fix spelling of initialize to use US English.
+#404076 - Added support for turning multiple CCK fields in to a playlist.
+Fixed a bug that became apparent in swftools_playlist_prepare_data() function
+that could result in incorrect filepaths being built.
+
+28 March 2009
+-------------
+Fix error in regex that was used by filters that prevented [] being used in
+place of <>.
+
+20 March 2009
+-------------
+Added integrated support for CCK filefield. Based on #404076 and patches from
+stormsweeper (/user/131571) and Amitaibu (/user/57511). Enables a formatter
+that attaches to filefields to allow the content to be rendered via SWF Tools.
+
+19 March 2009
+-------------
+Bring back modified admin form that sets an error and provides the path if a
+JavaScript embedding file can't be found (#394276).
+
+18 March 2009
+-------------
+#405498 - Background gradient for control bar was missing from settings page. 
+
+17 March 2009
+-------------
+In response to #348437 reported by stormsweeper two changes are implemented.
+Added status report to main Drupal status page, and SWF Tools status, to give
+a warning if the zlib library isn't present. This library is needed to read
+height and width data from compressed swf files. Secondly, player modules now
+report a default height and width, so if all else fails we can fall back on
+those so that media content will display correctly. As part of this the sizing
+function has been separated in to a new swftools_set_size() function to try and
+clarify the code.
+
+16 March 2009
+-------------
+Migrated enhanced color chooser from HEAD. You need to refresh the theme cache
+to activate this. Easiest way is go to Administer > Site building > Modules,
+don't change anything, and hit Save configuration. 
+Brought in support for playslists based on streamed media from HEAD. All media
+has to be on the same stream - at present you can't mix streamed and non-
+streamed content.
+Brought in support for a splash image with FlowPlayer3 - use image="image.jpg"
+in the input filter (as for Wijering4).
+Added support for product key for commercial FlowPlayers.
+Disabled relative urls - more work is needed to confirm that this feature is
+working properly. In the interim go back to full paths.
+
+15 March 2009
+-------------
+FlowPlayer module was merging $vars->othervars in to the configuration array
+for the FlowPlayer. This may be contributory in the broken content that was
+reported in #401888.
+
+11 March 2009
+-------------
+Reverse code added recently that produces relative urls - it doens't work
+correctly for sites that aren't using clean urls. Tackle this properly as part
+of the rewrite of url building that is planned, and that will need to try and
+address this, plus international sites.
+
+08 March 2009
+-------------
+#394858 - Autodetection of action was broken as a result of an intended
+optimisation. Gone back to the old method.
+#394486 - FlowPlayer3 default player set to latest version.
+
+06 March 2009
+-------------
+Quick fix for #384876 until I can come up with a better solution (prevents the
+SWF Tools playlist cache clear from deleting everything in the root of the file
+system!)
+
+06 March 2009
+-------------
+Code for obtaining available methods simplified further - simply calls
+module_invoke_all('swftools_methods') to trigger all modules reporting.
+RTMP plugin for FlowPlayer3 now configurable on settings page.
+colorpicker.js and colorpicker.css prefixed with flowplayer3_ to avoid any
+(unlikely) namespace clashes.
+FlowPlayer3 commented heavily to try and make this a good reference point for
+future modules. Comments could probably be extracted to developer documentation
+at some future point to slim down code.
+
+05 March 2009
+-------------
+VERY early support for streaming of single flv files via JW4 and FlowPlayser3
+players. More a proof of concept at this point as I haven't researched it! At
+the moment the playes don't support playlists, but they seem ok for single
+files (testing locally using Red5).
+swf() function changed to support this - the file assignment for the filename
+to a flashvar no longer uses the $file_url which remains internal to SWF Tools,
+it now references $vars->othervars['file_url'] as this can be manipulated by
+player modules. This is necessary to put the data in the right format for JW4
+player. Player modules that don't manipulate that variable should be
+unaffected.
+File existence checks skipped for streaming files as they could be on a very
+different path to the Drupal file system, so we'll not worry.
+To use streaming with FlowPlayer3 the streaming plugin must be added to the
+FlowPlayer3 shared folder.
+
+28 February 2009
+----------------
+Lots of tidying up of code done, and added many more comments. Added a number
+of docblocks to try and describe what functions do.
+Changed swftools_[player]_playlist function to be more consistent with Drupal
+hooks so they are now [module]_[player]_swftools_playlist. This change appears
+in all player modules. While minor it should make code a little easier to read.
+Changed calls to such hooks to use module_hook as this is a bit clearer.
+Moved code that defines the methods of SWF Tools itself in to a new function
+swftools_swftools_methods(). This is more logical since it is actually a hook in
+all other modules, so there is no reason SWF Tools should be any different.
+Also moved code that merges the generic player methods to this function since
+it makes the code that then assembles the available methods cleaner.
+Modified swf() so that you can call it with an array of filenames, in which
+case it will automatically prepare a playlist and return the markup - should be
+easier for end users, although the old system of calling 
+swftools_prepare_playlist_data() and then swf_list() will still work.
+Deleted swftools_swftools_flashvars() as this hook didn't do anything.
+Refactored swftools_methods_available() as it didn't really need so many if /
+else if constructs.
+Added new function swftools_strip_base_root() that will try to strip the
+$base_root part out of path. What this means is that local files are given a
+relative path, rather than an absolute path. Not sure if this gives any real
+speed gain, but it looks a bit neater, and if swf isn't working it would help
+to highlight where an absolute path is being set.
+
+26 February 2009
+----------------
+Experimental - why have swf() and swf_list()? The swf() function can simply
+detect if an array of filenames was passed, and if it was then it can call
+swftools_prepare_playlist_data() and do what swf_list() does.
+
+25 February 2009
+----------------
+Initialise arrays in swf_list() function to suppress notice errors that are
+generated when function is called without passing all settings.
+
+23 February 2009
+----------------
+Fix coding in swftools.admin.status.inc so it doesn't generate multiple
+notice errors when rendering status report.
+Admin form changed to use the constant FLOWPLAYER3_MEDIAPLAYER, which makes it
+more consistent with code elsewhere.
+Support for allowscriptaccess parameter added (in response to #380580)
+
+22 February 2009
+----------------
+Issue with patch #371615 identified as an issue with flash node and the way
+Drupal handles null when writing to the database (converts to (int)0).
+Flash node updated to fix this issue, so patch #371615 can be reinstated.
+
+19 Feburary 2009
+----------------
+Reverse part of patch #371615 as it breaks flash node auto detection of mp3
+and flv files as flash node passes a zero, rather than empty.
+
+17 February 2009
+---------------
+Fix reset configuration options on Wijering and FlowPlayer.
+
+16 Feburary 2009
+----------------
+Minor fix to swftools_url_parse() to eliminate notice error when processing
+strings of parameters.
+swftools_flowplayer3_mediaplayer_playlist() simplified as it is not really
+necessary to produce a valid xml file.
+Tidy up use of . in concatanation of strings
+
+12 February 2009
+----------------
+#371735 - Fixed - incorrect construction of id tag in HTML.
+#371615 by KarenS - fix lines that result in PHP errors when parameters are
+not defined.
+
+07 October 2008
+---------------
+#308515 - Fixed - string used for determining extension was empty when a remote
+file is being checked, so code changed to check a more appropriate string.
+
+06 October 2008
+---------------
+Appending the nocache string to filenames seems to have broken content, but
+I'm sure it was working before. Recommitting without the cache setting until
+I can be sure it is working right.
+
+03 October 2008
+---------------
+#314045 - Constants incorrectly defined - fixed.
+
+23 September 2008
+-----------------
+Cumulative changes that address a number of issues.
+Identification of default players on the admin screen was wrong.
+swftools_get_media_url changed due to bug that resulted in double /
+appearing in the file path (#308172).
+Auto-detection of sizes changed so that players are always auto
+detected even when a remote media url is configured.
+Test content added to status page to help identify if SWF Tools is
+working.
+Missing php from <?php in swftools.admin.status.inc
+Path to default background image generated using url() function.
+
+6 September 2008
+----------------
+First official release of SWF Tools for Drupal 6!
+
+Text below describes what was changed as part of this release compared to v5.
+
+swftools.module
+---------------
+Menus updated to v6
+Use of l() in filter fixed
+Settings call backs updated
+File checks in swf() modified to better handle local files(?)
+_swftools_tf logic modified - was returning wrong values
+allowfullscreen parameter added to _swftools_params and embedding generation routine
+Text changed to sentence case for consistency with rest of Drupal
+Assigning action in swf() occurred twice - one instance deleted
+$nocache logic changed so caching string only appended once at the very end (not sure how this works)
+swftools_get_media_url changed to use file_create_url - should allow private file system
+Suggested fix for encoding in _swftools_get_flashvars_string applied
+swftools_theme() added to allow theme function to be registered
+Code that attempts to generate a valid base path altered to make a better guess
+Base path made compatible with private file system
+Fixes as per issue list at end of this document
+Parameter list extended to better support macros
+SWF Filter changed to be easier to use with other filters (<swf > is replaced
+by [swf ] during the prepare phase, so the code isn't stripped by HTML filters.
+[swf ] can be used directly when writing a filter. Filters can now be written
+using just [swf file=""] or [swf files=""] and filter will use file/files to
+determine if a playlist is intended. [swflist ] can still be used so old filter
+entries will work as originally planned.
+Filter amended to strip <p></p> from around the filter, to allow W3C validation
+to pass.
+Direct embedding mark-up changed to be standards compliant.
+swf() function parameters altered - now works more like the rest of Drupal 6 as
+an array of parameters is passed, rather than a series of parameters - pass an
+array with (optional) keys params, flashvars, othervars, methods. Params are
+passed to the generation code, flashvars becomes the flashvars string,
+othervars and method are passed to SWF Tools handlers.
+Check for existence of playlist directory (and creation as required) added to
+swftools_get_playlist_path() so it is created without having to visit settings
+page.
+Constant SWFTOOLS_INSTALLED added to make it easier to notify other modules if
+SWF Tools is available.
+Adding js to every page now defaults to TRUE (and SWFTOOLS_ALWAYS_ADD_JS added
+as a constant for code legibility). This means that SWF Tools behaves as
+"expected" with filters, without users having to specifically set this option.
+More descriptive messages when no player is configured, so users are directed
+to the appropriate settings page.
+Various drupal_set_messages made translate by use of t() function.
+Wording of settings pages changed to make more consistent with rest of Drupal.
+When playing media file_url is added to othervars['file_url'] so that player
+modules can access the media file path if they need to. This is particularly
+required for FlowPlayer to allow the appropriate config string to be built.
+swftools_push_js() added to hook_init(), rather than hook_menu() since it is
+technically not a menu function!
+New code added to direct embedding to assign an object id to the outer (IE6)
+object - without this JW Media Player 4 with IE6 causes pages to say they have
+an error.
+
+
+swftools.admin.inc
+------------------
+Form creation code adjusted to suit v6 menu call back
+Allow full screen parameter added to embed form
+Missing files now generate a download link if the download key is set in the
+methods array.
+Settings page altered slightly to put all file handling options together (some
+were under embedding settings). Means embedding settings is now simple for new
+users.
+Settings moved to sit under Administer > Site configuration > SWF Tools rather
+than promoting SWF Tools to a top level below Administer.
+Option added to file handling to allow SWF Tools to respond to requests to
+access swf, jpg, jpeg, mp3, flv and xml under a private file system.
+Cache flushing now calls drupal_flush_all_caches() which clears filters, block
+and page caches, so is more likely to ensure changes to flash content are
+properly rendered later.
+
+
+swftools.admin.status.inc
+-------------------------
+Added a status page that generates reports much like the system status report.
+Intent is to provide some diagnostics if an installation isn't working.
+At the moment it can report on whether the embedding and playback features
+appear to be correctly configured (methods are available, supporting files are
+available etc)
+Status report is found at admin/reports/swftools.
+
+
+genericplayers.module
+---------------------
+Menu updated to v6
+Option to disable autoplay flv disabled as generic player always autoplays.
+
+
+swfobject.info
+--------------
+Modified to v6
+
+
+swftools.info
+-------------
+Modified to v6
+
+
+swfobject.module
+----------------
+Added a download key to swfobject_swftools_methods() so the admin form can
+provide a link to the required files
+
+
+onepixelout.module
+---------------
+Menu updated to v6
+Added a download key to onepixelout_swftools_methods() so the admin form
+can provide a link to the required files
+_swf() and _swflist() functions removed as redundant
+
+
+wijering.info
+-------------
+Name string renamed JW Media Player 3 to make explicit to version 4 module.
+Description string changed to make explicit this is for JW Player 3.
+
+
+wijering.module
+---------------
+Menu updated to v6
+Added a download key to wijering_swftools_methods() so the admin form can
+provide a link to the required files
+_swf() and _swflist() functions removed as redundant
+
+
+wijering.admin.inc
+------------------
+wijering_admin_form_submit updated to forms API v6
+Form routine tweaked to make it look more like a regular system settings form,
+ie Reset to default option added to admin form
+Confirmation message added to simulate settings form
+
+
+wijering4.module / wijering4.admin.inc / wijering4.info
+-------------------------------------------------------
+Initial version of a module to support Wijering media player 4.
+Some of the parameters have been renamed, some are gone, and some new ones
+have been implemented.
+
+
+imagerotator.module / imagerotator.admin.in / imagerotator.info
+---------------------------------------------------------------
+Image rotator separated out from JW Media Player 3 - logically this is a
+different module to the main player module, so it seems sensible to
+have this as a separate package. To the end user it makes a logical
+distinction between media players and the image cycler. Also, the JW
+Image Rotator is still at version 3, so to have Media Player 4 and
+Image Rotator 3 would mean enabling Media Player 3 which is counter
+intuitive! Internally it still uses the name WIJERING_IMAGEROTATOR
+so the existing variables are preserved, even though this is now a
+distinct module.
+
+
+lutman.module
+-------------
+Added download key to methods array to allow easy download.
+
+
+lutman.info
+-----------
+Updated to v6
+Is descriptor right? It says lutman is included, but it isn't?
+
+
+ufo.module
+-------------
+Added download key to methods array to allow easy download.
+Removed alert pop-ups.
+
+
+ufo.info
+-----------
+Updated to v6
+
+
+simpleviewer.module
+-------------------
+Menu updated to v6.
+
+
+swfobject2.module / swfobject2.info
+-----------------------------------
+Support for SWF Object 2 added, and output made standards compliant.
+Uses the flashvars in array format, rather than string form, to provide
+clearer javascript, and seems to be working ok.
+Original version of this module added the js to the page header, but
+that causes content generated with filters to break!
+js now added to page body, rather than header - remembered that when filter
+caching is enabled the js won't get added to the page header!
+New code added to assign unique id to the object (using swf followed by the
+same id numbers as the div. Without this JW Media Player 4 with IE6 causes
+pages to say they have an error.
+
+
+flowplayer.module / flowplayer.info / flowplayer.admin.inc
+----------------------------------------------------------
+Feature request under SWF Tools 5.1 asked for support for FlowPlayer.
+This module introduces initial support, but more work needed at the
+moment. Adding this module resulted in the changes to swfobject2 to
+use the array format, and the addition of the media file path to
+the resolved_methods array in SWF Tools itself.
+
+
+Private file handling
+---------------------
+Change to method of generating path seems to allow private files to work.
+Tested with playback of a swf, and also an mp3 via generic and Wijering players.
+If files are placed on the site via FTP then a SWF Tools option must be set
+on the File handling page to allow SWF Tools to grant access to media files.
+It allows access to swf, mp3, flv, xml, jpg, jpeg and png formats. If access is
+denied by any other module then access is not allowed, so content that is
+being protected by a module is not compromised by activating this setting.
+The default setting for allowing access to private files is OFF, so to let
+SWF Tools allow handling of private files it must be explicitly set by the
+user on the settings page (Administer > Site configuration > SWF Tools >
+File handling > Private file system).
+
+
+General
+-------
+Broken identifier strings replaced with correct format
+UFO and SWFObject 1.5 are both superceded by SWFObject 2.0 - new module written
+but not tested extensively yet.
+Configuration pages moved to sit under Administer > Site configuration > SWF
+Tools, rather than having SWF Tools promoted to its own level.
+Default HTML alt added as a constant for clarity, and wording made a little
+more informative to assist users who don't see the content.
+File locations settings moved from embedding page to file handling page. This
+is more consistent, and presents new users with fewer options on the first
+settings page. Most people probably never change anything other than the
+embedding method at first.
+
+
+Issue queue
+-----------
+218326 - Full screen does not work
+166804 - Fullscreen option for JW PLAYER
+153780 - Full Screen Support using Wijering Flash
+Full screen now a parameter on the settings page, and passed to flash modules
+to enable it.
+
+191279 - Strange escaping behaviour of ":" and "/" and 1 pixel out Player
+173021 - 1PixelOut - Error Opening File
+154364 - input formats!
+202591 - 1pixelout can't find file
+Incorporated the suggested fix to reverse the encoding.
+This probably explains "203301 - Error Opening File" as well.
+
+178283 - Patch to fix bug in "base" parameter for direct embedding
+Patch applied - base now properly set when using direct embedding mode.
+
+179322 - variable_get for Flash Version incorrect
+Suggested fix applied.
+scale and swliveconnect had similar errors so fixed those too.
+
+146935 - Menu titles get strange formatting because of surplus white space
+Fixed
+
+157397 - file path for attachment is wrong
+Think this is fixed with modified file handling mechanism that was needed as
+the "double files" issue occurred with flash node too.
+
+252956 - Private Uploads and SWFTools
+Should be fixed with new code that allows used of private file systems with
+SWF Tools. Note - SWF Tools must be allowed to grant access to playlists.
+
+294163 - Standards Compliant Flash
+SWF Tools now produces standards complaint (XHTML 1.0 Strict) using either
+direct embedding or via SWF Object 2 *in most cases*. The filter component
+has been updated to string the <p></p> that wrap around the <div> containing
+the flash, but if you use the format in the middle of a paragraph this won't
+work properly and you will get code that FAILS validation. If validation is
+important then you may need to test pages containing to SWF Tools content to
+verify that they are validating properly.
+
+181473 - FlowPlayer support
+FlowPlayer support has been added.
+
+233375 - Upgrade to 6.0
+Here it is!
+
+186896 - Wijering player w/playlist shows up on IE, not on FF or Opera
+Have not been able to recreate this error, but seems to be ok under all tests
+during develop of SWF Tools 6, so assuming can be closed.
+
+
+; $Id: CHANGELOG.txt,v 1.18.2.24 2009/04/22 21:59:44 stuartgreenfield Exp $

@@ -1,0 +1,121 @@
+<?php // $Id: accessible_content_wysiwyg.module,v 1.1.2.1 2010/01/02 08:08:02 kevee Exp $
+
+/**
+*  @file
+*  Lets folks preview the accessiblity of text areas within any form
+*/
+
+/**
+*  Implementation of hook_menu()
+*/
+function accessible_content_wysiwyg_menu() {
+  $items = array();
+
+  $items['accessibility/check'] = array(
+    'type' => MENU_CALLBACK,
+    'title' => 'Accessibility check',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('accessible_content_wysiwyg_form'),
+    'access arguments' => array('use wysiwyg accessibility'),
+  );
+
+  $items['accessibility/check/highlight'] = array(
+    'type' => MENU_CALLBACK,
+    'title' => 'Accessibility Highlighted check',
+    'page callback' => 'accessible_content_wysiwyg_highlight_page',
+    'access arguments' => array('use wysiwyg accessibility'),
+  );
+
+  return $items;
+}
+
+/**
+*  Page callback for accessibility/check/highlight. This renders a highlighted view
+*  of accessibility problems.
+*/
+function accessible_content_wysiwyg_highlight_page() {
+  global $base_url;
+  accessible_content_include_library();
+  $quail = new quail($_POST['html'], 'accessible_content', 'string', 'demo');
+  $guideline = node_load($_POST['guideline']);
+  $quail->runCheck(array('ac_module_guideline' => $guideline));
+  return $quail->getReport(array('image_url' => $base_url .'/'. drupal_get_path('module', 'accessible_content') .'/images/test-demo-severe.png'));
+}
+
+/**
+*  Form callback for accessibility/check. This renders a form based on posted HTML and GUIDELINE values
+*/
+function accessible_content_wysiwyg_form() {
+  drupal_add_css(drupal_get_path('module', 'accessible_content') .'/accessible_content.css');
+  $results = accessible_content_check_string($_POST['html'], $_POST['guideline']);
+
+  return accessible_content_accessibility_report($results);
+}
+
+/**
+*  Implementation of hook_theme_registry_alter
+*/
+function accessible_content_wysiwyg_theme_registry_alter(&$theme_registry) {
+  $theme_registry['textarea']['function'] = 'accessible_content_wysiwyg_textarea';
+}
+
+/**
+*  Theme override for text area
+*/
+function accessible_content_wysiwyg_textarea($element) {
+  $node = menu_get_object();
+  if (!$node || !variable_get($node->type .'_ac_enable', 0)) {
+    return theme_textarea($element);
+  }
+  drupal_add_css(drupal_get_path('module', 'accessible_content_wysiwyg') .'/accessible_content_wysiwyg.css');
+  drupal_add_js(drupal_get_path('module', 'accessible_content_wysiwyg') .'/accessible_content_wysiwyg.js');
+  return theme_textarea($element) .'<p>'.
+      l('Check accessibility', 'accessibility/check', array('attributes' => array(
+        'class' => 'ac_wysiwyg_link',
+        'guideline' => variable_get($node->type .'_accessibility_guideline_nid', 0),
+        'textarea' => $element['#id'],
+      ))) .' | '.
+      l('Highlight accessibility Issues', 'accessibility/check/highlight', array('attributes' => array(
+        'class' => 'ac_wysiwyg_link ac_wysiwyg_link_highlight',
+        'guideline' => variable_get($node->type .'_accessibility_guideline_nid', 0),
+        'textarea' => $element['#id'],
+      ))) .'</p>';
+}
+
+/**
+*	Implementation of hook_nodeapi
+*/
+function accessible_content_wysiwyg_form_alter(&$form, $form_state, $form_id) {
+	if($form_id == $form['#node']->type .'_node_form') {
+	  drupal_add_js('var nodeGuideline = '. variable_get($form['#node']->type .'_accessibility_guideline_nid', 0) .';', 'inline');
+	}
+}
+/**
+*  Implementation of hook_perm()
+*/
+function accessible_content_wysiwyg_perm() {
+  return array('use wysiwyg accessibility');
+}
+
+function accessible_content_wysiwyg_wysiwyg_include_directory($type) {
+  switch ($type) {
+    case 'plugins':
+      return $type;
+  }
+}
+
+/**
+*	Implementation of hook_wysiwyg_plugin()
+*
+function accessible_content_wysiwyg_wysiwyg_plugin($editor) {
+  return array(
+        'accessibility' => array(
+          'type' => 'external',
+          'title' => t('Check Accessibility'),
+          'description' => t('Checks the accessibility of the editor content'),
+          'path' => drupal_get_path('module', 'accessible_content_wysiwyg') . '/plugin/tinymce',
+          'icon' => drupal_get_path('module', 'accessible_content_wysiwyg') . '/plugins/accessibility/images/accessibility.gif',
+          'buttons' => array('accessibility' => t('Check Accessibility')),
+        ),
+      );
+}*/

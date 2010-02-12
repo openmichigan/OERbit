@@ -1,0 +1,233 @@
+# $Id: de.po,v 1.4 2009/12/16 03:40:11 rdeboer Exp $
+#
+# German translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  module_grants_theme.inc,v 1.8 2009/07/03 06:37:27 rdeboer
+#  module_grants.module,v 1.30 2009/07/22 03:54:27 rdeboer
+#  module_grants.info,v 1.5 2009/06/01 01:14:28 rdeboer
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-10-01 13:09+0200\n"
+"PO-Revision-Date: 2009-10-01 13:29+0100\n"
+"Last-Translator: Konrad Tadesse <Konrad.Tadesse@Pixelpark.com>\n"
+"Language-Team: German <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: module_grants_theme.inc:44
+msgid "Title"
+msgstr "Titel"
+
+#: module_grants_theme.inc:45
+msgid "Type"
+msgstr "Typ"
+
+#: module_grants_theme.inc:46
+msgid "Creator"
+msgstr "Autor"
+
+#: module_grants_theme.inc:47
+msgid "Last updated"
+msgstr "Zuletzt aktualisiert"
+
+#: module_grants_theme.inc:48
+msgid "By"
+msgstr "Von"
+
+#: module_grants_theme.inc:49
+msgid "Published?"
+msgstr "Veröffentlicht?"
+
+#: module_grants_theme.inc:54
+msgid "Term"
+msgstr "Term"
+
+#: module_grants_theme.inc:57
+msgid "Workflow state"
+msgstr "Status Arbeitsablauf"
+
+#: module_grants_theme.inc:68
+msgid "Yes"
+msgstr "Ja"
+
+#: module_grants_theme.inc:68
+msgid "No"
+msgstr "Nein"
+
+#: module_grants_theme.inc:74
+msgid "No state"
+msgstr "Kein Status"
+
+#: module_grants_theme.inc:81
+msgid "No content found."
+msgstr "Kein Inhalt gefunden."
+
+#: module_grants.module:25
+msgid "Showing all content <em>you created</em> and still have at least view access to, filtered by publication status."
+msgstr "Anzeige aller Inhalte, die Sie zu mindestens einsehen können und zuletzt verändert hatten. (Sortierung nach Veröffentlichungsstatus)"
+
+#: module_grants.module:28
+msgid "Showing all content <em>you created</em> and still have at least view access to."
+msgstr "Anzeige aller Inhalte, die Sie zu mindestens einsehen können und editiert hatten."
+
+#: module_grants.module:34
+msgid "Showing all content <em>you last modified</em> and still have at least view access to, filtered by publication status."
+msgstr "Anzeige aller Inhalte, die Sie zu mindestens einsehen können und zuletzt verändert hatten. (Sortierung nach Veröffentlichungsstatus)"
+
+#: module_grants.module:37
+msgid "Showing all content <em>you last modified</em> and still have at least view access to."
+msgstr "Anzeige aller Inhalte, die Sie zu mindestens einsehen können und zuletzt verändert hatten."
+
+#: module_grants.module:43
+msgid "Showing all content you can <em>edit</em>, filtered by publication status."
+msgstr "Anzeige aller Inhalte, die Sie  editiert hatten, gefiltert nach Veröffentlichungsstatus"
+
+#: module_grants.module:46
+msgid "Showing all content you can <em>edit</em>."
+msgstr "Anzeige aller Inhalte, die Sie editieren können."
+
+#: module_grants.module:51
+msgid "Showing all content you have at least <em>view</em> access to, filtered by publication status."
+msgstr "Anzeige aller Inhalte, die Sie zumindestens einsehen können, gefiltert nach Veröffentlichungsstatus"
+
+#: module_grants.module:54
+msgid "Showing all content you have at least <em>view</em> access to."
+msgstr "Anzeige aller Inhalte, die Sie zumindestens <em>einsehen</em> können."
+
+#: module_grants.module:312
+msgid "Configure behaviour when multiple content access modules are enabled"
+msgstr "Verhalten einstellen wenn 'multiple content access' Module aktiviert sind."
+
+#: module_grants.module:316
+msgid "Interpret absence of access grants as a \"don't care\", rather than a \"deny access\"."
+msgstr "Die Abwesenheit von Zugangsgarantien ehe wie \"egal\" als als \"Zugang verbieten\" interpretieren."
+
+#: module_grants.module:318
+msgid "Only applies when two or more content access modules are enabled and one of the modules makes no statement about a node that is about to be accessed. If this box is checked, then a content access module saying nothing (via the node_access table) about the node in question will be deemed to be ok with the user having access to it. If not checked (i.e. \"strict\"), then a module saying nothing will be taken as a \"deny access\"."
+msgstr ""
+
+#: module_grants.module:322
+msgid "OR rather than AND the access grants from multiple modules, i.e. behave like core does (for published content)."
+msgstr "Für publizierte Inhalte wie die Drupal-Core verhalten also eher als ODER im Gegensatz zu UND die Zugriffsrechte von mehreren Modulen."
+
+#: module_grants.module:324
+msgid "Note that normally core behaviour is <strong>not</strong> what you want -- it is the reason Module Grants was written in the first place."
+msgstr "Beachte: Normalerweise ist es NICHT das Drupal-Core-Verhalten das Sie wünschen - das ist ja der Grund warum das Modul 'Grants' erstellt worden ist."
+
+#: module_grants.module:437
+msgid "Delete all revisions"
+msgstr "Alle Versionen löschen"
+
+#: module_grants.module:719
+msgid "You have permission to publish content of types: %moderated_types."
+msgstr "Sie haben das Recht den Inhalt der Seitentypen:: %moderated_types <em>zu publizieren</em>."
+
+#: module_grants.module:724
+msgid "You have permission to <em>unpublish</em> content of types: %moderated_types."
+msgstr "Sie haben das Recht den Inhalt der Seitentypen:: %moderated_types <em>zurück zuziehen</em>."
+
+#: module_grants.module:727
+msgid "You have permission to <em>(re)publish</em> content of types: %moderated_types."
+msgstr "Sie haben das Recht den Inhalt der Seitentypen:: %moderated_types <em>wieder zu publizieren</em>."
+
+#: module_grants.module:772
+msgid "View current"
+msgstr "Aktuell anzeigen"
+
+#: module_grants.module:772
+msgid "View"
+msgstr "Anzeigen"
+
+#: module_grants.module:776
+msgid "Edit current"
+msgstr "Aktuell bearbeiten"
+
+#: module_grants.module:776
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: module_grants.module:64
+msgid "access I Created tab"
+msgstr "Recht für: 'von mir erstellt' Tab"
+
+#: module_grants.module:64
+msgid "access I Last Modified tab"
+msgstr "Recht für: 'von mir zuletzt modifiziert' Tab"
+
+#: module_grants.module:64
+msgid "access I Can Edit tab"
+msgstr "Recht für: 'Editierbar' Tab"
+
+#: module_grants.module:64
+msgid "access I Can View tab"
+msgstr "Recht für: 'Sichtbar' Tab"
+
+#: module_grants.module:65
+msgid "access Published tab"
+msgstr "Recht für: 'Publiziert' Tab"
+
+#: module_grants.module:65
+msgid "access Unpublished tab"
+msgstr "Recht für: 'Unveröffentlicht' Tab"
+
+#: module_grants.module:65
+msgid "access All tab"
+msgstr "Zugang zu 'Alles' Tab"
+
+#: module_grants.module:448
+msgid "accessible-content"
+msgstr "accessible-content"
+
+#: module_grants.module:81
+msgid "Accessible content"
+msgstr "Editierbare Inhalte"
+
+#: module_grants.module:91
+msgid "I created"
+msgstr "Persönlich erstellt"
+
+#: module_grants.module:100;138;175;212
+msgid "Published"
+msgstr "Veröffentlicht"
+
+#: module_grants.module:109;146;183;220
+msgid "Unpublished"
+msgstr "Unveröffentlicht"
+
+#: module_grants.module:118;155;192;229
+msgid "All"
+msgstr "Alle"
+
+#: module_grants.module:129
+msgid "I last modified"
+msgstr "modifiziert"
+
+#: module_grants.module:166
+msgid "I can edit"
+msgstr "Editierbar"
+
+#: module_grants.module:203
+msgid "I can view"
+msgstr "Sichtbar"
+
+#: module_grants.module:239
+msgid "Module grants"
+msgstr "Module grants (Versonierungen)"
+
+#: module_grants.module:240
+msgid "Configure how node access modules interact."
+msgstr "Einstellen wie 'node access' Modulen interagieren."
+
+#: module_grants.info:0
+msgid "Module Grants"
+msgstr "Module Grants (Versionierung)"
+
+#: module_grants.info:0
+msgid "Enables access control for unpublished content and allows modules that operate on access grants to work together in the expected way."
+msgstr "Aktiviert eine Zugriffssteuerung für unveröffentlichten Inhalt und erlaubt Modulen, die mit den Zugriffsrechten arbeiten, auf die erwartete Weise zusammenzuarbeiten."
+

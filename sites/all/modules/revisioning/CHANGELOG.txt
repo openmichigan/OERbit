@@ -1,0 +1,107 @@
+$Id: CHANGELOG.txt,v 1.28 2010/01/13 00:36:14 rdeboer Exp $
+
+Changelog for Revisioning module for drupal 6.
+
+6.x-1.0
+=======
+Initial drupal 6 release.
+
+6.x-1.1
+=======
+o No error when Trigger module isn't installed (thanks: herzi)
+o Improved translatability.
+o Fixed &$ ref in line 350. (thanks: blcompton)
+
+6.x-1.2
+=======
+o Only display content info when NO teaser is requested via hook_node_api('view') (patch by Ogredude)
+o Fixed broken link shown in watchdog message when trigger is invoking action.
+o Added German translations and .pot file (thanks: rastatt)
+
+6.x-1.3
+=======
+o Added link to compare revisions when Diff module is enabled
+o revisioning_node_api() won't intercept URI's that don't start with "/node/%"
+o Don't show 'Show all revisions' link when 'Revisions' tab is also visible
+
+6.x-1.4
+=======
+o Further improved translatability (requested by herzi, #420258)
+
+6.x-2.0
+=======
+o Change of look & feel w.r.t to links above content.
+o Made theming more flexible; use CSS
+
+6.x-2.1
+=======
+o Tidied up theming. Removed obsolete file.
+
+6.x-2.2
+=======
+o Removed revisioning operations from authenticated user's home page (occurred
+  for themes employing engines).
+
+6.x-2.3
+=======
+o Don't display horizontal rule when submenu is empty.
+o Styled current and pending revisions in revisions summary table.
+o Side-by-side comparison function when Diff module is enabled.
+o Fix triggering of "change workflow action" in Workflow module [thanks: easp]
+o Respect admin theme for content editing when ticked on admin settings page [thanks james.cartledge]
+
+6.x-2.4
+=======
+o Allow both 'node' and 'user' context token placeholders to be used with
+  publish, revert and unpublish triggers (see tutorial drupal.org/node/408968)
+
+6.x-2.5
+=======
+o [#465890] Option to create new revisions at every save, as opposed to only
+  when the working copy is NOT pending (default) [thanks: David Stosik]
+
+6.x-2.6
+=======
+o Update of German translations [thanks: rastatt]
+o #500864: Use menu local tasks for revision links and actions., stage 1 (thanks: crea)
+o Bug fix: #505724: User is taken to //node/%nid/revisions after editing node (thanks: dboulet)
+o Bug fix: #499126: Query string 'destination' overrides diff redirect path (thanks: dboulet)
+o Bug fix: #499820: HTML entities are not displayed correctly in node titles in messages (thanks: dboulet)
+o Bug fix: #415012: Do not show revisioning info on teaser view
+o Bug fix: #416998: Revisioning takes over all "Edit" in all content
+o Bug fix: #484774: Only Show Revisioning Sublinks if Revisions Enabled for That Content Type
+o Feature: returned Delete button: #482184: Who stole my delete button !
+o Feature: Pending revisions alert: a small "block" a moderator can place anywhere on the screen showing the latest (or oldest) content titles currently awaiting review and publication. Gets updated automatically as the moderator clicks around the screen (even when navigating to pages not related to moderation).
+o Feature: #428354: Tab for listing author's content (via latest version of Module Grants)
+o Feature: Auto-publication upon save: new option for moderators, saving them another couple of clicks; see also: #470308: New content remains unpublished for users with Publish permissions
+o Feature: #481018: Revisioning triggers are only listed for user #1
+o Feature: revisioning for user profiles: install Content Profile; see #480618: Revisioning for content types set as profiles?
+
+6.x-2.7
+=======
+o [#513078]:introductiong 'view own revisions' permission.
+
+6.x-3.1
+=======
+o Rules integration (thanks: crea)
+o Rules integration: added current and target revision author [#575880] (thanks: crea).
+o Avoid same message being shown twice [#536826] (thanks: dboulet & crea)
+o French translation (thanks: chmoindron), German translation (thanks: tadesse)
+o [#549588] (thanks: crea)
+o [#599802] (thanks: Jaza)
+o [#566292]
+o "view revisions of any/own content type" [#549414] (thanks: crea)
+o [#611988]
+o [#630090]
+o [#666546]
+o [#598686]
+o [#633114]
+o [#585002]
+o [#628444]
+o [#602146]
+o Updated README.txt
+
+6.x-3.4
+=======
+Refactored for better efficiency and integratability, see [#642962]
+

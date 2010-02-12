@@ -1,0 +1,127 @@
+<?php
+// $Id: accessible_content.test,v 1.1 2009/12/02 16:34:45 kevee Exp $
+
+/**
+*  @file 
+*  Tests for the SimpleTest module
+*/
+class AccessibleContentNodeTypesTestCase extends DrupalWebTestCase {
+  
+  /**
+  *  Implementation of getInfo()
+  */
+  public static function getInfo() {
+    return array(
+      'name' => 'Node Types',
+      'description' => 'Checks Accessible Content Module that it creates the node types.',
+      'group' => 'Accessible Content',
+    );
+  }
+  
+  /**
+  *  Implementation of setUp()
+  */
+  public function setUp() {
+    parent::setUp('accessible_content');  // Enable any modules required for the test
+    // Create and log in our user
+    $privileged_user = $this->drupalCreateUser(array('access accessibility guidelines',
+                                                     'access accessibility tests',
+                                                     'create accessibility guidelines',
+                                                     'edit accessibility guidelines',
+                                                     'delete accessibility guidelines',
+                                                     'delete accessibility tests',
+                                                     'create accessibility tests',
+                                                     'edit accessibility tests',
+                                                     'view accessibility information'));
+    $this->drupalLogin($privileged_user);
+  }
+  
+  /**
+  *  Test that a user can create a guideline
+  */
+  public function testAccessibleContentGuidelineCreate() {
+    // Create node to edit.
+    $edit = array();
+    $edit['title'] = $this->randomName(8);
+    $edit['body'] = $this->randomName(16);
+   
+    $this->drupalPost('node/add/accessibility-guideline', $edit, t('Save'));
+    $this->assertText(t('Accessibility Guideline @title has been created.', array('@title' => $edit['title'])));
+
+  }
+
+  /**
+  *  Test that a user can edit a guideline
+  */
+  public function testAccessibleContentGuidelineEdit() {
+    $guideline = array(
+      'type' => 'accessibility_guideline',
+      'title' => $this->randomName(32),
+      'body' => $this->randomName(120),
+    );
+    $node = $this->drupalCreateNode($guideline);
+    
+    $edit_path = "node/{$node->nid}/edit";
+    $this->drupalGet($edit_path);
+    $this->assertFieldById('edit-body', '', 'Checking that the body field exists');
+  }
+}
+
+class AccessibleContentAccessibilityTestTestCase extends DrupalWebTestCase {
+  
+  /**
+  *  Implementation of getInfo()
+  */
+  public static function getInfo() {
+    return array(
+      'name' => 'Accessibility Test',
+      'description' => 'Checks that an accessibility test will run on the node type page',
+      'group' => 'Accessible Content',
+    );
+  }
+  
+  /**
+  *  Implementation of setUp()
+  */
+  public function setUp() {
+    parent::setUp('accessible_content');  // Enable any modules required for the test
+    // Create and log in our user
+    $privileged_user = $this->drupalCreateUser(array('create page content',
+                                                     'administer content types',
+                                                     'view accessibility information'));
+    $this->drupalLogin($privileged_user);
+  }
+  
+  /**
+  *  Tests that the accessibility options in the node type edit form exists
+  */
+  public function testUserCanSetAccessibility() {
+    $edit_path = "admin/content/node-type/page";
+    $this->drupalGet($edit_path);
+    $this->assertFieldById('edit-ac-enabled', '', 'Checking that the accessibility option exists');
+  } 
+  
+  /**
+  *  Turns on accessibility options for the page node type
+  */
+  public function testPageNodeAccessibilty() {
+    $edit_path = "admin/content/node-type/page";
+    $guideline = $this->drupalGetNodeByTitle('WCAG 1.0 (AAA)');
+    $options = array('ac_enabled' => 1,
+                     'ac_fail' => 1,
+                     'accessibility_guideline' => $guideline->nid);
+    $this->drupalPost($edit_path, $options, t('Save content type'));
+    $this->assertText(t('The content type Page has been updated.'));
+    $node_title = $this->randomName(32);
+    $langcode = FIELD_LANGUAGE_NONE;
+    $body_key = "body[$langcode][0][value]";
+    $page = array(
+      'title' => $node_title,
+      'body' => '<img src="rex.jpg">This is an image with no alt text',
+    );
+    $this->drupalPost('node/add/page', $page, t('Save'));
+    $node = $this->drupalGetNodeByTitle($node_title);
+    $this->assertTrue(is_array($node->accessibility_totals));
+  }
+
+}

@@ -1,0 +1,123 @@
+<?php
+// $Id: genericplayers.module,v 1.3 2008/10/03 23:20:32 stuartgreenfield Exp $
+
+/**
+ *
+ * Support for generic Flash player for SWF Tools
+ *
+ * Please note: This module does not need to be installed (hence no .info file).
+ * It is included automatically by swftools.module. It is uses the ".module" naming
+ * syntax because it serves as a tutorial module for creating your own Flash Player integration
+ * module.
+ */
+
+/**
+ * Implementation of swftools_methods hook
+ * Report methods back to SWF Tools
+ */
+
+define('GENERIC_FLV', 'generic_flv'); // Play an flv file
+define('GENERIC_MP3', 'generic_mp3'); // Play an mp3.
+
+function genericplayers_swftools_methods() {
+
+  $methods = array();
+
+  $mp3_player = array (
+    'name'        => GENERIC_MP3,
+    'module'      => 'genericplayers',
+    'file'        => 'file_url', // Define which flashvar to assign a 'file to play' variable.
+    'shared_file' => 'generic/generic_mp3.swf',
+    'title'       => t('Generic MP3 player'),
+  );
+
+  $methods[SWFTOOLS_MP3_DISPLAY][GENERIC_MP3] = $mp3_player;
+
+  $flv_player = array (
+    'name'        => GENERIC_FLV,
+    'module'      => 'genericplayers',
+    'file'        => 'file_url', // Define which flashvar to assign a 'file to play' variable.
+    'shared_file' => 'generic/generic_flv.swf',
+    'title'       => t('Generic FLV player'),
+  );
+
+  $methods[SWFTOOLS_FLV_DISPLAY][GENERIC_FLV] = $flv_player;
+
+  return $methods;
+}
+
+
+/**
+ * Implementation of hook_menu(). Items such as access control is set by swftools automatically
+ * This is not a "true" hook, but the contents returned by this function are merged with
+ * swftools_menu to provide the complete menu structure for SWF Tools
+ */
+function genericplayers_menu() {
+
+  $items = array();
+
+  //$items['admin/media/swf/generic'] = array(
+  $items['admin/settings/swftools/generic'] = array(
+    'title' => 'Generic players',
+    'description' => 'Basic Flash players that ship with SWF Tools',
+    'access arguments' => array('administer flash'),
+    'weight' => -1,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('swftools_admin_generic_form'),
+  );
+  return $items;
+}
+
+
+/**
+ * Implementation of swftools_admin_hook_form.
+ * Return the system settings page for generic players
+ */
+function swftools_admin_generic_form() {
+
+  $form = array();
+
+  $methods = swftools_methods_available(SWFTOOLS_EMBED_METHOD);
+
+  $form['generic_mp3_autostart'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('generic_mp3_autostart', FALSE),
+    '#title' => t('Autostart MP3 files'),
+    '#description' => t('Automatically start playing MP3 files.'),
+  );
+
+  $form['generic_flv_autostart'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('generic_flv_autostart', TRUE),
+    '#title' => t('Autostart FLV files'),
+    '#disabled' => TRUE, // Generic player always autoplays
+    '#description' => t('Automatically start playing FLV files.<br />
+                         This option cannot be changed as the generic player
+                         always automatically starts playing FLV files.
+                        '),
+  );
+
+  return system_settings_form($form);
+}
+
+
+/**
+ * Implementation of swftools_flashvars hook.
+ *
+ */
+function genericplayers_swftools_flashvars($action, &$methods, &$vars) {
+  // All we need to do is assign the 'file_url' variable to our preferred place on the flashvars array.
+  if ($vars->othervars['file_url']) {
+    $vars->flashvars['file_url'] = $vars->othervars['file_url'];
+  }
+
+  switch ($action) {
+    case SWFTOOLS_MP3_DISPLAY:
+      $vars->flashvars['autostart'] = (isset($vars->flashvars['autostart'])) ? ($vars->flashvars['autostart']) : variable_get('generic_mp3_autostart', FALSE) ? 'true' : 'false';
+      break;
+    case SWFTOOLS_FLV_DISPLAY:
+      $vars->flashvars['autostart'] = (isset($vars->flashvars['autostart'])) ? ($vars->flashvars['autostart']) : variable_get('generic_flv_autostart', FALSE) ? 'true' : 'false';
+      break;
+  }
+  return $vars->flashvars;
+}

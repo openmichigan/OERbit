@@ -1,0 +1,11 @@
+; $Id: linkchecker.info,v 1.2.2.2 2009/01/25 23:41:02 hass Exp $
+name = Link checker
+description = "Periodically checks for broken links in node types, blocks and cck fields and reports the results."
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-11-24
+version = "6.x-2.4"
+core = "6.x"
+project = "linkchecker"
+datestamp = "1259090342"
+

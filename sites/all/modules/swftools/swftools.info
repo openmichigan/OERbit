@@ -1,0 +1,12 @@
+; $Id: swftools.info,v 1.3 2008/09/07 19:42:14 stuartgreenfield Exp $
+name =  SWF Tools
+description = This is the core component of SWF Tools and provides a common API for handling Adobe Flash related media.
+package = SWF Tools
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-04-27
+version = "6.x-2.5"
+core = "6.x"
+project = "swftools"
+datestamp = "1240829764"
+

@@ -1,0 +1,91 @@
+/* $Id: accessible_content.css,v 1.1.2.3 2010/01/08 20:07:26 kevee Exp $ */
+div.ac-test-ok h4 {
+  color: #0e6e21;
+}
+
+div.ac-test-error h4 {
+  color: #722e32;
+}
+
+div.ac-test img {
+  float: left;
+  margin-right: 10px;
+}
+
+.ac-label {
+  display: block;
+  padding: 3px;
+  background-repeat: no-repeat;
+  margin-right: 10px;
+  font-weight: bold;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+
+.ac-severe {
+  background-color: #751421;
+  color: white;
+  font-weight: bold;
+}
+
+.ac-moderate {
+  color: black;
+  background-color: #f2e128;
+  font-weight: bold;
+}
+
+.ac-suggestion {
+  color: white;
+  background-color: #0A610E;
+  font-weight: bold;
+}
+
+.ac-test .highlight {
+  float: right;
+  padding-left: 18px;
+  background-position: left top;
+  background-repeat: no-repeat;
+  background-image: url(images/highlight.png);
+}
+
+.ac-test {
+  border-bottom-color: #aaaaaa;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.ac-block-total {
+  float: right;
+  margin-left: 10px;
+}
+
+.accessibility-error-severe {
+  border-color: #ed031d;
+  border-style: solid;
+  border-width: 2px;
+}
+
+.accessibility-error-moderate {
+  border-color: #dfa053;
+  border-style: dotted;
+  border-width: 2px;
+}
+
+.accessibility-error-suggestion {
+  border-color: #12ad1a;
+  border-style: dashed;
+  border-width: 2px;
+}
+
+div.test-overriden {
+  background-color: #e5e5e5;
+  padding: 5px;
+}
+
+div.test-overriden h6 {
+  font-weight: bold;
+  font-style: italic;
+}
+

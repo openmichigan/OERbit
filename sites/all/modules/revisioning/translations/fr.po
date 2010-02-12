@@ -1,0 +1,388 @@
+# $Id$
+#
+# French translation of revisioning module for Drupal (general)
+# Copyright 2009 Charles-Hubert MOINDRON <chmoindron@gmail.com>
+# Generated from files:
+#  revisioning_theme.inc,v 1.24 2009/07/09 06:44:40 rdeboer
+#  revisioning_triggers_actions.inc,v 1.8 2009/06/01 03:37:33 rdeboer
+#  revisioning.module,v 1.44 2009/07/23 00:07:14 rdeboer
+#  revisioning.info,v 1.10 2009/06/01 01:17:51 rdeboer
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Drupal revisioning v6.x-2.7\n"
+"POT-Creation-Date: 2009-10-02 12:28+0200\n"
+"PO-Revision-Date: 2009-10-06 14:50+0200\n"
+"Last-Translator: Charles-Hubert MOINDRON <chmoindron@gmail.com>\n"
+"Language-Team: French <chmoindron@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: revisioning_theme.inc:41
+msgid "Revisions for %title"
+msgstr "Révisions pour %title"
+
+#: revisioning_theme.inc:78
+msgid "Saved !date by !username"
+msgstr "Enregistré !date par !username"
+
+#: revisioning_theme.inc:93
+msgid "Published"
+msgstr "Publié"
+
+#: revisioning_theme.inc:93
+msgid "Unpublished"
+msgstr "Non publié"
+
+#: revisioning_theme.inc:111
+msgid "Compare"
+msgstr "Comparer"
+
+#: revisioning_theme.inc:128
+msgid "Please select 2 revisions rather than !count"
+msgstr "Choisissez 2 versions plutôt que !count"
+
+#: revisioning_theme.inc:146
+msgid "Comparing revision #!revision2 against revision #!revision1"
+msgstr "Comparaison de la révision #!revision2 par rapport à la révision #!revision1"
+
+#: revisioning_theme.inc:187
+msgid "Revision"
+msgstr "Révision"
+
+#: revisioning_theme.inc:192
+msgid "Term"
+msgstr "Terme"
+
+#: revisioning_theme.inc:194
+msgid "Status"
+msgstr "Statut"
+
+#: revisioning_theme.inc:213
+msgid "in draft/pending publication"
+msgstr "brouillons/en attente de publication"
+
+#: revisioning_theme.inc:216
+msgid "current revision (published)"
+msgstr "révision actuelle (publiée)"
+
+#: revisioning_theme.inc:216
+msgid "archived"
+msgstr "archivé"
+
+#: revisioning_theme.inc:258
+msgid "!num_revisions pending"
+msgstr "!num_revisions en attente"
+
+#: revisioning_theme.inc:89
+msgid "@publication_status @content_type %title has only one revision"
+msgid_plural "@publication_status @content_type %title has @count revisions."
+msgstr[0] "@content_type %title (@publication_status) n'a qu'une révision"
+msgstr[1] "@content_type %title (@publication_status) a @count révisions."
+
+#: revisioning_theme.inc:259
+msgid "1 revision"
+msgid_plural "@count revisions"
+msgstr[0] "1 révision"
+msgstr[1] "@count révisions"
+
+#: revisioning_triggers_actions.inc:20
+msgid "When publishing a pending revision"
+msgstr "À la publication d'une révision en attente"
+
+#: revisioning_triggers_actions.inc:23
+msgid "When reverting to an archived revision"
+msgstr "Au retour à une révision archivée"
+
+#: revisioning_triggers_actions.inc:26
+msgid "When unpublishing the current revision"
+msgstr "À la dépublication de la révision actuelle"
+
+#: revisioning_triggers_actions.inc:74
+msgid "Publish the most recent pending revision"
+msgstr "Publier la version en attente la plus récente"
+
+#: revisioning_triggers_actions.inc:93 revisioning.module:709;771
+msgid "view"
+msgstr "voir"
+
+#: revisioning_triggers_actions.inc:50;91
+msgid "revisioning"
+msgstr "versionnage"
+
+#: revisioning_triggers_actions.inc:50
+msgid "%op trigger is actioning \"@aids\""
+msgstr "Le déclencheur %op actionne \"@aids\""
+
+#: revisioning_triggers_actions.inc:91
+msgid "Executing publish_latest_revision action for @type %title"
+msgstr "Exécution de l'action publish_latest_revision pour @type %title"
+
+#: revisioning.module:25
+msgid "To edit, publish or delete one of the revisions below, click on its saved date."
+msgstr "Pour éditer, publier ou supprimer l'une des révisions ci-dessous, cliquez sur sa date d'enregistrement."
+
+#: revisioning.module:28
+msgid "Below you can assign actions to run when certain publication-related events happen. For example, you could send an e-mail to an author when their content is pubished."
+msgstr "Ci-dessous, vous pouvez assigner des actions à lancer quand certains événements liés à la publication surviennent. Par exemple, vous pouvez envoyer un email à un auteur quand son contenu est publié."
+
+#: revisioning.module:31
+msgid "Showing all <em>pending</em> content <em>you created</em> and still have at least view access to."
+msgstr "Affichage de tout le contenu <em>en attente</em> que <em>vous avez créé</em> et que vous pouvez encore voir."
+
+#: revisioning.module:34
+msgid "Showing all <em>pending</em> content <em>you last modified</em> and still have at least view access to."
+msgstr "Affichage de tout le contenu <em>en attente</em> que <em>vous êtes le (la) dernier(ère) à avoir modifié</em> et que vous pouvez encore voir."
+
+#: revisioning.module:37
+msgid "Showing all <em>pending</em> content you can <em>edit</em>."
+msgstr "Affichage de tout le contenu <em>en attente</em> que vous pouvez <em>éditer</em>."
+
+#: revisioning.module:40
+msgid "Showing all content you have at least <em>view</em> access to."
+msgstr "Affichage de tout le contenu que vous pouvez au moins <em>voir</em>."
+
+#: revisioning.module:441
+msgid "New revision in draft, pending moderation"
+msgstr "Nouvelle révision en brouillon, en attente de modération"
+
+#: revisioning.module:491;669;696
+msgid "Cancel"
+msgstr "Annuler"
+
+#: revisioning.module:503
+msgid "New revision in draft, pending moderation (requires \"Create new revision\")"
+msgstr "Nouvelle révision en brouillon, en attente de modération (nécessite \"Créer une nouvelle révision\")"
+
+#: revisioning.module:508
+msgid "New revision in draft"
+msgstr "Nouvelle révision en brouillon"
+
+#: revisioning.module:513
+msgid "Create new revision"
+msgstr "Créer une nouvelle révision"
+
+#: revisioning.module:516
+msgid "Only when saving %type content that is not already in draft/pending moderation"
+msgstr "Seulement à l'enregistrement de contenu %type qui n'est pas déjà en brouillon ou en attente de modération"
+
+#: revisioning.module:517
+msgid "Every time %type content is updated, even when saving content in draft/pending moderation"
+msgstr "Chaque fois qu'un contenu %type est mis à jour, même à l'enregistrement de contenu en brouillon ou en attente de modération"
+
+#: revisioning.module:519
+msgid "Use less disk space and avoid cluttering your revisions list. With the first option ticked, modifications are saved to the same copy (i.e. no additional revisions are created) until the content is published."
+msgstr "Utilise moins d'espace disque et évite d'encombrer la liste des révisions. Avec la première option cochée, les modifications sont enregistrées (aucune révision supplémentaire n'est créée) jusqu'à ce que le contenu soit publié."
+
+#: revisioning.module:522
+msgid "Auto-publish drafts of type %type (for moderators)"
+msgstr "Publier automatiquement les brouillons de type %type (pour les modérateurs)"
+
+#: revisioning.module:525
+msgid "If this box is ticked and the logged-in user has the \"publish revisions\" permission, then any draft of type %type is published immeditaley upon saving, without further review."
+msgstr "Si cette case est cochée et que l'utilisateur connecté a le droit \"publier les révisions\", tous les brouillons de type %type seront publiés à la sauvegarde, sans vérification supplémentaire."
+
+#: revisioning.module:575
+msgid "Auto-publishing initial draft as the first revision."
+msgstr "Auto-publication du brouillon initial en tant que première révision."
+
+#: revisioning.module:582
+msgid "Initial revision created and published."
+msgstr "Version initiale créée et publiée."
+
+#: revisioning.module:585
+msgid "Initial draft created, pending publication."
+msgstr "Brouillon initial créé, en attente de publication."
+
+#: revisioning.module:601
+msgid "Please note there is one revision more recent than the one you are about to edit."
+msgstr "Veuillez noter qu'il y a une révision plus récente que celle que vous vous apprêtez à éditer."
+
+#: revisioning.module:604
+msgid "Please note there are !count revisions more recent than the one you are about to edit."
+msgstr "Veuillez noter qu'il y a !count révisions plus récentes que celle que vous vous apprêtez à éditer."
+
+#: revisioning.module:614
+msgid "Updating existing copy, not creating new revision as this one is still pending."
+msgstr "Mise à jour de la copie existante, sans création d'une nouvelle révision car celle-ci est encore en attente."
+
+#: revisioning.module:620
+msgid "Auto-publishing this revision."
+msgstr "Auto-publication de cette révision."
+
+#: revisioning.module:639
+msgid "Your changes are now current as moderation is switched off for this content type."
+msgstr "Vos changements sont maintenant validés car la modération n'est pas activée pour ce type de contenu."
+
+#: revisioning.module:666
+msgid "Are you sure you want to publish this revision of %title?"
+msgstr "Êtes-vous sûr(e) de vouloir publier cette révision de %title ?"
+
+#: revisioning.module:668
+msgid "Publishing this revision will make it visible to the public."
+msgstr "Publier cette révision la rendra visible au public."
+
+#: revisioning.module:669;927
+msgid "Publish"
+msgstr "Publier"
+
+#: revisioning.module:693
+msgid "Are you sure you want to unpublish %title?"
+msgstr "Êtes-vous sûr(e) de vouloir dépublier %title ?"
+
+#: revisioning.module:695
+msgid "Unpublishing will remove this content from public view."
+msgstr "Dépublier retirera ce contenu de la vue du public."
+
+#: revisioning.module:696
+msgid "Unpublish"
+msgstr "Dépublier"
+
+#: revisioning.module:708
+msgid "%title has been unpublished."
+msgstr "%title a été dépublié."
+
+#: revisioning.module:723
+msgid "There is a pending revision. Are you sure you want to revert to an archived revision?"
+msgstr "Il y a une révision en attente. Êtes-vous sûr(e) de vouloir revenir à une version archivée ?"
+
+#: revisioning.module:770
+msgid "Revision has been published."
+msgstr "La révision a été publiée."
+
+#: revisioning.module:794
+msgid "\"!title\" has no pending revision to be published."
+msgstr "\"!title\" n'a pas de révision en attente à publier."
+
+#: revisioning.module:902
+msgid "Displaying <em>pending</em> revision of @content_type %title, last modified by !author on @date"
+msgstr "Affichage de la révision <em>en attente</em> de @content_type %title, modifié pour la dernière fois par !author le @date"
+
+#: revisioning.module:906
+msgid "Displaying <em>current, published</em> revision of @content_type %title, last modified by !author on @date"
+msgstr "Affichage de la version <em>actuelle et publiée</em> de @content_type %title, modifié pour la dernière fois par !author le @date"
+
+#: revisioning.module:907
+msgid "Displaying <em>archived</em> revision of @content_type %title, last modified by !author on @date"
+msgstr "Affichage de la révision <em>archivée</em> de @content_type %title, modifié pour la dernière fois par !author le @date"
+
+#: revisioning.module:932
+msgid "Unpublish current revision"
+msgstr "Dépublier la révision actuelle"
+
+#: revisioning.module:937
+msgid "Delete both revisions"
+msgstr "Supprimer les deux révisions"
+
+#: revisioning.module:993
+msgid "Node revision ID"
+msgstr "ID de révision du noeud"
+
+#: revisioning.module:1011
+msgid "Pending revisions"
+msgstr "Révisions en attente"
+
+#: revisioning.module:1020
+msgid "Maximum number of pending revisions displayed"
+msgstr "Nombre maximum de révisions en attente à affichier"
+
+#: revisioning.module:1022
+msgid "Note: the title of this block mentions the total number of revisions pending, which may be greater than the number of revisions displayed."
+msgstr "Note : le titre de ce bloc fait mention du nombre total de révisions en attente, qui peut être supérieur au nombre de révisions affichées."
+
+#: revisioning.module:1026
+msgid "Order in which pending revisions are displayed"
+msgstr "Ordre dans lequel les révisions en attente sont affichées"
+
+#: revisioning.module:1028
+msgid "Oldest at top"
+msgstr "Les plus anciens en haut"
+
+#: revisioning.module:1029
+msgid "Newest at top"
+msgstr "Les plus récents en haut"
+
+#: revisioning.module:1031
+msgid "Note: order is based on revision timestamps."
+msgstr "Note : l'ordre est basé sur la date de la révision."
+
+#: revisioning.module:709;771
+msgid "content"
+msgstr "contenu"
+
+#: revisioning.module:709
+msgid "Unpublished @type %title"
+msgstr "@type %title dépublié"
+
+#: revisioning.module:771
+msgid "Published rev #%revision of @type %title"
+msgstr "Ver. #%revision de @type %title publié"
+
+#: revisioning.module:937
+msgid "Delete"
+msgid_plural "Delete all @count revisions"
+msgstr[0] "Supprimer"
+msgstr[1] "Supprimer les @count révisions"
+
+#: revisioning.module:53
+msgid "access 'Pending' tab"
+msgstr "accéder à l'onglet 'En attente'"
+
+#: revisioning.module:53
+msgid "edit revisions"
+msgstr "éditer les révisions"
+
+#: revisioning.module:53
+msgid "publish revisions"
+msgstr "publier les révisions"
+
+#: revisioning.module:53
+msgid "unpublish current revision"
+msgstr "dépublier la révision actuelle"
+
+#: revisioning.module:53
+msgid "view revisions of own content"
+msgstr "voir les révisions de son propre contenu"
+
+#: revisioning.module:68;78;88;98
+msgid "In draft/Pending publication"
+msgstr "Brouillons/En attente de publication"
+
+#: revisioning.module:128
+msgid "View"
+msgstr "Voir"
+
+#: revisioning.module:140
+msgid "Edit"
+msgstr "Éditer"
+
+#: revisioning.module:154
+msgid "Publish this"
+msgstr "Publier"
+
+#: revisioning.module:166
+msgid "Unpublish this"
+msgstr "Dépublier"
+
+#: revisioning.module:179
+msgid "Revert to this"
+msgstr "Revenir à"
+
+#: revisioning.module:194
+msgid "Delete"
+msgstr "Supprimer"
+
+#: revisioning.module:210
+msgid "Compare to current"
+msgstr "Comparer avec l'actuelle"
+
+#: revisioning.info:0
+msgid "Revisioning"
+msgstr "Revisioning"
+
+#: revisioning.info:0
+msgid "Allows the creation and modification of pre-published, current and archived content while the current revision remains unchanged and publicly visible until the changes have been reviewed by a moderator."
+msgstr "Autorise la création et la modification du contenu pré-publié, actuel et archivé pendant que la révision actuelle reste inchangée et visible publiquement jusqu'à ce que les changements aient été vérifiés par un modérateur."

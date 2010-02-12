@@ -1,0 +1,80 @@
+<?php
+// $Id: ufo.module,v 1.2 2008/09/07 19:42:14 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - UFO
+ *
+ * Enables the use of Bobby Van der Sluis's ufo.js which provides image replacement
+ * for Flash content. ufo.js must be downloaded separately (add the whole zip
+ * file to swftools/shared/
+ *
+ * Author's Site.
+ * http://www.bobbyvandersluis.com/ufo/
+ */
+
+function ufo_swftools_methods() {
+  $methods = array();
+  $methods[SWFTOOLS_EMBED_METHOD]['ufo_replace'] = array (
+    'name'        => 'ufo_replace',
+    'module'      => 'ufo',
+    'shared_file' => 'ufo/ufo.js',
+    'title'       => t('UFO - JavaScript'),
+    'download'    => 'http://www.bobbyvandersluis.com/ufo/',
+  );
+  return $methods;
+}
+
+/**
+ * Implementation of swftools_embed hook
+ * Returns the markup for the page, plus set necessary javascript.
+ */
+function ufo_swftools_embed($action = 'add_js', $methods = FALSE, $vars = FALSE, $html_alt = '') {
+
+  static $ufo_has_run;
+  static $ufo_id = 0;
+
+  // Output javascript to the header
+  if (!$ufo_has_run) {
+    // Add ufo.js
+    drupal_add_js(swftools_get_player_path() .'/ufo/ufo.js');
+    drupal_add_js(_ufo_header_js(), 'inline', 'header');
+    $ufo_has_run = TRUE;
+    if ($action == 'add_js') {
+      // Exit early having put the javascript in the header.
+      return;
+    }
+  }
+
+  static $unique_id = 0;
+  $unique_id++;
+
+  $html = '<div id="ufo-id-'. time() . $unique_id . '" class="swftools ufo" '.
+           swftools_json_params($vars->params, 'swftools') .' '.">\n".
+           $html_alt .
+           '</div>';
+  return $html;
+}
+
+/**
+ * The jQuery code that will try to replace all elements after the page loads.
+ * This parses the JSON out of the 'swftools' attribute of all class="ufo" divs. *
+ */
+function _ufo_header_js() {
+
+  $js = "
+  $(document).ready(function(){
+    $('.ufo').each(function(i){
+      params = Drupal.parseJson($(this).attr('swftools'));
+		  var FO = { movie: params['src'], width: params['width'], height: params['height'],
+		             majorversion: params['version'], build: '0', xi: 'false',
+		             quality: params['quality'], wmode: params['wmode'], align: params['align'],
+                 salign: params['salign'], play: params['play'], loop: params['loop'],
+                 menu: params['menu'], base: params['base'], flashvars: params['flashvars'],
+                 allowfullscreen: 'true'
+		             };
+      UFO.create(FO, this.id);
+    });
+  });
+  ";
+  return $js;
+}

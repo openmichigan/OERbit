@@ -1,0 +1,37 @@
+$Id: CHANGELOG.txt,v 1.8 2009/12/23 02:52:14 rdeboer Exp $
+
+Changelog for Smart Menu and Smart Tabs modules for drupal 6.x
+
+6.x-0.5
+=======
+Initial drupal 6 release.
+
+6.x-0.6
+=======
+Allow Smart menu blocks to be invisible
+
+6.x-1.0-BETA1
+============
+Improved efficiency of invisible blocks
+
+6.x-1.0-BETA2
+=============
+Improved Smart content tabs behaviour w.r.t to associated (primary/secondary
+links) behaviour when Smart menus isn't enabled or 'Smart menus for tabbed
+content' isn't ticked.
+
+6.x-1.0-BETA3
+=============
+Clear menu cache when saving Smart menus admin settings. Minor mods.
+
+6.x-1.0
+========
+Refactoring of 6.x-1.0-BETA3
+
+6.x-1.1
+=======
+Minor bug in setting default tab selection for pages that have no defaults set (eg Accessible content page of Module Grants)
+
+6.x-1.2
+=======
+Proper fix (as opposed to workaround) for [#634192] and [#660626]

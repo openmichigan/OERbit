@@ -1,0 +1,298 @@
+<?php
+// $Id: wijering.module,v 1.7.2.1 2009/03/17 23:13:22 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - Jeroen Wijering's Flash Players
+ *
+ * Enables the use of Jeroen Wijering's Flash Media and Flash Image
+ * Rotator files.
+ *
+ * Author's Site.
+ * http://jeroenwijering.com
+ */
+
+define('WIJERING_MEDIAPLAYER', 'wijering_mediaplayer'); // 'player', can display mixed files
+define('WIJERING_DOWNLOAD', 'http://code.jeroenwijering.com/trac/browser/tags');
+
+/**
+ * Implementation of swftools_methods hook
+ * Report methods back to SWF Tools
+ */
+function wijering_swftools_methods() {
+
+  $methods = array();
+  $media_player = array(
+    'name'        => WIJERING_MEDIAPLAYER,
+    'module'      => 'wijering',
+    'file'        => 'file', // Define which flashvar to assign a 'file to play' variable.
+    'version'     => '7',
+    'shared_file' => 'flash_media_player/mediaplayer.swf',
+    'title'       => t('JW Media Player 3'),
+    'download'    => WIJERING_DOWNLOAD,
+    'width'       => '320',
+    'height'      => '260',
+  );
+
+  // Wijering support various actions with the same player and info.
+  $methods[SWFTOOLS_FLV_DISPLAY][WIJERING_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_FLV_DISPLAY_LIST][WIJERING_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MP3_DISPLAY][WIJERING_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MP3_DISPLAY_LIST][WIJERING_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MEDIA_DISPLAY][WIJERING_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_MEDIA_DISPLAY_LIST][WIJERING_MEDIAPLAYER] = $media_player;
+  $methods[SWFTOOLS_IMAGE_DISPLAY_LIST][WIJERING_MEDIAPLAYER] = $media_player;
+
+  return $methods;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function wijering_menu() {
+
+  $items = array();
+
+    //$items['admin/media/swf/wijering'] = array(
+    $items['admin/settings/swftools/wijering'] = array(
+      'title' => 'JW Media Player 3',
+      'description' => 'Settings for '. l('Jeroen Wijering\'s Media Player 3', WIJERING_DOWNLOAD) .'.',
+      'access arguments' => array('administer flash'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('wijering_admin_form'),
+      'file' => 'wijering.admin.inc',
+      'file path' => drupal_get_path('module', 'wijering'),
+    );
+
+  return $items;
+}
+
+
+/**
+ * These are the default settings as they are stored in the database and displayed
+ * on the settings page.
+ */
+function _wijering_settings($player) {
+  $opts = _wijering_options();
+
+  switch ($player) {
+    case WIJERING_MEDIAPLAYER:
+      // Define the settings list.
+      $defaults['boolean'] = array(
+        'largecontrols'       => 'default',
+        'shuffle'             => 'default',
+        'linkfromdisplay'     => 'default',
+        'usecaptions'         => 'default',
+        'usefullscreen'       => 'default',
+        'usekeys'             => 'default',
+        'autoscroll'          => 'default',
+        'showdigits'          => 'default',
+        'showeq'              => 'default',
+        'showicons'           => 'default',
+        'thumbsinplaylist'    => 'default',
+        'autostart'           => 'default',
+        'enablejs'            => 'default',
+      );
+      $defaults['color'] = array(
+        'backcolor'           => '',
+        'frontcolor'          => '',
+        'lightcolor'          => '',
+      );
+      $defaults['url'] = array(
+        'logo'                => '',
+        'callback'            => '',
+        'captions'            => '',
+        'fsbuttonlink'        => '',
+        'link'                => '',
+        'streamscript'        => '',
+      );
+      $defaults['integer'] = array(
+        'width'               => '400',
+        'height'              => '320',
+        'displayheight'       => '',
+        'displaywidth'        => '', // default is blank, otherwise overrides 'displayheight'
+        'bufferlength'        => '',
+        'rotatetime'          => '',
+        'volume'              => '',
+      );
+      $defaults['other'] = array(
+        'type'                => '', // Defaults to the filename extension.
+        'repeat'              => 'default', // This false is part of {true,false,list}
+        'linktarget'          => 'default',
+        'overstretch'         => 'default',
+      );
+      $saved_settings = variable_get('swftools_'. WIJERING_MEDIAPLAYER, array());
+      break;
+  }
+
+  // Overwrite initialised variables with those that might be already saved.
+  foreach ($defaults AS $category => $vars) {
+    foreach ($vars AS $key => $setting) {
+      if (isset($saved_settings[$key])) {
+        $defaults[$category][$key] = $saved_settings[$key];
+      }
+    }
+  }
+
+  return $defaults;
+}
+
+/**
+ * Implementation of swftools_flashvars hook.
+ * Return an array of flashvars.
+ */
+function wijering_swftools_flashvars($action, &$methods, &$vars) {
+
+  // Pad out the user parameters (like those passed through swf(), with our
+  // configured defaults, allowing the user parameters to dominate.
+  $saved_settings = _wijering_flashvars($methods->player['name']);
+
+  $saved = array();
+  foreach ($saved_settings AS $category => $settings) {
+    $saved = array_merge($saved, $settings);
+  }
+  $flashvars = array_merge($saved, $vars->flashvars);
+  if (isset($flashvars['image']) && !valid_url($flashvars['image'], TRUE)) {
+    $flashvars['image'] = swftools_get_media_url(swftools_get_media_path() . $flashvars['image']);
+  }
+
+  if ($vars->params['width']) {$flashvars['width'] = $vars->params['width'];}
+  if ($vars->params['height']) {$flashvars['height'] = $vars->params['height'];}
+
+  // Return an array of flash variables
+  return $flashvars;
+}
+
+/**
+ * This function is called from wijering_swftools_flashvars() which is called from swf()
+ * It will return the default flashvar configuration, just prior to any overrides
+ * passed into swf(). We start with the settings defined on admin/swf/wijering
+ * which are returned by _wijering_settings(). Then we prepare these values for output
+ * to html (eg. '1' become 'true') and we unset undefined flashvars to prevent their output.
+ *
+ */
+function _wijering_flashvars($this_player) {
+  // Cache this.
+  static $flashvars = array();
+  if (!count($flashvars)) {
+
+    // Media Player
+    foreach (array(WIJERING_MEDIAPLAYER) AS $player) {
+
+      // Get saved settings for this method.
+      $defaults = _wijering_settings($player);
+      foreach ($defaults AS $category => $vars) {
+        foreach ($vars AS $key => $setting) {
+          if (!$setting || $setting == 'default') {
+            unset($defaults[$category][$key]);
+          }
+          else {
+            switch ($category) {
+              case 'color':
+                $defaults['color'][$key] = str_replace('#', '0x', $defaults['color'][$key]);
+                break;
+              case 'boolean':
+                $defaults['boolean'][$key] = _swftools_tf($defaults['boolean'][$key]);
+                break;
+            }
+          }
+        }
+      }
+
+      // Not the same as width/height. This determines the extended width OR height
+      // past the main view area where the actual playlist file names can be found.
+      // Setting both together is not supported.
+      if ($defaults['integer']['displaywidth']) {
+        unset($defaults['integer']['displayheight']);
+      }
+      else {
+        unset($defaults['integer']['displaywidth']);
+      }
+
+      $flashvars[$player] = $defaults;
+    }
+  }
+
+  return $flashvars[$this_player];
+}
+
+/**
+ * flashvar and param option arrays. These are used for options settings in the
+ * configuration screen.
+ *
+ */
+function _wijering_options() {
+  $options['overstretch'] = array('default' => 'default', 'false' => 'false', 'true' => 'true', 'fit' => 'fit', 'none' => 'none', );
+  $options['repeat'] = array('default' => 'default', 'false' => 'false', 'true' => 'true', 'list' => 'list', );
+  $options['linktarget'] = array('default' => 'default', '_self' => '_self', '_blank' => '_blank', );
+  $options['transition'] = array('default' => 'default', 'fade' => 'fade', 'bgfade' => 'bgfade', 'blocks' => 'blocks', 'circles' => 'circles', 'fluids' => 'fluids', 'lines' => 'lines', 'random' => 'random', );
+  $options['bool'] = array('default' => 'default', 'true' => 'true', 'false' => 'false');
+  return $options;
+}
+
+function wijering_wijering_mediaplayer_swftools_playlist($xml_data, &$method, &$vars) {
+
+  $xml = '<playlist version="1" xmlns="http://xspf.org/ns/0/">
+            <title>'. $xml_data['header']['title'] .'</title>
+            <info></info>
+            <annotation></annotation>
+            <trackList>
+            ';
+  foreach ($xml_data['playlist'] AS $track => $details) {
+
+    if (!isset($details['background']) && strtolower(substr($details['fileurl'], -3, 3)) == 'mp3') {
+      if (isset($vars->flashvars['image'])) {
+        $details['background'] = swftools_get_media_url(swftools_get_media_path() . $vars->flashvars['image']);
+      } else {
+        $details['background'] = SWFTOOLS_DEFAULT_BG;
+      }
+    }
+    $xml .= "<track>\n";
+    $xml .= "<title>". $details['title'] ."</title>\n";
+    $xml .= "<creator></creator>\n";
+    $xml .= "<location>". $details['fileurl'] ."</location>\n";
+    $xml .= "<image>". $details['background'] ."</image>\n";
+    $xml .= "<info>". $details['fileurl'] ."</info>\n";
+    $xml .= "</track>\n";
+  }
+  $xml .= '</trackList>
+           </playlist>';
+  return $xml;
+}
+
+
+/*
+ * Implementation of hook_swftools_variable_mapping.
+ *
+ */
+function wijering_swftools_variable_mapping() {
+  return array(
+    WIJERING_MEDIAPLAYER => array(
+      'autostart' => 'flashvars',
+      'repeat' => 'flashvars',
+      'rotatetime' => 'flashvars',
+      'backcolor' => 'flashvars',
+      'frontcolor' => 'flashvars',
+      'lightcolor' => 'flashvars',
+      'displaywidth' => 'flashvars',
+      'displayheight' => 'flashvars',
+      'image' => 'flashvars',
+    ),
+  );
+}
+
+
+/**
+ * Implementation of hook_help
+ */
+function wijering_help($path, $arg) {
+  switch ($path) {
+    case 'admin/settings/swftools/wijering':
+      return '<p>'.t('These are the settings for Jeroen Wijering\'s mediaplayer.swf
+                      and correspond (by category and order) to the
+                      <a href="@wijering">Media Player and Image Rotator read me</a>.
+                      It is possible that you do not need to change any of
+                      these settings and blank values will defer to friendly
+                      defaults. Note that the label in (<em>brackets</em>)
+                      is the actual flashvar name and corresponds to the read me.', array('@wijering' => 'http://jeroenwijering.com/extras/readme.html')).'</p>';
+  }
+}

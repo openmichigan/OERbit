@@ -1,0 +1,53 @@
+<?php
+// $Id: smart_tabs.install,v 1.5 2009/12/17 07:22:31 rdeboer Exp $
+
+/**
+ * @file
+ *  Install and uninstall hooks for Smart tabs module.
+ */
+define('PROFILE_SMART_TABS_DISABLE', 'profile_smart_tabs_disable');
+
+/**
+ * Implementation of hook_install().
+ */
+function smart_tabs_install() {
+  if (module_exists('profile')) {
+    _create_smart_tabs_profile();
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function smart_tabs_uninstall() {
+  variable_del('smart_tabs_theme_override');
+  variable_del('smart_tabs_include_pages');
+  variable_del('smart_tabs_exclude_pages');
+  variable_del('smart_tabs_autoselect_default_tab_exclusions');
+  variable_del('smart_tabs_debug');
+  if (module_exists('profile')) {
+    _remove_smart_tabs_profile();
+  }
+}
+
+function _create_smart_tabs_profile() {
+  db_query("INSERT INTO {profile_fields} (title, name, explanation, category, type, weight, required, register, visibility, autocomplete, options, page) VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')",
+    'Disable Smart tabs', // title
+    PROFILE_SMART_TABS_DISABLE, // form field id
+    t('Unless disabled here, your tabs will have a memory so that upon return to the page the previously selected tabs are again selected for you.'),
+    'Smart tabs', //profile category
+    'checkbox', // type
+    0,     // weight
+    FALSE, // required
+    FALSE, // register
+    PROFILE_PRIVATE, // visibility = 1 for private
+    FALSE, // autocomplete
+    '',    // options in list selection
+    'Smart tabs'); // title of page used for browsing
+}
+
+function _remove_smart_tabs_profile() {
+  $fid = db_result(db_query("SELECT fid FROM {profile_fields} WHERE name = '%s'", PROFILE_SMART_TABS_DISABLE));
+  db_query('DELETE FROM {profile_fields} WHERE fid = %d', $fid);
+  db_query('DELETE FROM {profile_values} WHERE fid = %d', $fid);
+}

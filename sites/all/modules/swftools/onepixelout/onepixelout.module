@@ -1,0 +1,169 @@
+<?php
+// $Id: onepixelout.module,v 1.3.2.2 2009/04/20 21:40:08 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - Jeroen Onepixelout's Flash Players
+ *
+ * Enables the use of Jeroen Onepixelout's Flash Media and Flash Image
+ * Rotator files, branded forms of which ship with SWF Tools module.
+ *
+ * Author's Site.
+ * http://jeroenonepixelout.com
+ */
+
+define('ONEPIXELOUT', 'onepixelout'); // 'player', plays a single mp3
+
+
+/**
+ * Implementation of swftools_methods hook
+ * Report methods back to SWF Tools
+ */
+function onepixelout_swftools_methods() {
+
+  $methods = array();
+  $media_player = array(
+    'name'        => ONEPIXELOUT,
+    'module'      => 'onepixelout',
+    'file'        => 'soundFile', // Define which flashvar to assign a 'file to play' variable.
+    'version'     => '7',
+    'shared_file' => '1pixelout/player.swf',
+    'title'       => t('1 Pixel Out MP3 Player'),
+    'download'    => 'http://www.1pixelout.net/code/audio-player-wordpress-plugin/',
+    'width'       => '290',
+    'height'      => '24',
+  );
+
+  // Onepixelout support various actions with the same player and info.
+  $methods[SWFTOOLS_MP3_DISPLAY][ONEPIXELOUT] = $media_player;
+
+  return $methods;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function onepixelout_menu() {
+  $items = array();
+
+    //$items['admin/media/swf/onepixelout'] = array(
+    $items['admin/settings/swftools/onepixelout'] = array(
+      'title' => '1 Pixel Out',
+      'description' => 'Settings for '. l('1 Pixel Out MP3 Player', 'http://www.1pixelout.net/code/audio-player-wordpress-plugin/') .'.',
+      'access arguments' => array('administer flash'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('onepixelout_admin_form'),
+      'file' => 'onepixelout.admin.inc',
+      'file path' => drupal_get_path('module', 'onepixelout'),
+    );
+
+  return $items;
+}
+
+
+/**
+ * These are the default settings as they are stored in the database and displayed
+ * on the settings page.
+ */
+function _onepixelout_settings() {
+
+  $saved = variable_get('swftools_'. ONEPIXELOUT, array());
+
+  $defaults = array(
+    'autostart'      => 'no',
+    'loop'           => 'no',
+    'bg'             => '',
+    'leftbg'         => '',
+    'rightbg'        => '',
+    'rightbghover'   => '',
+    'lefticon'       => '',
+    'righticon'      => '',
+    'righticonhover' => '',
+    'text'           => '',
+    'slider'         => '',
+    'loader'         => '',
+    'track'          => '',
+    'border'         => '',
+  );
+
+  return array_merge($defaults, $saved);
+}
+
+/**
+ * Implementation of swftools_flashvars hook.
+ * Return an array of flashvars.
+ */
+function onepixelout_swftools_flashvars($action, &$methods, &$vars) {
+  
+  // Generate sequential player ids
+  static $player_id = 1;
+  
+  // Assign a flashvar to identify the player - we add time as well, like swfobject2, to ensure truly unique ids
+  $vars->flashvars['playerID'] = time() . $player_id++;
+  
+  // Retreive default onepixelout settings
+  $saved = _onepixelout_flashvars();
+
+  // Combine user and admin defaults, overwriting defaults.
+  $saved = array_merge($saved, $vars->flashvars);
+  
+  // Return the completed set of flashvars
+  return $saved;
+}
+
+/**
+ * This function takes the module settings and massages them
+ * as required for flashvar output.
+ *
+ */
+function _onepixelout_flashvars() {
+  // Cache this.
+  static $flashvars = array();
+  if (!count($flashvars)) {
+    // Get saved settings for this method.
+    $saved = _onepixelout_settings();
+    foreach ($saved AS $key => $setting) {
+      if (!$setting || $setting == 'default') {
+        // Don't pass out any undefined values.
+        unset($saved[$key]);
+      }
+    }
+  }
+  return $saved;
+}
+
+
+/*
+ * Implementation of hook_swftools_variable_mapping.
+ *
+ */
+function onepixelout_swftools_variable_mapping() {
+  return array(
+    ONEPIXELOUT => array(
+      'loop' => 'flashvars',
+      'autostart' => 'flashvars',
+      'leftbg' => 'flashvars',
+      'lefticon' => 'flashvars',
+      'rightbg' => 'flashvars',
+      'righticon' => 'flashvars',
+      'rightbghover' => 'flashvars',
+      'righticonhover' => 'flashvars',
+    ),
+  );
+}
+
+
+/**
+ * Implementation of hook_init().
+ * 
+ * Push the script to stop other players on to the page.
+ */
+function onepixelout_init() {
+  if (variable_get('swftools_always_add_js', SWFTOOLS_ALWAYS_ADD_JS)) {
+    onepixelout_push_js();
+  }
+};
+
+
+function onepixelout_push_js() {
+  drupal_add_js(drupal_get_path('module', 'onepixelout') .'/onepixelout.js', 'module', 'footer');
+}

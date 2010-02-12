@@ -1,0 +1,30 @@
+<?php
+// $Id: swftools.install,v 1.2.2.4 2009/03/17 23:13:22 stuartgreenfield Exp $
+
+function swftools_uninstall() {
+  db_query("DELETE from {variable} WHERE name LIKE 'swftools%'");
+}
+
+
+/**
+ * Check that the zlib extension exists for PHP.
+ */
+function swftools_requirements($phase) {
+
+  // Ensure translations don't break at install time
+  $t = get_t();
+  
+  // Check if the zlib library is loaded
+  $has_zlib = extension_loaded('zlib');
+  
+  // Generate the requirements array ready for return
+  $requirements['swftools'] = array(
+    'title' => $t('Zlib library'),
+    'description' => $has_zlib ? '' : $t('Without the <a href="@url">zlib library</a> SWF Tools is unable to automatically determine the dimensions of compressed swf files. SWF Tools will work but the size of compressed swf content must be specified, otherwise the content may not appear in some browsers.', array('@url' => 'http://www.php.net/zlib')),
+    'value' => $has_zlib ? $t('Enabled') : $t('Not installed'),
+    'severity' => $has_zlib ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+  );
+  
+  // Return the array
+  return $requirements;
+}

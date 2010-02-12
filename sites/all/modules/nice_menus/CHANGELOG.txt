@@ -1,0 +1,41 @@
+// $Id: CHANGELOG.txt,v 1.4.2.7 2008/11/30 19:59:55 add1sun Exp $
+
+=== DRUPAL 6.x-1.x ===
+6.x-1.3 (November 2008)
+- BUG #228323: Fixed regression that did not show user name for Navigation block title.
+- TRANSLATION added. Slovak translation by etki.
+
+6.x-1.2 (September 2008)
+- BUG #235562: JS is now called using drupal_add_js and you can enable/disable IE support. This will turn on JS for all browsers but Nice menus only actually runs its JS hacks for IE.
+- BUG #284294: turn off block caching since too much is changing per load.
+- BUG #288127: cleanup block title to use human-readable name rather than the machine name.
+- TRANSLATION added. Swedish translation by seals.
+
+6.x-1.1 (March 2008)
+- BUG #225439: Fixed a minor bug re: the link theme function.
+- BUG #228323: Using user name on the navigation block.
+- BUG #235053: Empty ULs were created when the user did not have access
+  to child menu items.
+- BUG #236078: Primary link theme function assumed using the default
+  primary-links menu.
+- FEATURE #211749: The number of Nice Menus blocks can now be set to any
+  number from 0-99. It is a textfield rather than the limited dropdown from
+  before.
+- FEATURE #170840: Added an IE hover class for the LI so it can be themed
+  the same way as other browsers.
+
+6.x-1.0 (February 2008)
+- Official release for Drupal 6.
+
+6.x-1.0-rc2 (January 2008)
+- BUG #210284: Moved CSS and JS inclusion to hook_init rather than the theme function due to block caching.
+
+6.x-1.0-rc1 (January 2008)
+- BUG #206910: Fixed wrong submit handler for the custom CSS setting.
+
+6.x-1.0-beta (January 2008)
+- BUG #205662: Fixed disabled menu items still showing.
+- TASK: Cleaned up documentation and removed debug code.
+
+6.x-1.0-alpha1 (December 2007)
+- Upgraded to Drupal 6.

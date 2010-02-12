@@ -1,0 +1,11 @@
+; $Id: beautytips.info,v 1.1.2.3 2009/05/08 22:53:26 kleinmp Exp $
+
+name = BeautyTips
+description = Implements jQuery BeautyTips Tooltip plugin
+core = 6.x
+; Information added by drupal.org packaging script on 2009-09-24
+version = "6.x-1.1"
+core = "6.x"
+project = "beautytips"
+datestamp = "1253807407"
+

@@ -1,0 +1,149 @@
+<?php
+// $Id: simpleviewer.module,v 1.4.2.2 2009/04/19 00:02:10 stuartgreenfield Exp $
+
+/**
+ * SWF Tools - simpleviewer.module
+ *
+ * Enables the use of SimpleViewer Flash
+ * for image gallery display. SimpleViewer must be downloaded separately.
+ *
+ * Author's Site.
+ * http://www.airtightinteractive.com/simpleviewer/
+ */
+
+define('SIMPLEVIEWER', 'simpleviewer'); // 'player', shows multiple images.
+
+
+/**
+ * Implementation of swftools_methods hook
+ * Report methods back to SWF Tools
+ */
+function simpleviewer_swftools_methods() {
+
+  $methods = array();
+  $image_rotator = array(
+    'name'        => SIMPLEVIEWER,
+    'module'      => 'simpleviewer',
+    'shared_file' => 'simpleviewer/viewer.swf',
+    'file'        => 'xmlDataPath',
+    'version'     => '7',
+    'title'       => t('SimpleViewer'),
+    'download'    => 'http://www.airtightinteractive.com/simpleviewer/',
+    'width'       => '700',
+    'height'      => '600',
+  );
+  $methods[SWFTOOLS_IMAGE_DISPLAY_LIST][SIMPLEVIEWER] = $image_rotator;
+  return $methods;
+}
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function simpleviewer_menu() {
+  $items = array();
+
+    $items['admin/settings/swftools/simpleviewer'] = array(
+      'title' => 'SimpleViewer',
+      'description' => 'Settings for <a href="http://www.airtightinteractive.com/simpleviewer/">Airtight Interactive\'s SimpleViewer</a> image gallery.',
+      'weight' => 1,
+
+      'access arguments' => array('administer flash'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('simpleviewer_admin_form'),
+      'file' => 'simpleviewer.admin.inc',
+      'file path' => drupal_get_path('module', 'simpleviewer'),
+
+
+      );
+
+  return $items;
+}
+
+/**
+ * Implementation of swftools_flashvars hook
+ * Allows the Flash player provider to add variables to the Flashvars array.
+ * Other arrays can also be modified.
+ *
+ */
+function simpleviewer_swftools_flashvars($action, &$methods, &$vars) {
+  $sv_vars = _simpleviewer_vars();
+
+  // Here we only assign 'other' settings to othervars, and return 'swf' settings
+  // as the flashvars. 'xml' settings are for the xml file only.
+  // See http://www.airtightinteractive.com/forum/viewtopic.php?t=4085&start=0
+  if (is_array($sv_vars['other'])) {
+    $vars->othervars = array_merge($sv_vars['other'], $vars->othervars);
+  }
+  return $sv_vars['swf'];
+}
+
+
+/**
+ * These are the default options and flashvars.
+ *
+ */
+function _simpleviewer_vars() {
+
+  include_once(drupal_get_path('module', 'simpleviewer') .'/simpleviewer.admin.inc');
+  // Grab the admin form and use all of the default values as settings for the flash embedding.
+  $sv_vars = simpleviewer_admin_form(TRUE);
+
+  foreach (element_children($sv_vars) AS $name) {
+    $name_parts = explode('_', $name);
+    if ($name_parts[1] == 'xml') {
+      // The last part of the Drupal variable name matches the SimpleViewer XML option name
+      $return['xml'][$name_parts[2]] = $sv_vars[$name]['#default_value'];
+    }
+    elseif ($name_parts[1] == 'swf') {
+      $return['swf'][$name_parts[2]] = $sv_vars[$name]['#default_value'];
+    }
+    else {
+      $return['other'][$name_parts[2]] = $sv_vars[$name]['#default_value'];
+    }
+  }
+  return $return;
+}
+
+
+function simpleviewer_simpleviewer_swftools_playlist($playlist_data, &$method, &$vars) {
+
+  $sv_vars = _simpleviewer_vars();
+  
+  $xml_vars = array_merge($sv_vars['xml'], $vars->flashvars);
+
+  $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
+  $xml .= '<simpleviewerGallery '.
+          'maxImageWidth="'. $xml_vars['maxImageWidth'] .'" '.
+          'maxImageHeight="'. $xml_vars['maxImageHeight'] .'" '.
+          'textColor="'. str_replace('#', '0x', $xml_vars['textColor']) .'" '.
+          'frameColor="'. str_replace('#', '0x', $xml_vars['frameColor']) .'" '.
+          'frameWidth="'. $xml_vars['frameWidth'] .'" '.
+          'stagePadding="'. $xml_vars['stagePadding'] .'" '.
+          'thumbnailColumns="'. $xml_vars['thumbnailColumns'] .'" '.
+          'thumbnailRows="'. $xml_vars['thumbnailRows'] .'" '.
+          'navPosition="'. $xml_vars['navPosition'] .'" '.
+          'title="'. $xml_vars['title'] .'" '.
+          'imagePath="'. $vars->params['base'] .'" '.
+          'thumbPath="'. $vars->params['base'] .'" '.
+          'enableRightClickOpen="'. $xml_vars['enableRightClickOpen'] .'" '.
+          'backgroundImagePath="'. $xml_vars['backgroundImagePath'] .'">';
+  
+  foreach($playlist_data['playlist'] AS $track => $details) {
+    
+    // Strip default sites path if it is present
+    if (strpos($details['filename'], file_create_path()) === 0) {
+      $details['filename'] = str_replace(file_create_path() . '/', '', $details['filename']);
+    }
+    
+    $xml .= '
+    <image>
+      <filename>'. $details['filename']. '</filename>
+      <caption>'. $details['description'] .'</caption>
+    </image>';
+  }
+
+  $xml .= "\n</simpleviewerGallery>";
+
+  return $xml;
+}

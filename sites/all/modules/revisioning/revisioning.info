@@ -1,0 +1,12 @@
+; $Id: revisioning.info,v 1.12 2010/01/03 06:57:11 rdeboer Exp $
+name = Revisioning
+description = Allows the creation and modification of content while the current revision remains unchanged and publicly visible until the changes have been reviewed by a moderator.
+core = "6.x"
+dependencies[] = module_grants
+
+; Information added by drupal.org packaging script on 2010-01-13
+version = "6.x-3.4"
+core = "6.x"
+project = "revisioning"
+datestamp = "1263349209"
+

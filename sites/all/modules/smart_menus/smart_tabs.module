@@ -1,0 +1,510 @@
+<?php
+// $Id: smart_tabs.module,v 1.10 2009/12/23 02:52:14 rdeboer Exp $
+
+/**
+ * @file
+ * Adds memory to your tabs so that on subsequent visits to the parent page
+ * the previously visited tabs are pre-selected for you.
+ *
+ * Examples
+ * Single row of tabs:
+ *   o Administer>>Site building>>Triggers. Pick a tab. Click any link on the
+ *     screen and return to the Triggers page. The previously selected tab will
+ *     be pre-selected for you.
+ * Double row of tabs:
+ *   o First visit Administer>>Site building>>Themes. Click the Configure tab
+ *     and pick a theme tab. Click away to, say Blocks, then return to Themes.
+ *     The Configure and theme tabs are pre-selected for you.
+ *   o First visit My account, click the Edit tab, then Smart tabs. Return to
+ *     the main navigation menu. Then revisit 'My account' to find Edit, 'Smart
+ *     tabs' still selected.
+ *   o Install Module Grants (http://drupal.org/project/module_grants), which
+ *     will create an 'Accessible content' menu item. First visit
+ *     accessible-content/i-can-edit/published, then accessible-content/i-can-view.
+ *     The Published tab selection will carry across to the new tab.
+ *
+ * You may occasionally find that certain rows of tabs don't exhibit the
+ * expected Smart behaviour. This can happen when a programmer has
+ * deviated from the convention.
+ * In some cases a workaround may be possible, see smart_tab_fixes.inc.
+ * If you've come across tabs that don't perform Smartly, let us know on the
+ * issues pages of the Smart menus project.
+ * While waiting for a fix for the particular tabs in question, you can
+ * suppress Smart behaviour for selected pages here: Administer>>Site
+ * configuration>>Smart tabs.
+ */
+
+require_once drupal_get_path('module', 'smart_menus') .'/smart_tabs.install';
+require_once drupal_get_path('module', 'smart_menus') .'/smart_tabs_fixes.inc';
+
+define('DEFAULT_SMART_TABS_PAGE_EXCLUSIONS', 
+  "admin/content/node-type/*/fields*\nnode/*/edit/components*");
+define('DEFAULT_AUTOSELECT_DEFAULT_TAB_EXCLUSIONS', 
+  'admin/content/node-type/*/fields*');
+
+/**
+ * Implementation of hook_menu().
+ *
+ * Define configuration options for Smart tabs.
+ */
+function smart_tabs_menu() {
+  $items = array();
+  $items['admin/settings/smart_tabs'] = array(
+    'title' => 'Smart tabs',
+    'description' =>  'Configure Smart tabs behaviour',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_smart_tabs_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
+
+/**
+ * Menu callback for admin settings.
+ */
+function _smart_tabs_admin_settings() {
+
+  $form['smart_tabs_theme_override'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow Smart tabs to control tab behaviour'),
+    '#default_value' => variable_get('smart_tabs_theme_override', TRUE),
+    '#description' => t('Only untick this if Smart tabs does not behave as advertised with your theme. If you untick this option, but still want Smart tabs behaviour, you must implement either <em>yourtheme</em>_menu_local_tasks() or phptemplate_menu_local_tasks() yourself.'),
+  );
+
+  $form['smart_tabs_pages'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Specify the pages on which tabs should behave smartly'),
+    '#collapsible' => FALSE,
+  );
+  $form['smart_tabs_pages']['smart_tabs_include_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Pages to include'),
+    '#default_value' => variable_get('smart_tabs_include_pages', '*'),
+    '#description' => t("Enter Drupal menu paths, one per line. The asterisk '*' is the wildcard character. An example is %admin-wildcard for all administration pages.",
+      array('%admin-wildcard' => 'admin/*')),
+  );
+  $form['smart_tabs_pages']['smart_tabs_exclude_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Pages to exclude from the collection specfied above'),
+    '#default_value' => variable_get('smart_tabs_exclude_pages', DEFAULT_SMART_TABS_PAGE_EXCLUSIONS),
+    '#description' => t("Enter Drupal menu paths, one per line, for instance: %node. The asterisk '*' is the wildcard character allowing you to specify a groups of nodes, e.g. %node-wildcard. Where they exist use the URL aliases rather than the node numbers. %front is the front page.",
+      array('%node' => 'recipes/desserts/chocolate-cake', '%node-wildcard' => 'recipes/desserts/*', '%front' => '<front>'))
+  );
+
+  $form['smart_tabs_missing_default'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Specify the pages on which Smart tabs should <em>not</em> select a default tab when none is specified.'),
+    '#collapsible' => FALSE,
+  );
+  $form['smart_tabs_missing_default']['smart_tabs_autoselect_default_tab_exclusions'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Pages to exclude'),
+    '#default_value' => variable_get('smart_tabs_autoselect_default_tab_exclusions', DEFAULT_AUTOSELECT_DEFAULT_TAB_EXCLUSIONS),
+    '#description' => t('Same notation as above applies.')
+  );
+
+  $form['smart_tabs_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable debug info'),
+    '#default_value' => variable_get('smart_tabs_debug', FALSE),
+    '#description' => t('Debug info is visible only to a logged-in administrator (uid=1).'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implementation of hook_theme().
+ *
+ * Declare the theme functions used in this module.
+ */
+function smart_tabs_theme() {
+  return array('menu_local_tasks_smart_tabs' => array('arguments' => array()));
+}
+
+/**
+ * Theme the menu local tasks in a smart way.
+ *
+ * @return
+ */
+function theme_menu_local_tasks_smart_tabs() {
+  $output = '';
+  if ($primary_tabs = menu_primary_local_tasks_smart_tabs()) {
+    $output .= "<ul class=\"tabs primary clear-block\">\n". $primary_tabs ."</ul>\n";
+  }
+  if ($secondary_tabs = menu_secondary_local_tasks_smart_tabs()) {
+    $output .= "<ul class=\"tabs secondary clear-block\">\n". $secondary_tabs ."</ul>\n";
+  }
+  return $output;
+}
+
+/* Implementation of ENGINENAME_hook().
+ *
+ * Returns the rendered local tasks, overriding theme_menu_local_tasks().
+ * Note: Smart tabs deals with this altering the registry directly, thus
+ * avoiding clashes with themes like Garland, which already implement
+ * ENGINENAME_hook(). See smart_tabs_fixes.inc
+ *
+ * @ingroup themeable
+ *
+function phptemplate_menu_local_tasks() {
+  return theme(array('menu_local_tasks_smart_tabs', 'menu_local_tasks'));
+}*/
+
+function menu_primary_local_tasks_smart_tabs() {
+  return _menu_local_tasks_smart_tabs(0);
+}
+
+function menu_secondary_local_tasks_smart_tabs() {
+  return _menu_local_tasks_smart_tabs(1);
+}
+
+ /**
+ * Render the local tasks (aka tabs). Similar to menu_local_tasks(), but smarter.
+ *
+ * 1) Smart tabs have a memory, so that when you return to the page with the
+ *    tabs, your last last tab selection will again be active.
+ * 2) Where two rows of tabs are used, i.e. primary and secondary, smart
+ *    secondary tabs are aware not only of their parents, but also of their cousins.
+ *    By this it is meant that if you select a new primary tab and this tab has
+ *    a secondary tab by the same leaf name as the previous selected secondary
+ *    tab, then this secondary tab will be auto-selected.
+ *    This results in a far more natural user experience, as only one tab
+ *    changes per mouse click, rather than two.
+ *
+ * @param $level
+ *   The level of tasks you ask for. Primary tasks are 0, secondary are 1.
+ * @return
+ *   Themed output corresponding to the tabs of the requested level.
+ */
+function _menu_local_tasks_smart_tabs($level = 0) {
+  static $tabs;
+  if (!_user_has_smart_tabs_enabled()) {
+    return menu_local_tasks($level);
+  }
+
+  if (!isset($tabs)) {
+    $router_item = menu_get_item();
+    if (!$router_item || !$router_item['access']) {
+      return '';
+    }
+
+    // Get all primary and secondary tabs regardless of $level
+    $result = db_query("SELECT * FROM {menu_router} WHERE tab_root = '%s' ORDER BY weight, title", $router_item['tab_root']);
+    $map = arg();
+    $children = array();
+    $tasks = array();
+    while ($item = db_fetch_array($result)) {
+      _menu_translate($item, $map, TRUE);
+      if ($item['tab_parent']) {
+        $children[$item['tab_parent']][$item['path']] = $item;
+      }
+      // Store the translated item for later use.
+      $tasks[$item['path']] = $item;
+    }
+    $path = $router_item['path']; // $path may include % whereas href won't
+    $is_included = _auto_select_tab($path, $router_item['href'], $tasks);
+
+    $tabs = array();
+    // Find all tabs below the current path.
+    // Tab parenting may skip levels, so number of parts in the path may not
+    // equal depth. Thus we use the $depth counter (offset by 1000 for ksort).
+    $depth = 1001;
+    $new_active_tabs = array();
+    while (isset($children[$path])) {
+      // A quick check to see if a static default tab has been set.
+      // This will almost always be the case except for Module Grants'
+      // accessible-content menu.
+      _set_default_tab_if_necessary($path, $children[$path]);
+
+      $tabs_current = '';
+      $next_path = '';
+      $count = 0;
+      foreach ($children[$path] as $item) {
+        if ($item['access']) {
+          $count++;
+          if ($is_active_tab = ($item['type'] == MENU_DEFAULT_LOCAL_TASK)) {
+            $item['localized_options']['attributes']['class'] = 'active';
+            $new_active_tabs[$item['tab_parent']] = $item['path'];
+            // Set this tab as the one whose children are to be iterated over next
+            $next_path = $item['path'];
+          }
+          // Render themed link inside a themed tab and add to current row
+          $link = theme('menu_item_link', $item);
+          $tabs_current .= theme('menu_local_task', $link, $is_active_tab);
+        }
+      }
+      $path = $next_path;
+      $tabs[$depth]['count'] = $count;
+      $tabs[$depth]['output'] = $tabs_current;
+      $depth++;
+    }
+    // Find all tabs at the same level or above the current one.
+    $parent = $router_item['tab_parent'];
+    $path = $router_item['path'];
+    $current = $router_item;
+    $depth = 1000;
+    while (isset($children[$parent])) {
+      $tabs_current = '';
+      $next_path = '';
+      $next_parent = '';
+      $count = 0;
+      foreach ($children[$parent] as $item) {
+        if ($item['access']) {
+          $count++;
+          // Check for the clicked (i.e. active) tab.
+          if ($is_active_tab = ($item['path'] == $path)) {
+            $new_active_tabs[$item['tab_parent']] = $item['path'];
+            $next_path = $item['tab_parent'];
+            if (isset($tasks[$next_path])) {
+              $next_parent = $tasks[$next_path]['tab_parent'];
+            }
+          }
+          // Render themed link inside a themed tab and add to list
+          $link = theme('menu_item_link', $item);
+          $tabs_current .= theme('menu_local_task', $link, $is_active_tab);
+        }
+      }
+      $path = $next_path;
+      $parent = $next_parent;
+      $tabs[$depth]['count'] = $count;
+      $tabs[$depth]['output'] = $tabs_current;
+      $depth--;
+    }
+    // Sort by depth.
+    ksort($tabs);
+    // Remove the depth, we are interested only in their relative placement.
+    $tabs = array_values($tabs);
+
+    if ($is_included) {
+      // Update the session with the currently selected tabs (1 for each row)
+      _remember_tabs($new_active_tabs);
+    }
+  }
+  // Do not display single tabs.
+  return (isset($tabs[$level]) && $tabs[$level]['count'] > 1) ? $tabs[$level]['output'] : '';
+}
+
+function _user_has_smart_tabs_enabled() {
+  global $user;
+
+  if (module_exists('profile')) {
+    $sql = "SELECT pv.value FROM {profile_values} pv INNER JOIN {profile_fields} pf ON pv.fid = pf.fid WHERE pf.name = '%s' AND pv.uid = %d";
+    return !(bool)trim(db_result(db_query($sql, PROFILE_SMART_TABS_DISABLE, $user->uid)));
+  }
+  return TRUE;
+}
+
+function _auto_select_tab($path, $href, $tasks) {
+  // Note that the Edit, Revisions, Track tabs aren't aliased so will
+  // have $href==$href_alias like node/123/edit, node/123/revisions etc.
+  $href_alias = drupal_get_path_alias($href);
+  $include_items = variable_get('smart_tabs_include_pages', '*');
+  $exclude_items = variable_get('smart_tabs_exclude_pages', DEFAULT_SMART_TABS_PAGE_EXCLUSIONS);
+  $include_item = drupal_match_path($href_alias, $include_items);
+  $exclude_item = drupal_match_path($href_alias, $exclude_items);
+  $is_included = $include_item && !$exclude_item;
+
+  if (!$is_included) {
+    _st_debug_info(t('%page is excluded from Smart tabs', array('%page' => $href_alias)));
+  }
+  else {
+    $new_active_href = _derive_new_active_href($path, $tasks);
+    if (_is_valid($new_active_href)) {
+      if (drupal_match_path($new_active_href, $exclude_items)) {
+        _st_debug_info(t('Not auto-selecting %tab_name tab at %tab_href as it is on the Smart tabs exclusion list.', array(
+         '%tab_name' => drupal_ucfirst(_leaf($new_active_href)),
+         '%tab_href' => _parent_path($new_active_href))));
+        $is_included = FALSE;
+      }
+      else {
+        // @TODO check if user has access to new_active_ref
+        // Eg not all nodes come with a Revisions tab, so 'Access denied' may occur.
+        // Can we do this via $tasks ?
+
+        // We're redirecting to the previously active child or grandchild,
+        // discarding the page just loaded (but not yet themed, so not visible).
+        // It would be nicer if we could execute this code BEFORE loading the
+        // page, but until this is dealt with properly in the core architecture
+        // we'll have to just work around it.
+        // @TODO change @tab_name to be the localised (translated) tab name.
+        _st_debug_info(t('Auto-selecting previously active %tab_name tab at %tab_href', array(
+          '%tab_name' => drupal_ucfirst(_leaf($new_active_href)),
+          '%tab_href' => _parent_path($new_active_href))));
+        drupal_goto($new_active_href);
+      }
+    }
+    elseif (!empty($new_active_href)) {
+      _st_debug_info(t("The href %href is invalid.", array('%href' => $new_active_href)));
+    }
+    $_SESSION['active-tabs']['last-active-href'] = $href_alias;
+  }
+  return $is_included;
+}
+
+function _set_default_tab_if_necessary($path, &$children) {
+  foreach (array_reverse($children) as $tab => $item) {
+    if ($item['access']) {
+      if ($item['type'] == MENU_DEFAULT_LOCAL_TASK) { // we're ok, get out
+        return;
+      }
+      $accessible_tab = $tab;
+    }
+  }
+  if (empty($accessible_tab)) {
+    _st_debug_info(t('%path does not have any tabs or tabs accessible to you.', array('%path' => $path)));
+    return;
+  }
+  _st_debug_info(t('No default tab is set for local task %path.', array('%path' => $path)));
+  $exclude_items = variable_get('smart_tabs_autoselect_default_tab_exclusions', DEFAULT_AUTOSELECT_DEFAULT_TAB_EXCLUSIONS);
+  $exclude_item = drupal_match_path($path, $exclude_items);
+  if ($exclude_item) {
+    _st_debug_info(t('Not pre-selecting tab %accessible_tab, as auto-selection is switched-off for the tabs on page %path.',
+      array('%accessible_tab' => $accessible_tab, '%path' => $path)));
+  }
+  else {
+    _st_debug_info(t('Selecting default tab %accessible_tab for local task %path.',
+      array('%accessible_tab' => $accessible_tab, '%path' => $path)));
+    $children[$accessible_tab]['type'] = MENU_DEFAULT_LOCAL_TASK;
+  }
+}
+
+function _is_valid($path) {
+  return !empty($path) && (strpos($path, '//') === FALSE);
+}
+
+/**
+ * Find out where to go based on the clicked menu item or tab.
+ * The clicked item could be
+ * 1) a menu item that is the parent to one or more rows of local tasks (aka tabs)
+ * 2) a local task that
+ *  a) has zero or more sibling tasks but no child tasks (ie a single row of tabs)
+ *  b) has zero or more sibling tasks as well as child tasks (ie a 2nd row of tabs)
+ *
+ * @param $clicked_path
+ *  The router path as opposed to the href, e.g. 'user/%' rather than 'user/34'
+ * @param $tasks
+ *  The row or two rows of local tasks as loaded from the database
+ * @return
+ *  o if the clicked menu item or local task has a recently active grandchild
+ *    task, return that grandchild
+ *  o else, if the clicked menu item or local task has a recently active child
+ *    task, return that child
+ *  o else, if the clicked item is a local task, return the child that has the
+ *    same leaf path name as the previously selected nephew task (ie. the child
+ *    of a sibling of the clicked task), if it exists.
+ *    Example:
+ *      If accessible-content/i-can-edit/published was selected previously
+ *      and the user clicks accessible-content/i-can-view, then return
+ *      accessible-content/i-can-view/published
+ *  o else return void
+ */
+function _derive_new_active_href($clicked_path, $tasks) {
+  $active_child = $_SESSION['active-tabs'][$clicked_path];
+  if (empty($active_child)) { // eg accessible-content/i-can-view clicked for first time
+    $parent = $tasks[$clicked_path]['tab_parent'];
+    $active_sibling = $_SESSION['active-tabs'][$parent];
+    if (empty($active_sibling)) {
+      return '';
+    }
+    if ($active_sibling == $clicked_path) {
+      return '';
+    }
+    $active_nephew = $_SESSION['active-tabs'][$active_sibling];
+    if (empty($active_nephew)) {
+      return '';
+    }
+    $active_child = $clicked_path .'/'. _leaf($active_nephew);
+    if (!isset($tasks[$active_child])) {
+      return '';
+    }
+    unset($_SESSION['active-tabs'][$active_sibling]); // do we need to do this if we're going to return ''?
+    $new_tab = $tasks[$active_child];
+  }
+  else {
+    // eg accessible-content for 2nd time, get the child or grandchild
+    $active_grandchild = $_SESSION['active-tabs'][$active_child];
+    $new_tab = $tasks[empty($active_grandchild) ? $active_child : $active_grandchild];
+  }
+  if (!$new_tab['access']) {
+  //drupal_set_message(t('Not auto-selecting %tab_name tab at %tab_href as you\'re not authorized to access that page.', array(
+  //  '%tab_name' => drupal_ucfirst(_leaf($new_tab['href'])),
+  //  '%tab_href' => _parent_path($new_tab['href']))));
+    return '';
+  }
+  // If the tab that we're about to propose is the default for the clicked_path,
+  // then don't return it, as it will result in an unnecessary additional page
+  // load.
+  $new_active_href = ($new_tab['type'] == MENU_DEFAULT_LOCAL_TASK) ? '' : $new_tab['href'];
+
+  // Avoid looping back to the already selected tab, eg. clicking 'node/123'
+  // (e.g via menu) when 'node/123/edit' is selected should not take user back
+  // to 'node/123/edit', especially as this causes the associated (primary
+  // or secondary links) menu to collapse, i.e. the menu can't be opened
+  // anymore.
+  // Don't do this for normal local tasks like accessible-content/*/*, as
+  // the second row may fall back to the wrong default.
+  // Also don't do this when 'Smart menus for tabbed content' is ticked.
+  if (($new_active_href == $_SESSION['active-tabs']['last-active-href'])
+    && (strpos($clicked_path, '/%') > 0)
+    && !(module_exists('smart_menus') && _get_user_tabbed_content_expansion())) {
+    return '';
+  }
+  return $new_active_href;
+}
+
+/**
+ * Store the paths (rather than the hrefs) of the active tabs on this page.
+ * There will be one active tab per row of local tasks, so either one or two on
+ * the page.
+ *
+ * @param $new_active_tabs
+ * @return nothing
+ */
+function _remember_tabs($new_active_tabs) {
+  if (!empty($new_active_tabs)) {
+    foreach ($new_active_tabs as $parent => $child) {
+      $_SESSION['active-tabs'][$parent] = $child;
+    }
+  }
+}
+
+function _leaf($path) {
+//$last_slash = strrpos($path, '/');
+//return $last_slash === FALSE ? $path : substr($path, $last_slash + 1);
+  return end(explode('/', $path));
+}
+
+/**
+ * Return the path up to (and excluding) the last slash in the supplied string.
+ *
+ * @param $path
+ *   A URL
+ * @return
+ *   The substring upto the last slash, or the entire string if it contains no
+ *   slash.
+ */
+function _parent_path($path) {
+  return substr($path, 0, strrpos($path, '/'));
+}
+
+function _st_debug_info($message) {
+  global $user;
+  if ($user->uid == 1 && variable_get('smart_tabs_debug', FALSE)) {
+    drupal_set_message($message, 'warning', FALSE);
+  }
+}
+
+/**
+ * Implementation of MODULENAME_preprocess_hook(), where hook==page.
+ *
+ * Use only in cases where an installed (base) theme already implements
+ * phptemplate_menu_local_tasks(), like Garland does, or implements
+ * THEMENAME_menu_local_tasks(), like Zen does.
+ *
+ * @ingroup themeable
+ *
+function smart_tabs_preprocess_page(&$variables) {
+{
+  $variables['tabs'] = theme(array('menu_local_tasks_smart_tabs', 'menu_local_tasks'));
+}*/

@@ -1,0 +1,16 @@
+<p>The Accessible Content module helps content authors create and manage content in a way that ensures that the content meets accessibility standards, and lets site administrators build and customize the standards the site should adhere to. When the module is enabled, it creates two kinds of nodes, a collection of <strong>Accessibility Tests</strong>, and a group of these tests called <strong>Accessibility Guidelines</strong>.</p>
+
+<p>Each node type can have its own accessibility standards. To enable the module for a content type, go to the content type edit form (from <em>admin/content/types</em> and click on the <em>Edit</em> link) and look under the <strong>Accessibility Checking</strong> field-set.</p>
+
+<p><img src="path:node-type-settings.png" alt="The Accessiblity Checking fieldset with a checkbox reading Enable checking for accessibility, another checkbox which reads Stop node submission if severe errors exists, and a select box reading Guideline with a list of accessibility guidelines."></p>
+
+<p>This form lets the administrator control the following options, per node-type:</p>
+<ul>
+	<li><strong>Enable checking for accessibility</strong> Check this to enable Accessibility Testing for this node type.</li>
+	<li><strong>Stop node submission of severe errors exist</strong> If an accessibility test that is marked as <em>Severe</em> fails, this option will prevent the node from being submitted at all until the node author fixes the problems.</li>
+	<li><strong>Guideline</strong> Select the accessibility guideline to use for this node type.</li>
+
+</ul>
+
+<h3>CCK Fields</h3>
+<p>CCK Fields can also be checked for accessibility. Fields inherit the Guideline from the node type they are being used under,  so to enable checking a field (text fields only), check the box reading <strong>enable accessibility checking</strong>.</p>

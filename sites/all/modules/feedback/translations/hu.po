@@ -1,0 +1,73 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Feedback v2\n"
+"POT-Creation-Date: 2008-07-08 21:56+0200\n"
+"PO-Revision-Date: 2009-01-11 12:27+0100\n"
+"Last-Translator: Adam Banko <thefirstofall@gmail.com>\n"
+"Language-Team: KSzK Webteam <webteam@sch.bme.hu>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Hungarian\n"
+"X-Poedit-Country: HUNGARY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: feedback.module:24
+msgid "Feedback messages"
+msgstr "Visszajelző üzenetek"
+
+#: feedback.module:25
+msgid "View feedback messages."
+msgstr "Visszajelző üzenetek megtekintése."
+
+#: feedback.module:42
+msgid "Feedback form"
+msgstr "Visszajelző űrlap"
+
+#: feedback.module:52
+#: feedback.info:0
+msgid "Feedback"
+msgstr "Visszajelzés"
+
+#: feedback.module:87
+msgid "If you experience a bug or would like to see an addition on the current page, feel free to leave us a message."
+msgstr "Ha hibát találtál vagy jobbító javaslatod van az aktuális oldalhoz, üzend meg nekünk."
+
+#: feedback.module:93;147
+msgid "Message"
+msgstr "Üzenet"
+
+#: feedback.module:97
+msgid "Send"
+msgstr "Küld"
+
+#: feedback.module:104
+msgid "Thanks for your feedback!"
+msgstr "Köszönjük a visszajelzésedet!"
+
+#: feedback.module:144
+msgid "Location"
+msgstr "Hely"
+
+#: feedback.module:145
+msgid "Date"
+msgstr "Dátum"
+
+#: feedback.module:146
+msgid "User"
+msgstr "Felhasználó"
+
+#: feedback.module:163
+msgid "No feedback entries available."
+msgstr "Nem érhetők el visszajelzések."
+
+#: feedback.info:0
+#, fuzzy
+msgid "Allows site visitors and users to report issues about this site."
+msgstr "Az oldal látogatói tudjanak visszajelezni az oldallal kapcsolatban."
+
+#: feedback.info:0
+msgid "Development"
+msgstr "Fejlesztés"
+

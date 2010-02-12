@@ -1,0 +1,13 @@
+; $Id: flowplayer3.info,v 1.1 2008/12/08 00:14:18 stuartgreenfield Exp $
+name =  FlowPlayer 3
+description = Enables support for FlowPlayer 3.
+package = SWF Tools
+dependencies[] = swftools
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-04-27
+version = "6.x-2.5"
+core = "6.x"
+project = "swftools"
+datestamp = "1240829764"
+

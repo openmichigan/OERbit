@@ -1,0 +1,574 @@
+<?php
+// $Id: smart_menus.module,v 1.8 2009/11/10 01:48:40 rdeboer Exp $
+
+/**
+ * @file
+ *  Adds memory to your menus and tabs so that on subsequent visits to the
+ *  parent page the previously visited menu item is pre-selected for you.
+ *
+ *  For a quick example, after enabling the module on your site, navigate to
+ *  Administer>>Site building>>Menus>>Primary links, (i.e.
+ *  admin/build/menu-customize/primary-links), then click My account (/user).
+ *  Clicking Administer again will now auto-expand all the way to Primary links.
+ */
+require_once drupal_get_path('module', 'smart_menus') .'/smart_menus.install';
+
+define('DEFAULT_MENU_EXCLUSIONS',
+  "admin/build/modules*"); // Modules page can be slow to load
+
+/**
+ * Implementation of hook_menu().
+ *
+ * Define configuration options for Smart menus.
+ */
+function smart_menus_menu() {
+  $items = array();
+  $items['admin/settings/smart_menus'] = array(
+    'title' => 'Smart menus',
+    'description' =>  'Configure Smart menus behaviour',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('smart_menus_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
+
+/**
+ * Menu callback for admin settings.
+ */
+function smart_menus_admin_settings() {
+  $form['smart_menus'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Specify the pages on which menus should behave smartly'),
+    '#collapsible' => FALSE,
+  );
+  $form['smart_menus']['smart_menus_include_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Pages to include'),
+    '#default_value' => variable_get('smart_menus_include_pages', '*'),
+    '#description' => t("Enter Drupal menu paths, one per line. '*' is the wildcard character. Examples are %node-wildcard for normal content pages and %admin-wildcard for the administration pages.",
+      array('%node-wildcard' => 'node/*', '%admin-wildcard' => 'admin/*')),
+  );
+  $form['smart_menus']['smart_menus_exclude_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Pages to exclude from the collection specfied above'),
+    '#default_value' => variable_get('smart_menus_exclude_pages', DEFAULT_MENU_EXCLUSIONS),
+    '#description' => t("Enter Drupal menu paths, one per line. '*' is the wildcard character. An example is %admin-wildcard for the module configuration page(s), which can be slow to load. Use URL aliases where they exist, instead of %node. %front is the front page.",
+      array('%admin-wildcard' => 'admin/build/modules/*', '%node' => 'node/123', '%front' => '<front>'))
+  );
+  $form['smart_menus_depth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Smart menus auto-expansion depth'),
+    '#default_value' => (int)variable_get('smart_menus_depth', 9),
+    '#description' => t('The maximum number of menu levels to which to auto-expand any submenu. This applies to anonymous users. Authenticated users may override this setting. Use 0 to revert to the static menu behaviour of core.'),
+  );
+  $form['smart_menus_tabbed_content'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Smart menus for tabbed content'),
+    '#default_value' => variable_get('smart_menus_tabbed_content', TRUE),
+    '#description' => t('Core Drupal behaviour is to collapse the associated menu whenever a content tab (Edit, Revisions, Track...) is clicked. When this option is ticked Smart menus auto-expand to highlight the menu item the tab belongs to.'),
+  );
+  $form['smart_menus_active_trail'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Highlight active menu trail'),
+    '#default_value' => variable_get('smart_menus_active_trail', FALSE),
+    '#description' => t('Highlight the entire active menu trail, not just the bottom item. The latter is core behaviour.'),
+  );
+
+  $form['smart_menus_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable debug info'),
+    '#default_value' => variable_get('smart_menus_debug', FALSE),
+    '#description' => t('Debug info is visible only to a logged-in administrator (uid=1).'),
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Implementation of hook_form_FORMID_alter().
+ */
+function smart_menus_form_smart_menus_admin_settings_alter(&$form, &$form_state) {
+  _sm_debug_info("Clearing menu cache.");
+  menu_cache_clear_all();
+}
+
+/**
+ * Implementation of hook_block().
+ *
+ * Smart version of the navigation menu block.
+ */
+function smart_menus_block($op = 'list', $delta = 0, $edit = array()) {
+  global $user;
+
+  switch ($op) {
+    case 'list':
+      // Set up the defaults for the Site configuration>>Blocks page.
+      // Return an array of 4 blocks and their default values.
+      $blocks[0]['info'] = t('Smart navigation');
+      $blocks[1]['info'] = t('Smart primary links');
+      $blocks[2]['info'] = t('Smart secondary links');
+      $blocks[3]['info'] = t('Smart custom links');
+      foreach ($blocks as $i => $block) {
+        $blocks[$i]['cache'] = BLOCK_NO_CACHE;
+      }
+      return $blocks;
+
+    case 'configure':
+      $form["smart_menus_block_invisible_$delta"] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Make this block invisible. Let Smart menus do its magic without displaying the menu, as I use my own menu renderer.'),
+        '#default_value' => variable_get("smart_menus_block_invisible_$delta", FALSE),
+        '#description' => t('Tick this to make your <strong>Administration menu</strong>, <strong>SimpleMenu</strong>, <strong>Nice Menus</strong>, <strong>Menu block</strong> or <strong>JQuery menu</strong> Smart.')
+      );
+      if ($delta > 2) {
+        $form['smart_menus_custom_links_name'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Smart menus custom links menu name'),
+          '#default_value' => variable_get('smart_menus_custom_links_name', _find_default_custom_links_name()),
+          '#description' => t('Machine name of the custom links menu that should behave smartly. This is the name you entered when you created the menu at %link, prefixed with "menu-".', array('%link' => 'Administer >> Site building >> Menus'))
+        );
+      }
+      return $form;
+
+    case 'save':
+      variable_set("smart_menus_block_invisible_$delta", $edit["smart_menus_block_invisible_$delta"]);
+      if ($delta > 2) {
+        variable_set('smart_menus_custom_links_name', $edit['smart_menus_custom_links_name']);
+      }
+      return;
+
+    case 'view':
+      $block = array();
+      switch ($delta) {
+        case 0:
+          $block['subject'] = $user->uid ? check_plain($user->name) : t('Navigation');
+          $menu_name = 'navigation';
+          break;
+
+        case 1:
+          $block['subject'] = t('Primary links');
+          $menu_name = 'primary-links';
+          break;
+
+        case 2:
+          $block['subject'] = t('Secondary links');
+          $menu_name = 'secondary-links';
+          break;
+
+        case 3:
+          $block['subject'] = t('Custom links');
+          $menu_name = variable_get('smart_menus_custom_links_name', _find_default_custom_links_name());
+          break;
+      }
+      if (variable_get("smart_menus_block_invisible_$delta", FALSE)) {
+        // Do the auto-expansion and memory magic leaving rendering of the menu
+        // to another module. Do not place any content in the $block.
+        _smart_menu_tree_page_data($menu_name, FALSE);
+      }
+      elseif ($tree_menu = _theme_menu_tree($menu_name)) {
+        $block['content'] = $tree_menu;
+      }
+      return $block;
+  }
+}
+
+function _find_default_custom_links_name() {
+  $sql = "SELECT menu_name FROM {menu_links} WHERE menu_name LIKE 'menu-%';";
+  return db_result(db_query($sql));
+}
+
+/**
+ * Render a menu tree based on the current path.
+ *
+ * @param $menu_name
+ *   The name of the menu.
+ * @return
+ *   The rendered HTML of that menu on the current page.
+ */
+function _theme_menu_tree($menu_name = 'navigation') {
+  static $themed_menu = array();
+  if (!isset($themed_menu[$menu_name])) {
+    $themed_menu[$menu_name] = menu_tree_output(_smart_menu_tree_page_data($menu_name));
+  }
+  return $themed_menu[$menu_name];
+}
+
+/**
+ * Get the data structure representing a named menu tree, based on the current
+ * page AND information in the session about recently visited menu items.
+ * This info tells us which menus to display expanded.
+ *
+ * The tree order is maintained by storing each parent in an individual
+ * field, see http://drupal.org/node/141866 for more.
+ *
+ * @param $menu_name
+ *   The named menu links to return
+ * @param $assemble_menu_tree
+ *   Defaults to TRUE. Set this to FALSE if you want to auto-expansion and
+ *   memory magic to happen, but intend to render the menu through elsewhere.
+ * @return
+ *   An array of menu links, in the order they should be rendered. The array
+ *   is a list of associative arrays -- these have two keys, 'link' and 'below'.
+ *   'link' is a menu item, ready for theming as a link.
+ *   'below' represents the submenu below the link if there is one, and it is a
+ *   subtree that has the same structure described for the top-level array.
+ *   See menu.inc/menu_tree_output() for the themed rendering of the array
+ *   returned.
+ */
+function _smart_menu_tree_page_data($menu_name = 'navigation', $assemble_menu_tree = 'TRUE') {
+  static $tree;
+  // Load the menu item corresponding to the current page.
+  if ($item = menu_get_item()) {
+    $clicked_href = $item['href'];
+    $uri = arg();
+    // Generate a cache ID (cid) specific for this page.
+    // Core version of menu_tree_page_data() is wasteful w.r.t tabbed content
+    // as node/123/edit belongs to the same menu item as node/123/revisions
+    // so doesn't need to be cached twice or more.
+    // Note: this also neatly implements Smart menus for tabbed content feature
+    // except for the highlighting. @TODO revisit.
+    $cid = 'links:'. $menu_name .':page-cid:'
+      . (/* _is_tabbed_content_page($uri) */ FALSE ? 'node/'. $uri[1] : $clicked_href)
+      .':'. (int)$item['access'];
+
+    if (!isset($tree[$cid])) {
+      $use_cache = TRUE; // always..., until someone feels otherwise...
+      if ($use_cache && $assemble_menu_tree) {
+        $cache = cache_get($cid, 'cache_menu');
+        if ($cache && isset($cache->data)) {
+          $cache = cache_get($cache->data, 'cache_menu');
+          if ($cache && isset($cache->data)) {
+            //_sm_debug_info(t('Retrieving submenu %cid from cache', array('%cid' => $cid)));
+            $data = $cache->data;
+          }
+        }
+      }
+      // Check whether a menu link exists that corresponds to the current path.
+      $parents = _retrieve_mlid_trail($menu_name, $item);
+      _auto_expand_to_previously_active_child($menu_name, $clicked_href, $parents);
+
+      // See if this was a click on a the tabbed content page, e.g. the Edit,
+      // Revisions, Track tabs above node/% pages.
+      // If so determine the parent trail and expand the associated menu.
+      if (_is_tabbed_content_page($uri) && _get_user_tabbed_content_expansion()) {
+        if ($assemble_menu_tree) {
+          $parents = _expand_submenu($menu_name, 'node/'. $uri[1]);
+        }
+      }
+      else {
+        _remember_active_trail($menu_name, $parents, $clicked_href);
+      }
+
+      if (!$assemble_menu_tree) {
+        return;
+      }
+
+      // If the tree data was not in the cache, $data will be NULL.
+      if (!isset($data)) {
+        _sm_debug_info(t('Submenu %cid is not in cache - loading it from {menu_links}.', array('%cid' => $cid)));
+        if ($item['access']) {
+          // Set up the placeholders for the SQL: one '%d' for every plid
+          $placeholders = implode(', ', array_fill(0, count($parents), '%d'));
+          // See if any of the menus are configured to be always expanded.
+          // The 'menu_expanded' var is non-empty if there's at least one
+          // submenu configured to be rendered expanded, as per the
+          // admin/build/menu/navigation page.
+          $args = $parents;
+          $expanded_menu_names = variable_get('menu_expanded', array());
+          if (in_array($menu_name, $expanded_menu_names)) {
+            // Collect all the links set to be expanded, and then add all of
+            // their children too
+            do {
+              $sql = "SELECT mlid FROM {menu_links} WHERE menu_name = '%s' AND expanded = 1 AND has_children = 1"
+                ." AND plid IN (". $placeholders .') AND mlid NOT IN ('. $placeholders .')';
+              $result = db_query($sql, array_merge(array($menu_name), $args, $args));
+              $num_rows = FALSE;
+              while ($item = db_fetch_array($result)) {
+                $args[] = $item['mlid'];
+                $num_rows = TRUE;
+              }
+              $placeholders = implode(', ', array_fill(0, count($args), '%d'));
+            } while ($num_rows);
+          }
+          array_unshift($args, $menu_name);
+        } // $item['access']
+        else {
+          // No access: show only the top-level menu items when access is denied.
+          $args = array($menu_name, '0');
+          $placeholders = '%d';
+          $parents = array();
+        }
+        // Select the links from the table, and recursively build the tree. We
+        // LEFT JOIN since there is no match in {menu_router} for an external
+        // link.
+        // $parents is passed in to apply CSS style class for the active trail.
+        $data['tree'] = menu_tree_data(db_query("
+          SELECT m.load_functions, m.to_arg_functions, m.access_callback, m.access_arguments, m.page_callback, m.page_arguments, m.title, m.title_callback, m.title_arguments, m.type, m.description, ml.*
+          FROM {menu_links} ml LEFT JOIN {menu_router} m ON m.path = ml.router_path
+          WHERE ml.menu_name = '%s' AND ml.plid IN (". $placeholders .")
+          ORDER BY p1 ASC, p2 ASC, p3 ASC, p4 ASC, p5 ASC, p6 ASC, p7 ASC, p8 ASC, p9 ASC", $args),
+          $parents);
+        $data['node_links'] = array();
+
+        menu_tree_collect_node_links($data['tree'], $data['node_links']);
+
+        if ($use_cache) {
+          $tree_cid = _menu_tree_cid($menu_name, $data);
+          if (!cache_get($tree_cid, 'cache_menu')) {
+            _sm_debug_info(t('Putting menu in cache %tree_cid', array('%tree_cid' => $tree_cid)));
+            cache_set($tree_cid, $data, 'cache_menu');
+          }
+          // Cache the cid of the shared data using the page-specific cid.
+          // Multiple cids (URLs) may point to the same $tree_cid.
+          cache_set($cid, $tree_cid, 'cache_menu');
+        }
+      } // !isset($data)
+
+      // Check access for the current user to each item in the tree.
+      menu_tree_check_access($data['tree'], $data['node_links']);
+
+      // Core doesn't highlight menu item belonging to the selected content tab
+      if (count($parents) > 1) {
+        $clicked_mlid = $parents[count($parents) - 2];
+        _markup_active_trail($data['tree'],
+          _get_user_show_active_trail() ? array_slice($parents, 0, -1) : array($clicked_mlid));
+      }
+
+      $tree[$cid] = $data['tree'];
+    } // isset($tree[$cid])
+    return $tree[$cid];
+  } // $item != NULL
+  return array();
+}
+
+function _retrieve_mlid_trail($menu_name, $item) {
+  $args = array($menu_name, $item['href']);
+  $placeholders = "'%s'";
+  if (drupal_is_front_page()) {
+    $args[] = '<front>';
+    $placeholders .= ", '%s'";
+  }
+  $parents = db_fetch_array(db_query("SELECT p1, p2, p3, p4, p5, p6, p7, p8 FROM {menu_links} WHERE menu_name = '%s' AND link_path IN (". $placeholders .")", $args));
+  if (empty($parents)) {
+    // If no parent exist, we may be on a local task aka tab.
+    // Use the path to the tab root as the active trail.
+    $parents = db_fetch_array(db_query("SELECT p1, p2, p3, p4, p5, p6, p7, p8 FROM {menu_links} WHERE menu_name = '%s' AND link_path = '%s'", $menu_name, $item['tab_root']));
+  }
+  // We always want all the top-level links with plid == 0.
+  $parents[] = 0;
+  // Use array_values() so that the indices are numeric for array_merge().
+  return array_unique(array_values($parents));
+}
+
+function _auto_expand_to_previously_active_child($menu_name, $clicked_href, $parents) {
+  if (count($parents) <= 1) {
+    // Click wasn't on this menu, will be rendered unexpanded.
+    return;
+  }
+  $current_trail = implode('/', array_slice($parents, 0, -1)) .'/';
+  $last_active_trail = $_SESSION[$menu_name .'-active-trail'];
+  $_SESSION[$menu_name .'-active-trail'] = $current_trail;
+  if ($last_active_trail != $current_trail) {
+    $clicked_alias = drupal_get_path_alias($clicked_href);
+    $clicked_mlid = $parents[count($parents) - 2];
+    // See if the last_active_trail starts with the current_trail
+    $pos = strpos($last_active_trail, $current_trail);
+    if ($pos === FALSE || $pos > 0) {
+      _if_not_excluded_goto_previously_active_menu_child($menu_name, $clicked_alias, $clicked_mlid);
+    }
+    else {
+      _sm_debug_info(t('@menu_name menu %clicked_menu_item: menu item %menu_id_trail backtracks on active menu trail %last_menu_id_trail -- not auto-expanding this submenu.', array(
+        '@menu_name' => $menu_name,
+        '%clicked_menu_item' => $clicked_alias,
+        '%menu_id_trail' => $current_trail,
+        '%last_menu_id_trail' => $last_active_trail)));
+      // Am in two minds about whether to forget child or not
+      unset($_SESSION[$menu_name .'-active-menus'][$clicked_mlid]);
+    }
+  }
+  else {
+    // We get here when someone clicks the same menu item twice, when Smart
+    // tabs auto-selects a child tab or when the Smart navigation and Smart
+    // primary-links blocks are both installed and the user clicks two
+    // (different) primary links in succession. This is a side-effect of the
+    // primary links being children of /node (mlid=7 in menu_links table).
+    // Similar behaviour for /admin (mlid=2) and /node (mlid=3).
+    // All of this is harmless and can be ignored.
+    // _sm_debug_info(t('Revisiting menu item %menu_id_trail, %clicked_menu_item.', array(
+    //   '%menu_id_trail' => $current_trail,
+    //   '%clicked_menu_item' => $clicked_href)));
+  }
+}
+
+function _if_not_excluded_goto_previously_active_menu_child($menu_name, $clicked_alias, $clicked_mlid) {
+  $max_depth = $_SESSION['smart_menu_stop_expanding'] ? 0 : _get_user_smart_menu_depth();;
+  $depth = 1;
+  $mlid = $clicked_mlid;
+  while ($depth < $max_depth && ($child = $_SESSION[$menu_name .'-active-menus'][$mlid]['child']) > 0) {
+    $mlid = $child;
+    $depth++;
+  }
+  if ($depth > 1) { // the clicked menu item has a previously active child
+
+    $include_items = variable_get('smart_menus_include_pages', '*');
+    $exclude_items = variable_get('smart_menus_exclude_pages', DEFAULT_MENU_EXCLUSIONS);
+    $is_included = drupal_match_path($clicked_alias, $include_items);
+    $is_excluded = drupal_match_path($clicked_alias, $exclude_items);
+
+    if ($is_included && !$is_excluded) {
+      $expanded_path = drupal_get_path_alias($_SESSION[$menu_name .'-active-menus'][$mlid]['href']);
+      if (drupal_match_path($expanded_path, $exclude_items)) {
+        _sm_debug_info(t('Not auto-expanding to %path as it is on the Smart menus exclusion list.', array('%path' => $expanded_path)));
+      }
+      elseif (!empty($expanded_path)) {
+        // Go to the previously active item. This will load the page content
+        // and then call _smart_menu_tree_page_data again.
+        _sm_debug_info(t('Auto-expanding !count level(s) to previously selected menu item %path.',
+          array('!count' => $depth - 1, '%path' => $expanded_path)));
+        $_SESSION['smart_menu_stop_expanding'] = TRUE;
+        drupal_goto($expanded_path);
+      }
+    }
+    else{
+      _sm_debug_info(t('Submenu %path is excluded from Smart menus expansion.', array('%path' => $clicked_alias)));
+    }
+  }
+  unset($_SESSION['smart_menu_stop_expanding']);
+}
+
+function _expand_submenu($menu_name, $href) {
+  $parents = _find_parents($menu_name, $href);
+  _sm_debug_info(t('@menu_name menu trail belonging to %page is %menu_trail', array(
+    '@menu_name' => $menu_name,
+    '%page' => $href,
+    '%menu_trail' => implode('/', $parents))));
+  $parents[] = 0; // Want top menu, apparently...
+  return $parents;
+}
+
+/**
+ * See if this was a click on a content tab (Edit, Track, etc), ie. a URI of
+ * the form 'node/%/<op>', where <op> is one of edit, track, revisions, etc.
+ * @param $uri
+ * @return bool
+ */
+function _is_tabbed_content_page($uri) {
+  return $uri[0] == 'node' && is_numeric($uri[1]) && !empty($uri[2]);
+}
+
+function _markup_active_trail(&$tree, $parents) {
+  foreach ($tree as &$menu) {
+    if (in_array($menu['link']['mlid'], $parents)) {
+      $menu['link']['localized_options']['attributes']['class'] = 'active';
+    }
+    if (!empty($menu['below'])) {
+      _markup_active_trail($menu['below'], $parents);
+    }
+  }
+}
+
+/**
+ * Note: the currently selected tabbed page parent tends to come up
+ * as $_SESSION[navigation-active-menus][7]['href'], where
+ * 7 equals $_SESSION[navigation-active-trail] (without the '/')
+ *
+ * @param $menu_name
+ * @param $href
+ * @return mlid
+ */
+function _find_parents($menu_name, $href) {
+  $parent_mlids = array();
+  if ($mlid = _find_mlid_by_href($menu_name, $href)) {
+    $parent_mlids[] = $mlid;
+    while ($mlid = _find_parent_mlid($menu_name, $mlid)) {
+      $parent_mlids[] = $mlid;
+    }
+  }
+  return array_reverse($parent_mlids);
+}
+
+function _find_mlid_by_href($menu_name, $href) {
+  if (isset($_SESSION[$menu_name .'-active-menus'])) {
+    // Find a previously visited menu item with the requested href
+    foreach ($_SESSION[$menu_name .'-active-menus'] as $mlid => $item) {
+      if ($item['href'] == $href) {
+        return $mlid;
+      }
+    }
+  }
+}
+
+function _find_parent_mlid($menu_name, $mlid) {
+  foreach ($_SESSION[$menu_name .'-active-menus'] as $plid => $item) {
+    if (isset($item['child']) && $item['child'] == $mlid) {
+      return $plid;
+    }
+  }
+}
+
+function _remember_active_trail($menu_name, $parents, $clicked_href) {
+  // $parents = explode('/', $_SESSION[$menu_name .'-active-trail']);
+  // When menu is clicked $parents has at least 2 elements, the second being 0
+  for ($i = 0; $i < count($parents) - 1; $i++) {
+    if (!isset($parents[$i + 1]) || $parents[$i + 1] <= 0) {
+      // Last one has no child, but is used to store href
+      $_SESSION[$menu_name .'-active-menus'][$parents[$i]]['href'] = $clicked_href;
+      break;
+    }
+    $_SESSION[$menu_name .'-active-menus'][$parents[$i]]['child'] = $parents[$i + 1];
+  }
+  //_sm_debug_info("\$_SESSION[$menu_name" .'-active-trail]: '. $_SESSION[$menu_name .'-active-trail']);
+  //_sm_debug_info("\$_SESSION[$menu_name" .'-active-menus]: '. print_r($_SESSION[$menu_name .'-active-menus'], TRUE));
+}
+
+function _get_user_smart_menu_depth() {
+  global $user;
+
+  if (module_exists('profile')) {
+    $sql = "SELECT pv.value FROM {profile_values} pv INNER JOIN {profile_fields} pf ON pv.fid = pf.fid WHERE pf.name = '%s' AND pv.uid = %d";
+    $smart_menus_depth = db_result(db_query($sql, PROFILE_SMART_MENUS_DEPTH_FIELD, $user->uid));
+  }
+  if (!is_numeric($smart_menus_depth)) {
+    // Fall back to the global default as configured by the administrator
+    $smart_menus_depth = variable_get('smart_menus_depth', 9);
+  }
+  return (int)$smart_menus_depth;
+}
+
+function _get_user_tabbed_content_expansion() {
+  global $user;
+
+  if (module_exists('profile')) {
+    $sql = "SELECT pv.value FROM {profile_values} pv INNER JOIN {profile_fields} pf ON pv.fid = pf.fid WHERE pf.name = '%s' AND pv.uid = %d";
+    $disabled_tabbed_content = db_result(db_query($sql, PROFILE_SMART_MENUS_DISABLE_TABBED_CONTENT, $user->uid));
+  }
+  return empty($disabled_tabbed_content) ? variable_get('smart_menus_tabbed_content', TRUE) : !$disabled_tabbed_content;
+}
+
+function _get_user_show_active_trail() {
+  global $user;
+
+  if (module_exists('profile')) {
+    $sql = "SELECT pv.value FROM {profile_values} pv INNER JOIN {profile_fields} pf ON pv.fid = pf.fid WHERE pf.name = '%s' AND pv.uid = %d";
+    $show_active_trail = db_result(db_query($sql, PROFILE_SMART_MENUS_ACTIVE_TRAIL, $user->uid));
+  }
+  return empty($show_active_trail) ? variable_get('smart_menus_active_trail', FALSE) : (bool)$show_active_trail;
+}
+
+function _sm_debug_info($message) {
+  global $user;
+
+  if ($user->uid == 1 && variable_get('smart_menus_debug', FALSE)) {
+    drupal_set_message($message, 'warning');
+  }
+}
+
+/*
+function _get_path_by_mlid($mlid) {
+  return db_result(db_query("SELECT link_path FROM {menu_links} WHERE mlid = %d", $mlid));
+}
+
+function _get_menu_item($path) {
+  return db_fetch_array(db_query("SELECT * FROM {menu_router} WHERE path = '%s'", $path));
+}
+ */

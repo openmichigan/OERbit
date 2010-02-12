@@ -1,0 +1,89 @@
+# $Id: nice_menus.pot,v 1.2 2007/11/09 16:35:53 add1sun Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  nice_menus.module,v 1.16.2.13 2007/10/29 17:17:42 add1sun
+#  nice_menus.info,v 1.2.2.2 2007/06/18 23:06:52 dww
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2007-10-29 13:46-0400\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: nice_menus.module:15
+msgid "Make drop down css/javascript menus for site navigation and admin menus."
+msgstr ""
+
+#: nice_menus.module:18
+msgid "<p>This is a simple module that enables the site to have drop down css/javascript menus for site navigation and admin navigation.</p><p>Remember to activate and configure the menus in !link</p>"
+msgstr ""
+
+#: nice_menus.module:44
+msgid "Path to custom Nice Menus CSS file"
+msgstr ""
+
+#: nice_menus.module:45
+msgid "To override the default Nice Menus CSS layout, enter the path to your custom CSS file.  It should be a relative path from the root of your Drupal install (e.g. sites/all/themes/example/mymenu.css)."
+msgstr ""
+
+#: nice_menus.module:89 nice_menus.info:0
+msgid "Nice Menus"
+msgstr ""
+
+#: nice_menus.module:90
+msgid "Configure Nice Menus."
+msgstr ""
+
+#: nice_menus.module:108
+msgid "Number of Nice Menus"
+msgstr ""
+
+#: nice_menus.module:109
+msgid "The total number of independent nice menus (blocks) you want."
+msgstr ""
+
+#: nice_menus.module:135
+msgid "Menu Name"
+msgstr ""
+
+#: nice_menus.module:140
+msgid "Source Menu Tree"
+msgstr ""
+
+#: nice_menus.module:141
+msgid "The menu tree from which to show a nice menu."
+msgstr ""
+
+#: nice_menus.module:147
+msgid "Menu Style"
+msgstr ""
+
+#: nice_menus.module:148
+msgid "right: menu items are listed on top of each other and expand to the right"
+msgstr ""
+
+#: nice_menus.module:148
+msgid "left: menu items are listed on top of each other and expand to the left"
+msgstr ""
+
+#: nice_menus.module:148
+msgid "down: menu items are listed side by side and expand down"
+msgstr ""
+
+#: nice_menus.module:175
+msgid "Navigation"
+msgstr ""
+
+#: nice_menus.info:0
+msgid "CSS/jQuery drop-down, drop-right and drop-left menus to be placed in blocks"
+msgstr ""
+

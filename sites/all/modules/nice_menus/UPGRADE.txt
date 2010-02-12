@@ -1,0 +1,15 @@
+// $Id: UPGRADE.txt,v 1.3 2007/10/29 16:38:28 add1sun Exp $
+
+NICE MENUS UPGRADE
+------------------
+4.7 -> 5.x
+The CSS class has changed to change the underscore (_) to a dash (-)
+The 4.7 version of class="nice_menu" is now class="nice-menu" in version 5.
+You will need to adjust any Custom CSS you have added to account for this.
+The default CSS that comes with nice_menus uses this new convention already.
+
+Also note that the layout CSS for the module has been broken out into a
+separate CSS file (nice_menus_default.css). You have the option of replacing
+this file by creating a separate customized CSS file, and overriding the
+default CSS file at Administer -> Themes -> Configure -> Global settings ->
+"Path to custom nice menus CSS file".

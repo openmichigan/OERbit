@@ -1,0 +1,16 @@
+; $Id: smart_menus.info,v 1.4 2009/11/10 05:43:21 rdeboer Exp $
+
+name = Smart menus
+description = Give your menus a memory, so that on subsequent visits to the parent page the previously visited menu item is pre-selected for you.
+core = "6.x"
+package = Menus
+dependencies[] = profile
+; Note: there is no dependency on the core Menu module
+
+
+; Information added by drupal.org packaging script on 2009-12-23
+version = "6.x-1.2"
+core = "6.x"
+project = "smart_menus"
+datestamp = "1261537864"
+
