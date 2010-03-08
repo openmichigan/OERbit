@@ -1,0 +1,84 @@
+/* $Id: print.css,v 1.1.2.1 2009/02/13 06:40:02 johnalbin Exp $ */
+
+body {
+
+
+    font-family: Arial, Helvetica, "Bitstream Vera Sans", sans-serif;
+	color: #000;
+}
+.print-breadcrumb { display: none; }
+
+.field-field-page-image { float: right; }
+.field-field-page-image .field-label { display: none; }
+.field-field-page-image-caption {float: right; clear:right; width: 300px; font-size: small; color: #666;}
+.field-field-page-image-caption .field-label { display: none; }
+
+#header #header-blocks { display: none; }
+#header { height: auto; padding-bottom: 20px; }
+#content-top { display: none; }
+
+#footer {
+	background: none;
+	border-top: #999 solid 1px;
+}
+
+.print-footer { border-top: 1px solid #999; margin-top: 10px; padding-top: 10px; }
+.print-footer #block-menu-menu-footerlinks, .print-footer #block-block-1 { display: none; }
+
+
+/* underline all links */
+  a:link, a:visited
+  {
+    text-decoration: underline !important;
+  }
+
+  /* Don't underline header */
+  #site-name a:link,
+  #site-name a:visited
+  {
+    text-decoration: none !important;
+  }
+
+/* CSS2 selector to add visible href after links */
+  #content a:link:after,
+  #content a:visited:after
+  {
+    content: " (" attr(href) ") ";
+    font-size: 0.8em;
+    font-weight: normal;
+  }
+
+/* Un-float the content */
+  #content,
+  #content-inner
+  {
+    float: none;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+/* Turn off any background colors or images */
+  body,
+  #page, #page-inner,
+  #main, #main-inner,
+  #content, #content-inner
+  {
+    color: #000;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+/* Hide sidebars and nav elements */
+  #skip-to-nav, #navbar, #sidebar-left, #sidebar-right, .breadcrumb, div.tabs, .links, .taxonomy,
+  .book-navigation, .forum-topic-navigation, .pager, .feed-icons
+  {
+    visibility: hidden;
+    display: none;
+  }
+
+/* Otherwise, Firefox clips the content after the first page. */
+  #page
+  {
+    overflow-y: visible;
+  }
