@@ -72,3 +72,5 @@ for (var plugin in pluginSettings.drupal) {
   Drupal.wysiwyg.editor.instance.fckeditor.addPlugin(plugin, pluginSettings.drupal[plugin], Drupal.settings.wysiwyg.plugins.drupal[plugin], window);
 }
 
+FCKConfig.SpellChecker = 'SpellerPages';
+
