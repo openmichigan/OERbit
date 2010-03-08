@@ -1,0 +1,167 @@
+# $Id: weight.pot,v 1.1.2.4 2009/04/25 15:03:22 nancyw Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  weight.module,v 1.23.2.6 2009/02/25 19:05:39 nancyw
+#  weight.views.inc,v 1.2.2.1 2009/01/26 00:28:54 nancyw
+#  weight.info,v 1.4 2008/09/27 00:05:46 nancyw
+#  weight.install,v 1.2.2.1 2009/01/26 00:28:54 nancyw
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-04-25 10:57-0400\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: weight.admin.inc:15
+msgid "Node Weight Range"
+msgstr ""
+
+#: weight.admin.inc:18
+msgid "This will be the +/- range for node weight."
+msgstr ""
+
+#: weight.admin.inc:23
+msgid "Use Menu Weight"
+msgstr ""
+
+#: weight.admin.inc:25
+msgid "If the node has not been weighted, should we use the menu item weight?"
+msgstr ""
+
+#: weight.admin.inc:31
+msgid "Weight selector position weight"
+msgstr ""
+
+#: weight.admin.inc:33
+msgid "This controls where the selection for node weight goes on the node edit form. If the position is 10 and the user has \"administer nodes\" permission, it will be added into the \"Workflow options.\""
+msgstr ""
+
+#: weight.admin.inc:38
+msgid "Display On"
+msgstr ""
+
+#: weight.admin.inc:41
+msgid "Select the content types to be weighted.\r\n      The selected content types will be mass updated to the default weight</p>\r\n      <p><i>Note:</i> Unselecting a node type after having changed weights\r\n      will result in the loss of those weights. You may want to check the\r\n      <a href=\"@posts_page\">content page</a> before unsetting any node types."
+msgstr ""
+
+#: weight.admin.inc:53
+msgid "Default weight"
+msgstr ""
+
+#: weight.admin.inc:55
+msgid "If a new content type is selected, this is the weight that will be assigned to those nodes. If you are also changing the range above, \"Save\" that change first."
+msgstr ""
+
+#: weight.admin.inc:60
+msgid "Save configuration"
+msgstr ""
+
+#: weight.admin.inc:87
+msgid "Settings updated."
+msgstr ""
+
+#: weight.admin.inc:98
+msgid "Enabling weight for: !types, default weight: !default"
+msgstr ""
+
+#: weight.admin.inc:117
+msgid "@count nodes weight enabled."
+msgstr ""
+
+#: weight.admin.inc:126
+msgid "Disabling weight for: !types"
+msgstr ""
+
+#: weight.admin.inc:139
+msgid "@count nodes weight disabled."
+msgstr ""
+
+#: weight.views.inc:13;24;32 weight.module:162;52 weight.info:0
+msgid "Weight"
+msgstr ""
+
+#: weight.views.inc:25
+msgid "The node weight."
+msgstr ""
+
+#: weight.views.inc:51
+msgid "Weight Changer"
+msgstr ""
+
+#: weight.views.inc:52
+msgid "Displays rows in a table which allows weight change.  Be sure to add the Weight field and Sort by Weight."
+msgstr ""
+
+#: weight.views.inc:121
+msgid "sort by @s"
+msgstr ""
+
+#: weight.views.inc:216
+msgid "Save"
+msgstr ""
+
+#: weight.module:16;54 weight.info:0
+msgid "Add weight-based sorting to nodes."
+msgstr ""
+
+#: weight.module:18
+msgid "<h3>Description:</h3><p>The weight module adds a weight option to enabled node types. It uses the \"sticky\" field in the database to store weights as well as sticky information (so that feature is not lost). Nodes will be sorted first by stickiness, then by weight (lightest to heaviest), then by creation date.</p>\r\n        <h4>Setup:</h4><p>To enable weight sorting on existing nodes, visit the <a href=\"@setup\">weight db setup page</a> and select which node types to allow weighting. When you click \"Save configuration,\" the module will convert old sticky values to new weight-encoded values for proper sorting. If you de-select a type, weights on all nodes of that type will be converted back to standard sticky values.</p>\r\n        <h4>Permissions:</h4><p>Users with \"administer nodes\" permission will always be able to adjust weight for enabled node types. However, enabling \"assign node weight\" will allow non-node-admin users to adjust weight on their own nodes. Find these settings <a href=\"@access\">here</a>.</p>\r\n        <h4>Bulk weight management</h4><p>You may easily manage the weight of multiple nodes simultaneously by using the <a href=\"@node_admin\"> node admin page</a>.</p>"
+msgstr ""
+
+#: weight.module:29
+msgid "<strong>Note:</strong> When the weight module is enabled, it is not possible to filter based on sticky status."
+msgstr ""
+
+#: weight.module:114
+msgid "<strong>Weight:</strong> To change the weight of a node, select a value from the corresponding dropdown box under <i>Operations</i>. Node weights are submitted immediately. Selectors are only available for node types configured on the <a href=\"@weight_admin\">weight admin page</a>."
+msgstr ""
+
+#: weight.module:153
+msgid "Node Weight"
+msgstr ""
+
+#: weight.module:165
+msgid "In a node list context (such as the front page or term pages), list items (e.g. \"teasers\") will be ordered by \"stickiness\" then by \"node weight\" then by \"authored on\" datestamp. Items with a lower (lighter) node weight value will appear above those with a higher (heavier) value."
+msgstr ""
+
+#: weight.module:169
+msgid "<strong>Note</strong>: If this node is used in a menu, then this weight will be ignored."
+msgstr ""
+
+#: weight.module:219
+msgid "sticky"
+msgstr ""
+
+#: weight.module:220
+msgid "promoted"
+msgstr ""
+
+#: weight.module:221
+msgid "translate"
+msgstr ""
+
+#: weight.module:222
+msgid "moderated"
+msgstr ""
+
+#: weight.module:34
+msgid "assign node weight"
+msgstr ""
+
+#: weight.module:0
+msgid "weight"
+msgstr ""
+
+#: weight.install:14
+msgid "Weight module is now enabled. You must now update your nodes using the <a href=\"!url\">Weight DB setup page</a>"
+msgstr ""
+

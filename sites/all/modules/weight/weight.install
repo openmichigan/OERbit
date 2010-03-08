@@ -1,0 +1,33 @@
+<?php
+// $Id: weight.install,v 1.2.2.1 2009/01/26 00:28:54 nancyw Exp $
+// Author: Harry Slaughter <harry@devbee.com>
+/**
+ * @file
+ * This module uses the sticky column of the node table
+ * to add weighting to nodes.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function weight_install() {
+  drupal_set_message(t('Weight module is now enabled. You must now update your nodes using the <a href="!url">Weight DB setup page</a>', array('!url' => url('admin/settings/weight/setup'))));
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function weight_uninstall() {
+  // We need to unset any weighted nodes and reset sticky to normal values.
+  $weight_node_types = variable_get('weight_node_types', array());
+  if ($weight_node_types) {
+    $list = implode("', '", $weight_node_types);
+    db_query("UPDATE {node} n SET n.sticky = 1 WHERE n.sticky > 1 AND n.type IN ('". $list ."')");
+    db_query("UPDATE {node} n SET n.sticky = 0 WHERE n.sticky < 0 AND n.type IN ('". $list ."')");
+  }
+
+  // Delete our variables.
+  variable_del('weight_node_types');
+  variable_del('weight_range');
+  variable_del('weight_use_menu');
+}

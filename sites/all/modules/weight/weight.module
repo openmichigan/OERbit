@@ -1,0 +1,310 @@
+<?php
+// $Id: weight.module,v 1.23.2.8 2009/04/25 15:11:36 nancyw Exp $
+/**
+ * @file
+ * This module uses the sticky column of the node table
+ * to add weighting to nodes.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function weight_help($path, $args) {
+  switch ($path) {
+    case 'admin/setting/weight':
+    case 'admin/modules#description':
+      return t('Add weight-based sorting to nodes.');
+    case 'admin/help#weight':
+      return t('<h3>Description:</h3><p>The weight module adds a weight option to enabled node types. It uses the "sticky" field in the database to store weights as well as sticky information (so that feature is not lost). Nodes will be sorted first by stickiness, then by weight (lightest to heaviest), then by creation date.</p>
+        <h4>Setup:</h4><p>To enable weight sorting on existing nodes, visit the <a href="@setup">weight db setup page</a> and select which node types to allow weighting. When you click "Save configuration," the module will convert old sticky values to new weight-encoded values for proper sorting. If you de-select a type, weights on all nodes of that type will be converted back to standard sticky values.</p>
+        <h4>Permissions:</h4><p>Users with "administer nodes" permission will always be able to adjust weight for enabled node types. However, enabling "assign node weight" will allow non-node-admin users to adjust weight on their own nodes. Find these settings <a href="@access">here</a>.</p>
+        <h4>Bulk weight management</h4><p>You may easily manage the weight of multiple nodes simultaneously by using the <a href="@node_admin"> node admin page</a>.</p>',
+        array(
+          '@setup' => url('admin/settings/weight/setup'),
+          '@access' => url('admin/user/permissions'),
+          '@node_admin' => url('admin/content/node')
+          )
+      );
+    case 'admin/content/node':
+      return t('<strong>Note:</strong> When the weight module is enabled, it is not possible to filter based on sticky status.');
+  }
+}
+
+function weight_perm() {
+  return array('assign node weight');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function weight_menu() {
+  $items = array();
+
+  // Ajax callback for weight changer page.
+  $items['admin/node/weight/_weight_change'] = array(
+    'page callback' => '_weight_change',
+    'access arguments' => array('administer nodes'),
+    'type' => MENU_CALLBACK
+    );
+
+  // Top level settings.
+  $items['admin/settings/weight'] = array(
+    'title' => 'Weight',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Add weight-based sorting to nodes.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('weight_settings_form'),
+    'file' => 'weight.admin.inc',
+    );
+
+  return $items;
+}
+
+function weight_nodeapi(&$node, $op) {
+	$weight_node_types = variable_get('weight_node_types', array_flip(node_get_types('names')));
+	if (in_array($node->type, $weight_node_types)) {
+    switch ($op) {
+      case 'presave':
+        // Non-weighted nodes have a weight of zero.
+        if (is_null($node->node_weight)) {
+          $node->node_weight = 0;
+        }
+
+        // If the admin wants to use the menu weight, see if there is one.
+        if (variable_get('weight_use_menu', FALSE)) {
+          $node->node_weight = (isset($node->menu['link_title']) && !empty($node->menu['link_title'])) ? $node->menu['weight'] : $node->node_weight;
+        }
+
+        // Encode weight into the sticky value for the database.
+        _weight_encode($node);
+        break;
+
+      case 'load':
+        _weight_decode($node);
+        break;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ *
+ * This is where we tweak the admin/content/node to include our weight
+ * selector; hide the 'sticky' filter (it won't work when using weight module),
+ * and add some help text to the form.
+ */
+function weight_form_alter(&$form, $form_state, $form_id) {
+  $weight_node_types = variable_get('weight_node_types', array_flip(node_get_types('names')));
+
+  $weight_node_type_names = array();
+  foreach ($weight_node_types as $type) {
+    $weight_node_type_names[] = node_get_types('name', $type);
+  }
+
+  if ($form_id == 'node_admin_content') {
+  // The admin node page does not use the nodeapi for getting lists of nodes, so
+  // I never have a chance to convert the sticky flag to 0/1. and trying to
+  // filter on that field will not work. Therefore, I am going to hide the
+  // 'filter on sticky status' altogether when weight_module is enabled
+    unset($form['filters']['status']['status']['#options']['sticky-1']);
+    unset($form['filters']['status']['status']['#options']['sticky-0']);
+
+    // I can't add a table header for weight, so instead I'm going to explain
+    // the weight dropdown to the user. Also, to position my help text
+    // appropriately, I'm using this '#suffix' hack rather than adding
+    // a form property as i'd like to do.
+    $form['admin']['options']['#suffix'] .= t('<strong>Weight:</strong> To change the weight of a node, select a value from the corresponding dropdown box under <i>Operations</i>. Node weights are submitted immediately. Selectors are only available for node types configured on the <a href="@weight_admin">weight admin page</a>.',
+      array('@weight_admin' => url('admin/settings/weight'))
+      );
+
+    // Add weight selector under the operations section of the admin node
+    // overview page (admin/content/node).
+    if (!empty($form['admin']['operations'])) {
+      foreach ($form['admin']['operations'] as $nid => $title) {
+        // only add weight selector if weight is enabled for this node type
+        if (in_array($form['admin']['name'][$nid]['#value'], $weight_node_type_names) ) {
+          $selector = weight_node_selector($nid);
+          $form['admin']['operations'][$nid]['#value'] .= ' '. $selector['selector'];
+          $form['admin']['status'][$nid]['#value'] .=  $selector['status'];
+        }
+      }
+    }
+  }
+
+  // Node edit page weight selector.
+  if (isset($form['type']) && $form['type']['#value'] .'_node_form' == $form_id) {
+    if (user_access('assign node weight') || user_access('administer nodes')) {
+      $node = $form['#node'];
+      if (in_array($node->type, $weight_node_types)) {
+        $range = variable_get('weight_range', 20);
+        $position = variable_get('weight_position', 0);
+        $where = 'weight_form';
+
+        if ($position == 10 &&  user_access('administer nodes')) {
+          // We will add it to the Workflow fieldset.
+          $where = 'options';
+          $form['options']['#collapsed'] = ($node->node_weight == 0);
+        }
+        else {
+          // Add the node weight selector fieldset.
+          $form['weight_form'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Node Weight'),    
+            '#collapsible' => TRUE,    
+            '#collapsed' => ($node->node_weight == 0),    
+            '#weight' => $position,    
+            );
+        }
+
+        $form[$where]['node_weight'] = array(
+          '#type' => 'weight',
+          '#title' => t('Weight'),
+          '#default_value' => (int)$node->node_weight,
+          '#delta' => $range,
+          '#description' => t('In a node list context (such as the front page or term pages), list items (e.g. "teasers") will be ordered by "stickiness" then by "node weight" then by "authored on" datestamp. Items with a lower (lighter) node weight value will appear above those with a higher (heavier) value.'),
+          );
+
+        if (variable_get('weight_use_menu', FALSE)) {
+          $form['weight_form']['node_weight']['#description'] .= '<br /> '. t('<strong>Note</strong>: If this node is used in a menu, then this weight will be ignored.');
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Generate JS code for selecting individual node weights on admin page
+ */
+function weight_node_selector($nid) {
+  static $js_included;
+
+  if (!$js_included) {
+    $path = drupal_get_path('module', 'weight');
+    drupal_add_js($path .'/httpRequest.js', 'module', 'header', TRUE);
+    $js_included = TRUE;
+    drupal_add_css($path .'/weight.css');
+  }
+
+  $selector_template = "\n"."<select style=\"margin: 0;\"
+    onchange='httpRequest(\"GET\", \"" . base_path() .
+    "?q=admin/node/weight/_weight_change/\" + [NID] + \"/\" +
+    this.options[this.selectedIndex].value,true)' >";
+
+  $node = node_load($nid);
+
+  // Convert to our weight range.
+  $weight = $node->node_weight;
+
+  // ugly bit of javascript we use for each dropdown to submit weight changes
+  // in the background. Relies on even uglier httpRequest.js file that comes
+  // with this module. Ironically, Ajax makes me feel dirty.
+
+  $weight_range = variable_get('weight_range', 20);
+  for ($i = 0 - $weight_range; $i <= $weight_range; ++$i) {
+    $selector_template .= "<option value='$i'>$i</option>";
+  }
+  $selector_template .= '</select>';
+
+  $weight_selector = preg_replace("/(value='$weight')/", "$1 selected='selected'", $selector_template);
+  $weight_selector = preg_replace("/\[NID\]/", $nid, $weight_selector);
+
+  $status = NULL;
+  $status .= $node->sticky ? '<br />'. t('sticky') : NULL;
+  $status .= $node->promote ? '<br />'. t('promoted') : NULL;
+  $status .= $node->translate ? '<br />'. t('translate') : NULL;
+  $status .= $node->moderate ? '<br />'. t('moderated') : NULL;
+
+  return array(
+    'selector' => '<div class="weight-selector">'. $weight_selector .'</div>',
+    'status' => $status,
+    );
+}
+
+/**
+ * Ajax callback for weight manager page.
+ */
+function _weight_change($nid, $weight) {
+  // Doing it this way preserves the revision information.
+  $node = node_load($nid);
+  $node->node_weight = $weight;
+  node_save($node);
+}
+
+/**
+ * Convert our weight to 'encoded' sticky value for DB.
+ * Stickiness is the inverse of weight - stickiness is sorted DESC while
+ * weight is sorted ASC so we invert the weight before saving...
+ * If the sticky box is checked, subtract weight from 100;
+ * unweighted sticky nodes will have a value of 100.
+ */
+function _weight_encode(&$node) {
+  if ($node->sticky) {
+    $node->sticky = 100 - $node->node_weight;
+  }
+  // Unweighted non-sticky nodes will have a value of -100.
+  else {
+    $node->sticky = -($node->node_weight + 100);
+  }
+}
+
+/**
+ * Convert our weight back out of sticky.
+ */
+function _weight_decode(&$node) {
+  if ($node->sticky == 0 || $node->sticky == 1) {
+    $node->node_weight = 0;
+    return;
+  }
+  
+  if ($node->sticky > 0) {
+    $node->node_weight = 100 - $node->sticky;
+    $node->sticky = 1;
+  }
+  else {
+    $node->node_weight = -($node->sticky + 100);
+    $node->sticky = 0;
+  }
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function weight_views_api() {
+  return array('api' => 2, 'path' => drupal_get_path('module', 'weight'));
+}
+
+/**
+ * Implementation of hook_theme()
+ */
+function weight_theme() {
+  return array(
+    'weight_view_weight_form' => array(
+      'arguments' => array('form' => NULL),
+      'template' => 'weight-view-weight-form',
+    ),
+  );
+}
+
+/** 
+ * Prepare the weight form for its template file.
+ */
+function template_preprocess_weight_view_weight_form(&$vars) {
+  $vars['header'] = $vars['form']['#variables']['header'];
+  $vars['class'] = $vars['form']['#variables']['class'];
+  $vars['id'] = $vars['form']['#variables']['id'];
+  $vars['fields'] = $vars['form']['#variables']['fields'];
+  foreach ($vars['form']['rows'] as $count => $item) {
+    if (is_numeric($count)) {
+      foreach ($item as $field => $value) {
+        if (substr($field, 0, 1) != '#') {
+          if (substr($field, 0, 6) == 'weight') {
+            $value['#attributes']['class'] = 'weight_dragger';
+          }
+          $vars['rows'][$count][$field] = drupal_render($value);
+        }
+      }
+    }
+  }
+  unset($vars['form']['rows']);
+  $vars['submit'] = drupal_render($vars['form']);
+ }
