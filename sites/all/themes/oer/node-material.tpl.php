@@ -136,7 +136,5 @@
   
   <?php print $node->field_file[0]['filename']; ?>
   <?php print $node->field_file[0]['filepath']; ?>
-  
-  
-<?php print "<pre>"; print_r($node); print "</pre>"; ?>
+
 </div></div> <!-- /node-inner, /node -->
