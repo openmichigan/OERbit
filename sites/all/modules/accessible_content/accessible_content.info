@@ -3,9 +3,9 @@ name = Accessible Content
 description = The core module of accessible content
 package = Accessible Content
 core = 6.x
-; Information added by drupal.org packaging script on 2010-01-31
+; Information added by drupal.org packaging script on 2010-02-22
 version = "6.x-1.x-dev"
 core = "6.x"
 project = "accessible_content"
-datestamp = "1264896013"
+datestamp = "1266796817"
 

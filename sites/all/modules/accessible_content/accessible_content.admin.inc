@@ -1,4 +1,4 @@
-<?php // $Id: accessible_content.admin.inc,v 1.1.2.1 2010/01/09 20:42:28 kevee Exp $
+<?php // $Id: accessible_content.admin.inc,v 1.1.2.3 2010/02/21 20:08:51 kevee Exp $
 
 /**
 *  @file The administration forms
@@ -12,17 +12,25 @@ function accessible_content_admin_form() {
   $form = array();
   $form['#attributes'] = array('enctype' => "multipart/form-data");
   $error_types = array('severe', 'moderate', 'suggestion');
-
+  if (module_exists('advanced_help')) {
+    $form['adv_help'] = array(
+      '#value' => l('Read more about Accessible Content', 'admin/advanced_help/accessible_content'),
+    );
+  }
+  
   $form['ac_error_display'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display tests even if there are no errors'),
     '#description' => t('If checked, this will display even tests in reports which had no errors.'),
     '#default_value' => variable_get('ac_error_display', 0),
   );
-
+  $adv_help = (module_exists('advanced_help')) 
+              ? l('Learn more', 'help/accessible_content/tests')
+              : '';
   $form['ac_user_interface'] = array(
     '#type' => 'fieldset',
     '#title' => t('User Interface'),
+    '#description' => t('Control the way different severity levels are displayed in your site. ') . $adv_help,
   );
   foreach ($error_types as $type) {
     $form['ac_user_interface']['ac_'. $type] = array(
@@ -84,6 +92,88 @@ function accessible_content_admin_form_submit($form, $form_state) {
 }
 
 /**
+*  A form for adding or updating accessibility tests
+*/
+function accessible_content_admin_update_tests_form() {
+  $form = array();
+  
+  $form['instructions']['#value'] = '<div>'. t('This will install or update any accessibility tests which have not been created by Accessible Content module. If you have any nodes you have updated or created, they will not be overwritten.') .'</div>';
+  
+  $form['submit'] = array('#type' => 'submit', '#value' => 'Install or Update Tests');
+  
+  return $form;
+}
+
+/**
+*  Form submit callback for updating tests. This fires off the batch process.
+*/
+function accessible_content_admin_update_tests_form_submit() {
+  $batch = array(
+    'title' => t('Installing new tests or updating existing ones.'),
+    'operations' => array(
+      array('accessible_content_admin_update_tests_form_operation', array()),
+    ),
+    'finished' => 'accessible_content_admin_update_tests_form_finished',
+    'file' => drupal_get_path('module', 'accessible_content') .'/accessible_content.admin.inc',
+  );
+  batch_set($batch);
+}
+
+/**
+*  Main operation batch callback for creating or installing tests
+*/
+function accessible_content_admin_update_tests_form_operation(&$context) {
+  if (!$context['sandbox']['tests']) {
+    $file = fopen(dirname(__FILE__) .'/quail/guidelines/translations/en.txt', 'r');
+    while (($test = fgetcsv($file)) !== FALSE ) {
+      $context['sandbox']['tests'][] = $test;
+    }
+    $context['sandbox']['current_id'] = 0;
+    $context['message'] = 'Parsing test list';
+    $context['finished'] = 0;
+  }
+  else {
+    $test = $context['sandbox']['tests'][$context['sandbox']['current_id']];
+    $existing = db_result(db_query('SELECT nid FROM {accessible_content_node_test} WHERE test_name = "%s"', $test[0]));
+    if (count($test) == 4 && !$existing) {
+    $node = new stdClass();
+    $node->type = 'accessibility_test';
+    $node->uid = $user->uid;
+    $node->title = $test[1];
+    $node->body = $test[2];
+    node_save($node);
+    db_query('INSERT INTO {accessible_content_node_test} (nid, test_name, severity) VALUES(%d, "%s", %d)',
+      $node->nid,
+       $test[0],
+       $test[3]);
+      $context['results'][] = $test[1];
+    }
+    
+    $context['message'] = t('Installing test %test', array('%test' => $test[1]));
+    $context['sandbox']['current_id']++;
+    $context['finished'] = $context['sandbox']['current_id'] / count($context['sandbox']['tests']);
+
+  }
+}
+
+/**
+*  Batch completed callback for installing or updating tests
+*/
+function accessible_content_admin_update_tests_form_finished($success, $results, $operations) {
+  if ($success) {
+    $message = format_plural(count($results), 'One accessibility test created.', '@count accessibility tests created.');
+  }
+  else {
+    $message = t('An error occurred while installing accessibility tests.');
+  }
+  drupal_set_message($message);
+  // Providing data for the redirected page is done through $_SESSION.
+  foreach ($results as $result) {
+    $items[] = t('Installed test %title.', array('%title' => $result));
+  }
+  $_SESSION['ac_update_results'] = $items;
+}
+/**
 *  The form for checking existing content in the admin section
 */
 function accessible_content_admin_check_form() {
@@ -133,7 +223,7 @@ function accessible_content_admin_check_form_submit($form, &$form_state) {
     return NULL;
   }
   $batch = array(
-    'title' => t('Checking existing '. check_plain($form_state['values']['node_type']) .' content'),
+    'title' => t('Checking existing %type content', array('%type' => $form_state['values']['node_type'])),
     'operations' => $operations,
     'finished' => 'accessible_content_admin_check_form_batch_completed',
     'file' => drupal_get_path('module', 'accessible_content') .'/accessible_content.admin.inc',
@@ -147,7 +237,7 @@ function accessible_content_admin_check_form_submit($form, &$form_state) {
 */
 function accessible_content_admin_check_form_batch_completed($success, $results, $operations) {
   if ($success) {
-    $message = format_plural(count($results), 'One post checked for accessibility.', '@count post checked for accessibility.');
+    $message = format_plural(count($results), 'One post checked for accessibility.', '@count posts checked for accessibility.');
   }
   else {
     $message = t('An error occurred while checking existing content');

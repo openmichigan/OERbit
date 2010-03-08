@@ -1,5 +1,5 @@
 <?php
-// $Id: accessible_content.module,v 1.1.2.16 2010/01/30 22:16:15 kevee Exp $
+// $Id: accessible_content.module,v 1.1.2.19 2010/02/21 20:08:51 kevee Exp $
 
 /**
 *  @file
@@ -15,6 +15,11 @@ function accessible_content_include_library() {
   if ($result) {
     module_load_include('inc', 'accessible_content', 'accessible_content.quail');
     module_load_include('inc', 'accessible_content', 'accessible_content.theme');
+    if ($plugin_files = variable_get('ac_test_plugin_files', FALSE)) {
+      foreach ($plugin_files as $file) {
+        include_once($file);
+      }
+    }
     return TRUE;
   }
   return FALSE;
@@ -37,7 +42,7 @@ function accessible_content_menu() {
   $items = array();
 
   $items['admin/settings/accessible_content'] = array(
-    'title' => 'Accessible Content Settings',
+    'title' => 'Accessible Content',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('accessible_content_admin_form'),
     'access arguments' => array('administer site settings'),
@@ -54,6 +59,16 @@ function accessible_content_menu() {
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('accessible_content_admin_check_form'),
+    'access arguments' => array('administer site settings'),
+    'file' => 'accessible_content.admin.inc',
+    'weight' => 4,
+  );
+
+  $items['admin/settings/accessible_content/create_tests'] = array(
+    'title' => 'Update Tests',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('accessible_content_admin_update_tests_form'),
     'access arguments' => array('administer site settings'),
     'file' => 'accessible_content.admin.inc',
     'weight' => 4,
@@ -860,27 +875,30 @@ function accessible_content_accessibility_report($results, $prefix = NULL, $head
     );
     return $form;
   }
-  $total = ($results[QUAIL_TEST_SEVERE]['total']) ? $results[QUAIL_TEST_SEVERE]['total'] : 0;
-  $form[$prefix .'errors_'. QUAIL_TEST_SEVERE] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Severe Errors') .' ('. $total .')',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $total = ($results[QUAIL_TEST_MODERATE]['total']) ? $results[QUAIL_TEST_MODERATE]['total'] : 0;
-  $form[$prefix .'errors_'. QUAIL_TEST_MODERATE] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Moderate Errors') .' ('. $total .')',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $total = ($results[QUAIL_TEST_SUGGESTION]['total']) ? $results[QUAIL_TEST_SUGGESTION]['total'] : 0;
-  $form[$prefix .'errors_'. QUAIL_TEST_SUGGESTION] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Suggestions') .' ('. $total .')',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
+  if($results[QUAIL_TEST_SEVERE]['total']) {
+    $form[$prefix .'errors_'. QUAIL_TEST_SEVERE] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Severe Errors') .' ('. $results[QUAIL_TEST_SEVERE]['total'] .')',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+  }
+  if($results[QUAIL_TEST_MODERATE]['total']) {
+    $form[$prefix .'errors_'. QUAIL_TEST_MODERATE] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Moderate Errors') .' ('. $results[QUAIL_TEST_MODERATE]['total'] .')',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+  }
+  if($results[QUAIL_TEST_SUGGESTION]['total']) {
+    $form[$prefix .'errors_'. QUAIL_TEST_SUGGESTION] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Suggestions') .' ('. $results[QUAIL_TEST_SUGGESTION]['total'] .')',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+  }
   if (is_array($results)) {
     foreach ($results as $severity => $errors) {
       if (count($errors)) {
@@ -944,6 +962,7 @@ function accessible_content_views_api() {
 function accessible_content_menu_alter($menu) {
   accessible_content_include_library();
   $tests = module_invoke_all('accessible_content_install_tests');
+  $files = array();
   foreach ($tests as $test_name => $test) {
     $existing = db_result(db_query('SELECT nid FROM {accessible_content_node_test} WHERE test_name = "%s"',
                 $test_name));
@@ -957,7 +976,11 @@ function accessible_content_menu_alter($menu) {
       $node->ac_function_name = $test_name;
       node_save($node);
     }
+    if ($test['file']) {
+      $files[$test['file']] = $test['file'];
+    }
   }
+  variable_set('ac_test_plugin_files', $files);
 }
 
 /**
