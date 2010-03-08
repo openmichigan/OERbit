@@ -1,0 +1,9 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function path_breadcrumb_install() {
+  db_query('UPDATE {system} SET weight = -1 WHERE name = "path_breadcrumb"');
+}

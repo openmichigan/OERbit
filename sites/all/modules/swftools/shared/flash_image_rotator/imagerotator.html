@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+	<title>JW Image Rotator</title>
+
+	<style type="text/css">
+		body { background-color: #fff; padding: 0 25px; color:#000; font: 13px/18px Arial, sans-serif; }
+		a { color: #360; }
+		h3 { padding-top: 50px; }
+		ol { margin:5px 0 15px 16px; padding:0; list-style-type:square; }
+	</style>
+
+</head>
+<body>
+
+	<h3>Example</h3>
+	<p>Here's a simple example of the <a href="http://www.longtailvideo.com/players/jw-image-rotator/">JW Image Rotator</a> embedded in a page. Copy-paste the source code and put the files on your site to get started.</p>
+
+
+
+	<div id="container"><a href="http://www.macromedia.com/go/getflashplayer">Get the Flash Player</a> to see this rotator.</div>
+	<script type="text/javascript" src="swfobject.js"></script>
+	<script type="text/javascript">
+		var s1 = new SWFObject("imagerotator.swf","rotator","400","200","7");
+		s1.addParam("allowfullscreen","true");
+		s1.addVariable("file","madrid.xml");
+		s1.addVariable("width","400");
+		s1.addVariable("height","200");
+		s1.write("container");
+	</script>
+
+
+
+	<h3>Quickstart</h3>
+	<p>The easiest way to get going with the imagerotator is by copy-pasting the source code of this page to your site. Also make sure to copy-paste the .swf, .js and .xml file to your website. Plus your images of course...</p>
+
+	<h3>Licensing</h3>
+	<p>The Image Rotator is licensed under a <a href="http://creativecommons.org/licenses/by-nc-sa/2.0/">Creative Commons License</a>. It allows you to use, modify and redistribute the script for free for noncommercial purposes. For corporate use, <a href="http://www.longtailvideo.com/players/order" title="Order commercial licenses">please apply for a commercial license</a>!</p>
+
+	<h3>Documentation</h3>
+	<ol>
+		<li>All <a href="http://developer.longtailvideo.com/trac/wiki/ImageRotatorVars">supported flashvars</a> (variables) you can set to customize the imagerotator.</li>
+		<li>All <a href="http://developer.longtailvideo.com/trac/wiki/ImageRotatorFiles">supported playlist formats</a> you can use, plus some implementation info.</li>
+		<li>A tutorial on <a href="http://www.longtailvideo.com/support/tutorials/Embedding-Flash"> embedding flash items</a> in your site.</li>
+		<li>A tutorial with <a href="http://developer.longtailvideo.com/trac/wiki/FlashApi">all functions of the javascript API</a>.</li>
+	</ol>
+
+</body>
+</html>

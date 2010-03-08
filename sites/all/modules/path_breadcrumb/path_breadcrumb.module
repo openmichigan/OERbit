@@ -1,0 +1,56 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_menu().
+ */
+function path_breadcrumb_menu() {
+  $items = array();
+  $items['admin/settings/path_breadcrumb'] = array(
+    'title' => 'Path Breadcrumb',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('path_breadcrumb_admin_settings'),
+    'access arguments' => array('administer path breadcrumb'),
+    'file' => 'path_breadcrumb.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  // Only set breadcrumbs when loading a full node page.
+  if (!$a4) {
+    return;
+  }
+  // Check whether the current node type has path breadcrumb enabled
+  $types = array_values(variable_get('path_breadcrumb_types', array()));
+  $key = array_search($node->type, $types);
+  if (!$types[$key]) {
+    return;
+  }
+  switch ($op) {
+    case 'view':
+      $path = drupal_get_path_alias($_GET['q']);
+      $path = explode('/', $path);
+      $breadcrumb = array();
+      $count = count($path);
+      do {
+        if (!empty($path)) {
+          if ($count != count($path) || variable_get('path_breadcrumb_current', 0) == 0) {
+            $normal = drupal_get_normal_path(implode('/', $path));
+            $morsel = menu_get_object('node', 1, $normal);
+            if ($count == 1 && variable_get('path_breadcrumb_first', '') != '') {
+              $breadcrumb[] = l(variable_get('path_breadcrumb_first', ''), $morsel->path);
+            }
+            else {
+              $breadcrumb[] = l($morsel->title, $morsel->path);
+            }
+          }
+        }
+        $count--;
+      } while (array_pop($path));
+      drupal_set_breadcrumb(array_reverse($breadcrumb));
+  }
+}

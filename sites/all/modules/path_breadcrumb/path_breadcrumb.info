@@ -1,0 +1,5 @@
+; $Id$
+name = Path Breadcrumb
+description = Display breadcrumbs based on the URL path.
+dependencies[] = path
+core = 6.x

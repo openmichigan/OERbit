@@ -1,0 +1,56 @@
+<?php
+// $Id: mimedetect.install,v 1.7 2009/04/15 19:19:18 drewish Exp $
+
+/**
+ * Implementation of hook_install().
+ */
+function mimedetect_install() {
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function mimedetect_uninstall() {
+  variable_del('mimedetect_enable_file_binary');
+  variable_del('mimedetect_file_binary');
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function mimedetect_requirements($phase) {
+  $requirements = array();
+
+  $t = get_t();
+  $requirement = array(
+    'title' => $t('Mime type detection'),
+  );
+
+  if (extension_loaded('fileinfo')) {
+    $requirement['value'] = $t('PHP Fileinfo Extension');
+    if (!$finfo = @finfo_open(FILEINFO_MIME, drupal_get_path('module', 'mimedetect') .'/magic')) {
+      $requirement['description'] = $t('Fileinfo could not load the magic file. It could be corrupted. Try reinstalling the magic file distributed with the MimeDetect module.');
+      $requirement['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  else if (variable_get('mimedetect_enable_file_binary', FALSE)) {
+    $binary = variable_get('mimedetect_file_binary', '/usr/bin/file');
+    $requirement['value'] = $t("UNIX 'file' Command");
+    if (!is_executable($binary)){
+      if (!file_exists($binary)) {
+        $requirement['description'] = $t("The file %path does not exist or is not readable by your webserver. ", array('%path' => $binary));
+      }
+      else {
+        $requirement['description'] = $t("The file %path is not executable by your webserver.", array('%path' => $binary));
+      }
+      $requirement['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  else {
+    $requirement['value'] = $t('File Extension');
+    $requirement['description'] = $t("MimeDetect is using the browser supplied filename for file extension lookups. It is strongly recommended that you install and configure the PHP Fileinfo Extension or the UNIX 'file' command to provide more accurate severside mime type detection.");
+    $requirement['severity'] = REQUIREMENT_WARNING;
+  }
+
+  return array('mimedetect' => $requirement);
+}
