@@ -1,0 +1,97 @@
+<?php
+// $Id: custom_search_box.module,v 1.1.4.10 2009/04/08 22:33:47 jweberg Exp $
+
+/**
+ * @file custom_search_box.module
+ * This module adds setting options to the '?q=admin/settings/search' page that
+ * allows users with access to change the appearance of the search box. This no longer
+ * requires diving into the theme.
+ */
+
+
+/**
+ * Implementation of hook_search()
+ */
+function custom_search_box_search($op) {
+     switch ($op) {
+         case 'admin':
+             $form['custom_search_box'] = array(
+                '#type' => 'fieldset',
+                '#title' => t('Custom search box settings'),
+                '#description' => t('These setting allow you to change the settings of the search box which is supported by many themes.'),
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+             );
+             $form['custom_search_box']['custom_search_box_label'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Search box label'),
+                '#description' => t('This will change the label text next to the search form. You can leave this field blank for no text. The default value is "Search this site"'),
+                '#default_value' => variable_get('custom_search_box_label', t('Search this site')),
+             );
+             $form['custom_search_box']['custom_search_box_default'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Search form default'),
+                '#description' => t('This will change the default text inside the search form. You can leave this field blank for no text. This field is blank by default.'),
+                '#default_value' => variable_get('custom_search_box_default', t('')),
+             );
+             $form['custom_search_box']['custom_search_box_submit_text'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Search submit text'),
+                '#description' => t('This will change the search button text. You can leave this field blank for no button. The default value is "Search".'),
+                '#default_value' => variable_get('custom_search_box_submit_text', t('Search')),
+             );
+             $form['custom_search_box']['custom_search_box_submit_button'] = array(
+                '#type' => 'radios',
+                '#title' => t('Search submit button'),
+                '#description' => t('This setting allows you to choose between the default button provided by your own image. If image is selected, be sure to enter the image path.'),
+                '#default_value' => variable_get('custom_search_box_submit_button', 'submit'),
+                '#options' => array(
+                                'submit' => t('Default'),
+                                'image_button' => t('Image'),
+                              ),
+             );
+             $form['custom_search_box']['custom_search_box_image_path'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Image path'),
+                '#description' => t('Type the path relative to the main drupal directory. The default value is "sites/all/modules/custom_search_box/images/search.jpg".'),
+                '#default_value' => variable_get('custom_search_box_image_path', drupal_get_path('module', 'custom_search_box') .'/images/search.jpg'),
+             );
+          return $form;
+     }
+}
+
+/**
+ * Implementation of hook_form_alter()
+ **/
+function custom_search_box_form_alter(&$form, $form_state, $form_id) {
+    switch ($form_id) {
+      case 'search_theme_form':
+          $form['search_theme_form']['#title'] = variable_get('custom_search_box_label', t('Search this site'));
+          $form['search_theme_form']['#default_value'] = variable_get('custom_search_box_default', '');
+          $form['search_theme_form']['#attributes'] = array('onblur' => "if (this.value == '') {this.value = '". variable_get('custom_search_box_default', '') ."';}", 'onfocus' => "if (this.value == '". variable_get('custom_search_box_default', '') ."') {this.value = '';}" );
+          $form['submit']['#value'] = variable_get('custom_search_box_submit_text', t('Search'));
+          $form['submit']['#type'] = variable_get('custom_search_box_submit_button', 'submit');
+          $form['submit']['#name'] = 'op';
+          if ($form['submit']['#type'] == submit && $form['submit']['#value'] == '') {
+             $form['submit']['#attributes'] = array('style' => 'display:none;');
+          }
+          if ($form['submit']['#type'] == 'image_button') {
+             $form['submit']['#src'] = variable_get('custom_search_box_image_path', '');
+          }
+          return $form;
+       case 'search_block_form':
+          $form['search_block_form']['#title'] = variable_get('custom_search_box_label', t('Search this site'));
+          $form['search_block_form']['#default_value'] = variable_get('custom_search_box_default', '');
+          $form['search_block_form']['#attributes'] = array('onblur' => "if (this.value == '') {this.value = '". variable_get('custom_search_box_default', '') ."';}", 'onfocus' => "if (this.value == '". variable_get('custom_search_box_default', '') ."') {this.value = '';}" );
+          $form['submit']['#value'] = variable_get('custom_search_box_submit_text', t('Search'));
+          $form['submit']['#type'] = variable_get('custom_search_box_submit_button', 'submit');
+          $form['submit']['#name'] = 'op';
+          if ($form['submit']['#type'] == submit && $form['submit']['#value'] == '') {
+             $form['submit']['#attributes'] = array('style' => 'display:none;');
+          }
+          if ($form['submit']['#type'] == 'image_button') {
+             $form['submit']['#src'] = variable_get('custom_search_box_image_path', '');
+          }
+          return $form;
+    }
+}

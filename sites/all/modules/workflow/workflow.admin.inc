@@ -1,5 +1,5 @@
 <?php
-// $Id: workflow.admin.inc,v 1.7.2.1 2009/10/23 15:02:38 jvandyk Exp $
+// $Id: workflow.admin.inc,v 1.7.2.2 2010/03/02 18:32:54 jvandyk Exp $
 
 /**
  * @file
@@ -573,12 +573,19 @@ function workflow_state_delete_form($form_state, $wid, $sid) {
     // Don't include the state to be deleted in our list of possible
     // states that can be assigned.
     unset($states[$sid]);
-    $form['new_sid'] = array(
-      '#type' => 'select',
-      '#title' => t('State to be assigned to orphaned nodes'),
-      '#description' => format_plural($count, 'Since you are deleting a workflow state, a node which is in that state will be orphaned, and must be reassigned to a new state. Please choose the new state.', 'Since you are deleting a workflow state, @count nodes which are in that state will be orphaned, and must be reassigned to a new state. Please choose the new state.'),
-      '#options' => $states,
-    );
+    if ($states) {
+      $form['new_sid'] = array(
+        '#type' => 'select',
+        '#title' => t('State to be assigned to orphaned nodes'),
+        '#description' => format_plural($count, 'Since you are deleting a workflow state, a node which is in that state will be orphaned, and must be reassigned to a new state. Please choose the new state.', 'Since you are deleting a workflow state, @count nodes which are in that state will be orphaned, and must be reassigned to a new state. Please choose the new state.'),
+        '#options' => $states,
+      );
+    }
+    else {
+      $form['warning'] = array(
+        '#value' => format_plural($count, 'Since you are deleting the last workflow state in this workflow, the one remaining node which is in that state will have its workflow state removed. ', 'Since you are deleting the last workflow state in this workflow, @count nodes which are in that state will have their workflow state removed. '),
+      );
+    }
   }
 
   $form['wid'] = array(
@@ -592,7 +599,7 @@ function workflow_state_delete_form($form_state, $wid, $sid) {
 
   return confirm_form(
     $form,
-    t('Are you sure you want to delete %title (and all its transitions)?', array('%title' => $states[$sid])),
+    t('Are you sure you want to delete %title (and all its transitions)?', array('%title' => $state_name)),
     !empty($_GET['destination']) ? $_GET['destination'] : 'admin/build/workflow',
     t('This action cannot be undone.'),
     t('Delete'),
@@ -609,7 +616,8 @@ function workflow_state_delete_form_submit($form, &$form_state) {
   $states = workflow_get_states($form_state['values']['wid']);
   $state_name = $states[$form_state['values']['sid']];
   if ($form_state['values']['confirm'] == 1) {
-    workflow_state_delete($form_state['values']['sid'], $form_state['values']['new_sid']);
+    $new_sid = isset($form_state['values']['new_sid']) ? $form_state['values']['new_sid'] : NULL;
+    workflow_state_delete($form_state['values']['sid'], $new_sid);
     watchdog('workflow', 'Deleted workflow state %name', array('%name' => $state_name));
     drupal_set_message(t('The workflow state %name was deleted.', array('%name' => $state_name)));
   }

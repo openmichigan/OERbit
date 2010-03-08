@@ -1,0 +1,128 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_init().
+ */
+function course_init() {
+  if (module_exists('pathauto')) {
+    module_load_include('inc', 'course', 'course.pathauto');
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function course_menu() {
+  $items = array();
+  $items['node/%node/overview'] = array(
+    'title' => 'Overview',
+    'page callback' => 'course_display',
+    'page arguments' => array(1, 2),
+    'access callback' => 'course_local_task_access',
+    'access arguments' => array(1, 'overview'),
+    'weight' => -10,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['node/%node/sessions'] = array(
+    'title' => 'Sessions',
+    'page callback' => 'course_display',
+    'page arguments' => array(1, 2),
+    'access callback' => 'course_local_task_access',
+    'access arguments' => array(1, 'sessions'),
+    'weight' => -9,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['node/%node/materials'] = array(
+    'title' => 'Materials',
+    'page callback' => 'course_display',
+    'page arguments' => array(1, 2),
+    'access callback' => 'course_local_task_access',
+    'access arguments' => array(1, 'materials'),
+    'weight' => -9,
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function course_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks['course-feed'] = array('info' => 'Course Feed');
+      return $blocks;
+    case 'view':
+      $block = array(
+        'subject' => t('Course Feed'),
+        'content' => course_get_feed_link(),
+      );
+      return $block;
+  }
+}
+
+/**
+ * Determines whether the current node is a course.
+ */
+function course_local_task_access($node, $section) {
+  if ($node->type == 'course') {
+    switch ($section) {
+      case 'overview':
+        //return !empty($node->field_course_information);
+        return FALSE;
+      case 'sessions':
+        return !empty($node->field_course_sessions);
+      case 'materials':
+        return !empty($node->field_course_materials);
+      default:
+        return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Display all the course information.
+ */
+function course_display(&$node, $section) {
+  drupal_set_title($node->title);
+  return node_view($node, false, true, true);
+}
+
+/**
+ * Return the appropriate feed link for the current course.
+ */
+function course_get_feed_link() {
+  $node = menu_get_object('node', 1, $_GET['q']);
+  $alias = drupal_lookup_path('alias', 'node/' . $node->nid . ($node->type == 'course' ? '/rss' : '/feed'));
+  $icon = '<img src="/misc/feed.png" alt="Syndicate content" title="Syndicate" width="16" height="16" />';
+  if ($alias && in_array($node->type, array('course', 'unit'))) {
+    $link = '<a href="/' . $alias . '" class="feed-icon">' . $icon . '</a>';
+  }
+  else {
+    $link = '<a href="/rss.xml" class="feed-icon">' . $icon . '</a>';
+  }
+  return '<span class="print_rss">' . $link . '</span>';
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function course_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($node->type != 'course') {
+    return;
+  }
+  course_pathauto_alias($node, $op);
+  switch ($op) {
+    case 'view':
+      $breadcrumb = drupal_get_breadcrumb();
+      $section = array_pop(arg());
+      if (in_array($section, array('overview', 'sessions', 'materials'))) {
+        array_pop($breadcrumb);
+        $breadcrumb[] = l(ucfirst($section), $_GET['q']);
+        drupal_set_breadcrumb($breadcrumb);
+      }
+      break;
+  }
+}

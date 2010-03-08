@@ -1,0 +1,11 @@
+; $Id: custom_search_box.info,v 1.1 2009/03/14 21:33:26 jweberg Exp $ 
+name = Custom Search Box
+description = This module allows a user with admin page access to change the appearance of the search box. This is done through settings added to the '?q=admin/setting/search' page.
+core = 6.x
+dependencies[] = search
+; Information added by drupal.org packaging script on 2009-04-21
+version = "6.x-1.1"
+core = "6.x"
+project = "custom_search_box"
+datestamp = "1240285536"
+

@@ -1,5 +1,5 @@
 <?php
-// $Id: workflow.module,v 1.83.2.2 2009/10/23 15:02:38 jvandyk Exp $
+// $Id: workflow.module,v 1.83.2.13 2010/03/03 18:17:02 jvandyk Exp $
 
 /**
  * @file
@@ -253,6 +253,11 @@ function workflow_comment($a1, $op) {
     $node = node_load($a1['nid']);
     $sid = $a1['workflow'];
     $node->workflow_comment = $a1['workflow_comment'];
+    if (isset($a1['workflow_scheduled'])) {
+      $node->workflow_scheduled = $a1['workflow_scheduled'];
+      $node->workflow_scheduled_date = $a1['workflow_scheduled_date'];
+      $node->workflow_scheduled_hour = $a1['workflow_scheduled_hour'];
+    }
     workflow_transition($node, $sid);
   }
 }
@@ -308,7 +313,7 @@ function workflow_transition($node, $sid) {
         db_query("INSERT INTO {workflow_scheduled_transition} VALUES (%d, %d, %d, %d, '%s')", $node->nid, $old_sid, $sid, $scheduled, $comment);
 
         // Get name of state.
-        $state_name = db_result(db_query('SELECT state FROM {workflow_states} WHERE sid = %d', $sid));
+        $state_name = workflow_get_state_name($sid);
         watchdog('workflow', '@node_title scheduled for state change to %state_name on !scheduled_date', array('@node_title' => $node->title, '%state_name' => $state_name, '!scheduled_date' => format_date($scheduled)), WATCHDOG_NOTICE, l('view', "node/$node->nid/workflow"));
         drupal_set_message(t('@node_title is scheduled for state change to %state_name on !scheduled_date', array('@node_title' => $node->title, '%state_name' => $state_name, '!scheduled_date' => format_date($scheduled))));
       }
@@ -500,8 +505,14 @@ function workflow_execute_transition($node, $sid, $comment = NULL, $force = FALS
       db_query("UPDATE {workflow_node} SET stamp = %d WHERE nid = %d", $node->workflow_stamp, $node->nid);
       $result = module_invoke_all('workflow', 'transition pre', $old_sid, $sid, $node);
       _workflow_write_history($node, $sid, $comment);
+      unset($node->workflow_comment);
+
+      $result = module_invoke_all('workflow', 'transition post', $old_sid, $sid, $node);
+      // Rules integration
+      if (module_exists('rules')) {
+        rules_invoke_event('workflow_comment_added', $node, $old_sid, $sid);
+      }
     }
-    $result = module_invoke_all('workflow', 'transition post', $old_sid, $sid, $node);
     return;
   }
 
@@ -538,9 +549,9 @@ function workflow_execute_transition($node, $sid, $comment = NULL, $force = FALS
   $node->_workflow = $sid;
 
   // Register state change with watchdog.
-  $state_name = db_result(db_query('SELECT state FROM {workflow_states} WHERE sid = %d', $sid));
+  $state_name = workflow_get_state_name($sid);
   $type = node_get_types('name', $node->type);
-  watchdog('workflow', 'State of @type %node_title set to @state_name', array('@type' => $type, '%node_title' => $node->title, '@state_name' => $state_name), WATCHDOG_NOTICE, l('view', 'node/' . $node->nid));
+  watchdog('workflow', 'State of @type %node_title set to %state_name', array('@type' => $type, '%node_title' => $node->title, '%state_name' => $state_name), WATCHDOG_NOTICE, l('view', 'node/' . $node->nid));
 
   // Notify modules that transition has occurred. Actions should take place
   // in response to this callback, not the previous one.
@@ -548,6 +559,13 @@ function workflow_execute_transition($node, $sid, $comment = NULL, $force = FALS
 
   // Clear any references in the scheduled listing.
   db_query('DELETE FROM {workflow_scheduled_transition} WHERE nid = %d', $node->nid);
+
+  // Rules integration
+  if (module_exists('rules')) {
+    rules_invoke_event('workflow_state_changed', $node, $old_sid, $sid);
+  }
+
+  return $sid;
 }
 
 /**
@@ -658,7 +676,7 @@ function workflow_select_given_state_action_form($context) {
  * @see workflow_select_given_state_action_form()
  */
 function workflow_select_given_state_action_submit($form_id, $form_state) {
-  $state_name = db_result(db_query("SELECT state FROM {workflow_states} WHERE sid = %d", $form_state['values']['target_sid']));
+  $state_name = workflow_get_state_name($form_state['values']['target_sid']);
   return array(
     'target_sid' => $form_state['values']['target_sid'],
     'state_name' => $state_name,
@@ -785,13 +803,17 @@ function workflow_workflow($op, $old_state, $new_state, $node) {
           if ($action_info['type'] != 'node') {
             if (!isset($objects[$action_info['type']])) {
               $objects[$action_info['type']] = _trigger_normalize_node_context($action_info['type'], $node);
-           }
-           // Since we know about the node, we pass that info along to the action.
-           $context['node'] = $node;
-           $result = actions_do($aid, $objects[$action_info['type']], $context);
-         }
-         else {
-           actions_do($aid, $node, $context);
+            }
+            // Pass the node as the object for actions of type 'system'.
+            if (!isset($objects[$action_info['type']]) && $action_info['type'] == 'system') {
+              $objects[$action_info['type']] = $node;
+            }
+            // Since we know about the node, we pass that info along to the action.
+            $context['node'] = $node;
+            $result = actions_do($aid, $objects[$action_info['type']], $context);
+          }
+          else {
+            actions_do($aid, $node, $context);
           }
         }
       }
@@ -1010,7 +1032,7 @@ function workflow_create($name) {
  * Save a workflow's name in the database.
  *
  * @param $wid
- *   The ID of the workflowl
+ *   The ID of the workflow.
  * @param $name
  *   The name of the workflow.
  * @param $tab_roles
@@ -1105,6 +1127,19 @@ function workflow_get_state($sid) {
 }
 
 /**
+ * Given the ID of a state, return its name.
+ *
+ * @param integer $sid
+ *   The ID of the workflow state.
+ * @return string
+ *   The name of the workflow state.
+ */
+function workflow_get_state_name($sid) {
+  return db_result(db_query('SELECT state FROM {workflow_states} WHERE sid = %d', $sid));
+}
+
+
+/**
  * Add or update a workflow state to the database.
  *
  * @param $edit
@@ -1183,7 +1218,7 @@ function workflow_state_delete($sid, $new_sid = NULL) {
  */
 function workflow_transition_delete($tid) {
   $actions = workflow_get_actions($tid);
-  foreach ($actions as $aid) {
+  foreach ($actions as $aid => $type) {
     workflow_actions_remove($tid, $aid);
   }
   db_query("DELETE FROM {workflow_transitions} WHERE tid = %d", $tid);
@@ -1268,20 +1303,33 @@ function workflow_types_save($form_values) {
 /**
  * Get the actions associated with a given transition.
  *
+ * @see _trigger_get_hook_aids()
+ *
  * @param int $tid
  *   ID of transition.
  * @return array
- *   Actions as $aid => $description pairs.
+ *   Array of action ids in the same format as _trigger_get_hook_aids().
  */
 function workflow_get_actions($tid) {
-  $actions = array();
+  $aids = array();
   if (!module_exists('trigger')) {
     watchdog('workflow', 'Unable to get actions associated with a transition because the trigger module is not enabled.', array(), WATCHDOG_WARNING);
-    return $actions;
+    return $aids;
   }
-  $op = 'workflow-'. $tid;
-  $actions =  _trigger_get_hook_aids('workflow', $op);
-  return $actions;
+
+  $result = db_query("SELECT op FROM {trigger_assignments} WHERE hook = 'workflow'");
+  while ($data = db_fetch_object($result)) {
+    // Transition ID is the last part, e.g., foo-bar-1.
+    $transition = array_pop(explode('-', $data->op));
+    if ($tid == $transition) {
+      $results = db_query("SELECT aa.aid, a.type FROM {trigger_assignments} aa LEFT JOIN {actions} a ON aa.aid = a.aid WHERE aa.hook = '%s' AND aa.op = '%s' ORDER BY weight", 'workflow', $data->op);
+      while ($action = db_fetch_object($results)) {
+        $aids[$action->aid]['type'] = $action->type;
+      }
+    }
+  }
+
+  return $aids;
 }
 
 /**
@@ -1303,16 +1351,29 @@ function workflow_get_transition_id($from, $to) {
  *
  * Helpful when deleting a workflow.
  *
+ * @see workflow_transition_delete()
+ *
  * @param $tid
  *   Transition ID.
  * @param $aid
  *   Action ID.
- * @param $description
- *   Action description (from actions table).
  */
-function workflow_actions_remove($tid, $aid, $description) {
-  db_query("DELETE FROM {trigger_assignments} WHERE hook = '%s' AND op = '%s' AND aid = '%s'", 'workflow', 'workflow'. $tid, $aid);
-  watchdog('workflow', 'Action %action has been unassigned.',  array('%action' => $description));
+function workflow_actions_remove($tid, $aid) {
+  $ops = array();
+  $result = db_query("SELECT op FROM {trigger_assignments} WHERE hook = 'workflow' AND aid = '%s'", $aid);
+  while ($data = db_fetch_object($result)) {
+    // Transition ID is the last part, e.g., foo-bar-1.
+    $transition = array_pop(explode('-', $data->op));
+    if ($tid == $transition) {
+      $ops[] = $data->op;
+    }
+  }
+
+  foreach ($ops as $op) {
+    db_query("DELETE FROM {trigger_assignments} WHERE hook = 'workflow' AND op = '%s' AND aid = '%s'", $op, $aid);
+    $description = db_result(db_query("SELECT description FROM {actions} WHERE aid = '%s'", $aid));
+    watchdog('workflow', 'Action %action has been unassigned.',  array('%action' => $description));
+  }
 }
 
 /**
@@ -1404,7 +1465,7 @@ function workflow_action_info_alter(&$info) {
   foreach (array_keys($info) as $key) {
     // Modify each action's hooks declaration, changing it to say
     // that the action supports any hook.
-    $info[$key]['hooks'] = 'any';
+    $info[$key]['hooks']['any'] = TRUE;
   }
 }
 
@@ -1477,18 +1538,53 @@ function workflow_token_values($type, $object = NULL) {
         $comment = $row->comment;
       }
 
-      $values['workflow-current-state-name']                =  $states[$row->sid];
-      $values['workflow-old-state-name']                    =  $states[$row->old_sid];
+      if (isset($node->workflow) && !isset($node->workflow_stamp)) {
+        // The node is being submitted but the form data has not been saved to the database yet,
+        // so we set the token values from the workflow form fields.
+        $sid = $node->workflow;
+        $old_sid = isset($row->sid) ? $row->sid : _workflow_creation_state($wid);
+        $date = time();
+        $user_name = $node->uid ? $node->name : variable_get('anonymous', 'Anonymous');
+        $uid = $node->uid;
+        $mail = $node->uid ? $node->user_mail : '';
+        $comment = $node->workflow_comment;
+      }
+      else if (!isset($node->workflow) && empty($row->sid)) {
+        // If the state is not specified and the node has no workflow history,
+        // the node is being inserted and will soon be transitioned to the first valid state.
+        // We find this state using the same logic as workflow_nodeapi().
+        $choices = workflow_field_choices($node);
+        $keys = array_keys($choices);
+        $sid = array_shift($keys);
+        $old_sid = _workflow_creation_state($wid);
+        $date = time();
+        $user_name = $node->uid ? $node->name : variable_get('anonymous', 'Anonymous');
+        $uid = $node->uid;
+        $mail = $node->uid ? $node->user_mail : '';
+        $comment = $node->workflow_comment;
+      }
+      else {
+        // Default to the most recent transition data in the workflow history table.
+        $sid = $row->sid;
+        $old_sid = $row->old_sid;
+        $date = $row->stamp;
+        $user_name = $account->uid ? $account->name : variable_get('anonymous', 'Anonymous');
+        $uid = $account->uid;
+        $mail = $account->uid ? $account->mail : '';
+      }
 
-      $values['workflow-current-state-date-iso']            =  date('Ymdhis',$row->stamp);
-      $values['workflow-current-state-date-tstamp']         =  $row->stamp;
-      $values['workflow-current-state-date-formatted']      =  date('M d, Y h:i:s', $row->stamp);
+      $values['workflow-current-state-name']                =  $states[$sid];
+      $values['workflow-old-state-name']                    =  $states[$old_sid];
 
-      $values['workflow-current-state-updating-user-name']  = $account->uid ? $account->name : variable_get('anonymous', 'Anonymous');
-      $values['workflow-current-state-updating-user-uid']   = $account->uid;
-      $values['workflow-current-state-updating-user-mail']  = $account->uid ? $account->mail : '';
+      $values['workflow-current-state-date-iso']            =  date('Ymdhis', $date);
+      $values['workflow-current-state-date-tstamp']         =  $date;
+      $values['workflow-current-state-date-formatted']      =  date('M d, Y h:i:s', $date);
 
-      $values['workflow-current-state-log-entry']           = $row->comment;
+      $values['workflow-current-state-updating-user-name']  = check_plain($user_name);
+      $values['workflow-current-state-updating-user-uid']   = $uid;
+      $values['workflow-current-state-updating-user-mail']  = check_plain($mail);
+
+      $values['workflow-current-state-log-entry']           = filter_xss($comment, array('a', 'em', 'strong'));
       break;
   }
 
@@ -1517,4 +1613,20 @@ function workflow_token_list($type = 'all') {
   }
 
   return $tokens;
+}
+
+/**
+ * Implementation of hook_content_extra_fields().
+ */
+function workflow_content_extra_fields($type_name) {
+  $extra = array();
+  if (!in_array('node', variable_get('workflow_'. $type_name, array('node')))) {
+    return;
+  }
+  $extra['workflow'] = array(
+    'label' => t('Workflow'),
+    'description' => t('Workflow module form'),
+    'weight' => 10,
+  );
+  return $extra;
 }

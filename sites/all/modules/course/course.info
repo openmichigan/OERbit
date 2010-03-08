@@ -1,0 +1,7 @@
+; $Id$
+name = Course
+description = Display the appropriate Course elements
+dependencies[] = content
+dependencies[] = views
+package = Open Michigan
+core = 6.x

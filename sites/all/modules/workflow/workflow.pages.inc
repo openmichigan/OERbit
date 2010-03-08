@@ -1,5 +1,5 @@
 <?php
-// $Id: workflow.pages.inc,v 1.2.2.2 2009/10/30 02:43:01 jvandyk Exp $
+// $Id: workflow.pages.inc,v 1.2.2.3 2010/02/16 03:44:19 jvandyk Exp $
 
 /**
  * @file
@@ -117,7 +117,7 @@ function theme_workflow_deleted_state($state_name) {
  * @return
  *   Form definition array.
  */
-function workflow_tab_form($form_state, &$node, $wid, $states, $current) {
+function workflow_tab_form($form_state, $node, $wid, $states, $current) {
   $form['#tab'] = TRUE;
   $choices = workflow_field_choices($node);
 
