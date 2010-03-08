@@ -1,0 +1,37 @@
+Menu Block 6.x-2.2
+  #342498: Give unique class to depth-limited leaves that have children.
+  #341436: Depth-limited leaves that have children get "collapsed" icon.
+  #341345: WSOD on "Add menu block" page with some PHP versions.
+
+Menu Block 6.x-2.1
+  #300086: Add option to make starting level follow active menu item.
+  #340868: Clean up display of block configuration options.
+  #300094: Add option to sort active trail to top of menu tree.
+  #328238 by gorbeia: Add support for i18n menu translation.
+  #331934: Add option to select parent item of menu tree.
+  #330978: Add hook_get_menus() and implement Book module integration.
+  #331935: Replace admin/by-module hack with README.txt.
+  #332974: Collapsed menu items get "leaf" class when using "depth" option.
+  #333988: Create template for menu-block-wrapper.
+  #331933 by sun: Help links are displayed if Help module is disabled.
+  #338263: Migration from 5.x-1.x to 6.x-2.x is broken.
+  #305267: Menu blocks incorrectly cached per role.
+
+Menu Block 6.x-2.0
+  * Added extensive documentation help text.
+  * Added extended classes to menu trees.
+  * Menu block's administrative interface now matches the block module's
+    standard add, configure, and delete interface.
+  #266230: Port Menu block to D6.
+
+Menu Block 5.x-2.0
+  #304675: Port 6.x admin interface to 5.x.
+  * Added missing dependency on menu module.
+
+Menu Block 5.x-1.0
+  * Simplified block configuration.
+
+Menu Block 5.x-0.9
+  #266223: Add option to limit the depth of the tree to an arbitrary level.
+  * Added block config to specify whether to expand all children.
+  * Added settings to enable specific menu blocks.
