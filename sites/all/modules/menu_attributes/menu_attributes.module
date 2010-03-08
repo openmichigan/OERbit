@@ -1,0 +1,153 @@
+<?php
+// $Id: menu_attributes.module,v 1.6 2009/04/20 23:00:50 schoonzie Exp $
+
+/**
+ * @file
+ * Alters the menu form to allow the administrator to specify additional attributes for the menu link
+ */
+
+
+/**
+ * Implementation of hook_help().
+ */
+function menu_attributes_help($path, $arg) {
+  switch ($path) {
+    case 'admin/settings/menu_attributes':
+      return t('The menu attributes module allows you to set HTML attributes on the &lt;a&gt; element of individual menu items without hacking theme files. Use the settings below to choose what menu attributes are available to be set on the menu form and their defaults for <strong>new</strong> menu items.');
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function menu_attributes_menu() {
+  $items = array();
+  $items['admin/settings/menu_attributes'] = array(
+    'title' => 'Menu Attributes Settings',
+    'description' => 'Configure the Menu Attributes module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' =>  array('menu_attributes_admin'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'menu_attributes.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function menu_attributes_perm() {
+  return array('administer menu attributes');
+}
+
+function menu_attributes_form_alter(&$form, $form_state, $form_id) {
+  if ((isset($form['#node']) && $form['#node']->type .'_node_form' == $form_id) || ('menu_edit_item' == $form_id)) {
+    if ($form['#node']->type .'_node_form' == $form_id) { // It's the node edit form
+      $item = $form['#node']->menu;
+    }
+    else {
+      $item = $form['menu']['#item'];
+    }
+    
+    if (isset($form['menu'])) { // Check to see whether the menu form exists
+      $form['menu']['options'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Menu item attributes'),
+          '#access' => user_access('administer menu attributes'),
+          '#collapsible' => TRUE,
+          '#collapsed' => TRUE,
+          '#tree' => TRUE,
+          '#weight' => 50,
+      );
+      
+      if (variable_get('menu_attributes_id_enable', 1)) {
+        $form['menu']['options']['attributes']['id'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Id attribute'),
+          '#default_value' => $item['options']['attributes']['id'],
+          '#required' => FALSE,
+        );
+      }
+      if (variable_get('menu_attributes_name_enable', 1)) {
+        $form['menu']['options']['attributes']['name'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Name attribute'),
+          // For #default_value we check to see if it has been set for this item, if not we check to see if it is an existing menu item, if not, we use the default
+          '#default_value' => isset($item['options']['attributes']['name']) ? $item['options']['attributes']['name'] : ($item['mlid'] ? NULL : variable_get('menu_attributes_name_default', NULL)),
+          '#required' => FALSE,
+        );
+      }
+      if (variable_get('menu_attributes_target_enable', 1)) {
+        $form['menu']['options']['attributes']['target'] = array(
+          '#type' => 'select',
+          '#title' => t('Target attribute'),
+          '#description' => t('Enter the target for this link, default &lt;none&gt;'),
+          // For #default_value we check to see if it has been set for this item, if not we check to see if it is an existing menu item, if not, we use the default
+          '#default_value' => isset($item['options']['attributes']['target']) ? $item['options']['attributes']['target'] : ($item['mlid'] ? NULL : variable_get('menu_attributes_target_default', NULL)),
+          '#options' => array(
+            '' => '<none> (i.e. same window)',
+            '_blank' => 'New Window (_blank)',
+            '_top' => 'Top Window (_top)',
+            '_self' => 'Same Window (_self)',
+            '_parent' => 'Parent Window (_parent)',
+          ),
+          '#required' => FALSE,
+        );
+      }
+      if (variable_get('menu_attributes_rel_enable', 1)) {
+        $form['menu']['options']['attributes']['rel'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Rel attribute'),
+          '#description' => t('Enter \'nofollow\' here to nofollow this link'),
+          // For #default_value we check to see if it has been set for this item, if not we check to see if it is an existing menu item, if not, we use the default
+          '#default_value' => isset($item['options']['attributes']['rel']) ? $item['options']['attributes']['rel'] : ($item['mlid'] ? NULL : variable_get('menu_attributes_rel_default', NULL)),
+          '#required' => FALSE,
+        );
+      }
+      if (variable_get('menu_attributes_class_enable', 1)) {
+        $form['menu']['options']['attributes']['class'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Class attribute'),
+          '#description' => t('Enter additional classes to be added to the menu item'),
+          // For #default_value we check to see if it has been set for this item, if not we check to see if it is an existing menu item, if not, we use the default
+          '#default_value' => isset($item['options']['attributes']['class']) ? $item['options']['attributes']['class'] : ($item['mlid'] ? NULL : variable_get('menu_attributes_class_default', NULL)),
+          '#required' => FALSE,
+        );
+      }
+      if (variable_get('menu_attributes_style_enable', 1)) {
+        $form['menu']['options']['attributes']['style'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Style attribute'),
+          '#description' => t('Enter additional styles to be applied to the menu item'),
+          // For #default_value we check to see if it has been set for this item, if not we check to see if it is an existing menu item, if not, we use the default
+          '#default_value' => isset($item['options']['attributes']['style']) ? $item['options']['attributes']['style'] : ($item['mlid'] ? NULL : variable_get('menu_attributes_style_default', NULL)),
+          '#required' => FALSE,
+        );
+      }
+      if (variable_get('menu_attributes_accesskey_enable', 1)) {
+        $form['menu']['options']['attributes']['accesskey'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Accesskey attribute'),
+          '#description' => t('Specify an !accesskey for this menu item', array('!accesskey' => l('accesskey', 'http://en.wikipedia.org/wiki/Access_keys'))),
+          // For #default_value we check to see if it has been set for this item, if not we check to see if it is an existing menu item, if not, we use the default
+          '#default_value' => isset($item['options']['attributes']['accesskey']) ? $item['options']['attributes']['accesskey'] : ($item['mlid'] ? NULL : variable_get('menu_attributes_accesskey_default', NULL)),
+          '#required' => FALSE,
+          '#maxlength' => 1,
+        );
+      }
+    }
+  }
+}
+
+function menu_attributes_menu_link_alter(&$item, $menu) {
+  if (is_array($item['options']['attributes'])) {
+    foreach ($item['options']['attributes'] as $key => $value) {
+      if ($value == "") {
+        unset($item['options']['attributes'][$key]);
+      }
+    }
+  }
+}
+
+
