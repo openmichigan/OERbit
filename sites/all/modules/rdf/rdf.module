@@ -45,7 +45,9 @@ function rdf_init() {
   if (variable_get('rdf_rdfa_doctype', FALSE)) {
     // Implement hook_exit() to mark us as incompatible with aggressive caching:
     function rdf_exit($destination = NULL) {}
-    ob_start('_rdf_ob_handler');
+    if (arg(0) != 'filefield' && arg(1) != 'js_add_more') {
+      ob_start('_rdf_ob_handler');
+    }
   }
 }
 
