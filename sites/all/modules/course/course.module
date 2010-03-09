@@ -131,3 +131,24 @@ function course_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       break;
   }
 }
+
+/**
+ * Set inherited values from parent element.
+ */
+function course_form_alter(&$form, &$form_state, $form_id) {
+  if (!in_array($form_id, array('information_node_form', 'session_node_form', 'material_node_form'))) {
+    return;
+  }
+  if ($form['#node']->nid) {
+    return;
+  }
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'create_referrer') {
+    $parent = node_load(arg(1));
+    $form_state['values']['creativecommons']['select_license_form']['cc_license_uri'] = $parent->cc->uri;
+    $form_state['values']['creativecommons']['metadata']['attributionName'] = $parent->cc->metadata['attributionName'];
+    $form_state['values']['creativecommons']['metadata']['attributionURL'] = $parent->cc->metadata['attributionURL'];
+    $form_state['values']['creativecommons']['metadata']['type'] = $parent->cc->metadata['type'];
+    $form_state['values']['creativecommons']['metadata']['source'] = $parent->cc->metadata['source'];
+    $form_state['values']['creativecommons']['metadata']['date'] = $parent->cc->metadata['date'];
+  }
+}

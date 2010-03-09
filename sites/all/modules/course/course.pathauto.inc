@@ -17,7 +17,8 @@ function course_pathauto($op) {
         'overview' => t('Pattern for course overview'),
         'sessions' => t('Pattern for course sessions'),
         'materials' => t('Patern for course materials'),
-        'rss' => t('Pattern for course RSS feed'),
+        'rss' => t('Pattern for course RSS Feed'),
+        'rdf' => t('Pattern for course RDF'),
       );
       $patterns = token_get_list('node');
       foreach ($patterns as $type => $pattern_set) {
@@ -47,11 +48,13 @@ function course_pathauto_alias(&$node, $op) {
         $sessions = 'node/' . $node->nid . '/sessions';
         $materials = 'node/' . $node->nid . '/materials';
         $rss = 'node/' . $node->nid . '/rss';
+        $rdf = 'node/' . $node->nid . '/rdf';
         $placeholders = pathauto_get_placeholders('node', $node);
         pathauto_create_alias('course', $op, $placeholders, $overview, $node->nid, 'overview');
         pathauto_create_alias('course', $op, $placeholders, $sessions, $node->nid, 'sessions');
         pathauto_create_alias('course', $op, $placeholders, $materials, $node->nid, 'materials');
         pathauto_create_alias('course', $op, $placeholders, $rss, $node->nid, 'rss');
+        pathauto_create_alias('course', $op, $placeholders, $rdf, $node->nid, 'rdf');
       }
       break;
     case 'delete':
@@ -60,6 +63,7 @@ function course_pathauto_alias(&$node, $op) {
         path_set_alias('node/' . $node->nid . '/sessions');
         path_set_alias('node/' . $node->nid . '/materials');
         path_set_alias('node/' . $node->nid . '/rss');
+        path_set_alias('node/' . $node->nid . '/rdf');
       }
       break;
   }
