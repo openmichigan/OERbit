@@ -28,5 +28,11 @@ function path_breadcrumb_admin_settings(&$form_state) {
     '#description' => t('Mark whether to include the current node as part of the breadcrumb'),
     '#default_value' => variable_get('path_breadcrumb_current', 0),
   );
+  $form['path_breadcrumb_current_link'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Link current node'),
+    '#description' => t('Mark whether the current node will link to itself in the breadcrumb.'),
+    '#default_value' => variable_get('path_breadcrumb_current_link', 0),
+  );
   return system_settings_form($form);
 }
