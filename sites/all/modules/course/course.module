@@ -120,7 +120,12 @@ function course_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       $section = array_pop(arg());
       if (in_array($section, array('overview', 'sessions', 'materials'))) {
         array_pop($breadcrumb);
-        $breadcrumb[] = l(ucfirst($section), $_GET['q']);
+        if (variable_get('path_breadcrumb_current_link', 0) != 0) {
+          $breadcrumb[] = l(ucfirst($section), $_GET['q']);
+        }
+        else {
+          $breadcrumb[] = ucfirst($section);
+        }
         drupal_set_breadcrumb($breadcrumb);
       }
       break;
