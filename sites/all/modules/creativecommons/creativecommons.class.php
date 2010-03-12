@@ -379,8 +379,9 @@ class creativecommons_license {
       $node = node_load($this->nid);
       $user = user_load($node->uid);
       $default_title = $node->title;
-      $default_name = $user->name;
-      $default_attributionURL = url('user/'. $user->uid, array('absolute' => TRUE));
+      // Case #1735 - victor.kareh
+      //$default_name = $user->name;
+      //$default_attributionURL = url('user/'. $user->uid, array('absolute' => TRUE));
     }
 
     $html = "\n<div about=\"". url(($site ? '<front>' : 'node/'. $this->nid), array('absolute' => TRUE)) ."\" instanceof=\"cc:Work\"".
@@ -413,7 +414,7 @@ class creativecommons_license {
       $html .= check_markup(variable_get('creativecommons_arr_text', NULL));
     }
     // Site license, no attribution name
-    else if ($site && (!$this->metadata['attributionName'] || !creativecommons_metadata_is_available('attributionName'))) {
+    else if (!$this->metadata['attributionName'] || !creativecommons_metadata_is_available('attributionName')) {
       // CC0
       if ($this->type == 'zero') {
         $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, have been waived, although certain works referenced herein may be separately licensed.', $args);

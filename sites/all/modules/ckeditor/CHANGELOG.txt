@@ -1,0 +1,51 @@
+$Id: CHANGELOG.txt,v 1.6.2.18 2010/01/14 08:54:55 wwalc Exp $
+
+-- 2010-01-14 version 6.x-1.0
+- First stable release
+
+-- 2010-01-14 version 6.x-1.x-dev
+- [#680798] Improved compatibility with NewsFlash theme
+
+-- 2010-01-12 version 6.x-1.x-dev
+- [#680202] Fixed: image preview not working in IE8
+- [#664488] Fixed: CKEditor grabs initial focus in IE
+
+-- 2010-01-08 version 6.x-1.x-dev
+- [#665108] Fixed: CKeditor Show summary in full view checkbox always checked in editing mode
+
+-- 2010-01-06 version 6.x-1.x-dev
+- [#674454] by Dave Reid: Add drush integration to download the CKEditor library.
+
+-- 2009-12-23 version 6.x-1.x-dev
+- [#659278], [#666560], [#666616] Teaser buttons were missing when teasers were disabled by other modules
+
+-- 2009-12-22 version 6.x-1.x-dev
+- [#663228] Fixed: Link to node not working properly
+- [#665108] Fixed: CKeditor hide "Show summary in full view" checkbox
+- [#662590] Fixed: If more than one editor css file set in "Edit CKEditor profile" > "Define CSS path", then none are used
+- Improvements in MediaEmbed plugin
+
+-- 2009-12-17 version 6.x-1.x-dev
+- [#654626] Fixed PHP notice (Undefined offset in ckeditor_get_nodetype)
+
+-- 2009-12-16 version 6.x-1.x-dev
+- Fixed names of 'NumberedList' and 'BulletedList' buttons in Basic Toolbar
+- [#656570] Fixed problems with missing ckeditor.styles.js
+- [#654626] Fixed PHP notices "Undefined index: simple_incl, excl"
+- Fixed double slash in path to break and teaserbreak button images
+
+-- 2009-12-15 version 6.x-1.x-dev
+- [#659314] Fixed name of Format button in Basic Toolbar
+
+-- 2009-12-10 version 6.x-1.x-dev
+- Added MediaEmbed plugin
+ - [#652274] Fixed: Error Message from Color module with CKEditor
+ - [#653498] Fixed: Empty teasers when editing content
+ - [#651904] Fixed: CKEditor Widens Beyond content area when Resized
+ - [#652570] Fixed: Force simple toolbar doesn't work
+
+-- 2009-12-05 version 6.x-1.x-dev
+- First public (beta) release
+
+-- 2009-10-05 version 6.x-1.x-dev
+- Created initial dev version of the CKEditor module

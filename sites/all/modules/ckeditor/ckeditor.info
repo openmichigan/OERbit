@@ -1,0 +1,11 @@
+; $Id: ckeditor.info,v 1.1 2009/12/04 20:36:57 wwalc Exp $
+name = CKEditor
+description = "Enables the usage of CKEditor (WYSIWYG) instead of plain text fields."
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-01-14
+version = "6.x-1.0"
+core = "6.x"
+project = "ckeditor"
+datestamp = "1263461107"
+

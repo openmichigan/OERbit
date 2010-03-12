@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * Implementation of hook_uninstall()
+ */
+function stringoverrides_uninstall() {
+  // Remove all stored string replacements
+  db_query('DELETE FROM {variable} WHERE name LIKE "locale_custom_strings_%"');
+  db_query('DELETE FROM {variable} WHERE name LIKE "locale_custom_disabled_strings_%"');
+} // function stringoverrides_uninstall

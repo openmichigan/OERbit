@@ -1,0 +1,109 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!--
+   CKEditor - The text editor for Internet - http://ckeditor.com
+   Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
+-->
+<head>
+  <title>CKEditor</title>
+  <!-- $id$ -->
+  <script type="text/javascript">
+  var Drupal=window.opener['Drupal'];
+document.write('<scr' + 'ipt src="' + window.opener['Drupal'].settings.basePath + 'misc/jquery.js"></scr' + 'ipt>');
+document.write('<scr' + 'ipt src="' + window.opener['Drupal'].settings.ckeditor.editor_path + '/ckeditor.js?I"></scr' + 'ipt>');
+document.write('<scr' + 'ipt src="' + window.opener['Drupal'].settings.ckeditor.module_path + '/includes/ckeditor.utils.js?I"></scr' + 'ipt>');
+document.write('<scr' + 'ipt src="' + window.opener['Drupal'].settings.ckeditor.module_path + '/ckeditor.config.js?I"></scr' + 'ipt>');
+
+function Ok()
+{
+  var textarea_id=$(".content_editor").attr("id");
+  var data=CKEDITOR.instances[textarea_id].getData();
+  if (teaser=window.opener.Drupal.ckeditorTeaserInfo(textarea_id)) {
+    var brcode=/<!--break-->/;
+    data=data.split(brcode);
+    if(data.length>1){
+      teaser.textareaContainer.show();
+      teaser.textarea.attr('disabled', '');
+      if (teaser.button.attr('value') != Drupal.t('Join summary')) {
+        try {teaser.button.click();} catch(e) {teaser.button.val(Drupal.t('Join summary'));}
+      }
+      teaser.textarea.val(data[0]);
+      window.opener.$("#"+textarea_id).val(data[1]);
+    } else {
+      window.opener.$("#"+textarea_id).val(data[0]);
+      teaser.textarea.attr('disabled', 'disabled');
+      if (teaser.button.attr('value') != Drupal.t('Split summary at cursor')) {
+        try {teaser.button.click();} catch(e) {teaser.button.val(Drupal.t('Split summary at cursor'));}
+      }
+    }
+    teaser.buttonContainer.show();
+  } else {
+    window.opener.$("#"+textarea_id).val(data);
+  }
+  window.opener.focus();
+  window.close();
+}
+function Cancel()
+{
+  if ( CKEDITOR.instances[$(".content_editor").attr("id")].checkDirty() )
+  {
+    if ( !confirm(Drupal.t('Are you sure you want to cancel? Your changes will be lost.')) )
+      return ;
+  }
+
+  window.close();
+}
+
+function get_element_id(){
+  var regexp=/[?&]el=([^&#]*)/i;
+  var rs=regexp.exec(window.location.href);
+  if( rs == null ) {
+    return "";
+  } else {
+    return rs[1];
+  } 
+}
+  </script>
+</head>
+<body>
+  <script type="text/javascript">
+    $(document).ready(function () {
+      var textarea_id=get_element_id();
+      $(".content_editor").attr("id", textarea_id);
+      if (teaser=Drupal.ckeditorTeaserInfo(textarea_id)) {
+        if(teaser.textarea.val().length > 0){
+          $(".content_editor").val(
+            teaser.textarea.val() + '\n<!--break-->\n' + window.opener.$("#"+textarea_id).val()
+          );
+        } else {
+          $(".content_editor").val(window.opener.$("#"+textarea_id).val());
+        }
+      } else {
+        $(".content_editor").val(window.opener.$("#"+textarea_id).val());
+      }
+      if (($("#" + textarea_id).val().length > 0) && (window.opener.$("#" + textarea_id).attr('class').indexOf("filterxss1") != -1 || window.opener.$("#" + textarea_id).attr('class').indexOf("filterxss2") != -1)) {
+        $.post(Drupal.settings.basePath + 'index.php?q=ckeditor/xss', {
+          text: $('#' + textarea_id).val(),
+          'filters[]': Drupal.settings.ckeditor.settings[textarea_id].filters
+        }, function(text){
+          $("#" + textarea_id).val(text);
+        });
+      }
+      CKEDITOR.replace(textarea_id, Drupal.settings.ckeditor.settings[textarea_id]);
+    });
+  </script>
+  <table width="100%" height="100%">
+    <tr>
+      <td height="100%">
+        <textarea class="content_editor">
+        </textarea>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <input type="button" value="Ok" onclick="Ok();" style="width:120px" />
+        <input type="button" value="Cancel" onclick="Cancel();" />
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

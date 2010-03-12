@@ -16,10 +16,22 @@ function path_breadcrumb_admin_settings(&$form_state) {
     '#options' => $options,
     '#default_value' => variable_get('path_breadcrumb_types', array()),
   );
+  $form['path_breadcrumb_home'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include home'),
+    '#description' => t('Mark whether to include the front page as part of the breadcrumb'),
+    '#default_value' => variable_get('path_breadcrumb_home', 0),
+  );
+  $form['path_breadcrumb_home_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Home label'),
+    '#description' => t('Enter a static value for the first element of the breadcrumb. If omitted, the title will be used'),
+    '#default_value' => variable_get('path_breadcrumb_home_text', t('Home')),
+  );
   $form['path_breadcrumb_first'] = array(
     '#type' => 'textfield',
-    '#title' => t('First node'),
-    '#description' => t('Enter a static value for the first element of the breadcrumb. If omitted, the title will be used'),
+    '#title' => t('First node label'),
+    '#description' => t('Enter a static value for the first element of the breadcrumb. If omitted, the node title will be used. This is useful in case you do not want to include <em>Home</em> as part of the breadcrumb.'),
     '#default_value' => variable_get('path_breadcrumb_first', ''),
   );
   $form['path_breadcrumb_current'] = array(

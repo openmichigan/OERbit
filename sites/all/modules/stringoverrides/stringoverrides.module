@@ -1,0 +1,124 @@
+<?php
+// $Id: stringoverrides.module,v 1.5.2.6 2008/05/07 01:56:55 robloach Exp $
+
+/**
+ * @file
+ * Configuration interface to provide a quick and easy way of replacing text.
+ */
+
+/**
+ * Implementation of hook_help()
+ */
+function stringoverrides_help($path, $arg) {
+  $output = '';
+  if ($path == 'admin/help#stringoverrides') {
+    $output = '<p>'. t('The <strong>String Overrides</strong> module provides a quick and easy way of replacing text.') .'</p>';
+    $output .= '<p>'. t('To replace a string, enter what you find when the string is passed through the <a href="@t">t()</a> function. String Overrides cannot translate user-defined content, it can only replace strings wrapped in the t() function. To find the strings you can actually change, open up a module and look for t() function calls. Places where %, @, or ! are used means that the translation contains dynamic information (such as the node type or title in the above examples), these are not translated while the text around them are.', array('@t' => 'http://api.drupal.org/api/function/t')) .'</p>';
+    $output .= '<p>'. t('For example:') .'</p>';
+    $output .= theme('item_list', array('The %post has been updated.', 'Are you sure you want to delete %title?', 'Screenshot for %theme theme'));
+  }
+  else if ($arg[0] == 'admin' && $arg[1] == 'settings' && $arg[2] == 'stringoverrides') {
+    switch ($arg[3]) {
+    case 'import':
+      $output = '<p>'.  t('Upload a *.po file here to import a collection of strings.') .'</p>';
+    break;
+    case 'export':
+      $output = '<p>'.  t('The following is a generated *.po file. You can use this feature to backup the current String Overrides.') .'</p>';
+    break;
+    case NULL:
+      $output = '<p>'.  t('The following provides a quick and easy way of replacing text.') .'</p>';
+      break;
+    default:
+      if (module_exists('locale')) {
+        $lang = locale_language_name($arg[3]);
+        $output = '<p>'.  t('The following provides a quick and easy way of replacing text in @lang.', array('@lang' => $lang)) .'</p>';
+      }
+    break;
+    }
+  }
+  return $output;
+} // function stringoverrides_help
+
+/**
+ * Implementation of hook_perm()
+ */
+function stringoverrides_perm() {
+  return array('administer string overrides');
+} // function stringoverrides_perm
+
+/**
+ * Implementation of hook_menu()
+ */
+function stringoverrides_menu() {
+  $items = array();
+  $items['admin/settings/stringoverrides'] = array(
+    'title' => 'String overrides',
+    'description' => 'Provides a quick and easy way of replacing text on the site.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('stringoverrides_admin', 3),
+    'access arguments' => array('administer string overrides'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'stringoverrides.admin.inc',
+  );
+  $items['admin/settings/stringoverrides/import'] = array(
+    'title' => 'Import',
+    'description' => 'Import a set of overrides from a *.po file.',
+    'page arguments' => array('stringoverrides_admin_import'),
+    'access arguments' => array('administer string overrides'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 9,
+  );
+  $items['admin/settings/stringoverrides/export'] = array(
+    'title' => 'Export',
+    'description' => 'Import a set of overrides from a *.po file.',
+    'page arguments' => array('stringoverrides_admin_export'),
+    'access arguments' => array('administer string overrides'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  );
+  
+  // Add the language tabs if there are other languages
+  if (module_exists('locale')) {
+    global $language;
+    $languages = locale_language_list();
+    foreach ($languages as $code => $name) {
+      $items["admin/settings/stringoverrides/$code"] = array(
+        'title' => '@lang',
+        'title arguments' => array('@lang' => $name),
+        'page arguments' => array('stringoverrides_admin', $code),
+        'access arguments' => array('administer string overrides'),
+        'type' => $language->language == $code ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      );
+    }
+  }
+  else {
+    $items['admin/settings/stringoverrides/en'] = array(
+      'title' => 'Overrides',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('stringoverrides_admin', 'en'),
+      'access arguments' => array('administer string overrides'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'file' => 'stringoverrides.admin.inc',
+    );
+  }
+  
+  $items['admin/settings/stringoverrides/js'] = array(
+    'title' => 'String Overrides Javascript',
+    'page callback' => 'stringoverrides_js',
+    'type' => MENU_CALLBACK,
+    'file' => 'stringoverrides.admin.inc',
+    'access arguments' => array('administer string overrides'),
+  );
+  return $items;
+} // function stringoverrides_menu
+
+/**
+ * Implementation of hook_theme()
+ */
+function stringoverrides_theme() {
+  return array(
+    'stringoverrides_strings' => array(
+      'arguments' => array('form' => NULL),
+    ),
+  );
+} // function stringoverrides_theme

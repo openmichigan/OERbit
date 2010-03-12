@@ -57,6 +57,9 @@ function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         }
         $count--;
       } while (array_pop($path));
+      if (variable_get('path_breadcrumb_home', 0) != 0) {
+        $breadcrumb[] = l(variable_get('path_breadcrumb_home_text', t('Home')), '<front>');
+      }
       drupal_set_breadcrumb(array_reverse($breadcrumb));
   }
 }
