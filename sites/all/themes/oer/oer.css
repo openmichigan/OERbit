@@ -39,7 +39,9 @@ img.left {
 	background: transparent url(images/button-send.png) no-repeat center top;
 	text-indent: -1000em;
 	cursor: pointer; /* hand-shaped cursor */
-	cursor: hand; /* for IE 5.x */
+	font-size: 0px;
+	display:block;
+	line-height: 0px;
  }
  #webform-component-cancel a.cancel-button {
  	position: relative;
@@ -54,7 +56,6 @@ img.left {
 	background: transparent url(images/button-cancel.png) no-repeat center top;
 	text-indent: -1000em;
 	cursor: pointer; /* hand-shaped cursor */
-	cursor: hand; /* for IE 5.x */
  }
  #content-header .tabs {
  	margin-bottom: 30px;
@@ -185,15 +186,30 @@ a.social:hover span {
 #header #block-search-0 input#edit-search-block-form-1 {
 	border:1px solid #A3ACB5;
 	font-size:100%;
-	margin:0;
+	margin: 0 25px 0 0;
 	padding:2px;
 	width:164px;
 }
-#header #block-search-0 input#edit-submit, #header #block-search-0 input#edit-submit-1 {
-	margin: 0 0 0 4px;
-	position: relative;
-	top: 4px;
-}
+#header #block-search-0 input#edit-submit, #header #block-search-0 input#edit-submit-1 { 
+	width: 22px;
+	height: 18px;
+	margin: 1px 0 0 5px;
+	padding: 0;
+	border: 0;
+	background: transparent url(images/go.gif) no-repeat center top;
+	text-indent: -1000em;
+	cursor: pointer; /* hand-shaped cursor */
+	font-size: 0px;
+	display:block;
+	line-height: 0px;
+	position: absolute;
+	top: 0;
+	right: 0;
+ }
+
+
+
+
 
 /* primary nav */
 #header #block-menu_block-2 {
@@ -406,6 +422,11 @@ h1, h2, h3, h4, h5, h6 {
 	padding: 0 0 20px 0;
 	font-size: 90%;
 	clear: both;
+	width: 100%;
+	margin: 0 0 20px 0;
+}
+.content-course span.published {
+	float: left;
 }
 .content-course span.revised {
 	float: right;
@@ -489,10 +510,6 @@ ul.groupLinks li a.pdf {
 .course-keywords {
 	font-size: 80%;
 }
-#content-bottom #block-creativecommons-node_license {
-	font-size: 80%;
-}
-
 
 
 /*** Download ***/
@@ -547,6 +564,29 @@ ul.groupLinks li a.pdf {
 	background: url(images/icon-pdf.png) no-repeat;
 }*/
 
+
+
+/*** Sessions View ***/
+.view-sessions .views-row {
+	margin-bottom: 30px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #CCC;
+}
+.view-sessions .views-field-title {
+	text-align: left;
+	font-weight: bold;
+	background: #CEDDE4;
+	border-bottom:1px solid #97A6C7;
+	padding: 7px 10px;
+	margin: 0 0 20px;
+	color: #000;
+}
+.view-sessions .field-item {
+	margin-bottom: 10px;
+}
+.view-sessions .views-field-field-video-embed {
+	margin-bottom: 10px;
+}
 
 
 /*** FOOTER ***/
@@ -838,19 +878,19 @@ p.top a:hover {
 #content-top {
 	position: relative;
 }
-#block-print-0, #block-node-0, #block-block-11, #block-course-course-feed {
+#block-print-0, #block-node-0, #block-block-11, #block-course-course-feed, #block-block-12 {
 	position: relative;
 	right: 0;
 	top: 0;
 }
-#block-print-0 span, #block-node-0 a, #block-block-11 span, #block-course-course-feed span {
+#block-print-0 span, #block-node-0 a, #block-block-11 span, #block-course-course-feed span, #block-block-12 span {
 	float: right;
 }
-#block-node-0 a, #block-block-11 span, #block-course-course-feed span {
+#block-node-0 a, #block-block-11 span, #block-course-course-feed span, #block-block-12 span {
 	display: block;
 	margin-left: 1em;
 }
-div#block-print-0 div.edit, div#block-node-0 div.edit, div#block-block-11 div.edit, #block-course-course-feed div.edit {
+div#block-print-0 div.edit, div#block-node-0 div.edit, div#block-block-11 div.edit, #block-course-course-feed div.edit, #block-block-12 div.edit {
 	top: -20px !important;
 }
 
@@ -930,16 +970,16 @@ ul.tabs li.active a:hover
   }
   
   
-.creativecommons {
-	font-size: 90%;
+.coursefooter .creativecommons {
+	font-size: 80%;
 	border-top: 1px solid #C9CBD7;
 	margin: 20px 0 0 0;
 	padding: 20px 0 0 0;  
 }  
-.creativecommons img {
+.coursefooter .creativecommons img {
 	float: right;  
 }
-.creativecommons br {
+.coursefooter .creativecommons br {
 	display: none; 
 }
 
@@ -947,6 +987,7 @@ ul.tabs li.active a:hover
 /*** ACCORDIAN ***/
 .accordion-active {
 	border: 0;
+	margin-bottom: 0;
 }
 .views-accordion-item .accordion-header-active, h3.accordion-header-active {
 	border-bottom:1px solid #EEEEEE;
@@ -980,3 +1021,36 @@ h3.accordion-header {
 .accordion-content {
 	margin: 20px 10px;
 }
+.view-instructor img {
+	float: left;
+	margin: 0 10px 10px 0;
+}
+
+
+.view-materials .views-field-edit-node {
+	display: none;
+}
+.logged-in .view-materials .views-field-edit-node {
+	display: inline !important;
+}
+
+
+.publishedinfo, .editlink {
+	display: block;
+	border-top: 1px solid #C9CBD7;
+	border-bottom: 1px solid #C9CBD7;
+	font-size: 80%;
+	font-style: italic;
+	margin: 10px 0 10px;
+	padding: 5px 0;
+	float: left;
+	width: 50%;
+}
+.editlink {
+	text-align: right;
+}
+
+
+
+
+

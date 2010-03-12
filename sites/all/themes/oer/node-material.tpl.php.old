@@ -76,8 +76,6 @@
   <?php 
    $courseImage = $node->field_course_image[0]['view'];
    $courseImageCaption = $node->field_course_image_caption[0]['value'];
-   $courseDownload = $node->field_course_download_display[0]['value'];
-   
    	if ($courseImage == "") { $contentarea = "content-course-full"; } else { $contentarea = "content-course"; } 
   ?>
 <!-- Start the content -->  
@@ -99,52 +97,44 @@
       else {
         print $node->content['body']['#value'];
         print $node->content['overview_node_content_1']['#value'];
-        print $node->content['instructor_node_content_1']['#value'];
       }
   	?>
   	<!-- End of VIEW -->
   	
+  	
+  	
   </div>
   
   
-   
-<?php if($courseDownload != 'No' || $courseImage != "") { ?>
-  <div class="imgCapR" id="image-course">
-    
-  <!-- Download Course -->
-  <?php if($courseDownload != 'No') { ?>
-   <div class="course-download">
-    <a href="#">Download the full course resources</a>
-   </div>
-  <?php } ?>
   
+ <?php if ($courseImage != "") {  ?> 
+  <div class="imgCapR" id="image-course">
+    <!-- Download Course -->
+  	<div class="course-download">
+  		<a href="#">Download the full course resources</a>
+  	</div>
   	
- <?php if ($courseImage != "") {  ?>
   	<!-- Course Image -->
   	<?php print $courseImage; ?>
   	<?php print $courseImageCaption; ?>
   	
- <?php } ?>
- 
- 
   	<!-- Previous Terms -->
   	<!-- <div class="course-previous-terms">
   	PREVIOUS TERMS<br />
   	
   	</div> -->
   </div>
-  
  <?php } ?>
  
    <div class="coursefooter">
    <!--  Keywords -->
-     <?php if ($terms): ?><div class="course-keywords">Keywords: <div class="terms terms-inline"><?php print $terms; ?></div></div><?php endif; ?>
-   
-     <?php print $node->cc->get_html(); ?>
-   
+     <div class="course-keywords">Keywords: <div class="terms terms-inline"><?php print $terms; ?></div></div>   
    </div>
 
   <?php print $links; ?>
   
-<?php //print "<pre>"; print_r($node); print "</pre>"; ?>
+  
+  <?php print $node->field_file[0]['filename']; ?>
+  <?php print $node->field_file[0]['filepath']; ?>
+
 </div></div> <!-- /node-inner, /node -->

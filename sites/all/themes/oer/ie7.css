@@ -1,3 +1,13 @@
+
+/* Social */
 #header #block-block-4 {
-	top: 8px !important;
+	top: 18px !important;
 }
+
+/* Search */
+#header #block-search-0 input#edit-search-block-form-1 {
+	margin-right: 13px;
+}
+#header #block-search-0 input#edit-submit, #header #block-search-0 input#edit-submit-1 {
+	margin-top: 2px;
+ }
