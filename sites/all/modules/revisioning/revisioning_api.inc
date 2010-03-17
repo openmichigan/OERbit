@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning_api.inc,v 1.4 2010/01/13 00:36:14 rdeboer Exp $
+// $Id: revisioning_api.inc,v 1.5 2010/01/28 01:09:32 rdeboer Exp $
 
 /**
  * @file
@@ -18,16 +18,14 @@ define('REVISION_PENDING', 2);
  * Pending:
  *   - revision with (vid > current_vid) of ANY node
  *     OR single revision of UNPUBLISHED node
- *
  * Current, published:
  *   - revision with (vid == current_vid) of PUBLISHED node
- *
  * Archived:
  *   - all other revisions, i.e.
  *     revision with (vid < current_vid) of ANY node
  *     OR revision with (vid == current_vid) of UNPUBLISHED node
  *
- * Note: these will change when Revisioing is going to store revision states
+ * Note: these will change when Revisioning is going to store revision states
  * independently from vid number (e.g. in different table).
  */
 
@@ -46,6 +44,21 @@ function _revisioning_revision_states($state = NULL) {
     REVISION_ARCHIVED => t('Archived'),
   );
   return empty($state) ? $states : $states[$state];
+}
+
+/**
+ * Return TRUE when either of the following is true:
+ * o the supplied node has at least one revision more recent than the current
+ * o the node is not yet published and consists of a single revision
+ *
+ * Relies on vid, current_revision_id and num_revisions set on the node object,
+ * see function node_tools_nodeapi()
+ *
+ * @param $node
+ * @return TRUE, if node is pending according to the above definition
+ */
+function _revisioning_node_is_pending($node) {
+  return ($node->vid > $node->current_revision_id) || (!$node->status && $node->num_revisions == 1);
 }
 
 /**
@@ -128,6 +141,17 @@ function revisioning_revisionapi($op, &$node) {
     case 'post delete':
       break;
   }
+}
+
+/**
+ * Get the id of the latest revision belonging to a node.
+ * @param
+ *  $nid, id of the node
+ * @return
+ *  ID of the latest revision.
+ */
+function revisioning_get_latest_revision_id($nid) {
+  return db_result(db_query('SELECT MAX(vid) FROM {node_revisions} WHERE nid=%d', $nid));
 }
 
 /**
@@ -274,7 +298,7 @@ function _revisioning_publish_revision(&$node, $vid = NULL) {
  */
 function _revisioning_publish_latest_revision(&$node) {
   // Get latest pending revision or take the current provided it's UNpublished
-  $latest_pending = array_shift(_get_pending_revisions($node->nid));
+  $latest_pending = array_shift(_revisioning_get_pending_revisions($node->nid));
   if (!$latest_pending) {
     if (!$node->status && $node->is_current) {
       $latest_pending = $node;
@@ -297,7 +321,7 @@ function _revisioning_publish_latest_revision(&$node) {
  * @return
  *  integer
  */
-function _get_number_of_revisions_newer_than($vid, $nid) {
+function _revisioning_get_number_of_revisions_newer_than($vid, $nid) {
   return db_result(db_query("SELECT COUNT(*) FROM {node} n INNER JOIN {node_revisions} r ON n.nid=r.nid WHERE (r.vid>%d AND n.nid=%d)", $vid, $nid));
 }
 
@@ -309,7 +333,7 @@ function _get_number_of_revisions_newer_than($vid, $nid) {
  * @return
  *  integer
  */
-function _get_number_of_pending_revisions($nid) {
+function _revisioning_get_number_of_pending_revisions($nid) {
   return db_result(db_query("SELECT COUNT(*) FROM {node} n INNER JOIN {node_revisions} r ON n.nid=r.nid WHERE (r.vid>n.vid AND n.nid=%d)", $nid));
 }
 
@@ -322,7 +346,7 @@ function _get_number_of_pending_revisions($nid) {
  *  An array of revisions (latest first), each containing vid, title and
  *  content type.
  */
-function _get_pending_revisions($nid) {
+function _revisioning_get_pending_revisions($nid) {
   $sql = "SELECT r.vid, r.title, n.type FROM {node} n INNER JOIN {node_revisions} r ON n.nid=r.nid WHERE (r.vid>n.vid AND n.nid=%d) ORDER BY r.vid DESC";
   $result = db_query($sql, $nid);
   $revisions = array();
@@ -344,7 +368,7 @@ function _get_pending_revisions($nid) {
  *  An array of revision objects, each with published flag, log message, vid,
  *  title, timestamp and name of user that created the revision
  */
-function _get_all_revisions_for_node($nid, $include_taxonomy_terms = FALSE) {
+function _revisioning_get_all_revisions_for_node($nid, $include_taxonomy_terms = FALSE) {
   $sql_select = 'SELECT n.type, n.status, r.vid, r.title, r.log, r.uid, r.timestamp, u.name';
   $sql_from   = ' FROM {node_revisions} r LEFT JOIN {node} n ON n.vid=r.vid INNER JOIN {users} u ON u.uid=r.uid';
   $sql_where  = ' WHERE r.nid=%d ORDER BY r.vid DESC';
@@ -395,7 +419,7 @@ function _revisioning_revision_is(&$node) {
  * @return
  *  A translatable message containing details about the node
  */
-function _get_node_info_msg($node) {
+function _revisioning_node_info_msg($node) {
   // Get username for the revision, not the creator of the node
   $revision_author = user_load($node->revision_uid);
   $placeholder_data = array(
@@ -415,4 +439,22 @@ function _get_node_info_msg($node) {
     case REVISION_ARCHIVED:
       return t('Displaying <em>archived</em> revision of @content_type %title, last modified by !author on @date', $placeholder_data);
   }
+}
+
+/**
+ * Return TRUE only if the user account has ALL of the supplied permissions.
+ *
+ * @param $permissions
+ *  An array of permissions (strings)
+ * @param $account
+ *  The user account object. Defaults to the current user if omitted.
+ * @return bool
+ */
+function revisioning_user_all_access($permissions, $account = NULL) {
+  foreach ($permissions as $permission) {
+    if (!user_access($permission, $account)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
 }

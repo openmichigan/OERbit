@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning_theme.inc,v 1.27 2009/12/31 02:36:09 rdeboer Exp $
+// $Id: revisioning_theme.inc,v 1.31 2010/02/17 06:12:26 rdeboer Exp $
 
 /**
  * @file
@@ -28,21 +28,6 @@ function revisioning_theme() {
 }
 
 /**
- * Theme the revisions summary of the supplied node.
- *
- * @param $node
- *   Node whose revisions to display
- * @return
- *   Themed table HTML
- *
- * @ingroup themeable
- */
-function _theme_revisions_summary(&$node) {
-  drupal_set_title(t('Revisions for %title', array('%title' => $node->title)));
-  return drupal_get_form('revisioning_revisions_summary', $node->nid);
-}
-
-/**
  * Return revisions summary table data. If the Diff modules is enabled, the
  * object returned includes a column of checkboxes allowing the user to select
  * two revisions for side-by-side comparison.
@@ -62,7 +47,7 @@ function revisioning_revisions_summary($form_state, $nid) {
   $show_taxonomy_terms = module_exists('taxonomy') &&
     (count(taxonomy_get_vocabularies()) > 0) && variable_get("show_taxonomy_terms", TRUE);
 
-  $revisions = _get_all_revisions_for_node($nid, $show_taxonomy_terms);
+  $revisions = _revisioning_get_all_revisions_for_node($nid, $show_taxonomy_terms);
 
   $revision_ids = array();
   foreach ($revisions as $revision) {
@@ -226,7 +211,7 @@ function theme_revisioning_revisions_summary($form) {
   }
   $attributes = array('class' => 'table-revisions');
   $content = theme(array('table_revisions', 'table'), $header, $rows, $attributes, $caption = NULL);
-  $submenu_links = generate_node_links_according_to_permissions($node);
+  $submenu_links = _revisioning_generate_node_links_according_to_permissions($node);
   return theme(array('revisions_summary'), $submenu_links, $content) . drupal_render($form);
 }
 
@@ -247,12 +232,27 @@ function theme_table_revisions($header, $rows) {
 }
  */
 
+/**
+ * Theme the revisions summary of the supplied node.
+ *
+ * @param $node
+ *   Node whose revisions to display
+ * @return
+ *   Themed table HTML
+ *
+ * @ingroup themeable
+ */
+function _theme_revisions_summary(&$node) {
+  drupal_set_title(t('Revisions for %title', array('%title' => $node->title)));
+  return drupal_get_form('revisioning_revisions_summary', $node->nid);
+}
+
 function _theme_revisions_pending_block($nodes) {
   $max_num_shown = variable_get('revisioning_block_num_pending', 5);
   $nodes_to_display = array_slice($nodes, 0, $max_num_shown);
   $links = array();
   foreach ($nodes_to_display as $node) {
-    $vid = get_latest_revision_id($node->nid);
+    $vid = revisioning_get_latest_revision_id($node->nid);
     $links[] = l($node->title, "node/$node->nid/revisions/$vid/view");
   }
   $css_path = drupal_get_path('module', 'revisioning') .'/revisioning.css';
@@ -260,7 +260,7 @@ function _theme_revisions_pending_block($nodes) {
   $block = array();
   $title_link = trim(variable_get('revisioning_content_summary_page', ''));
   if (empty($title_link)) {
-    if (module_exists('module_grants_monitor') && user_any_access(module_grants_monitor_perm())) {
+    if (module_exists('module_grants_monitor') && user_tools_user_any_access(module_grants_monitor_perm())) {
       $title_link = 'accessible-content';
     }
     else {
@@ -272,4 +272,47 @@ function _theme_revisions_pending_block($nodes) {
     $title_link);
   $block['content'] = theme('item_list', $links);
   return $block;
+}
+
+
+/**
+ * Return an array of hyperlinks representing the operations the logged-in user
+ * is allowed to perform on the supplied node.
+ *
+ * @param $node
+ * @param $link_type
+ *   The type of link, e.g. MENU_IS_LOCAL_TASK, may affect the rendering via
+ *   theme('menu_item_link'), if overridden (eg zen_theme_menu_item_link()).
+ * @return array of themed hyperlinks
+ */
+function _revisioning_generate_node_links_according_to_permissions($node, $link_type = 0) {
+  $nid = $node->nid;
+  $links = array();
+  if (_revisioning_node_revision_access('publish revisions', $node)) {
+    $link['title'] = t('Publish');
+    $link['href'] = "node/$nid/revisions/$node->vid/publish";
+  //$link['localized_options']['query'] = drupal_get_destination();
+    $links[] = $link;
+  }
+  elseif (_revisioning_node_revision_access('unpublish current revision', $node)) {
+    $link['title'] = t('Unpublish current revision');
+    $link['href'] = "node/$nid/unpublish";
+  //$link['localized_options']['query'] = drupal_get_destination();
+    $links[] = $link;
+  }
+  if (_revisioning_node_revision_access('delete node', $node)) {
+    $link['title'] = // avoiding format_plural [#557050]
+      ($node->num_revisions == 1)
+      ? t('Delete')
+      : ($node->num_revisions == 2 ? t('Delete both revisions') : t('Delete all @count revisions', array('@count' => $node->num_revisions)));
+    $link['href'] = "node/$nid/delete";
+  //$link['localized_options']['query'] = '';
+    $links[] = $link;
+  }
+  $themed_links = array();
+  foreach ($links as $link) {
+    $link['type'] = $link_type;
+    $themed_links[] = theme('menu_item_link', $link);
+  }
+  return $themed_links;
 }

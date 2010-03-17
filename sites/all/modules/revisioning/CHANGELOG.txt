@@ -1,4 +1,4 @@
-$Id: CHANGELOG.txt,v 1.28 2010/01/13 00:36:14 rdeboer Exp $
+$Id: CHANGELOG.txt,v 1.29 2010/03/05 23:23:36 rdeboer Exp $
 
 Changelog for Revisioning module for drupal 6.
 
@@ -105,3 +105,7 @@ o Updated README.txt
 =======
 Refactored for better efficiency and integratability, see [#642962]
 
+6.x-3.5
+=======
+Decoupled from Module Grants, further refactoring to support Revisioning
+being used as API.

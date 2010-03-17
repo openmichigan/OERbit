@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning.rules.inc,v 1.3 2009/12/16 03:49:21 rdeboer Exp $
+// $Id: revisioning.rules.inc,v 1.5 2010/01/28 01:09:32 rdeboer Exp $
 
 /**
  * @file
@@ -37,7 +37,7 @@ function revisioning_rules_condition_info() {
  * Condition: check for pending revisions of the node.
  */
 function revisioning_node_has_pending($node, $settings) {
-  return (_get_number_of_pending_revisions($node->nid) > 0);
+  return (_revisioning_get_number_of_pending_revisions($node->nid) > 0);
 }
 
 /*
@@ -149,7 +149,7 @@ function _revisioning_rules_event_arguments() {
  * Current revision author argument handler.
  */
 function revisioning_events_argument_current_revision_author($node) {
-  $current_vid = get_current_revision_id($node->nid);
+  $current_vid = node_tools_get_current_node_revision_id($node->nid);
   $uid = $node->revision_uid;
   if ($node->vid != $current_vid) {
     $current = node_load($node->nid, $current_vid);
@@ -171,7 +171,7 @@ function revisioning_events_argument_target_revision_author($node) {
  * Current revision event argument handler.
  */
 function revisioning_events_argument_current_revision($node) {
-  $current_vid = get_current_revision_id($node->nid);
+  $current_vid = node_tools_get_current_node_revision_id($node->nid);
   if ($node->vid != $current_vid) {
     $current = node_load($node->nid, $current_vid);
     return $current;
@@ -230,7 +230,7 @@ function revisioning_rules_loaded_current_label($settings, $argument_labels) {
  * Action: load current revision of provided node.
  */
 function revisioning_rules_action_load_current($node) {
-  $current_vid = get_current_revision_id($node->nid);
+  $current_vid = node_tools_get_current_node_revision_id($node->nid);
   if ($node->vid != $current_vid) {
     $current = node_load($node->nid, $current_vid);
     return array('loaded_current_revision' => $current);

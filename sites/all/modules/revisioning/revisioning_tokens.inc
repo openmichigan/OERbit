@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning_tokens.inc,v 1.2 2009/12/31 02:36:09 rdeboer Exp $
+// $Id: revisioning_tokens.inc,v 1.3 2010/01/27 06:37:31 rdeboer Exp $
 
 /**
  * @file
@@ -54,7 +54,7 @@ function revisioning_token_values($type, $object = NULL, $options = array()) {
         case 'revert':
         case 'unpublish':
           $nid = arg(1);
-          $revision = node_load($nid, get_current_revision_id($nid));
+          $revision = node_load($nid, node_tools_get_current_node_revision_id($nid));
           $values['vid'] = $revision->vid;
           $values['revision-title'] = $revision->title;
           _set_revision_author_values($revision->revision_uid, $values);
