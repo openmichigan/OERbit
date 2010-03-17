@@ -85,7 +85,7 @@
     <!-- Term -->
   	<div class="term-year"><strong>Term:</strong> <?php print $node->field_course_term[0]['value']." ". $node->field_course_year[0]['view']; ?></div>
   	<!-- Publsihed & Revised Dates -->
-  	<div class="dates"><span class="published"><strong>Published:</strong> <?php print date('F j, Y',$node->created); ?></span> <span class="revised"><strong>Revised:</strong> <?php print date('F j, Y',$node->changed); ?></span></div>
+  	<div class="dates"><span class="published"><strong>Published:</strong> <span property="dc:created"><?php print date('F j, Y',$node->created); ?></span></span> <span class="revised"><strong>Revised:</strong> <span property="dc:available"><?php print date('F j, Y',$node->changed); ?><span property="dc:created"></span></div>
   	
   	<!-- Content -->
   	
@@ -128,7 +128,7 @@
  
    <div class="coursefooter">
    <!--  Keywords -->
-     <div class="course-keywords">Keywords: <div class="terms terms-inline"><?php print $terms; ?></div></div>   
+     <div class="course-keywords">Keywords: <div class="terms terms-inline" property="dc:subject"><?php print $terms; ?></div></div>   
    </div>
 
   <?php print $links; ?>

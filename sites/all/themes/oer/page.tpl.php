@@ -84,12 +84,15 @@
 <!-- 
 ************************************************
 ************************************************
-      SITE BUILD BY Switchback CMS
+      SITE BUILT BY Switchback CMS
       WWW.SWITCHBACKCMS.COM
 ************************************************
 ************************************************
 -->
 <head>
+  <meta property="dc:title" content="<?php print $title; ?>" />
+  <meta property="dc:identifier" content="<?php print $base_path . $node->path; ?>" />
+  <meta property="dc:language" content="<?php print $language->language; ?>" />
   <title><?php print $head_title; ?></title>
   <?php print $head; ?>
   <?php print $styles; ?>

@@ -130,7 +130,7 @@ function oer_preprocess_page(&$vars, $hook) {
 //* -- Delete this line if you want to use this function
 function oer_preprocess_node(&$vars, $hook) {
   if ($hook == 'node' && $vars['type'] == 'course') {
-    $sections = array('sessions', 'materials');
+    $sections = array('sessions', 'materials', 'highlights');
     if (in_array(arg(2), $sections)) {
       $vars['section'] = arg(2);
     }

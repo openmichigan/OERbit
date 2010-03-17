@@ -10,3 +10,8 @@
 #header #block-search-0 input#edit-submit, #header #block-search-0 input#edit-submit-1 {
 	margin-top: 2px;
  }
+ 
+ 
+.filefield-icon {
+	display: block;
+}

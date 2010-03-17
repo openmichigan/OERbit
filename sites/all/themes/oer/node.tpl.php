@@ -71,7 +71,7 @@
       <?php endif; ?>
 
       <?php if ($terms): ?>
-        <div class="terms terms-inline"><?php print t(' in ') . $terms; ?></div>
+        <div class="terms terms-inline" property="dc:subject"><?php print t(' in ') . $terms; ?></div>
       <?php endif; ?>
     </div>
   <?php endif; ?>
