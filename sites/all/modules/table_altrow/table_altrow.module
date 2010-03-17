@@ -1,0 +1,120 @@
+<?php
+// $Id: table_altrow.module,v 1.1.2.2 2008/02/17 18:59:11 deviantintegral Exp $
+/**
+ * table_altrow.module
+ * Insert even and odd classes for tables via input filters to allow for proper
+ * zebra-style striping.
+ */
+/**
+ * Implementation of hook_filter_tips
+ */
+function table_altrow_filter_tips($delta, $format, $long = FALSE) {
+  switch ($delta) {
+    case 0:
+      if ($long) {
+        return t('Tables will be rendered with different styles for even and odd rows if supported.');
+      }
+      else {
+        return t('Tables will be rendered with different styles for even and odd rows if supported.');
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_filter
+ */
+function table_altrow_filter($op, $delta = 0, $format = -1, $text = '') {
+  // The "list" operation provides the module an opportunity to declare both how
+  // many filters it defines and a human-readable name for each filter. Note that
+  // the returned name should be passed through t() for translation.
+  if ($op == 'list') {
+    return array(
+    0 => t('Table alternate row filter'),
+    );
+  }
+
+  // All operations besides "list" provide a $delta argument so we know which
+  // filter they refer to. We'll switch on that argument now so that we can
+  // discuss each filter in turn.
+  switch ($delta) {
+    // First we define the simple string substitution filter.
+    case 0:
+
+      switch ($op) {
+        // This description is shown in the administrative interface, unlike the
+        // filter tips which are shown in the content editing interface.
+        case 'description':
+          return t('Adds required attributes to an HTML tag.');
+
+          // We don't need the "prepare" operation for this filter, but it's required
+          // to at least return the input text as-is.
+        case 'prepare':
+          return $text;
+
+          // The actual filtering is performed here. The supplied text should be
+          // returned, once any necessary substitutions have taken place.
+        case 'process':
+          // First, we have to parse the variable.
+          $matches = array();
+          $offset = 0;
+          // Find a tbody
+          while(preg_match('!(<tbody ?.*>)!', $text, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+            $offset = $matches[0][1];
+            $count = 1;
+            // While the tbody is still open
+            while(preg_match('!(<tr( ?.*)>)|(</tbody>)!', $text, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+              // +1 so we don't match the same string
+              $offset = $matches[0][1] + 1;
+              
+              // Don't process tr's until we find a tbody.
+              if($matches[0][0] == '</tbody>') {
+                break;
+              }
+              
+              // Don't replace existing classes. Perhaps this should append a class instead?
+              if(!strstr($matches[2][0], 'class=')) {
+                if(($count % 2) == 0) {
+                  $new_tag = '<tr class="even"' . $matches[2][0] . '>';
+                  $text = str_replace_count($matches[0][0], $new_tag, $text, $offset - 1, 1);
+                }
+                else {
+                  $new_tag = '<tr class="odd"' . $matches[2][0] . '>';
+                  $text = str_replace_count($matches[0][0], $new_tag, $text, $offset - 1, 1);
+                }
+              }
+              $count++;
+            }
+          }
+
+          return $text;
+      }
+      break;
+  }
+}
+
+/**
+ * Replace every instance of a string with a count parameter like PHP5.
+ * This can probably be removed with Drupal goes to PHP5 only.
+ * Shamelessly stolen and modified from
+ * http://ca.php.net/manual/en/function.str-replace.php#76180
+ *
+ * @param string $needle
+ * @param string $replace
+ * @param string $haystack
+ * @param integer $count
+ * @param boolean $replace_first
+ * @return string
+ */
+function str_replace_count($needle, $replace, $haystack, $offset = null, $count = null) {
+  if ($count == null) $count = 0;
+  if ($offset == null) $offset = strpos($haystack, $needle);
+  $rpl_count = 0;
+  while (($offset !== false) && ($rpl_count < $count)) {
+    $haystack = substr_replace($haystack, $replace, $offset, strlen($needle));
+    $offset += strlen($replace);
+    $offset = strpos($haystack, $needle, $offset);
+    $rpl_count++;
+  }
+  return $haystack;
+}

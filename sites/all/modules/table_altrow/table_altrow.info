@@ -1,0 +1,10 @@
+; $Id: table_altrow.info,v 1.1.2.2.2.1 2008/02/17 19:08:24 deviantintegral Exp $
+name = Table Alternate Rows
+description = Automatically adds even/odd classes to tables.
+core = 6.x
+; Information added by drupal.org packaging script on 2008-02-17
+version = "6.x-1.1"
+core = "6.x"
+project = "table_altrow"
+datestamp = "1203275412"
+
