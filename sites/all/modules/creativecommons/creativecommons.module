@@ -745,6 +745,7 @@ function creativecommons_get_licenses($options = NULL, $value_as_type = FALSE) {
   // License classes
   $licenses[t('Creative Commons')] = array();
   $licenses[t('Public Domain')] = array();
+  //$licenses[t('Software')] = array(); // victor.kareh
 
   // Manual adjustments for 'standard' class
   $parser = xml_parser_create();
@@ -802,6 +803,9 @@ function creativecommons_license_sort($x, $y) {
     'by-nc' => 5,
     'by-nc-sa' => 6,
     'by-nc-nd' => 7,
+    //'gpl' => 8, // victor.kareh
+    //'lgpl' => 9, // victor.kareh
+    //'bsd' => 10, // victor.kareh
   );
 
   // Need to extract types
