@@ -1,0 +1,96 @@
+<?php
+// $Id: smart_menus.install,v 1.5 2009/11/10 01:48:40 rdeboer Exp $
+
+/**
+ * @file
+ *  Install and uninstall hooks for Smart menus module.
+ */
+
+define('PROFILE_SMART_MENUS_DEPTH_FIELD', 'profile_smart_menus_depth');
+define('PROFILE_SMART_MENUS_DISABLE_TABBED_CONTENT', 'profile_smart_menus_tabbed_content');
+define('PROFILE_SMART_MENUS_ACTIVE_TRAIL', 'profile_smart_menus_active_trail');
+
+/**
+ * Implementation of hook_install().
+ */
+function smart_menus_install() {
+//menu_cache_clear_all();
+  if (module_exists('profile')) {
+    _create_smart_menus_profile();
+  }
+  drupal_set_message(st('Please configure your content and navigation Smart menus <a href="@blocks_page">here</a>.',
+    array('@blocks_page' => url('admin/build/block')))); }
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function smart_menus_uninstall() {
+  menu_cache_clear_all();
+  variable_del('smart_menus_include_pages');
+  variable_del('smart_menus_exclude_pages');
+  variable_del('smart_menus_depth');
+  variable_del('smart_menus_custom_links_name');
+  variable_del('smart_menus_tabbed_content');
+  variable_del('smart_menus_active_trail');
+  variable_del('smart_menus_debug');
+  if (module_exists('profile')) {
+    _remove_smart_menus_profile();
+  }
+  drupal_set_message(t('Don\'t forget to <a href="@blocks_page">reconfigure</a> your content and navigation menu blocks.',
+    array('@blocks_page' => url('admin/build/block'))), 'warning');
+}
+
+function _create_smart_menus_profile() {
+  db_query("INSERT INTO {profile_fields} (title, name, explanation, category, type, weight, required, register, visibility, autocomplete, options, page) VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')",
+    'Smart menus auto-expansion depth', // title
+    PROFILE_SMART_MENUS_DEPTH_FIELD, // form field id
+    t('The maximum number of menu levels to which to auto-expand any (sub)menu. Leave blank to accept the default as set by the system administrtor. Use 0 to revert to the static menu behaviour of core.'),
+    'Smart menus', //profile category
+    'textfield', // type
+    0,     // weight
+    FALSE, // required
+    FALSE, // register
+    PROFILE_PRIVATE, // visibility = 1 for private
+    FALSE, // autocomplete
+    '',    // options in list selection
+    'smart-menus'); // title of page used for browsing
+
+  db_query("INSERT INTO {profile_fields} (title, name, explanation, category, type, weight, required, register, visibility, autocomplete, options, page) VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')",
+    'Disable Smart menus for tabbed content', // title
+    PROFILE_SMART_MENUS_DISABLE_TABBED_CONTENT, // form field id
+    t('Unless disabled here, your content menus will auto-expand to highlight the menu item belonging to the selected content tab, i.e. Edit, Revisions, Track etc.).'),
+    'Smart menus', //profile category
+    'checkbox', // type
+    0,     // weight
+    FALSE, // required
+    FALSE, // register
+    PROFILE_PRIVATE, // visibility = 1 for private
+    FALSE, // autocomplete
+    '',    // options in list selection
+    'smart-menus'); // title of page used for browsing
+
+  db_query("INSERT INTO {profile_fields} (title, name, explanation, category, type, weight, required, register, visibility, autocomplete, options, page) VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')",
+    'Highlight active menu trail', // title
+    PROFILE_SMART_MENUS_ACTIVE_TRAIL, // form field id
+    t('Highlight the entire active menu trail, not just the bottom item.'),
+    'Smart menus', //profile category
+    'checkbox', // type
+    0,     // weight
+    FALSE, // required
+    FALSE, // register
+    PROFILE_PRIVATE, // visibility = 1 for private
+    FALSE, // autocomplete
+    '',    // options in list selection
+    'smart-menus'); // title of page used for browsing
+}
+
+function _remove_smart_menus_profile() {
+  $sql = "SELECT fid FROM {profile_fields} WHERE name IN ('%s', '%s', '%s')";
+  $result = db_query($sql, PROFILE_SMART_MENUS_DEPTH_FIELD, PROFILE_SMART_MENUS_DISABLE_TABBED_CONTENT, PROFILE_SMART_MENUS_ACTIVE_TRAIL);
+  $fids = array();
+  for ($i = 0; $i < 3; $i++) {
+    $fids[] = db_result($result);
+  }
+  db_query('DELETE FROM {profile_fields} WHERE fid IN (%d, %d, %d)', $fids);
+  db_query('DELETE FROM {profile_values} WHERE fid IN (%d, %d, %d)', $fids);
+}
