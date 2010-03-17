@@ -1,0 +1,6 @@
+; $Id$
+name = Open Licenses
+description = Allows users to add different open licenses to selected content.
+package = Licenses
+dependencies[] = creativecommons
+core = 6.x
