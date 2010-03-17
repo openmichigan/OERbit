@@ -103,9 +103,7 @@
   <div id="page"><div id="page-inner">
 
     <a name="navigation-top" id="navigation-top"></a>
-    <?php if ($primary_links || $secondary_links || $navbar): ?>
-      <div id="skip-to-nav"><a href="#navigation"><?php print t('Skip to Navigation'); ?></a></div>
-    <?php endif; ?>
+    <div id="skip-to-nav"><a href="#navigation"><?php print t('Skip to Navigation'); ?></a> | <a href="#content-area"><?php print t('Skip to Content'); ?></a></div>
 
     <div id="header"><div id="header-inner" class="clear-block">
 
@@ -141,6 +139,7 @@
 
       <?php if ($header): ?>
         <div id="header-blocks" class="region region-header">
+          <a name="navigation" id="navigation"></a>
           <?php print $header; ?>
         </div> <!-- /#header-blocks -->
       <?php endif; ?>

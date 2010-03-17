@@ -1,5 +1,6 @@
 /* $Id: oer.css,v 1.0 $ */
 
+#ac-themer-toggle { display: none; }
 
 /** body **/
 body {
@@ -127,9 +128,8 @@ img.left {
 
 
 /*** Header Styles ***/
-#skip-to-nav a:link, #skip-to-nav a:visited {
-	color: #aabcd0;
-	text-decoration: none;
+#skip-to-nav {
+	text-indent: -1000em;
 }
 #logo {
 	float:left;
@@ -586,10 +586,12 @@ ul.groupLinks li a.pdf {
 }
 
 /*** Materials Table View ***/
-.view-materials table.views-table {
-	width: 100%;
+.view-materials table.views-table,
+.view-materials-embed table.views-table {
+	width: 100% !important;
 }
-.view-materials table.views-table caption {
+.view-materials table.views-table caption,
+.view-materials-embed table.views-table caption {
 	text-align: left;
 	font-weight: bold;
 	background: #CEDDE4;
@@ -597,33 +599,42 @@ ul.groupLinks li a.pdf {
 	padding: 7px 10px;
 	margin: 0 0 20px;
 }
-.view-materials table.views-table th {
+.view-materials table.views-table th,
+.view-materials-embed table.views-table th {
 	text-align: left;
 	font-weight: bold;
 	font-size: 90%;
 	color: #333;
 	border-bottom: 1px solid #CCC;
+	background: #eaeaea;
 }
-.view-materials table.views-table tbody tr {
+.view-materials table.views-table tbody tr,
+.view-materials-embed table.views-table tbody tr {
 	font-size: 85%;
 	background: none;
 }
-.view-materials table.views-table tbody tr td {
+.view-materials table.views-table tbody tr td,
+.view-materials-embed table.views-table tbody tr td {
 	padding: 5px 5px 5px 0;
 }
-.view-materials table.views-table th.views-field-title {
+.view-materials table.views-table th.views-field-title,
+.view-materials-embed table.views-table th.views-field-title {
 	width: 50%;
 }
-.view-materials table.views-table th.views-field-field-creators-value {
+.view-materials table.views-table th.views-field-field-creators-value,
+.view-materials-embed table.views-table th.views-field-field-creators-value {
 	width: 15%;
 }
-.view-materials table.views-table th.views-field-title.views-field-field-file-fid {
+.view-materials table.views-table th.views-field-title.views-field-field-file-fid,
+.view-materials-embed table.views-table th.views-field-title.views-field-field-file-fid {
 	width: 20%;
 }
-.view-materials table.views-table th.views-field-title.views-field-license-uri {
+.view-materials table.views-table th.views-field-title.views-field-license-uri,
+.view-materials-embed table.views-table th.views-field-title.views-field-license-uri {
 	width: 10%;
 }
-.view-materials table.views-table th.views-field-edit-node {
+.view-materials table.views-table th.views-field-edit-node,
+.view-materials-embed table.views-table th.views-field-edit-node {
 	width: 5%;
 	font-size: 75%;
 }
@@ -993,6 +1004,14 @@ div#block-print-0 div.edit, div#block-node-0 div.edit, div#block-block-11 div.ed
 	float: left;
 	margin: 0 10px 10px 0;
 	border: 1px solid #a6b6cf;
+	padding: 0;
+	height: 100px;
+	width: 100px;
+}
+.view-id-find .view-content .views-row .views-field-field-course-image-fid span {
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
 }
 .view-id-find .view-content .views-field-title a {
 	font-weight: bold;
@@ -1113,7 +1132,7 @@ ul.tabs li.active a:hover
 	display: inline !important;
 }
 .views-field-edit-node, .views-field-nothing, .views-field-body {
-	clear: both;
+	/*clear: both;*/
 }
 
 .publishedinfo, .editlink {
@@ -1135,13 +1154,18 @@ ul.tabs li.active a:hover
 
 
 /*** Materials ***/
-.view-materials .field-item {
+.view-materials-embed {
+	clear: both;
+}
+.view-materials .field-item,
+.view-materials-embed .field-item {
 	float: left;
 }
 .filefield-icon {
 	display: none;
 }
-.view-materials .views-field-field-file-fid a {
+.view-materials .views-field-field-file-fid a,
+.view-materials-embed .views-field-field-file-fid a {
 	background: transparent url(images/icon-other.png) no-repeat;
 	display: block;
 	width: 20px;
@@ -1149,9 +1173,10 @@ ul.tabs li.active a:hover
 	text-indent: -10000em;
 	float: left;
 }
-.view-materials .views-field-field-file-fid a.youtube, 
-.view-materials .views-field-field-file-fid a.image,
-.view-materials .views-field-field-file-fid a.external {
+.view-materials .views-field-field-file-fid a.youtube,
+.view-materials .views-field-field-file-fid a.external,
+.view-materials-embed .views-field-field-file-fid a.youtube,
+.view-materials-embed .views-field-field-file-fid a.external {
 	background: none !important;
 	text-indent: 0 !important;
 }
@@ -1169,63 +1194,83 @@ ul.tabs li.active a:hover
 .view-materials .views-field-field-file-fid a[href $='.ppt'] { 
    background: transparent url(images/icon-ppt.png) no-repeat !important;
 }*/
-.view-materials .views-field-field-file-fid a[href $='.ods'] { 
+.view-materials .views-field-field-file-fid a[href $='.ods'],
+.view-materials-embed .views-field-field-file-fid a[href $='.ods'] { 
    background: transparent url(images/icon-ods.png) no-repeat !important;
 }
 
 
 .view-materials .views-field-field-file-fid a[href$='.doc'], 
 .view-materials .views-field-field-file-fid a[href$='.rtf'], 
-.view-materials .views-field-field-file-fid a[href$='.docx'] {
+.view-materials .views-field-field-file-fid a[href$='.docx'],
+.view-materials-embed .views-field-field-file-fid a[href$='.doc'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.rtf'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.docx'] {
 	background: transparent url(images/icon_doc.gif) no-repeat  !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.txt'] {
+.view-materials .views-field-field-file-fid a[href$='.txt'],
+.view-materials-embed .views-field-field-file-fid a[href$='.txt'] {
 	background: transparent url(images/icon_txt.gif) no-repeat !important;
 }
 
 .view-materials .views-field-field-file-fid a[href$='.xls'], 
-.view-materials .views-field-field-file-fid a[href$='.xlsx'] {
+.view-materials .views-field-field-file-fid a[href$='.xlsx'],
+.view-materials-embed .views-field-field-file-fid a[href$='.xls'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.xlsx'] {
 	background: transparent url(images/icon_xls.gif) no-repeat !important;
 }
 
 .view-materials .views-field-field-file-fid a[href$='.rss'], 
-.view-materials .views-field-field-file-fid a[href$='.atom'] {
+.view-materials .views-field-field-file-fid a[href$='.atom'],
+.view-materials-embed .views-field-field-file-fid a[href$='.rss'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.atom'] {
 	background: transparent url(images/icon_feed.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.opml'] {
+.view-materials .views-field-field-file-fid a[href$='.opml'],
+.view-materials-embed .views-field-field-file-fid a[href$='.opml'] {
 	background: transparent url(images/icon_opml.gif) no-repeat center right;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.vcard'] {
+.view-materials .views-field-field-file-fid a[href$='.vcard'],
+.view-materials-embed .views-field-field-file-fid a[href$='.vcard'] {
 	background: transparent url(images/icon_vcard.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.exe'] {
+.view-materials .views-field-field-file-fid a[href$='.exe'],
+.view-materials-embed .views-field-field-file-fid a[href$='.exe'] {
 	background: transparent url(images/icon_exe.gif) no-repeat !important;
 }
 
 .view-materials .views-field-field-file-fid a[href$='.dmg'], 
-.view-materials .views-field-field-file-fid a[href$='.app'] {
+.view-materials .views-field-field-file-fid a[href$='.app'],
+.view-materials-embed .views-field-field-file-fid a[href$='.dmg'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.app'] {
 	background: transparent url(images/icon_dmg.gif) no-repeat !important;
 }
 
 .view-materials .views-field-field-file-fid a[href$='.pps'],
-.view-materials .views-field-field-file-fid a[href$='.ppt']  {
+.view-materials .views-field-field-file-fid a[href$='.ppt'],
+.view-materials-embed .views-field-field-file-fid a[href$='.pps'],
+.view-materials-embed .views-field-field-file-fid a[href$='.ppt']  {
 	background: transparent url(images/icon_pps.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.pdf'] {
+.view-materials .views-field-field-file-fid a[href$='.pdf'],
+.view-materials-embed .views-field-field-file-fid a[href$='.pdf'] {
 	background: transparent url(images/icon_pdf.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.xpi'] {
+.view-materials .views-field-field-file-fid a[href$='.xpi'],
+.view-materials-embed .views-field-field-file-fid a[href$='.xpi'] {
 	background: transparent url(images/icon_plugin.gif) no-repeat !important;
 }
 
 .view-materials .views-field-field-file-fid a[href$='.fla'], 
-.view-materials .views-field-field-file-fid a[href$='.swf'] {
+.view-materials .views-field-field-file-fid a[href$='.swf'],
+.view-materials-embed .views-field-field-file-fid a[href$='.fla'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.swf'] {
 	background: transparent url(images/icon_flash.gif) no-repeat !important;
 }
 
@@ -1233,19 +1278,27 @@ ul.tabs li.active a:hover
 .view-materials .views-field-field-file-fid a[href$='.rar'], 
 .view-materials .views-field-field-file-fid a[href$='.gzip'], 
 .view-materials .views-field-field-file-fid a[href$='.bzip'], 
-.view-materials .views-field-field-file-fid a[href$='.ace'] {
+.view-materials .views-field-field-file-fid a[href$='.ace'],
+.view-materials-embed .views-field-field-file-fid a[href$='.zip'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.rar'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.gzip'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.bzip'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.ace'] {
 	background: transparent url(images/icon_archive.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.ical'] {
+.view-materials .views-field-field-file-fid a[href$='.ical'],
+.view-materials-embed .views-field-field-file-fid a[href$='.ical'] {
 	background: transparent url(images/icon_ical.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.css'] {
+.view-materials .views-field-field-file-fid a[href$='.css'],
+.view-materials-embed .views-field-field-file-fid a[href$='.css'] {
 	background: transparent url(images/icon_css.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.ttf'] {
+.view-materials .views-field-field-file-fid a[href$='.ttf'],
+.view-materials-embed .views-field-field-file-fid a[href$='.ttf'] {
 	background: transparent url(images/icon_ttf.gif) no-repeat !important;
 }
 
@@ -1255,7 +1308,15 @@ ul.tabs li.active a:hover
 .view-materials .views-field-field-file-fid a[href$='.bmp'], 
 .view-materials .views-field-field-file-fid a[href$='.jpeg'], 
 .view-materials .views-field-field-file-fid a[href$='.svg'], 
-.view-materials .views-field-field-file-fid a[href$='.eps'] {
+.view-materials .views-field-field-file-fid a[href$='.eps'],
+
+.view-materials-embed .views-field-field-file-fid a[href$='.jpg'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.gif'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.png'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.bmp'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.jpeg'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.svg'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.eps'] {
 	background: transparent url(images/icon_pic.gif) no-repeat !important;
 }
 
@@ -1263,7 +1324,13 @@ ul.tabs li.active a:hover
 .view-materials .views-field-field-file-fid a[href$='.wmv'], 
 .view-materials .views-field-field-file-fid a[href$='.mp4'], 
 .view-materials .views-field-field-file-fid a[href$='.avi'], 
-.view-materials .views-field-field-file-fid a[href$='.mpg'] {
+.view-materials .views-field-field-file-fid a[href$='.mpg'],
+
+.view-materials-embed .views-field-field-file-fid a[href$='.mov'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.wmv'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.mp4'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.avi'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.mpg'] {
 	background: transparent url(images/icon_film.gif) no-repeat !important;
 }
 
@@ -1271,11 +1338,18 @@ ul.tabs li.active a:hover
 .view-materials .views-field-field-file-fid a[href$='.wav'], 
 .view-materials .views-field-field-file-fid a[href$='.ogg'], 
 .view-materials .views-field-field-file-fid a[href$='.wma'], 
-.view-materials .views-field-field-file-fid a[href$='.m4a'] {
+.view-materials .views-field-field-file-fid a[href$='.m4a'],
+
+.view-materials-embed .views-field-field-file-fid a[href$='.mp3'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.wav'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.ogg'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.wma'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.m4a'] {
 	background: transparent url(images/icon_music.gif) no-repeat !important;
 }
 
-.view-materials .views-field-field-file-fid a[href$='.torrent'] {
+.view-materials .views-field-field-file-fid a[href$='.torrent'],
+.view-materials-embed .views-field-field-file-fid a[href$='.torrent'] {
 	background: transparent url(images/icon_torrent.gif) no-repeat !important;
 }
 
