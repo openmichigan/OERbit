@@ -1,0 +1,227 @@
+<?php
+// $Id: node_tools.module,v 1.4 2010/02/02 05:53:03 rdeboer Exp $
+/**
+ * @file
+ * Generic reusable functions involving node objects.
+ *
+ * Required by Module Grants Monitor and Revisioning.
+ */
+
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * We use this mainly to set up some useful node properties that can be read
+ * later, whether it be in this module or another, thus removing the need for
+ * multiple calls to retrieve the same info in various places.
+ */
+function node_tools_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+
+  switch ($op) {
+    case 'presave':
+    case 'load': // get here immediately after the node is fetched from db
+      if (!isset($node->current_revision_id)) {
+        $node->current_revision_id = node_tools_get_current_node_revision_id($node->nid);
+        $node->is_current = node_tools_revision_is_current($node);
+        $node->num_revisions = node_tools_get_number_of_revisions($node->nid);
+      }
+    //$node->uid and $node->revision_uid were already set in node_load()
+    //$node->revision is set as part of 'prepare'-op, see node_object_prepare()
+      break;
+  }
+}
+
+/**
+ * Get the number of revisions belonging to a node.
+ * @param
+ *  $nid, id of the node
+ * @return
+ *  A count representing the number of revisions associated with the node
+ */
+function node_tools_get_number_of_revisions($nid) {
+  return db_result(db_query("SELECT COUNT(vid) FROM {node_revisions} WHERE nid=%d", $nid));
+}
+
+/**
+ * Get the id of the current revision that the supplied node is pointing to.
+ * Used in cases where the node object wasn't fully loaded or was loaded
+ * with a different revision.
+ *
+ * @param $nid
+ *  The id of the node whose current revision id is to be returned.
+ * @return
+ *  A single number being the current revision id (vid).
+ */
+function node_tools_get_current_node_revision_id($nid) {
+  return db_result(db_query('SELECT vid FROM {node} WHERE nid=%d', $nid));
+}
+
+/**
+ * Return whether the currenly loaded revision is the current one.
+ * @param $node
+ * @return
+ *  TRUE if the currently loaded node revision is the current revision
+ */
+function node_tools_revision_is_current($node) {
+  return !is_null($node) && ($node->current_revision_id == $node->vid);
+}
+
+/**
+ * Return whether the supplied content type is subject to moderation.
+ *
+ * @param $content_type
+ *  i.e. $node->type
+ * @return
+ *  TRUE, if the supplied type has the "New revision in draft, pending
+ *  moderation" box ticked on the Content management>>Content types>>edit page
+ *  (see Revisioning).
+ */
+function node_tools_content_is_moderated($content_type) {
+  return !empty($content_type) && in_array('revision_moderation', variable_get('node_options_'. $content_type, array()));
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function node_tools_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#id']) && $form['#id'] == 'node-form') {
+    $nid = $form['#node']->nid;
+    if (isset($form['buttons']['delete']) && node_tools_get_number_of_revisions($nid) > 1) {
+      // Special treatment for Delete button when there's multiple revisions.
+      // Make it obvious to the user that a 'Delete' is in fact 'Delete all'.
+      $form['buttons']['delete']['#value'] = t('Delete all revisions');
+    }
+  }
+}
+
+define('NO_FILTER', '-1');
+
+/**
+ * Retrieve a list of nodes or revisions accessible to the logged-in user via
+ * the supplied operation.
+ *
+ * @param $op
+ *   Operation, one of 'view', 'update' or 'delete'
+ * @param $is_published
+ *   1 to return only published content
+ *   0 to return only content that isn't published
+ *  -1 (default) no filter, return content regardles of publication status
+ * @param $creator_uid
+ *   Only return content created by the user with the supplied id.
+ *   Defaults to -1, which means don't care who the creator is.
+ * @param $modifier_uid
+ *   Only return content last modified by the user with the supplied id.
+ *   Defaults to -1, which means don't care who last modifed the node.
+ * @param $is_moderated
+ *   TRUE to return only content of types that are subject to moderation
+ *   FALSE to return only content that isn't subject to moderation
+ *   -1 (default) no filter, return content regardles of moderation flag
+ * @param $is_pending
+ *   Boolean indicating whether only nodes pending publication should be
+ *   returned; a pending node is defined as a node that has a revision newer
+ *   than the current OR a node with a single revision that is not published.
+ * @param $max
+ *   Maximum number of nodes to be returned, defaults to 1000
+ * @param $order_by_override
+ *   "ORDER BY ..." clause to be added, defaults to "timestamp DESC".
+ * @return
+ *   An array of node objects each containing nid, content type, published flag,
+ *   creator-id, title+vid+modifier-id+timestamp of the current revision, plus taxonomy
+ *   term(s) and workflow state, if these modules are installed and enabled.
+ *
+ * @todo
+ *   Allow paging, improve performance
+ */
+function node_tools_get_nodes($op, $is_published = -1, $creator_uid = -1, $modifier_uid = -1,
+  $is_moderated = -1, $is_pending = FALSE, $max = 1000, $order_by_override = NULL) {
+//drupal_set_message("op='$op', is_published='$is_published', creator=$creator_uid, modifier=$modifier_uid, is_moderated='$is_moderated', is_pending='$is_pending', max=$max, show_msg='$show_message', order=$order_by_override", 'warning');
+  $sql_select = 'SELECT n.nid, r.vid, n.uid AS creator_uid, r.uid, n.type, n.status, r.title, r.timestamp';
+  // Join on current revision (vid) except when looking for pending revisions
+  $sql_from   = ' FROM {node} n INNER JOIN {node_revisions} r '. ($is_pending ? 'ON n.nid=r.nid' : 'ON n.vid=r.vid');
+  $sql_where  = ($is_published < 0) ? '' : " WHERE n.status=$is_published";
+  if ($creator_uid >= 0) {
+    $sql_where  = empty($sql_where) ? " WHERE n.uid=$creator_uid" : $sql_where ." AND n.uid=$creator_uid";
+  }
+  if ($modifier_uid >= 0) {
+    $sql_where  = empty($sql_where) ? " WHERE r.uid=$modifier_uid" : $sql_where ." AND r.uid=$modifier_uid";
+  }
+  if ($is_pending) {
+    $sql_where  = empty($sql_where) ? ' WHERE' : $sql_where .' AND';
+    $sql_where .= ' (r.vid>n.vid OR (n.status=0 AND (SELECT COUNT(vid) FROM {node_revisions} WHERE nid=n.nid)=1))';
+  }
+  $sql_order = " ORDER BY " . (empty($order_by_override) ? _node_tools_extract_order_clause_from_URI() : $order_by_override);
+  $include_taxonomy_terms = module_exists('taxonomy') &&
+    (count(taxonomy_get_vocabularies()) > 0) && variable_get("show_taxonomy_terms", TRUE);
+  $include_workflow_state = module_exists('workflow') && count(workflow_get_all()) > 0;
+  if ($include_taxonomy_terms) {
+    $sql_select .= ', td.name AS term';
+    $sql_from .= ' LEFT JOIN {term_node} tn ON r.vid=tn.vid LEFT JOIN {term_data} td ON tn.tid=td.tid';
+  }
+  if ($include_workflow_state) {
+    $sql_select .= ', ws.state';
+    $sql_from .= ' LEFT JOIN {workflow_node} wn ON wn.nid=n.nid LEFT JOIN {workflow_states} ws ON wn.sid=ws.sid';
+  }
+  $sql = $sql_select . $sql_from . $sql_where . $sql_order;
+//drupal_set_message($sql);
+  $node_query_result = db_query_range($sql, 0, $max);
+  $nodes = array();
+  while ($node = db_fetch_object($node_query_result)) {
+    $filter = ($is_moderated < 0) || $is_moderated == node_tools_content_is_moderated($node->type);
+    $access = module_exists('module_grants') ? module_grants_node_access($op, $node) : node_access($op, $node);
+    if ($filter && $access) {
+      if (empty($nodes[$node->nid])) {
+        $nodes[$node->nid] = $node;
+      }
+      // If a node has more than one taxonomy term, these will be returned by
+      // the query as seperate objects differing only in their terms.
+      elseif ($include_taxonomy_terms && !empty($node->term)) {
+        // When $is_pending==TRUE more dan one revision may be returned, so
+        // need to check for duplicate terms.
+        $existing_node = $nodes[$node->nid];
+        if (strpos($existing_node->term, $node->term) === FALSE) {
+          // Bit of a quick & dirty -- goes wrong if a term is substr of another
+          $existing_node->term .= "/$node->term";
+        }
+      }
+    }
+  }
+  return $nodes;
+}
+
+/**
+ * Extract from the incoming URI (as in the table column header href)
+ * the sort field and order for use in an SQL 'ORDER BY' clause.
+ * @param
+ *   none
+ * @return
+ *   db table field name and sort direction as a string
+ */
+function _node_tools_extract_order_clause_from_URI() {
+  // We shouldn't have to do this, as tablesort.inc/tablesort_header(), called
+  // from theme_table() is meant to look after it, but it's got a bug [#480382].
+  // Note: this function is secure, as we're only allowing recognised values,
+  //       all unknown values, result in the a descending sort by 'timestamp'.
+  switch ($order_by = drupal_strtolower($_REQUEST['order'])) {
+    case 'creator':
+      $order_by = 'n.uid';
+      break;
+    case 'by':
+      $order_by = 'r.uid';
+      break;
+    case 'published?':
+      $order_by = 'status';
+      break;
+    case 'workflow state':
+      $order_by = 'state';
+      break;
+    // Listing names that are fine the way they are here:
+    case 'title':
+    case 'type':
+    case 'term':
+      break;
+    default:
+      $order_by = 'timestamp';
+      break;
+  }
+  $direction = (drupal_strtolower($_REQUEST['sort'])== 'asc') ? 'ASC' : 'DESC';
+  return "$order_by $direction";
+}

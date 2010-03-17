@@ -1,0 +1,510 @@
+<?php
+// $Id: module_grants.module,v 1.58 2010/02/20 00:51:44 rdeboer Exp $
+
+/**
+ * @file
+ *  Module to apply access grants to pre-published content just as they are
+ *  to published content and to make multiple content access modules work
+ *  together in the expected way.
+ *
+ *  In core (node.module) access to a node requires either the "administer
+ *  nodes" blanket permission or the "access content" permission PLUS an
+ *  applicable node permission, like "edit story content".
+ *  If, apart from "access content" none of the applicable node permissions
+ *  are ticked AND the node is currently published, then the node_access()
+ *  function consults the node_access table. This table may be populated by
+ *  various contributed modules dealing with content access, such as Workflow
+ *  Access, Taxonomy Access Control, TAC-Lite etc. If ANY (as opposed to ALL)
+ *  of these modules are ok with the user accessing the node in question, then
+ *  access is granted.
+ *  For node REVISIONS the same applies, except that prior to the above,
+ *  equivalent revision permissions are checked first by the function
+ *  _node_revision_access(). These permissions apply across all content types.
+ *  They are: 'view revisions', 'revert revisions' and 'delete revisions'. Note
+ *  that in core there's no 'edit revisions'; this permission comes with the
+ *  Revisioning module.
+ *
+ *  Module Grants enhances the above behaviour. Using hook_menu_alter() Module
+ *  Grants overrides view, edit and delete links to use the
+ *  module_grants_node_access() callback rather than core's node_access(). By
+ *  default, module_grants_node_accss() operates identically to node_access()
+ *  with these exceptions:
+ *  o when content is not yet published, the node_access table is consulted
+ *    just as it is for published content, provided the user has at least the
+ *    'view revisions' permission or its equivalent when Revisioning is enabled.
+ *  o when two or more content access modules are at play, access to the node
+ *    is granted only if ALL (rather than ANY) of the modules say yes.
+ *  This amounts to a more natural behaviour.
+ *
+ *  As far as node revisions go, a similar pattern is applied, in that rather
+ *  than the _node_revision_access() callback, module_grants_node_revision()
+ *  is executed prior to the view, revert and delete revisions operations. As
+ *  is the case with core's _node_revisions_access(), after the user
+ *  permissions have been checked, module_grants_node_revision_access()
+ *  proceeds with a call to module_grants_node_access() to test the associated
+ *  node access grants, ie. 'view', 'update', 'delete'.
+ *
+ *  Access checks are cached, so that when multiple modules request whether a
+ *  user has access to a node or revision, only one evaluation per node/revision
+ *  operation is perfomed for each HTTP request.
+ *
+ *  To allow contributed modules to alter or add to the above process, Module
+ *  Grants provides a hook, called from module_grants_node_revision_access():
+ *
+ *    hook_user_node_access($revision_op, $node)
+ *
+ *  If implemented this function should return either FALSE (meaning deny
+ *  access to the node for this revision_op) or a required node operation (ie.
+ *  'view', 'update', 'delete'). This node operation is passed to
+ *  module_grants_node_access(), which returns a boolean indicating whether
+ *  access is granted or not.
+ *  The Revisioning module takes advantage of this hook to combine its
+ *  revision-related user permissions with proper access control, as provided by
+ *  Module Grants.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function module_grants_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#module_grants':
+      $s = t('For help and full documentation see the <a href="@module_grants">Module Grants project page</a>',
+        array('@module_grants' => url('http://drupal.org/project/module_grants')));
+      break;
+  }
+  return empty($s) ? '' : '<p>'. $s .'</p>';
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function module_grants_menu() {
+  $items = array();
+  $items['admin/settings/module_grants'] = array(
+    'title' => 'Module grants',
+    'description' => 'Configure how node access modules interact and customise the <em>Accessible-content</em> page.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('module_grants_admin_configure'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'module_grants.admin.inc'
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ *
+ * Modify menu items defined in other modules, in particular the node module.
+ */
+function module_grants_menu_alter(&$items) {
+  // As module_grants_node_access() fixes the problem of grants not being
+  // checked when a node isn't published, all node access menu links are
+  // altered to use function module_grants_node_access().
+  // For normal view/edit/delete operations module_grant_node_access() is
+  // called directly, for the revision-specific operations the function is
+  // called via module_grants_node_revision_access().
+
+  // ---- Node-related access callbacks
+  $items['node/%node']['access callback'] = 'module_grants_node_access';
+
+  $items['node/%node/view']['access callback'] = 'module_grants_node_access';
+  $items['node/%node/view']['access arguments'] = array('view', 1); // don't remove!
+
+  $items['node/%node/edit']['access callback'] = 'module_grants_node_access';
+
+  // Need to override delete because node.module's node_delete() calls
+  // node_access() directly when module_grants_node_access() should be used.
+  $items['node/%node/delete']['page arguments'] =  array('module_grants_node_delete_confirm', 1);
+  $items['node/%node/delete']['access callback'] = 'module_grants_node_access';
+  $items['node/%node/delete']['module'] = 'module_grants';
+  $items['node/%node/delete']['file'] = 'module_grants.pages.inc';
+
+  // ---- Revision-related access callbacks
+  $items['node/%node/revisions']['access callback'] = 'module_grants_node_revision_access';
+  $items['node/%node/revisions']['access arguments'] = array('view revision list', 1);
+
+  // Point /%node/revisions/%/view page to same callback as /%node/view (see
+  // node.module) for a consistent view of current, pending, archived revisions
+  $items['node/%node/revisions/%/view']['page callback'] = 'node_page_view';
+  $items['node/%node/revisions/%/view']['access callback'] = 'module_grants_node_revision_access';
+  $items['node/%node/revisions/%/view']['access arguments'] = array('view revisions', 1);
+
+  $items['node/%node/revisions/%/delete']['access callback'] = 'module_grants_node_revision_access';
+  $items['node/%node/revisions/%/delete']['access arguments'] = array('delete revisions', 1);
+
+  $items['node/%node/revisions/%/revert']['access callback'] = 'module_grants_node_revision_access';
+  $items['node/%node/revisions/%/revert']['access arguments'] = array('revert revisions', 1);
+}
+
+/**
+ * Similar to node_access() in node.module but ANDs rather than ORs grants
+ * together on a per module base to create more natural behaviour.
+ * Also makes sure that published and unpublished content are treated
+ * in the same way, i.e. that grants are checked in either case.
+ *
+ * @param $node_op
+ *  One of 'view', 'update' or 'delete'. We don't need to deal with 'create'.
+ * @param $node
+ *  The node for which the supplied operation is checked
+ * @param $account
+ *  user object, use NULL or omit for current user
+ * @return
+ *  FALSE if the supplied operation isn't permitted on the node
+ */
+function module_grants_node_access($node_op, $node, $account = NULL) {
+  static $access = array();
+  global $user;
+
+  if (!$node) {
+    return FALSE;
+  }
+
+  $nid = $node->nid;
+  if (isset($access["$nid:$node_op"])) {
+    return $access["$nid:$node_op"];
+  }
+
+  // If the node is in a restricted format, disallow editing.
+  if ($node_op == 'update' && !filter_access($node->format)) {
+    return ($access["$nid:$node_op"] = FALSE);
+  }
+  // If no account object is supplied, the access check is for the current user.
+  if (empty($account)) {
+    $account = $user;
+  }
+  if (user_access('administer nodes', $account)) {
+    return $access["$nid:$node_op"] = TRUE;
+  }
+  if (!user_access('access content', $account)) {
+    return $access["$nid:$node_op"] = FALSE;
+  }
+  $module = node_get_types('module', $node);
+  if ($module == 'node') {
+    $module = 'node_content';
+  }
+  $result = module_invoke($module, 'access', $node_op, $node, $account);
+  if (!is_null($result)) {
+  //drupal_set_message("'$node_op' access=$result by module $module: '$node->title'", 'warning', FALSE);
+    return $access["$nid:$node_op"] = $result;
+  }
+  // Having arrived here, node access has still neither been granted nor denied.
+  // We're about to hand over to enabled content access modules, that is those
+  // that implement hook_node_grants() and consult the node_access table.
+  // By default the node_access table allows 'view' access to all and does not
+  // take the node's publication status into account. This would mean that
+  // anonymous users would be able to view content that isn't published,
+  // assuming they have the 'access content' permission, which is normal.
+  // Therefore, to differentiate view access for unpublished content between
+  // anonymous and authorised users, we only allow view access to unpublished
+  // content to roles that have the 'view revisions' or 'view revisions of
+  // any|own <type> content" permissions (from Revisioning).
+  // So, do NOT give any of these view revisions permissions to the anonymous
+  // user role.
+  // The exception are authors viewing their own content. It would be silly to
+  // disallow authors viewing the (unpublished) content they just saved!
+  //
+  if ($node_op == 'view' && !$node->status) {
+    $may_view = module_invoke('revisioning', 'user_node_access', 'view revisions', $node)
+      || user_access('view revisions');
+    if (!$may_view) {
+      if ($account->uid != $node->uid) {
+        // Not the author: no permission to view this unpublished content.
+        return $access["$nid:$node_op"] = FALSE;
+      }
+    }
+  }
+
+  $base_sql = "SELECT COUNT(*) FROM {node_access} WHERE (nid=0 OR nid=%d) AND ((gid=0 AND realm='all')";
+
+  // If module_grants_lenient is set, then a content access module that has
+  // nothing to say about the node in question will be deemed to be ok with
+  // $account having access to $node.
+  // If module_grants_lenient isn't set and a content access module has nothing
+  // to say about the node in question this will be taken as a 'deny access'.
+  $nid1 = variable_get('module_grants_lenient', TRUE) ? $nid : NULL;
+  $all_grants = _module_grants_by_module($node_op, $account, $nid1);
+  if (count($all_grants) == 0) { // no module implements hook_node_grants()
+    // Note that in the absence of any content access modules the node_access
+    // table by default contains a single row that grants the 'all' realm
+    // 'view' access to all nodes via nid=0.
+    $sql = "$base_sql) AND grant_$node_op >=1";
+    $result = db_result(db_query($sql, $nid));
+    //drupal_set_message("'$node_op' access=$result by node_access table: '$node->title'", 'warning', FALSE);
+    return $access["$nid:$node_op"] = $result;
+  }
+
+  $or_modules = variable_get('module_grants_OR_modules', FALSE);
+  foreach ($all_grants as $module => $module_grants) {
+    $sql = $base_sql . (empty($module_grants) ? "" : " OR ($module_grants)") .") AND grant_$node_op >=1";
+    // Effectively AND module_grants together by breaking loop as soon as one fails
+    // A single SQL statement may be slightly quicker but won't tells us
+    // which of the modules denied access. This is useful debug feedback.
+    $result = db_result(db_query($sql, $nid));
+    //drupal_set_message("'$node_op' access=$result by $module-grants: '$node->title'", 'warning', FALSE);
+    if ($or_modules) {
+      if ($result > 0) { // OR module grants together: break as soon as one succeeds
+        break;
+      }
+    }
+    elseif ($result == 0) { // AND module grants together: break as soon as one fails
+      break;
+    }
+  }
+  return $access["$nid:$node_op"] = $result;
+}
+
+/**
+ * Menu options dealing with revisions have their revision-specific
+ * permissions checked via user_access(), before being tested for the
+ * associated node-specific operation.
+ * Return a boolean indicating whether the current user has access to the
+ * requested revision AND node.
+ *
+ * @param $revision_op
+ *   The requested revision operation, e.g. 'view revisions'.
+ * @param $node
+ *   Node object for which revision access is requested.
+ * @return
+ *   TRUE when the current user has the requested access to the supplied revision
+ *
+ * @see node.module, _node_revision_access()
+ *
+ * Note, unlike _node_revision_access(), it is ok to also call this function
+ * on nodes that have only a single revision.
+ * Also unlike _node_revision_access(), the function below makes sure not to
+ * cache access to a revision based on vid alone, as different revision
+ * operations may be requested by various modules in response to a single HTTP
+ * request (read: mouse-click).
+ */
+function module_grants_node_revision_access($revision_op, $node) {
+  static $access = array();
+
+  if (!$node) {
+    return FALSE;
+  }
+  $vid = $node->vid;
+  if (isset($access["$vid:$revision_op"])) {
+    return $access["$vid:$revision_op"];
+  }
+
+  if (!isset($node->num_revisions) || !isset($node->is_current)) {
+    drupal_set_message('Node object data incomplete -- have you enabled the Node Tools submodule?', 'warning', FALSE);
+  }
+  // See if other modules have anything to say about this revision_op, i.e.
+  // whether they implement hook_user_node_access($revision_op, $node).
+  $or_modules = TRUE; // variable_get('module_grants_OR_modules', FALSE);
+  $hook = 'user_node_access';
+  foreach (module_implements($hook) as $module) {
+    $result = module_invoke($module, $hook, $revision_op, $node);
+    if (!is_null($result)) {
+      if ($or_modules) {
+        if ($result) { // OR permissions together: return as soon as one succeeds
+          break;
+        }
+      }
+      elseif (!$result) { // AND permissons together: return as soon as one fails
+        break;
+      }
+    }
+  }
+  // If no module implements hook_user_node_access() for this revision_op,
+  // then fall back to the equivalent of what _node_revision_access() does, i.e.
+  // check user permission, followed by node access.
+  $node_op = is_null($result) ? _module_grants_user_node_access($revision_op, $node) : $result;
+
+  if ($node_op && $node_op != 'view' && $node_op != 'update' && $node_op != 'delete') {
+    drupal_set_message("$module_$hook returns illegal node operation 'node_op'", 'warning', FALSE);
+  }
+
+  $access["$vid:$revision_op"] = $node_op && module_grants_node_access($node_op, $node);
+  return $access["$vid:$revision_op"];
+}
+
+/**
+ * Implementation of hook_db_rewrite_sql().
+ *
+ * This module defines module_grants_node_access() (above) as a replacement for
+ * node_access(), which is used only for single node views. Node access in
+ * listings is processed with node_db_rewrite_sql(), which needs to have the
+ * same treatment.
+ * This function is similar to node_db_rewrite_sql() in node.module but ANDs
+ * rather than ORs grants together on a per module base to create a more
+ * natural behaviour.
+ * Supplied by mcarbone, see [#601064].
+ */
+function module_grants_db_rewrite_sql($query, $primary_table, $primary_field) {
+  if ($primary_field == 'nid' && !variable_get('module_grants_OR_modules', FALSE)) {
+    if (!node_access_view_all_nodes()) {
+      $return['where'] = _module_grants_node_access_where_sql();
+      return $return;
+    }
+  }
+}
+
+/**
+ * Similar to user_access() but also takes node info into account. Returns
+ * a node operation, to be checked by module_grants_node_access().
+ *
+ * @param $revision_op
+ *   Revision operation for which associated user permission is checked, e.g.
+ *   'view revisions'
+ * @param $node
+ * @return bool
+ *   FALSE if the $revision_op is known to Module Grants but not permitted on
+ *   this node, 'view', 'update' or 'delete' otherwise
+ */
+function _module_grants_user_node_access($revision_op, $node) {
+
+  switch ($revision_op) {
+
+    case 'view revisions':
+      // Suppress Revisions tab when there's only one revision -- consistent with core.
+      if (!user_access('view revisions') || $node->num_revisions == 1) {
+        return FALSE;
+      }
+      break;
+
+    case 'view revision list':
+      // Suppress Revision summary when there's only one revision.
+      if (!user_access('view revisions') || $node->num_revisions == 1) {
+        return FALSE;
+      }
+      break;
+
+    case 'revert revisions':
+      return user_access('revert revisions') ? 'update' : FALSE;
+
+    case 'delete revisions':
+      // Don't need 'delete revisions' permission when deleting node of 1 revision
+      return user_access('delete revisions') || $node->num_revisions == 1 ? 'delete' : FALSE;
+
+    default:
+      drupal_set_message("Unknown Module Grants operation '$revision_op'", 'warning', FALSE);
+  }
+  return 'view';
+}
+
+/**
+ * Delete a node and all its revisions.
+ * Required because node.module's node_delete() has a hard-wired call to
+ * node_access() when we should be using module_grants_node_access().
+ */
+function _module_grants_node_delete($nid) {
+  $node = node_load($nid);
+  db_query('DELETE FROM {node} WHERE nid = %d', $node->nid);
+  db_query('DELETE FROM {node_revisions} WHERE nid = %d', $node->nid);
+
+  // Call the node-specific callback (if any).
+  node_invoke($node, 'delete');
+  node_invoke_nodeapi($node, 'delete');
+
+  // Clear the page and block caches.
+  cache_clear_all();
+
+  // Remove this node from the search index if needed.
+  if (function_exists('search_wipe')) {
+    search_wipe($node->nid, 'node');
+  }
+  watchdog('content', '@type: deleted %title.', array('@type' => $node->type, '%title' => $node->title));
+  drupal_set_message(t('@type %title has been deleted.', array('@type' => node_get_types('name', $node), '%title' => $node->title)));
+}
+
+/**
+ * Generate an SQL where clause for use in fetching a node listing.
+ *
+ * Similar to _node_access_where_sql() in node.module but ANDs rather than ORs
+ * grants together on a per module base to create a more natural behaviour.
+ *
+ * @param $node_op
+ *   The operation that must be allowed to return a node.
+ * @param $node_access_alias
+ *   If the node_access table has been given an SQL alias other than the default
+ *   "na", that must be passed here.
+ * @param $account
+ *   The user object for the user performing the operation. If omitted, the
+ *   current user is used.
+ * @return
+ *   An SQL where clause.
+ */
+function _module_grants_node_access_where_sql($node_op = 'view', $node_access_alias = 'na', $account = NULL) {
+  global $user;
+
+  if (user_access('administer nodes')) {
+    return;
+  }
+  if (empty($account)) {
+    $account = $user;
+  }
+  $all_grants = _module_grants_by_module($node_op, $account);
+
+  $grants = array();
+  foreach ($all_grants as $module => $module_grants) {
+    $lenient_subquery = '';
+    if (variable_get('module_grants_lenient', TRUE)) {
+      $module_realms = array_keys(module_invoke($module, 'node_grants', $account, $node_op));
+      if (!empty($module_realms)) {
+        $lenient_subquery = "(SELECT COUNT(1) FROM {node_access} nasq WHERE $node_access_alias.nid=nasq.nid AND realm IN ('". implode("','", $module_realms) ."')) = 0 OR ";
+      }
+    }
+    $grants[] = '('. $lenient_subquery ."(SELECT COUNT(1) FROM {node_access} nasq WHERE $node_access_alias.nid=nasq.nid AND ($module_grants)) > 0)";
+  }
+//return = count($grants) ? implode(' AND ', $grants) : '';
+//[#601064], comment #13
+  $base_sql = "((SELECT COUNT(1) FROM {node_access} nasq WHERE $node_access_alias.nid=nasq.nid AND gid=0 AND realm='all') > 0)";
+  $sql = $base_sql . (count($grants) ? ' OR '. implode(' AND ', $grants) : '');
+  return $sql;
+}
+
+/**
+ * Return a map, keyed by module name, of SQL clauses representing the grants
+ * associated with the module, as returned by that module's hook_node_grants().
+ *
+ * @param $node_op
+ *   The operation, i.e 'view', 'update' or 'delete'
+ * @param $account
+ *   User account object
+ * @param $nid
+ *   Optional. If passed in, only modules with at least one row in the
+ *   node_acces table for the supplied nid are included (lenient interpretation
+ *   of absence of node grants). If not passed in, then all modules implementing
+ *   hook_node_grants() will be included (strict).
+ * @return
+ *   An array of module grants SQL, keyed by module name
+ */
+function _module_grants_by_module($node_op, $account, $nid = NULL) {
+  $hook = 'node_grants';
+  $all_grants = array();
+  foreach (module_implements($hook) as $module) {
+    $module_grants = module_invoke($module, $hook, $account, $node_op);
+    if (!empty($module_grants)) {
+      // If a nid has been passed in, don't collect the grants for this module
+      // unless it has at least one row in the node_access table for this nid.
+      if ($nid) {
+        $count = db_result(db_query("SELECT COUNT(*) FROM {node_access} WHERE nid=%d AND realm IN ('". implode("','", array_keys($module_grants)) ."')", $nid));
+        if ($count == 0 && $module != 'domain') { // #564318
+          // Module doesn't have a node_access row for this node, so continue
+          // to next module.
+          continue;
+        }
+      }
+      $module_gids = array();
+      foreach ($module_grants as $realm => $gids) {
+        foreach ($gids as $key => $gid) {
+          if (is_numeric($gid)) { // skip $gid=='domain' etc, see [#675596]
+            $module_gids[] = "(gid=$gid AND realm='$realm')";
+          }
+        }
+      }
+      // #564318 Domain Access has special case with a global cross-domain grant
+      if ($module == 'domain' && $nid) {
+        $module_gids[] = "(nid=$nid AND gid=0 AND realm='domain_site')";
+      }
+      // Within a module OR the gid/realm combinations together
+      if (!empty($module_gids)) {
+        $all_grants[$module] = implode(' OR ', $module_gids);
+      }
+    }
+  }
+  return $all_grants;
+}

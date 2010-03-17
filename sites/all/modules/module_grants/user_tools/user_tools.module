@@ -1,0 +1,54 @@
+<?php
+// $Id: user_tools.module,v 1.2 2010/01/28 03:45:36 rdeboer Exp $
+/**
+ * @file
+ * Generic reusable functions involving user objects.
+ *
+ * Required by Module Grants Monitor.
+ */
+
+/**
+ * Return TRUE only if the user account has ALL of the supplied permissions.
+ *
+ * @param $permissions
+ *  An array of permissions (strings)
+ * @param $account
+ *  The user account object. Defaults to the logged-in user if omitted.
+ * @return bool
+ */
+function user_tools_user_all_access($permissions, $account = NULL) {
+  foreach ($permissions as $permission) {
+    if (!user_access($permission, $account)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Return if the user account has at least one of the supplied permissions.
+ *
+ * @param $permissions
+ *  An array of permissions (strings)
+ * @param $account
+ *  The user account object. Defaults to the logged-in user if omitted.
+ * @return
+ *  first permission found or FALSE if no access
+ */
+function user_tools_user_any_access($permissions, $account = NULL) {
+  return user_tools_find_first_permission($permissions, $account) != NULL;
+}
+
+function user_tools_find_first_permission($permissions, $account = NULL) {
+  if (is_array($permissions)) {
+    foreach ($permissions as $permission) {
+      if (user_access($permission, $account)) {
+        return $permission;
+      }
+    }
+  }
+  else {
+  // return user_access($permissions, $account);
+  }
+  return NULL;
+}

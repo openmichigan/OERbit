@@ -1,0 +1,340 @@
+<?php
+// $Id: module_grants_monitor.module,v 1.2 2010/02/02 05:53:34 rdeboer Exp $
+
+/**
+ * @file
+ * Accessible content monitor. Creates an 'Accessible content' link in the
+ * navigation menu to display a summary of all content accessible to the
+ * logged-in user as determined by the enabled content access modules.
+ */
+require_once drupal_get_path('module', 'module_grants_monitor') .'/module_grants_monitor.pages.inc';
+
+define('I_CREATED', '1');
+define('I_LAST_MODIFIED', '2');
+
+/**
+ * Implementation of hook_help().
+ */
+function module_grants_monitor_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#module_grants_monitor':
+      $s = t('For documentation see the <a href="@module_grants">Module Grants project page</a>',
+        array('@module_grants' => url('http://drupal.org/project/module_grants')));
+      break;
+
+    case 'accessible-content/i-created':
+    case 'accessible-content/i-created/published':
+    case 'accessible-content/i-created/not-published':
+      $s = t('Showing all content <em>you created</em> and still have at least view access to, filtered by publication status.');
+      break;
+    case 'accessible-content/i-created/all':
+      $s = t('Showing all content <em>you created</em> and still have at least view access to.');
+      break;
+    case 'accessible-content/i-last-modified':
+    case 'accessible-content/i-last-modified/published':
+    case 'accessible-content/i-last-modified/not-published':
+      $s = t('Showing all content <em>you last modified</em> and still have at least view access to, filtered by publication status.');
+      break;
+    case 'accessible-content/i-last-modified/all':
+      $s = t('Showing all content <em>you last modified</em> and still have at least view access to.');
+      break;
+    case 'accessible-content/i-can-edit':
+    case 'accessible-content/i-can-edit/published':
+    case 'accessible-content/i-can-edit/not-published':
+      $s = t('Showing all content you can <em>edit</em>, filtered by publication status.');
+      break;
+    case 'accessible-content/i-can-edit/all':
+      $s = t('Showing all content you can <em>edit</em>.');
+      break;
+    case 'accessible-content/i-can-view':
+    case 'accessible-content/i-can-view/published':
+    case 'accessible-content/i-can-view/not-published':
+      $s = t('Showing all content you have at least <em>view</em> access to, filtered by publication status.');
+      break;
+    case 'accessible-content/i-can-view/all':
+      $s = t('Showing all content you have at least <em>view</em> access to.');
+      break;
+  }
+  return empty($s) ? '' : '<p>'. $s .'</p>';
+}
+
+/**
+ * Implementation of hook_perm().
+ *
+ * The order of the permissions is relevant to the dynamic allocation of
+ * suitable default tab selections.
+ */
+function module_grants_monitor_perm() {
+  return array(
+    // tab row 1:
+    'access I Created tab', 'access I Last Modified tab', 'access I Can Edit tab', 'access I Can View tab',
+    // tab row 2:
+    'access Published tab', 'access Unpublished tab', 'access All tab');
+}
+
+/**
+ * Implementation of hook_theme().
+ *
+ * Register the theme_hooks() available in this module, with their arguments
+ * and default values.
+ */
+function module_grants_monitor_theme() {
+  return array(
+    'module_grants_monitor_nodes_summary' => array(
+        // to call theme_module_grants_monitor_nodes_summary($nodes)
+       'arguments' => array('nodes' => NULL)
+    )
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ *
+ * Define new menu items and local tasks (tabs).
+ * Existing menu items are modified through hook_menu_alter().
+ */
+function module_grants_monitor_menu() {
+  $items = array();
+
+  // Create an 'Acessible content' menu item in the navigation menu.
+  // Add tabs: 'I created', 'I last modified', 'I can edit', 'I can view', each
+  // with sub tabs 'Published', 'Unpublished', 'All'
+
+  // There's an issue w.r.t assigning default tab selections for the
+  // 'Accessible content' menu item. Core insists that each row of tabs has
+  // exactly one tab defined with type=MENU_DEFAULT_LOCAL_TASK, the other tabs
+  // having type=MENU_LOCAL_TASK.
+  // The default we set needs to be part of the subset of tabs that the user
+  // is permitted to see. The problem is that the user permissions are evaluated
+  // when the menu and its tabs are about to be rendered (in menu.inc,
+  // function theme_menu_local_tasks()), whereas the type must be defined
+  // upfront when the menu structure is created, i.e. in the lines below.
+  // The way we get around this problem is to first load the page with content
+  // according to the user permissions, by calling this module's function
+  // _module_grants_monitor_accessible_content_summary(). Then we take advantage
+  // of the Smart menus module, which overrides theme_menu_local_tasks(), to
+  // highlight as 'current' the tabs matching the content shown.
+
+  $items['accessible-content'] = array(
+    'title' => 'Accessible content',
+    'page callback' => '_module_grants_monitor_accessible_content_summary',
+    'page arguments' => array(), // tabs default based on user permissions
+    'access callback' => 'user_tools_user_any_access',
+    'access arguments' => array(module_grants_monitor_perm()),
+    'weight' => 2
+  );
+
+  // 'I created' and sub tabs
+  $items['accessible-content/i-created'] = array(
+    'title' => 'I created',
+    'page callback' => '_module_grants_monitor_accessible_content_summary',
+    'page arguments' => array('access I Created tab'), // 2nd tab defaults
+    'access callback' => 'user_access',
+    'access arguments' => array('access I Created tab'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 0
+  );
+  $items['accessible-content/i-created/published'] = array(
+    'title' => 'Published',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '1', I_CREATED),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Created tab', 'access Published tab')),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['accessible-content/i-created/not-published'] = array(
+    'title' => 'Unpublished',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '0', I_CREATED),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Created tab', 'access Unpublished tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1
+  );
+  $items['accessible-content/i-created/all'] = array(
+    'title' => 'All',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '-1', I_CREATED),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Created tab', 'access All tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5
+  );
+
+  // 'I last modified' and sub tabs
+  $items['accessible-content/i-last-modified'] = array(
+    'title' => 'I last modified',
+    'page callback' => '_module_grants_monitor_accessible_content_summary', // 2nd tab defaults
+    'page arguments' => array('access I Last Modified tab'),
+    'access callback' => 'user_access',
+    'access arguments' => array('access I Last Modified tab'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5
+  );
+  $items['accessible-content/i-last-modified/published'] = array(
+    'title' => 'Published',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '1', I_LAST_MODIFIED),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Last Modified tab', 'access Published tab')),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['accessible-content/i-last-modified/not-published'] = array(
+    'title' => 'Unpublished',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '0', I_LAST_MODIFIED),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Last Modified tab', 'access Unpublished tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1
+  );
+  $items['accessible-content/i-last-modified/all'] = array(
+    'title' => 'All',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '-1', I_LAST_MODIFIED),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Last Modified tab', 'access All tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5
+  );
+
+  // 'I can edit' and sub tabs
+  $items['accessible-content/i-can-edit'] = array(
+    'title' => 'I can edit',
+    'page callback' => '_module_grants_monitor_accessible_content_summary', // 2nd tab defaults
+    'page arguments' => array('access I Can Edit tab'),
+    'access callback' => 'user_access',
+    'access arguments' => array('access I Can Edit tab'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10
+  );
+  $items['accessible-content/i-can-edit/published'] = array(
+    'title' => 'Published',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('update', '1'),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Can Edit tab', 'access Published tab')),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['accessible-content/i-can-edit/not-published'] = array(
+    'title' => 'Unpublished',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('update', '0'),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Can Edit tab', 'access Unpublished tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1
+  );
+  $items['accessible-content/i-can-edit/all'] = array(
+    'title' => 'All',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('update', '-1'),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Can Edit tab', 'access All tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5
+  );
+
+  // 'I can view' and sub tabs
+  $items['accessible-content/i-can-view'] = array(
+    'title' => 'I can view',
+    'page callback' => '_module_grants_monitor_accessible_content_summary', // 2nd tab defaults
+    'page arguments' => array('access I Can View tab'),
+    'access callback' => 'user_access',
+    'access arguments' => array('access I Can View tab'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 15
+  );
+  $items['accessible-content/i-can-view/published'] = array(
+    'title' => 'Published',
+    'page callback' => 'module_grants_monitor_accessible_content_summary',  // both tabs known
+    'page arguments' => array('view', '1'),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Can View tab', 'access Published tab')),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['accessible-content/i-can-view/not-published'] = array(
+    'title' => 'Unpublished',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '0'),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Can View tab', 'access Unpublished tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1
+  );
+  $items['accessible-content/i-can-view/all'] = array(
+    'title' => 'All',
+    'page callback' => 'module_grants_monitor_accessible_content_summary', // both tabs known
+    'page arguments' => array('view', '-1'),
+    'access callback' => 'user_tools_user_all_access',
+    'access arguments' => array(array('access I Can View tab', 'access All tab')),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5
+  );
+
+  return $items;
+}
+
+/**
+ * Similar to module_grants_monitor_accessible_content_summary (which it calls)
+ * but with a different parameter list based on the (lack of) default tabs, as
+ * opposed to content properties.
+ *
+ * @param $tab1
+ * @param $tab2
+ * @param $account
+ * @return unknown_type
+ */
+function _module_grants_monitor_accessible_content_summary($tab1 = NULL, $tab2 = NULL, $account = NULL) {
+  // First 4 Module Grants Monitor permissions pertain to 1st row of tabs
+  $permissions_tab_row1 = array_slice(module_grants_monitor_perm(), 0, 4);
+  // 2nd row has Revisioning perm followed by remaining Module Grants Monitor perms
+  $permissions_tab_row2 = module_exists('revisioning') ? array('access Pending tab') : array();
+  $permissions_tab_row2 = array_merge($permissions_tab_row2, array_slice(module_grants_monitor_perm(), 4));
+
+  if (!$tab1) {
+    $tab1 = user_tools_find_first_permission($permissions_tab_row1);
+  }
+  elseif (!user_access($tab1, $account)) {
+    unset($tab1);
+  }
+  if (!$tab2) {
+    $tab2 = user_tools_find_first_permission($permissions_tab_row2);
+  }
+  elseif (!user_access($tab2, $account)) {
+    unset($tab2);
+  }
+  if (!($tab1 && $tab2)) {
+    drupal_set_message(t('For you to see the list of Accessible content your administrator must give you permissions to one or more tabs of each of the two tab rows.'), 'warning');
+    return '';
+  }
+  $access = 'view';
+  $user_filter = NO_FILTER;
+  $published = NO_FILTER;
+  $is_moderated = NO_FILTER;
+  $is_pending = FALSE;
+  switch ($tab1) {
+    case 'access I Created tab':
+      $user_filter = I_CREATED;
+      break;
+    case 'access I Last Modified tab':
+      $user_filter = I_LAST_MODIFIED;
+      break;
+    case 'access I Can Edit tab':
+      $access = 'update';
+      break;
+  }
+  switch ($tab2) {
+    case 'access Published tab':
+      $published = TRUE;
+      break;
+    case 'access Unpublished tab':
+      $published = FALSE;
+      break;
+    case 'access Pending tab':
+      $is_moderated = user_access('administer nodes') ? NO_FILTER : TRUE;
+      $is_pending = TRUE;
+      break;
+  }
+  return module_grants_monitor_accessible_content_summary($access, $published, $user_filter, $is_moderated, $is_pending);
+}
