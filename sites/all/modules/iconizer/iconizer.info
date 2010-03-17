@@ -1,0 +1,10 @@
+; $Id: iconizer.info,v 1.1.4.1 2008/02/28 16:04:01 thepanz Exp $
+name = Iconizer
+description = "Adds icons next to links in Admin-section, well-know protocols and files links."
+core = 6.x
+; Information added by drupal.org packaging script on 2008-04-30
+version = "6.x-1.1"
+core = "6.x"
+project = "iconizer"
+datestamp = "1209568511"
+

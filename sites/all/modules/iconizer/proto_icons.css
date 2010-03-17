@@ -1,0 +1,46 @@
+/**
+* $Id: proto_icons.css,v 1.1 2007/08/21 15:51:46 thepanz Exp $
+* CSS and Icons taken from:
+* http://pooliestudios.com/projects/iconize/
+*/
+
+a[href ^="aim:"] {
+	padding: 5px 20px 5px 0;
+    background: transparent url(proto_icons/icon_aim.gif) no-repeat center right;
+}
+
+a[href ^="msnim:"] {
+	padding: 5px 20px 5px 0;
+    background: transparent url(proto_icons/icon_msn.gif) no-repeat center right;
+}
+
+a[href ^="xmpp:"] {
+	padding: 5px 20px 5px 0;
+    background: transparent url(proto_icons/icon_jabber.gif) no-repeat center right;
+}
+
+a[href *="icq.com"] { 
+	padding: 5px 20px 5px 0;
+	background: transparent url(proto_icons/icon_icq.gif) no-repeat center right;
+}
+
+a[href *="edit.yahoo.com/config/send_webmesg?"] { 
+	padding: 5px 20px 5px 0;
+	background: transparent url(proto_icons/icon_yim.gif) no-repeat center right;
+}
+
+a[href ^="callto:"] {
+	padding: 5px 20px 5px 0;
+    background: transparent url(proto_icons/icon_call.gif) no-repeat center right;
+}
+
+a[href ^="skype:"] {
+	padding: 5px 20px 5px 0;
+    background: transparent url(proto_icons/icon_skype.gif) no-repeat center right;
+}
+
+/* email */
+a[href ^="mailto:"] {
+	padding: 5px 20px 5px 0;
+    background: transparent url(proto_icons/icon_mailto.gif) no-repeat center right;
+}

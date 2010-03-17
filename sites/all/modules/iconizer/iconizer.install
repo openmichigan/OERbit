@@ -1,0 +1,18 @@
+<?php
+// $Id: iconizer.install,v 1.1 2007/08/21 15:51:46 thepanz Exp $
+
+function iconizer_install() {
+}
+
+function iconizer_uninstall() {
+  // cleaning variables setted
+  variable_del('iconizer_themes_enable');
+  variable_del('iconizer_themes_path');
+  variable_del('iconizer_admin_icons');
+  variable_del('iconizer_admin_icons_theme');
+  variable_del('iconizer_files_icons');
+  variable_del('iconizer_files_icons_theme');
+  variable_del('iconizer_proto_icons');
+  variable_del('iconizer_proto_icons_theme');
+
+}

@@ -1,0 +1,180 @@
+/**
+ * $Id: admin_icons.css,v 1.1.4.1 2008/02/28 17:59:23 thepanz Exp $
+ * Tecnique from: http://www.askthecssguy.com/2006/12/showing_hyperlink_cues_with_cs_1.html
+ */
+ 
+ /**
+ * Default link padding;
+ */
+dl.admin-list dt a { 
+   padding: 4px 0px 4px 24px;   
+}
+/**
+ * Admin/Content
+ */
+dl.admin-list dt a[href $='admin/content/taxonomy'] {  
+   background: url(admin_icons/taxonomy.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/book'] {  
+   background: url(admin_icons/book.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/newsletters'] { 
+   background: url(admin_icons/newsletters.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/node-settings'] { 
+   background: url(admin_icons/node-settings.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/node'] { 
+   background: url(admin_icons/node.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/types'] { 
+   background: url(admin_icons/types.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/rss-publishing'] { 
+   background: url(admin_icons/rss-publishing.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/search'] { 
+   background: url(admin_icons/search-content.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/comment'] { 
+   background: url(admin_icons/comment.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/content/nodewords'] { 
+   background: url(admin_icons/nodewords.png) no-repeat 0 50%;
+}
+
+/**
+ * Admin/Build
+ */
+dl.admin-list dt a[href $='admin/build/block'] { 
+   background: url(admin_icons/blocks.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/menu'] { 
+   background: url(admin_icons/menu.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/modules'] { 
+   background: url(admin_icons/modules.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/themes'] { 
+   background: url(admin_icons/themes.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/views'] { 
+   background: url(admin_icons/views.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/path'] { 
+   background: url(admin_icons/path.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/contact'] { 
+   background: url(admin_icons/contact.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/import'] { 
+   background: url(admin_icons/import.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/build/export'] { 
+   background: url(admin_icons/export.png) no-repeat 0 50%;
+}
+
+/**
+ * Admin/Settings
+ */
+dl.admin-list dt a[href $='admin/settings/locale'] { 
+   background: url(admin_icons/locale.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/site-maintenance'] { 
+   background: url(admin_icons/site-maintenance.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/site-information'] { 
+   background: url(admin_icons/site-information.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/date-time'] { 
+   background: url(admin_icons/date-time.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/error-reporting'] { 
+   background: url(admin_icons/error-reporting.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/clean-urls'] { 
+   background: url(admin_icons/clean-urls.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/file-system'] { 
+   background: url(admin_icons/file-system.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/performance'] { 
+   background: url(admin_icons/performance.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/image-toolkit'] { 
+   background: url(admin_icons/image-toolkit.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/front'] { 
+   background: url(admin_icons/front.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/admin'] { 
+   background: url(admin_icons/admin.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/search'] { 
+   background: url(admin_icons/search.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/uploads'] { 
+   background: url(admin_icons/uploads.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/throttle'] { 
+   background: url(admin_icons/throttle.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/filters'] { 
+   background: url(admin_icons/filters.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/googleanalytics'] { 
+   background: url(admin_icons/googleanalytics.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/iconizer'] { 
+   background: url(admin_icons/iconizer.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/settings/securelogin'] { 
+   background: url(admin_icons/securelogin.png) no-repeat 0 50%;
+}
+
+/**
+ * Admin/User
+ */
+dl.admin-list dt a[href $='admin/user/user'] { 
+   background: url(admin_icons/user.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/user/permissions'] { 
+   background: url(admin_icons/access.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/user/rules'] { 
+   background: url(admin_icons/rules.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/user/search'] { 
+   background: url(admin_icons/search-user.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/user/settings'] { 
+   background: url(admin_icons/user_settings.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/user/roles'] { 
+   background: url(admin_icons/roles.png) no-repeat 0 50%;
+}
+
+/**
+ * Admin/Reports
+ */
+dl.admin-list dt a[href $='admin/reports/access-denied'] { 
+   background: url(admin_icons/access-denied.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/reports/page-not-found'] { 
+   background: url(admin_icons/page-not-found.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/reports/dblog'] { 
+   background: url(admin_icons/watchdog.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/reports/status'] { 
+   background: url(admin_icons/status.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/reports/search'] { 
+   background: url(admin_icons/search-log.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/reports/systeminfo'] { 
+   background: url(admin_icons/systeminfo.png) no-repeat 0 50%;
+}
+dl.admin-list dt a[href $='admin/reports/updates'] { 
+   background: url(admin_icons/updates.png) no-repeat 0 50%;
+}

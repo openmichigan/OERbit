@@ -1,0 +1,113 @@
+<?php
+/* $Id: iconizer.module,v 1.1.4.3 2008/03/06 10:54:45 thepanz Exp $ */
+/**
+* Iconizer module: adds icons before links in Admin section.
+* @author: thePanz ( thePanz@gmail.com )
+*/
+define('ICONIZER_NO_THEMES', TRUE);
+/**
+* Display help and module information
+* @param section which section of the site we're displaying help
+* @return help text for section
+*/
+function iconizer_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#iconizer":
+      $output = '<p>'.  t('Adds icons next to links in Admin-section and well-know protocols and files'). '</p>';
+      break;
+  }
+
+  return $output;
+}
+
+/**
+* Valid permissions for this module
+* @return array An array of valid permissions for the onthisdate module
+*/
+function iconizer_perm() {
+  $perm = array();
+  $perm[] = 'display iconizer links';
+  $perm[] = 'manage iconizer settings';
+  //$perm[] = 'choose iconizer themes'
+  return $perm;
+}
+
+/**
+* Menu hook
+*/
+function iconizer_menu() {
+  //$items = array();
+  
+  $items['admin/settings/iconizer'] = array(
+    'title' => 'Iconizer settings',
+    'description' => 'Admin iconizer settings: Admin-links, files, protocols and themes',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('iconizer_admin'),
+    'access arguments' => array('manage iconizer settings'),
+    'file' => 'iconizer.admin.inc',
+    // 'type' => MENU_NORMAL_ITEM,
+   );
+   
+  return $items;
+}
+
+/**
+ * init hook
+ */
+function iconizer_init() {
+  _iconizer_add_css();
+}
+
+/**
+* Retrive themes for icons
+*/
+function _iconizer_get_themes($part) {
+  // parts in "admin", "protocols" or "files"  
+  $themes = array('default' => 'Default theme');
+  if( variable_get('iconizer_themes_enable', 0) !== 0) {
+  $themes['test'] = 'test theme';
+    // scan variable_get('iconizer_themes_path') for other themes
+  }
+  return $themes;
+}
+
+/**
+* Add CSS function
+*/
+function _iconizer_add_css() {
+  if(variable_get('iconizer_admin_icons', 1) == 1 && arg(0) == 'admin') {
+    drupal_add_css(_iconizer_admin_css(variable_get('iconizer_admin_icons_theme', 'default')),'module','screen');
+  }
+  if(variable_get('iconizer_files_icons', 0) == 1) {
+    drupal_add_css(_iconizer_files_css(variable_get('iconizer_files_icons_theme', 'default')),'module','screen');
+  }  
+  if(variable_get('iconizer_proto_icons', 0) == 1) {
+    drupal_add_css(_iconizer_proto_css(variable_get('iconizer_proto_icons_theme', 'default')),'module','screen');
+  }  
+}
+
+function _iconizer_proto_css($theme) {
+  return _iconizer_get_theme_path($theme, 'proto').'/proto_icons.css';
+}
+
+function _iconizer_files_css($theme) {
+  return _iconizer_get_theme_path($theme, 'files').'/files_icons.css';
+}
+
+function _iconizer_admin_css($theme) {    
+  return _iconizer_get_theme_path($theme, 'admin').'/admin_icons.css';
+}
+
+function _iconizer_get_theme_path($theme, $part) {
+  $default = drupal_get_path('module','iconizer');
+
+  if($theme == 'default') 
+    return $default;
+  
+  elseif(variable_get('iconizer_themes_enable', 0) != 0 && variable_get('iconizer_'.$part.'_icons_theme',0) != 0) {
+    return variable_get('iconizer_'.$part.'_icons_theme','');
+  }
+  else
+    return $default;
+}
