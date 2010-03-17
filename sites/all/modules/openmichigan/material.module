@@ -1,0 +1,18 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function material_form_material_node_form_alter(&$form, &$form_state) {
+  $form['#after_build'][] = 'material_resource_type';
+}
+
+/**
+ * Prevents the user from selecting multiple resource types.
+ */
+function material_resource_type($form) {
+  //dpm($form['field_resource_type']);
+  drupal_add_js(drupal_get_path('module', 'material') . '/material.js');
+  return $form;
+}

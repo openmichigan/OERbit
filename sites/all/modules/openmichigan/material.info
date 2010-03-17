@@ -1,0 +1,6 @@
+; $Id$
+name = Material
+description = Handles properties for course materials
+dependencies[] = course
+package = Open Michigan
+core = 6.x

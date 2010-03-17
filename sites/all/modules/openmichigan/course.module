@@ -1,0 +1,177 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_menu().
+ */
+function course_menu() {
+  $items = array();
+  $items['node/%node/overview'] = array(
+    'title' => 'Overview',
+    'page callback' => 'course_display',
+    'page arguments' => array(1, 2),
+    'access callback' => 'course_local_task_access',
+    'access arguments' => array(1, 'overview'),
+    'weight' => -10,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['node/%node/sessions'] = array(
+    'title' => 'Sessions',
+    'page callback' => 'course_display',
+    'page arguments' => array(1, 2),
+    'access callback' => 'course_local_task_access',
+    'access arguments' => array(1, 'sessions'),
+    'weight' => -9,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['node/%node/materials'] = array(
+    'title' => 'Materials',
+    'page callback' => 'course_display',
+    'page arguments' => array(1, 2),
+    'access callback' => 'course_local_task_access',
+    'access arguments' => array(1, 'materials'),
+    'weight' => -9,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['node/%node/highlights'] = array(
+    'title' => 'Highlights',
+    'page callback' => 'course_display',
+    'page arguments' => array(1, 2),
+    'access callback' => 'course_local_task_access',
+    'access arguments' => array(1, 'highlights'),
+    'weight' => -9,
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function course_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks['course-feed'] = array('info' => 'Course Feed');
+      return $blocks;
+    case 'view':
+      $block = array(
+        'subject' => t('Course Feed'),
+        'content' => course_get_feed_link(),
+      );
+      return $block;
+  }
+}
+
+/**
+ * Determines whether the current node is a course.
+ */
+function course_local_task_access($node, $section) {
+  if ($node->type == 'course') {
+    switch ($section) {
+      case 'overview':
+        //return !empty($node->field_course_information);
+        return FALSE;
+      case 'sessions':
+        return !empty($node->field_course_sessions);
+      case 'materials':
+        return !empty($node->field_course_materials);
+      case 'highlights':
+        return !empty($node->field_course_highlights);
+      default:
+        return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Display all the course information.
+ */
+function course_display(&$node, $section) {
+  drupal_set_title($node->title);
+  return node_view($node, false, true, true);
+}
+
+/**
+ * Return the appropriate feed link for the current course.
+ */
+function course_get_feed_link() {
+  $node = menu_get_object('node', 1, $_GET['q']);
+  $alias = drupal_lookup_path('alias', 'node/' . $node->nid . ($node->type == 'course' ? '/rss' : '/feed'));
+  $icon = '<img src="/misc/feed.png" alt="Syndicate content" title="Syndicate" width="16" height="16" />';
+  if ($alias && in_array($node->type, array('course', 'unit'))) {
+    $link = '<a href="/' . $alias . '" class="feed-icon">' . $icon . '</a>';
+  }
+  else {
+    $link = '<a href="/feed" class="feed-icon">' . $icon . '</a>';
+  }
+  return '<span class="print_rss">' . $link . '</span>';
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function course_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($node->type != 'course') {
+    return;
+  }
+  if (module_exists('pathauto')) {
+    module_load_include('inc', 'course', 'course.pathauto');
+    course_pathauto_alias($node, $op);
+  }
+  switch ($op) {
+    case 'view':
+      $breadcrumb = drupal_get_breadcrumb();
+      $section = array_pop(arg());
+      if (in_array($section, array('overview', 'sessions', 'materials', 'highlights'))) {
+        array_pop($breadcrumb);
+        if (variable_get('path_breadcrumb_current_link', 0) != 0) {
+          $breadcrumb[] = l(ucfirst($section), $_GET['q']);
+        }
+        else {
+          $breadcrumb[] = ucfirst($section);
+        }
+        drupal_set_breadcrumb($breadcrumb);
+      }
+      break;
+  }
+}
+
+/**
+ * Set inherited values from parent element.
+ */
+function course_form_alter(&$form, &$form_state, $form_id) {
+  if (!in_array($form_id, array('information_node_form', 'session_node_form', 'material_node_form', 'other_node_form'))) {
+    return;
+  }
+  if ($form['#node']->nid) {
+    return;
+  }
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'create_referrer') {
+    $parent = node_load(arg(1));
+    $form_state['values']['creativecommons']['select_license_form']['cc_license_uri'] = $parent->cc->uri;
+    $form_state['values']['creativecommons']['metadata']['attributionName'] = $parent->cc->metadata['attributionName'];
+    $form_state['values']['creativecommons']['metadata']['attributionURL'] = $parent->cc->metadata['attributionURL'];
+    $form_state['values']['creativecommons']['metadata']['type'] = $parent->cc->metadata['type'];
+    $form_state['values']['creativecommons']['metadata']['source'] = $parent->cc->metadata['source'];
+    $form_state['values']['creativecommons']['metadata']['description'] = $parent->cc->metadata['description'];
+    $form_state['values']['creativecommons']['metadata']['creator'] = $parent->cc->metadata['creator'];
+    $form_state['values']['creativecommons']['metadata']['rights'] = $parent->cc->metadata['rights'];
+    $form_state['values']['creativecommons']['metadata']['date'] = $parent->cc->metadata['date'];
+    $form['creativecommons']['select_license_form']['cc_license_uri']['#default_value'] = $parent->cc->uri;
+    $form['creativecommons']['metadata']['attributionName']['#default_value'] = $parent->cc->metadata['attributionName'];
+    $form['creativecommons']['metadata']['attributionName']['#default_value'] = $parent->cc->metadata['attributionName'];
+    $form['creativecommons']['metadata']['attributionURL']['#default_value'] = $parent->cc->metadata['attributionURL'];
+    $form['creativecommons']['metadata']['type']['#default_value'] = $parent->cc->metadata['type'];
+    $form['creativecommons']['metadata']['source']['#default_value'] = $parent->cc->metadata['source'];
+    $form['creativecommons']['metadata']['description']['#default_value'] = $parent->cc->metadata['description'];
+    $form['creativecommons']['metadata']['creator']['#default_value'] = $parent->cc->metadata['creator'];
+    $form['creativecommons']['metadata']['rights']['#default_value'] = $parent->cc->metadata['rights'];
+    $form['creativecommons']['metadata']['date']['#default_value'] = $parent->cc->metadata['date'];
+    $form['field_creators'][0]['#default_value']['value'] = $parent->field_creators[0]['value'];
+    $form['field_creators'][1]['#default_value']['value'] = $parent->field_creators[1]['value'];
+    $form['field_contributors'][0]['#default_value']['value'] = $parent->field_contributors[0]['value'];
+    $form['field_contributors'][1]['#default_value']['value'] = $parent->field_contributors[1]['value'];
+    $form['field_publisher'][0]['#default_value']['value'] = $parent->field_publisher[0]['value'];
+  }
+}

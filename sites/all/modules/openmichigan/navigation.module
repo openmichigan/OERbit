@@ -1,0 +1,136 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_block().
+ */
+function navigation_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks['navigation'] = array(
+        'info' => t('Hierarchical Navigation'),
+        'cache' => BLOCK_CACHE_PER_ROLE | BLOCK_CACHE_PER_PAGE,
+      );
+      return $blocks;
+    case 'view':
+      return array(
+        'subject' => t('Hierarchical Navigation'),
+        'content' => navigation_display(),
+      );
+  }
+}
+
+/**
+ * Displays a rendered hierarchical menu.
+ */
+function navigation_display() {
+  $node = node_load(arg(1));
+  $menu = '';
+  $attributes = array('class' => '');
+  switch ($node->type) {
+    case 'course':
+      $node = node_load($node->field_parent_unit[0]['nid']);
+    case 'unit':
+      $attributes['class'] = 'navigation-schools-colleges';
+      $menu .= theme_item_list(array('data' => l('All Schools & Colleges', 'education/schools-colleges')), NULL, 'ul', $attributes);
+      $parents = array();
+      $siblings = array();
+      navigation_get_parents($node, $parents, $node->nid);
+      $parents = array_reverse($parents);
+      $siblings = navigation_get_siblings($node);
+      if (!empty($siblings[$node->nid])) {
+        $siblings[$node->nid]['children'] = navigation_get_children($node);
+      }
+      if (!empty($parents)) {
+        $attributes['class'] = 'navigation-academic-units';
+        $menu .= theme_item_list($parents, NULL, 'ul', $attributes);
+      }
+      if (!empty($siblings)) {
+        $attributes['class'] = 'navigation-current-unit';
+        foreach ($siblings as $key => $values) {
+          $item = node_load($key);
+          if (!empty($item->field_unit_top[0]['nid'])) {
+            $attributes['class'] = 'navigation-top-unit';
+          }
+        }
+        $menu .= theme_item_list($siblings, NULL, 'ul', $attributes);
+      }
+      break;
+    default:
+      $path = drupal_get_path_alias($_GET['q']);
+      $path = explode('/', $path);
+      if ($path[0] == 'education') {
+        $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL AND status=1 ORDER BY node.title ASC');
+        $children = array();
+        while ($top = db_fetch_array($query)) {
+          $children[$top['nid']] = l($top['title'], 'node/' . $top['nid']);
+        }
+        $menu .= theme_item_list($children, NULL, 'ul', array('class' => 'navigation-academic-sub-units'));
+      }
+      break;
+  }
+  return $menu;
+}
+
+/**
+ * Gets a list of parents for the current node.
+ */
+function navigation_get_parents(&$node, &$parents, $nid) {
+  if (!empty($node->field_unit_top[0]['nid'])) {
+    if ($node->nid != $nid) {
+      $parents[$node->nid] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-top')));
+    }
+  }
+  elseif (!empty($node->field_parent_unit[0]['nid'])) {
+    $parent = node_load($node->field_parent_unit[0]['nid']);
+    if ($node->nid != $nid) {
+      $parents[$node->nid] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-units')));
+    }
+    navigation_get_parents($parent, $parents, $nid);
+  }
+}
+
+/**
+ * Gets a list of siblings for the current academic unit.
+ */
+function navigation_get_siblings(&$node) {
+  $siblings = array();
+  if (!empty($node->field_parent_unit[0]['nid'])) {
+    $parent = node_load($node->field_parent_unit[0]['nid']);
+    if (!empty($parent->field_unit_sub_unit[0]['items'])) {
+      foreach ($parent->field_unit_sub_unit[0]['items'] as $sibling) {
+        $siblings[$sibling['nid']]['data'] = l($sibling['title'], 'node/' . $sibling['nid'], array('attributes' => array('class' => 'navigation-siblings')));
+      }
+    }
+  }
+  if (!empty($node->field_unit_top[0]['nid'])) {
+    $siblings[$node->nid]['data'] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-self')));
+  }
+  return $siblings;
+}
+
+/**
+ * Gets a list of courses for the current academic unit.
+ */
+function navigation_get_children(&$node) {
+  $children = array();
+  $attributes = array('class' => 'navigation-courses');
+  if (is_array($node->field_unit_courses[0]['items'])) {
+    foreach ($node->field_unit_courses[0]['items'] as $item) {
+      if ($item['nid'] == arg(1)) {
+        $attributes['class'] = 'navigation-courses active';
+      }
+      else {
+        $attributes['class'] = 'navigation-courses';
+      }
+      $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
+    }
+  }
+  $attributes['class'] = 'navigation-sub-units';
+  if (is_array($node->field_unit_sub_unit[0]['items'])) {
+    foreach ($node->field_unit_sub_unit[0]['items'] as $item) {
+      $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
+    }
+  }
+  return $children;
+}

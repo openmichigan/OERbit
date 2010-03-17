@@ -1,0 +1,5 @@
+; $Id$
+name = Navigation
+description = Creates navigation menu based on hierarchy
+package = Open Michigan
+core = 6.x
