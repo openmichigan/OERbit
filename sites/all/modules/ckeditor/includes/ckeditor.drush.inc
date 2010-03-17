@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.drush.inc,v 1.1.2.1 2010/01/06 20:27:59 mephir Exp $
+// $Id: ckeditor.drush.inc,v 1.1.2.2 2010/03/10 10:26:38 mephir Exp $
 
 /**
  * @file
@@ -10,7 +10,7 @@
  * Implements hook_drush_command().
  */
 function ckeditor_drush_command() {
-  $items['ckeditor download'] = array(
+  $items['ckeditor-download'] = array(
     'callback' => 'ckeditor_drush_download',
     'description' => dt('Downloads the required CKEditor library from svn.fckeditor.net.'),
     'arguments' => array(

@@ -1,4 +1,4 @@
-// $Id: ckeditor.config.js,v 1.2.2.6 2010/01/14 08:19:27 wwalc Exp $
+// $Id: ckeditor.config.js,v 1.2.2.7 2010/03/11 12:39:54 wwalc Exp $
 
 /*
  WARNING: clear browser's cache after you modify this file.
@@ -124,7 +124,11 @@ CKEDITOR.editorConfig = function(config) {
     Drupal.settings.ckeditor.linktonode_basepath = Drupal.settings.basePath;
   }
 
-  //'MediaEmbed' plugin. To enable it, uncomment lines below and add 'MediaEmbed' button to selected toolbars.
+  // 'MediaEmbed' plugin. To enable it, uncomment lines below and add 'MediaEmbed' button to selected toolbars.
   //config.extraPlugins += (config.extraPlugins ? ',mediaembed' : 'mediaembed' );
   //CKEDITOR.plugins.addExternal('mediaembed', Drupal.settings.ckeditor.module_path + '/plugins/mediaembed/');
+
+  // 'IMCE' plugin. If IMCE module is enabled, you may uncomment lines below and add an 'IMCE' button to selected toolbar. 
+  //config.extraPlugins += (config.extraPlugins ? ',imce' : 'imce' );
+  //CKEDITOR.plugins.addExternal('imce', Drupal.settings.ckeditor.module_path + '/plugins/imce/');
 };

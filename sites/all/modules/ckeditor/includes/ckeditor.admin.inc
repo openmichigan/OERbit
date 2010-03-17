@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.admin.inc,v 1.2.2.3 2009/12/16 13:07:00 wwalc Exp $
+// $Id: ckeditor.admin.inc,v 1.2.2.14 2010/03/11 12:39:54 wwalc Exp $
 /**
  * CKEditor - The text editor for Internet - http://ckeditor.com
  * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
@@ -218,10 +218,10 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     $maxsize=128;   //default max name length
 
     $res=array();
-    $pat = "/^(?<name>.*?)_(?<n>[0-9]*)$/";
-    if (preg_match_all($pat, $oldname, $res)) {     // oldname like 'name_nr'
-      $name=$res['name'][0];
-      $num=$res['n'][0]+1;
+    $pat = "/^(.*?)_([0-9]+)$/";
+    if (preg_match($pat, $oldname, $res)) {     // oldname like 'name_nr'
+      $name=$res[1];
+      $num=$res[2]+1;
     }
     else{
       $name=$oldname;
@@ -527,18 +527,17 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#description' => t('Use auto detect user language feature.')
   );
 
-  /*
-  $form['appearance']['appearance_conf'] = array(
+  $form['appearance']['language_direction'] = array(
     '#type' => 'select',
-    '#title' => t('Ignore this section, use default settings defined in config files'),
-    '#default_value' => $profile->settings['appearance_conf'] ? $profile->settings['appearance_conf'] : 'f',
+    '#title' => t('Language Direction'),
+    '#default_value' => !empty($profile->settings['language_direction']) ? $profile->settings['language_direction'] : 'default',
     '#options' => array(
-      'f' => t('FALSE'),
-      't' => t('true')
+      'default' => t('Get from current locale (default)'),
+      'ltr' => t('Left-To-Right'),// language (like English)
+      'rtl' => t('Right-To-Left') // languages (like Arabic)
     ),
-    '#description' => t('Although it is less handy, defining settings only in config files (<code>fckconfig.js</code> and <code>ckeditor.config.js</code>) will slightly leverage your traffic and improve load time of your site. <br/>Warning: if set to true, all changes made in <code>Editor appearance</code> will have no affect on CKEditor\'s behaviour.'),
+    '#description' => t('Choose language direction used in the editing area. Even when CKEditor auto detects user language and adjusts it\'s user interface, the editing area is not automatically changed into LTR or RTL mode. To be able to type LTR (like English) and RTL (like Arabic, Hebrew, Persian) content at the same time, please take a look at the <b>Styles</b> combo and <b>Language: RTL</b>, <b>Language: LTR</b> styles available there. Note: this combo box is not available in the default toolbar, the <b>Styles</b> button needs to be added to the toolbar in ckeditor.config.js.')
   );
-  */
 
   $form['output'] = array(
     '#type' => 'fieldset',
@@ -580,18 +579,41 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#description' => t('Semicolon separated list of HTML font formats. Allowed values are: p;div;pre;address;h1;h2;h3;h4;h5;h6'),
   );
 
-  /*
-  $form['output']['output_conf'] = array(
-    '#type' => 'select',
-    '#title' => t('Ignore this section, use default settings defined in config files'),
-    '#default_value' => $profile->settings['output_conf'] ? $profile->settings['output_conf'] : 'f',
+  if (!empty($profile->settings['formatting']['custom_formatting_options']))
+  foreach( $profile->settings['formatting']['custom_formatting_options'] as $k => $v ) {
+    if ($v === 0) {
+      unset($profile->settings['formatting']['custom_formatting_options'][$k]);
+    }
+  }
+
+  $form['output']['custom_formatting'] = array(
+    '#type' => 'radios',
+    '#title' => t('Use custom formatting options'),
+    '#default_value' => !empty($profile->settings['custom_formatting']) ? $profile->settings['custom_formatting'] : 'f',
     '#options' => array(
-      'f' => t('False'),
-      't' => t('True')
+      't' => t('Yes'),
+      'f' => t('No'),
     ),
-    '#description' => t('Although it is less handy, defining settings only in config files ("fckconfig.js" and "ckeditor.config.js") will slightly leverage your traffic and improve load time of your site. <br/>Warning: if set to true, all changes made in "Cleanup and output" will have no affect on CKEditor\'s behaviour.'),
   );
-  */
+
+  $form['output']['formatting'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom formatting options'),
+    '#tree' => TRUE,
+  );
+
+  $form['output']['formatting']['custom_formatting_options'] = array(
+    '#type' => 'checkboxes',
+    '#default_value' => !empty($profile->settings['formatting']['custom_formatting_options']) ? array_keys((array) $profile->settings['formatting']['custom_formatting_options']) : array('indent' => 'indent', 'breakBeforeOpen' => 'breakBeforeOpen', 'breakAfterOpen' => 'breakAfterOpen', 'breakAfterClose' => 'breakAfterClose'),
+    '#options' => array(
+      'indent' => t('indent the element contents'),
+      'breakBeforeOpen' => t('break line before the opener tag'),
+      'breakAfterOpen' => t('break line after the opener tag'),
+      'breakBeforeClose' => t('break line before the closer tag'),
+      'breakAfterClose' => t('break line after the closer tag'),
+      'pre_indent' => t('indent the &lt;pre&gt; element contents'),
+    ),
+  );
 
   $form['css'] = array(
     '#type' => 'fieldset',
@@ -618,7 +640,19 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#default_value' => !empty($profile->settings['css_path']) ? $profile->settings['css_path'] : "",
     '#size' => 40,
     '#maxlength' => 255,
-    '#description' => t('Enter path to CSS file (Example: "css/editor.css") or a list of css files separated by a comma (Example: "/themes/garland/style.css,http://example.com/style.css"). Make sure to select "Define css" above.<br />Available placeholders:<br /><strong>%h</strong> - host name (!host).<br /><strong>%t</strong> - path to theme (!theme).', array('!host' => base_path(), '!theme' => base_path() . path_to_theme() .'/'))
+    '#description' => t('Enter path to CSS file (Example: !example1) or a list of css files separated by a comma (Example: !example2). Make sure to select "Define css" above.',
+      array(
+        '!example1' => '"css/editor.css"',
+        '!example2' => '"/themes/garland/style.css,http://example.com/style.css"',
+      )) .
+      '<br />'.
+      t('Available placeholders:!h - host name (!host).!t - path to theme (!theme).',
+        array(
+        '!h' => '<br /><strong>%h</strong>',
+        '!t' => '<br /><strong>%t</strong>',
+        '!host' => base_path(),
+        '!theme' => base_path() . path_to_theme() .'/'
+        ))
   );
 
   $form['css']['css_style'] = array(
@@ -639,7 +673,20 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#default_value' => !empty($profile->settings['styles_path']) ? $profile->settings['styles_path'] : "",
     '#size' => 40,
     '#maxlength' => 255,
-    '#description' => t('Enter path to XML file with predefined styles (Example: "/ckeditor.styles.js"). Be sure to select "define path to ckeditor.styles.js" above.<br />Available placeholders:<br /><strong>%h</strong> - host name (!host).<br /><strong>%t</strong> - path to theme (!theme).<br /><strong>%m</strong> - path to CKEditor module (!module).', array('!host' => base_path(), '!theme' => base_path() . path_to_theme() .'/', '!module' => drupal_get_path('module', 'ckeditor')))
+    '#description' => t('Enter path to a file with predefined styles (Example: "!example1"). Be sure to select "define path to ckeditor.styles.js" above.',
+      array(
+        '!example1' => '/ckeditor.styles.js'
+      )) .
+      '<br />'.
+      t('Available placeholders:!h - host name (!host).!t - path to theme (!theme).!m - path to CKEditor module (!module).',
+      array(
+        '!h' => '<br /><strong>%h</strong>',
+        '!t' => '<br /><strong>%t</strong>',
+        '!m' => '<br /><strong>%m</strong>',
+        '!host' => base_path(),
+        '!theme' => base_path() . path_to_theme() .'/',
+        '!module' => drupal_get_path('module', 'ckeditor'))
+      )
   );
 
   $form['ckeditor_upload_settings'] = array(
@@ -663,6 +710,11 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
   if (module_exists('imce')) {
     $filebrowsers['imce'] = t('IMCE');
     $filebrowsers_dialogs['imce'] = t('IMCE');
+  }
+
+  if (module_exists('tinybrowser')) {
+    $filebrowsers['tinybrowser'] = t('TinyBrowser');
+    $filebrowsers_dialogs['tinybrowser'] = t('TinyBrowser');
   }
 
   if (module_exists('imagebrowser')) {
@@ -704,12 +756,23 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
 
   $form['ckeditor_upload_settings']['UserFilesPath'] = array(
     '#type' => 'textfield',
-    '#prefix' => '<fieldset><legend>CKFinder settings</legend>',
+    '#prefix' => '<fieldset><legend>' . t('CKFinder settings') .'</legend>',
     '#title' => t('Path to uploaded files'),
     '#default_value' => !empty($profile->settings['UserFilesPath']) ? $profile->settings['UserFilesPath'] : "%b%f/",
     '#size' => 40,
     '#maxlength' => 255,
-    '#description' => t('Path to uploaded files relative to the document root.<br />Available placeholders:<br/><strong>%b</strong> - base URL path of the Drupal installation (!base).<br/><strong>%f</strong> - Drupal file system path where the files are stored (!files).<br /><strong>%u</strong> - User ID.<br /><strong>%n</strong> - Username.<br />Current path: !path', array('!path' => $current_user_files_path, '!files' => file_directory_path(), '!base' => base_path())),
+    '#description' => t('Path to uploaded files relative to the document root.') .
+      '<br />'.
+      t('Available placeholders:!b - base URL path of the Drupal installation (!base).!f - Drupal file system path where the files are stored (!files).!u - User ID.!n - Username.<br />Current path: !path',
+        array(
+          '!n' => '<br /><strong>%n</strong>',
+          '!u' => '<br /><strong>%u</strong>',
+          '!f' => '<br/><strong>%f</strong>',
+          '!b' => '<br/><strong>%b</strong>',
+          '!path' => $current_user_files_path,
+          '!files' => file_directory_path(),
+          '!base' => base_path()
+        ))
   );
 
   $form['ckeditor_upload_settings']['UserFilesAbsolutePath'] = array(
@@ -719,7 +782,20 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#size' => 40,
     '#maxlength' => 255,
     '#suffix' => '</fieldset>',
-    '#description' => t('The path to the local directory (in the server) which points to the path defined above. If empty, CKEditor will try to discover the right path.<br />Available placeholders:<br/><strong>%d</strong> - server path to document root (!root).<br /><strong>%b</strong> - base URL path of the Drupal installation (!base).<br/><strong>%f</strong> - Drupal file system path where the files are stored (!files).<br /><strong>%u</strong> - User ID.<br /><strong>%n</strong> - Username.<br />Current path: !path', array('!path' => $current_user_files_absolute_path, '!files' => file_directory_path(), '!base' => base_path(), '!root' => $_SERVER['DOCUMENT_ROOT'])),
+    '#description' => t('The path to the local directory (in the server) which points to the path defined above. If empty, CKEditor will try to discover the right path.') .
+      '<br />'.
+      t('Available placeholders:!d - server path to document root (!root).!b - base URL path of the Drupal installation (!base).!f - Drupal file system path where the files are stored (!files).!u - User ID.!n - Username.<br />Current path: !path',
+        array(
+          '!u' => '<br /><strong>%u</strong>',
+          '!n' => '<br /><strong>%n</strong>',
+          '!d' => '<br/><strong>%d</strong>',
+          '!b' => '<br /><strong>%b</strong>',
+          '!f' => '<br/><strong>%f</strong>',
+          '!path' => $current_user_files_absolute_path,
+          '!files' => file_directory_path(),
+          '!base' => base_path(),
+          '!root' => $_SERVER['DOCUMENT_ROOT']
+        ))
   );
 
   if (variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE) {
@@ -740,7 +816,7 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#title' => t('Load method'),
     '#default_value' => !empty($profile->settings['ckeditor_load_method']) ? $profile->settings['ckeditor_load_method'] : 'ckeditor.js',
     '#options' => _ckeditor_load_methods(),
-    '#description' => t('Select the load method of CKEditor. If ckeditor_base.js is used, only a small file is initially loaded and the rest part of the editor is loaded later (see "Load timeout"). This might be handy if CKEditor is disabled by default.'),
+    '#description' => t('Select the load method of CKEditor. If ckeditor_basic.js is used, only a small file is initially loaded and the rest part of the editor is loaded later (see "Load timeout"). This might be handy if CKEditor is disabled by default.'),
   );
   $form['advanced']['ckeditor_load_time_out'] = array(
     '#type' => 'textfield',
@@ -749,6 +825,16 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#size' => 40,
     '#maxlength' => 255,
     '#description' => t('The time to wait (in seconds) to load the full editor code after the page load, if the "ckeditor_basic.js" file is used. If set to zero, the editor is loaded on demand.'),
+  );
+  $form['advanced']['forcePasteAsPlainText'] = array(
+    '#type' => 'select',
+    '#title' => t('Force pasting as plain text'),
+    '#default_value' => !empty($profile->settings['forcePasteAsPlainText']) ? $profile->settings['forcePasteAsPlainText'] : "f",
+    '#options' => array(
+      't' => t('Enabled'),
+      'f' => t('Disabled')
+      ),
+      '#description' => t('If enabled, HTML content will be automatically changed to plain text when pasting.'),
   );
   $form['advanced']['theme_config_js'] = array(
     '#type' => 'radios',
@@ -837,7 +923,7 @@ function ckeditor_admin_profile_form_validate($form, &$form_state) {
 
   if (!empty($edit['styles_path'])) {
     if ($edit['css_style'] != 'self') {
-      form_set_error('styles_path', t('Path to predefined styles is not empty. Please set the "Predefined styles" option to "define path to fckstyles.xml" mode.'));
+      form_set_error('styles_path', t('Path to predefined styles is not empty. Please set the "Predefined styles" option to "define path to ckeditor.styles.js" mode.'));
     }
     elseif (FALSE !== strpos($edit['styles_path'], '"')) {
       form_set_error('styles_path', t('Double quotes are not allowed in path.'));
@@ -1009,7 +1095,17 @@ function ckeditor_admin_global_profile_form($form_state, $mode = 'add') {
     '#default_value' =>  !empty($profile->settings['ckeditor_path']) ? $profile->settings['ckeditor_path'] : '%m/ckeditor',
     '#size' => 40,
     '#maxlength' => 128,
-    '#description' => t('Path to CKEditor (the HTML editor, downloaded from <a href="!ckeditornet">ckeditor.com</a>) relative to the document root.<br />Available placeholders:<br /><strong>%b</strong> - base URL path of the Drupal installation (!base).<br /><strong>%m</strong> - base URL path where CKEditor module is stored (!files).<br />Current path: !path', array('!path' => ckeditor_path(FALSE), '!base' => base_path(), '!files' => base_path() . $module_drupal_path , '!ckeditornet' => 'http://ckeditor.com/download')),
+    '#description' => t('Path to CKEditor (the HTML editor, downloaded from <a href="!ckeditorcom">ckeditor.com</a>) relative to the document root.') .
+      '<br />'.
+      t('Available placeholders:!b - base URL path of the Drupal installation (!base).!m - base URL path where CKEditor module is stored (!files).<br />Current path: !path',
+      array(
+        '!b' => '<br /><strong>%b</strong>',
+        '!m' => '<br /><strong>%m</strong>',
+        '!path' => ckeditor_path(FALSE),
+        '!base' => base_path(),
+        '!files' => base_path() . $module_drupal_path ,
+        '!ckeditorcom' => 'http://ckeditor.com/download'
+     )),
     '#required' => TRUE
   );
 
@@ -1050,7 +1146,7 @@ function ckeditor_admin_global_profile_form($form_state, $mode = 'add') {
     '#options' => array('p' => t('Link to paths only'), 'n' => t('Link using internal: links'), 'pn' => t('Allow user to select between paths and internal links')),
     '#title' => t('Path Filter & Link To Content integration'),
     '#default_value' => empty($profile->settings['linktoc']) ? 'p' : $profile->settings['linktoc'],
-    '#description' => t('With !plink extension it is possible to use :internal links. By default !link extension is linking to nodes using paths.', array('!plink' => l(t('Path Filter'), 'http://drupal.org/project/pathfilter'), '!link' => l(t('Link To Content'), 'http://drupal.org/project/linktocontent'))),
+    '#description' => t('With !plink extension it is possible to use internal: links. By default !link extension is linking to nodes using paths.', array('!plink' => l(t('Path Filter'), 'http://drupal.org/project/pathfilter'), '!link' => l(t('Link To Content'), 'http://drupal.org/project/linktocontent'))),
     );
   }
 

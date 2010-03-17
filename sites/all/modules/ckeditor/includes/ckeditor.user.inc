@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.user.inc,v 1.1 2009/12/04 20:36:57 wwalc Exp $
+// $Id: ckeditor.user.inc,v 1.1.2.1 2010/03/04 08:26:41 mephir Exp $
 /**
  * CKEditor - The text editor for Internet - http://ckeditor.com
  * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
@@ -129,7 +129,7 @@ function ckeditor_user_delegate($type, $edit, &$user, $category = NULL) {
         '#size' => 40,
         '#maxlength' => 128,
       );
-
+      
       $form['ckeditor']['ckeditor_lang'] = array(
         '#type' => 'select',
         '#title' => t('Language'),

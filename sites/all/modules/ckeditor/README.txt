@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.3.2.6 2010/01/14 09:08:11 wwalc Exp $
+$Id: README.txt,v 1.3.2.7 2010/03/11 12:39:54 wwalc Exp $
 
 CONTENTS OF THIS FILE
 ---------------------
@@ -11,6 +11,7 @@ CONTENTS OF THIS FILE
  * Installation troubleshooting
  * Plugins: Teaser break and Pagebreak
  * Plugins: MediaEmbed
+ * Plugins: IMCE
  * Uploading images and files
  * How to install CKFinder
  * Modules: Link to content (EXPERIMENTAL)
@@ -158,6 +159,31 @@ To enable it, do the following:
       simply add button at the end of array (or somewhere in the middle):
 
       ['Link','Unlink','MediaEmbed','Anchor']
+
+      (remember about single quotes).
+
+Plugins: IMCE
+-------------------
+CKEditor comes with an IMCE plugin, that adds a button to the toolbar that opens IMCE in a new window.
+This might be helpful if you want to avoid having to open the Image Dialog and then clicking the "Browse Server" button
+and instead open IMCE with a single click. 
+
+To enable it, do the following:
+
+   1. Open /drupal/modules/ckeditor/ckeditor.config.js
+
+   2. Uncomment the following lines (remove "//") in ckeditor.config.js:
+      //config.extraPlugins += (config.extraPlugins ? ',imce' : 'imce' );
+      //CKEDITOR.plugins.addExternal('imce', Drupal.settings.ckeditor.module_path + '/plugins/imce/');
+
+   3. Add button to the toolbar. The button name is: IMCE. 
+      For example if you have a toolbar with an array of buttons defined as follows:
+
+      ['Link','Image']
+
+      simply add button at the end of array (or somewhere in the middle):
+
+      ['Link','Image','IMCE']
 
       (remember about single quotes).
 

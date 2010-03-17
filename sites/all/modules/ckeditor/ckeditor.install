@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.install,v 1.2.2.2 2010/01/12 10:01:20 wwalc Exp $
+// $Id: ckeditor.install,v 1.2.2.7 2010/03/09 15:38:01 mephir Exp $
 /*
  * CKEditor - The text editor for Internet - http://ckeditor.com
  * Copyright (C) 2003-2008 Frederico Caldeira Knabben
@@ -57,7 +57,7 @@ function ckeditor_install() {
 
   switch ($f_sv) {
     case 6201:
-      db_query("INSERT INTO {ckeditor_role}(name, rid) SELECT name, rid FROM fckeditor_role");
+      db_query("INSERT INTO {ckeditor_role}(name, rid) SELECT name, rid FROM {fckeditor_role}");
       $rs=db_query("SELECT * FROM {fckeditor_settings} WHERE 1");
       while ($row=db_fetch_array($rs)) {
         $nname=str_replace(array('FCKeditor', 'fckeditor'), array('CKEditor', 'ckeditor'), $row['name']);
@@ -128,13 +128,16 @@ function ckeditor_install() {
       $arr['width'] = variable_get("ckeditor_width", "100%");
       $arr['lang'] = "en";
       $arr['auto_lang'] = "t";
-
+      $arr['language_direction'] = "default";
+      
       //output
       $arr['enter_mode'] = "p";
       $arr['shift_enter_mode'] = "br";
       $arr['font_format'] = 'p;div;pre;address;h1;h2;h3;h4;h5;h6';
       $arr['format_source'] = "t";
       $arr['format_output'] = "t";
+      $arr['custom_formatting'] = "f";
+      $arr['formatting']['custom_formatting_options'] = array('indent' => 'indent', 'breakBeforeOpen' => 'breakBeforeOpen', 'breakAfterOpen' => 'breakAfterOpen', 'breakAfterClose' => 'breakAfterClose');
 
       //css
       $arr['css_mode'] = "theme";
@@ -263,14 +266,14 @@ function ckeditor_schema() {
  * - Quick upload and/or the built-in file browser are used and $cookie_domain is not set
  */
 function ckeditor_requirements($phase) {
-  module_load_include('module', 'ckeditor');
-  module_load_include('inc', 'ckeditor', 'includes/ckeditor.lib');
   $requirements = array();
 
   if ($phase == 'runtime') {
+    module_load_include('module', 'ckeditor');
+    module_load_include('inc', 'ckeditor', 'includes/ckeditor.lib');
     $requirements['ckeditor'] = array(
-    'title' => t('CKEditor'),
-    'value' => t('Unknown'),
+      'title' => t('CKEditor'),
+      'value' => t('Unknown'),
     );
 
     $requirements['ckeditor']['severity'] = REQUIREMENT_OK;

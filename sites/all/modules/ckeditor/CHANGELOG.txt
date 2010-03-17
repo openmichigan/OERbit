@@ -1,51 +1,110 @@
-$Id: CHANGELOG.txt,v 1.6.2.18 2010/01/14 08:54:55 wwalc Exp $
+$Id: CHANGELOG.txt,v 1.6.2.45 2010/03/11 12:39:54 wwalc Exp $
 
--- 2010-01-14 version 6.x-1.0
-- First stable release
+-----------------------------
+ 2010-03-11
+ New stable release: 6.x-1.1
+-----------------------------
 
--- 2010-01-14 version 6.x-1.x-dev
+-- 2010-03-10
+- [#674454] Changed drush command name 
+
+-- 2010-03-09
+- [#736786] by irakli: CKEditor is incompatible with Installation profiles
+
+-- 2010-03-06
+- [#732264] Fixed ckeditor dialog when editor is running in modal window from ctools
+
+-- 2010-03-05
+- [#733512] Fixed editing area size 
+
+-- 2010-03-04
+- [#731086] Notice: Undefined index: #rows / #value
+- [#703960] by hinanui: The CKEditor fails to load sporadically if the teaser of the node is empty
+- [#703428] Add forcePasteAsPlainText to CKEditor profile
+- [#707878] Add output formatting
+- [#725880] RTL solution for editor
+
+-- 2010-03-02
+- [#729142] Notice: Undefined variable: filebroswer in ckeditor.module on line 703
+- [#728212] by morningtime: Looks for contents.css in wrong location
+- [#679976] support Panels
+- [#721914] Opening IMCE window without Image Dialog
+
+-- 2010-03-01
+- [#716274] Clone Profile incompatible with PCRE <7.0
+
+-- 2010-02-17
+- [#651616] by FrankT: added German translation
+- [#707370] support Tinybrowser
+
+-- 2010-02-16
+- [#651616] by samuelsan: added Spanish translation
+- [#713804] by thebuckst0p: Fixed migration from fckeditor (doesn't respect DB prefix for fckeditor_role) 
+
+-- 2010-02-03
+- [#651616] by chmoindron: added French translation
+- [#703316] Advanced settings are broken in the dev release
+- [#695474] by jeeba: Fixed warning: Invalid argument supplied for foreach() in ckeditor.module line 998
+- [#694082] by FrankT: Fixed string issues
+
+-- 2010-01-25
+- [#692558] by J0nathan: Fixed problem with adding boolean values into "Custom javascript configuration
+
+-- 2010-01-15
+- Added current instance tracking in javascript for easier integration with other module (Drupal.ckeditorInstance)
+- Added Drupal.ckeditorInsertHtml function
+- [#686024] by Grizz: Fixed errors in CSS file
+
+------------------------------
+ 2010-01-14 
+ First stable release: 6.x-1.0
+------------------------------
+
+-- 2010-01-14
 - [#680798] Improved compatibility with NewsFlash theme
 
--- 2010-01-12 version 6.x-1.x-dev
+-- 2010-01-12
 - [#680202] Fixed: image preview not working in IE8
 - [#664488] Fixed: CKEditor grabs initial focus in IE
 
--- 2010-01-08 version 6.x-1.x-dev
+-- 2010-01-08
 - [#665108] Fixed: CKeditor Show summary in full view checkbox always checked in editing mode
 
--- 2010-01-06 version 6.x-1.x-dev
+-- 2010-01-06
 - [#674454] by Dave Reid: Add drush integration to download the CKEditor library.
 
--- 2009-12-23 version 6.x-1.x-dev
+-- 2009-12-23
 - [#659278], [#666560], [#666616] Teaser buttons were missing when teasers were disabled by other modules
 
--- 2009-12-22 version 6.x-1.x-dev
+-- 2009-12-22
 - [#663228] Fixed: Link to node not working properly
 - [#665108] Fixed: CKeditor hide "Show summary in full view" checkbox
 - [#662590] Fixed: If more than one editor css file set in "Edit CKEditor profile" > "Define CSS path", then none are used
 - Improvements in MediaEmbed plugin
 
--- 2009-12-17 version 6.x-1.x-dev
+-- 2009-12-17
 - [#654626] Fixed PHP notice (Undefined offset in ckeditor_get_nodetype)
 
--- 2009-12-16 version 6.x-1.x-dev
+-- 2009-12-16
 - Fixed names of 'NumberedList' and 'BulletedList' buttons in Basic Toolbar
 - [#656570] Fixed problems with missing ckeditor.styles.js
 - [#654626] Fixed PHP notices "Undefined index: simple_incl, excl"
 - Fixed double slash in path to break and teaserbreak button images
 
--- 2009-12-15 version 6.x-1.x-dev
+-- 2009-12-15
 - [#659314] Fixed name of Format button in Basic Toolbar
 
--- 2009-12-10 version 6.x-1.x-dev
+-- 2009-12-10
 - Added MediaEmbed plugin
  - [#652274] Fixed: Error Message from Color module with CKEditor
  - [#653498] Fixed: Empty teasers when editing content
  - [#651904] Fixed: CKEditor Widens Beyond content area when Resized
  - [#652570] Fixed: Force simple toolbar doesn't work
 
--- 2009-12-05 version 6.x-1.x-dev
-- First public (beta) release
+-------------------------------------------
+ 2009-12-05 
+ First public (beta) release: 6.x-1.0-beta1
+-------------------------------------------
 
--- 2009-10-05 version 6.x-1.x-dev
+-- 2009-10-05
 - Created initial dev version of the CKEditor module
