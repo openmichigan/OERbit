@@ -98,9 +98,16 @@
      	  print $node->content[$section . '_node_content_1']['#value'];
       }
       else {
-        print $node->content['body']['#value'];
-        print $node->content['overview_node_content_1']['#value'];
-        print $node->content['instructor_node_content_1']['#value'];
+        if (arg(2) == 'nodereferrer_create_content') {
+          if (module_exists('bulkupload')) {
+            print bulkupload_upload_page();
+          }
+        }
+        else {
+          print $node->content['body']['#value'];
+          print $node->content['overview_node_content_1']['#value'];
+          print $node->content['instructor_node_content_1']['#value'];
+        }
       }
   	?>
   	<!-- End of VIEW -->
