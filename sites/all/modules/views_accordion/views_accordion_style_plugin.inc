@@ -36,7 +36,8 @@ class views_accordion_style_plugin extends views_plugin_style {
     }
     // Find out how many items the display is currently configured to show (row-start-open)
     $maxitems = $this->display->handler->get_option('items_per_page');
-    $maxitems = ($maxitems == 0) ? 10 : $maxitems;  // if items_per_page is set to unlimitted (0), 10 rows will be what the user gets to choose from.
+    // if items_per_page is set to unlimitted (0), 10 rows will be what the user gets to choose from.
+    $maxitems = ($maxitems == 0) ? 10 : $maxitems;
 
     // Setup our array of options for choosing which row should start opened (row-start-open)
     $rsopen_options = array();

@@ -3,33 +3,49 @@ Drupal.behaviors.views_accordion = function(context) {
 
   if(Drupal.settings.views_accordion){
     $.each(Drupal.settings.views_accordion, function(id) {
-      var activeClass = 'accordion-header-active'; // the CSS class that the active header will recieve when it's open
-      var hoverClass = 'accordion-header-hover'; // the CSS class that the headers will recieve when the mouse goes over
-      var contentClass = 'accordion-content'; // the CSS class that the content in the accordions will have
+      // the CSS class that the active header will recieve when it's open
+      var activeClass = 'accordion-header-active';
+      // the CSS class that the headers will recieve when the mouse goes over
+      var hoverClass = 'accordion-header-hover';
+      // the CSS class that the content in the accordions will have
+      var contentClass = 'accordion-content';
       /*
        * Our view settings
        */
       var usegroupheader = this.usegroupheader;
-      var grouped = this.grouping;  // wether or not field grouping is enabled
-      var keeponeopen = this.keeponeopen; // wether or not we'll be allowing the user to close opened items
-      var speed = this.speed;  // how fast the sliding will be
-      var startopen = this.startopen;  // wether or not an item will start opened
-      var cycleOn = this.autocycle; // wether or not we'll be using auto cycling of items
-      var cycleSpeed = this.autocyclespeed; // time between each cycle (added to speed below to avoid weird behaviour)
-      var togglelinks = this.togglelinks;  // wether or not to show Open All / Close All links
-      var disablecloseothers = this.disablecloseothers;  // wether or not when clicking a closed item we should close all others.
-      var rowstartopen = this.rowstartopen; // The row that we have to open on load, if any.
+      // wether or not field grouping is enabled
+      var grouped = this.grouping;
+      // wether or not we'll be allowing the user to close opened items
+      var keeponeopen = this.keeponeopen;
+      // how fast the sliding will be
+      var speed = this.speed;
+      // wether or not an item will start opened
+      var startopen = this.startopen;
+      // wether or not we'll be using auto cycling of items
+      var cycleOn = this.autocycle;
+      // time between each cycle (added to speed below to avoid weird behaviour)
+      var cycleSpeed = this.autocyclespeed;
+      // wether or not to show Open All / Close All links
+      var togglelinks = this.togglelinks;
+      // wether or not when clicking a closed item we should close all others.
+      var disablecloseothers = this.disablecloseothers;
+      // The row that we have to open on load, if any.
+      var rowstartopen = this.rowstartopen;
 
       // the selectors we have to play with
-      var contentSelector = 'div.' + contentClass; // used for selecting all accordion content to show/hide
-      var displaySelector = this.display;  // Used to grab anything under our view.
-      var headerSelector = usegroupheader ? (this.header) : ('.' + this.header); // this.header is the class of our first field
+      // used for selecting all accordion content to show/hide
+      var contentSelector = 'div.' + contentClass;
+      // Used to grab anything under our view.
+      var displaySelector = this.display;
+      // this.header is the class of our first field
+      var headerSelector = usegroupheader ? (this.header) : ('.' + this.header);
 
       // we have to use different selectors if using field grouping because we have several divs with #id
       var idSelector = grouped ? ('.' + id) : ('#' + id);
       var $viewcontent = $('#' + displaySelector);
       if (usegroupheader) $viewcontent = $viewcontent.parent().parent();
-      if (grouped && !usegroupheader) $viewcontent = $viewcontent.parent();  // views renders html as if you had several views...
+      // views renders html as if you had several views...
+      if (grouped && !usegroupheader) $viewcontent = $viewcontent.parent();
 
       /*
        * Fixing ajax views bug (was wrapping the div everytime), we need to check hasRan
@@ -43,7 +59,8 @@ Drupal.behaviors.views_accordion = function(context) {
         $triggers.addClass('accordion-header');
 
         $triggers.parent().each(function(){
-          $(this).children().slice(1).wrapAll('<div class="' + contentClass + '">') // we wrap all but the header in a div so we can target the content later
+          // we wrap all but the header in a div so we can target the content later
+          $(this).children().slice(1).wrapAll('<div class="' + contentClass + '">')
         }).parent().addClass('accordion-active');
 
         var $content =  usegroupheader ? $(contentSelector, $viewcontent) : $(idSelector + ' ' + contentSelector);
@@ -70,7 +87,8 @@ Drupal.behaviors.views_accordion = function(context) {
          *  Accordion action
          */
         $triggers.click(function(ev) {
-          if (ev.detail === 1 || !ev.detail) { // so we prevent double clicking madness (for not so savy web users) !ev.detail is for when its triggered by code
+          // so we prevent double clicking madness (for not so savy web users) !ev.detail is for when its triggered by code
+          if (ev.detail === 1 || !ev.detail) {
             // so we keep accordions for each field group are independent (if using field groups)
             var $ourTrigger = $(this);
             var $contentToHandle = (grouped && (!usegroupheader)) ? $ourTrigger.parents(idSelector).children().children().children(contentSelector) : $content;
@@ -121,7 +139,8 @@ Drupal.behaviors.views_accordion = function(context) {
          */
         if (cycleOn) {
           var running = true;
-          var interval = speed + cycleSpeed;  // (animation time + cycle time)
+          // (animation time + cycle time)
+          var interval = speed + cycleSpeed;
           var hardstop = false;
           // creating buttons stop/start/ paused status
           $viewcontent.before('<span class="stop-accordion"><a class="stop-accordion" href="#">' + Drupal.t('Stop') + '</a></span>');
