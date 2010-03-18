@@ -1,0 +1,190 @@
+<?php
+// $Id: bulkupload.module,v 1.8 2009/08/12 09:21:51 sdrycroft Exp $
+/**
+ * This is a complete rewrite of the bulkupload module.  The module
+ * allows a user to upload multiple files in one simple step.
+ * The module also provides an editing interface that makes
+ * editing a large number of files also much easier.
+ */
+/***********************************************************************************
+ * HOOKS
+ ***********************************************************************************/
+function bulkupload_menu() {
+  $items['bulkupload/upload'] = array(
+  	'access callback' => true,
+//    'access arguments' => array('create material content'),
+    'title' => 'File upload',
+    'page callback' => 'bulkupload_upload_files',
+    'type' => MENU_CALLBACK);
+  $items['bulkupload/get'] = array(
+    'title' => 'File thumbs',
+    'access arguments' => array('create material content'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'bulkupload_js'
+  );
+  $items['bulkupload'] = array(
+    'title' => 'Upload files',
+    'access arguments' => array('create material content'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'bulkupload_upload_page'
+  );
+  return $items;
+}
+
+// function bulkupload_form_alter(&$form, &$form_state, $form_id){
+//   // Lets add a small message to the top of the node/add/image form to point to the
+//   // multiple add image page
+//   if($form_id == 'image_node_form'){
+//     $form['bulkupload'] = array(
+//       '#weight' => -100, // make sure it is at the top
+//       '#value' => '<div class="messages"><p>'.t('You can add multiple files quickly to the site from the <a href="@uploadpage">multiple upload page</a>', array('@uploadpage'=>url('bulkupload/bulkupload'))).'</p></div>'
+//     );
+//   }
+// }
+/***********************************************************************************
+ * CALLBACKS
+ ***********************************************************************************/
+/**
+ * Callback for the bulkupload/bulkupload page which simply displays the applet for uploading
+ * of images
+ *
+ * @return String (Contains HTML for displaying of the applet)
+ */
+function bulkupload_upload_page()
+{
+  // If we're lookin' at this page, then chuffin heck, we need t'JavaScript & CSS
+  drupal_add_js(drupal_get_path('module','bulkupload').'/bulkupload.js');
+  drupal_add_css(drupal_get_path('module','bulkupload').'/bulkupload.css');
+  return
+  	'<div class="bulkupload postlet">
+		<applet name="postlet" code="Main.class"
+			archive="'.url(drupal_get_path('module','bulkupload').'/java/bulkupload.jar', array('absolute' => TRUE)).'" width="100%" height="300" mayscript>
+			<param name = "maxthreads"		value = "5" />
+			<param name = "language"		value = "EN" />
+			<param name = "type"			value = "application/x-java-applet;version=1.3.1" />
+			<param name = "destination"		value = "'.url('bulkupload/upload', array('absolute' => TRUE)).'" />
+			<param name = "backgroundcolour" value = "16777215" />
+			<param name = "tableheaderbackgroundcolour" value = "14079989" />
+			<param name = "tableheadercolour" value = "0" />
+			<param name = "warnmessage" value = "false" />
+			<param name = "autoupload" value = "false"/>
+			<param name = "helpbutton" value = "false"/>
+			<param name = "removebutton" value = "true" />
+			<param name = "addbutton" value = "true"/>
+			<param name = "uploadbutton" value = "true" />
+		</applet>
+		<script type="text/javascript">
+		  imagesreturnurl ="'.url('bulkupload/get', array('absolute' => TRUE)).'";
+		</script>
+	</div>';
+}
+/**
+ * Callback for the upload destination.  This is where images are sent to by the applet.
+ * This page is NOT designed to be viewed by humans/browsers.
+ */
+function bulkupload_upload_files(){
+  // Output a postlet error if the user isn't allowed to upload.
+  if (!user_access('create images')){
+    ?>
+POSTLET REPLY
+POSTLET:NO
+POSTLET:SERVER ERROR
+POSTLET:ABORT ALL
+END POSTLET REPLY
+    <?php
+    exit;
+  }
+  else {
+    // User is allowed to upload, well lets do it
+    $uploaded = 0;
+    // The image module doesn't rename the files when it moves them, so we need to do that first
+    $temp_filename = dirname($_FILES['userfile']['tmp_name']).'/'.$_FILES['userfile']['name'];
+    file_move($_FILES['userfile']['tmp_name'],$temp_filename);
+    $image_node = 0;
+//    $image_node = image_create_node_from($temp_filename, $_FILES['userfile']['name']);
+    if (!$image_node){
+      // Lets work out why it wasn't uploaded and change the error accordingly.
+
+      // For now we'll say this type isn't allowed
+      $uploaded = 2;
+    } else {
+      // Image has been added, lets add it to the image_gallery
+      $gallery_tid = variable_get('bulkupload_gallery_tid', 0);
+      if($gallery_tid){
+        taxonomy_node_save($image_node, array($gallery_tid));
+      }
+    }
+    switch($uploaded){
+      case 0:
+        ?>
+POSTLET REPLY
+POSTLET:YES
+END POSTLET REPLY
+        <?php
+        break;
+      case 1:
+        ?>
+POSTLET REPLY
+POSTLET:NO
+POSTLET:TOO LARGE
+POSTLET:ABORT THIS
+END POSTLET REPLY
+        <?php
+        break;
+      case 2:
+        ?>
+POSTLET REPLY
+POSTLET:NO
+POSTLET:FILE TYPE NOT ALLOWED
+POSTLET:ABORT THIS
+END POSTLET REPLY
+        <?php
+        break;
+      case 3:
+        ?>
+POSTLET REPLY
+POSTLET:NO
+POSTLET:SERVER ERROR
+POSTLET:ABORT ALL
+END POSTLET REPLY
+        <?php
+        break;
+    }
+  }
+  exit;
+}
+/**
+ * Menu callback, ajax call to populate the page with the thumbnails
+ */
+function bulkupload_js(){
+  // Reurns HTML as JS for the thumbs of images uploaded
+  // Does this for the user logged in only
+  if(function_exists('matrix_editor_menu')){
+    $matrix = " ".l('Edit your most recent images', 'matrix/image');
+  }
+  print drupal_to_js(array('html' => '<p>'.t('The following images have been uploaded by you in the last hour.') . $matrix .'</p>'.bulkupload_get_thumbs_html(60)));
+  exit();
+}
+/***********************************************************************************
+ * HELPER FUNCTIONS
+ ***********************************************************************************/
+/**
+ * Following gets an HTML formatted list of images that the current user has uploaded,
+ * and not edited.  It can also optionally show only images uploaded in the last x minutes
+ *
+ * @return String (Formatted HTML)
+ */
+function bulkupload_get_thumbs_html($minutes = NULL){
+  global $user;
+  if(is_null($minutes)){
+    $result = db_query("SELECT nid FROM {node} WHERE uid = %d AND created=changed AND type='image'",$user->uid);
+  }else{
+    $result = db_query("SELECT nid FROM {node} WHERE uid = %d AND created=changed AND type='image' AND created>%d",$user->uid , time()-($minutes*60));
+  }
+  $html = '';
+  while($node = db_fetch_object($result)){
+    $node = node_load($node->nid);
+    $html .= '<div class="bulkuploadthumb" id="bulkuploadthumb-'.$node->nid.'">'.l(image_display($node,  IMAGE_THUMBNAIL, array('alt'=>$node->title)),'node/'.$node->nid.'/edit', array('html'=>TRUE, 'attributes'=>array('target'=>'_blank'))).'</div>';
+  }
+  return $html;
+}

@@ -1,0 +1,9 @@
+; $Id: bulkupload.info,v 1.5 2009/08/12 09:21:51 sdrycroft Exp $
+name = Bulk Upload
+description = Uploads multiple files from the browser or with drag & drop to make multiple file upload easier
+package = Open Michigan
+dependencies[] = material
+core = 6.x
+project = bulkupload
+version = "6.x-2.1"
+

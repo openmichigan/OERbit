@@ -1,0 +1,22 @@
+.imagex{
+  border: solid 1px #999;
+  margin: 0.75em 0pt;
+}
+.imagexthumb{
+  width: 100px;	
+  height: 100px;	
+  margin:2px;
+  padding:2px;
+  border: solid 2px #999;
+  float: left;
+}
+.postlet{
+  padding: 0;
+}
+.thumbs{
+  padding:10px;
+  display:none;
+}
+.header{
+  padding:10px;
+}
