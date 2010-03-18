@@ -98,8 +98,11 @@ END POSTLET REPLY
     // User is allowed to upload, well lets do it
     $uploaded = 0;
     // The image module doesn't rename the files when it moves them, so we need to do that first
-    $temp_filename = dirname($_FILES['userfile']['tmp_name']).'/'.$_FILES['userfile']['name'];
-    file_move($_FILES['userfile']['tmp_name'],$temp_filename);
+    $upload_path = file_directory_path().'/'.$_FILES['userfile']['name'];
+    if (file_copy($_FILES['userfile']['tmp_name'], $upload_path))
+    {
+    	file_delete ($_FILES['userfile']['tmp_name']);
+    }
     $image_node = 0;
 //    $image_node = image_create_node_from($temp_filename, $_FILES['userfile']['name']);
     if (!$image_node){
