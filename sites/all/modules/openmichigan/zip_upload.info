@@ -1,0 +1,7 @@
+; $Id$
+name = Zip Upload
+description = Upload a Zip file and create nodes for each of them.
+dependencies[] = upload
+dependencies[] = material
+package = Open Michigan
+core = 6.x
