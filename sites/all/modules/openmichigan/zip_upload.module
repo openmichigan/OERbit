@@ -145,11 +145,23 @@ function zip_upload_create_material($file, $nid) {
   $form_state['values']['op'] = t('Save');
   $form_state['values']['field_course_reference'][0]['nid']['nid'] = $parent->title . ' [nid:' . $parent->nid . ']';
   $form_state['values']['field_material_type'][0]['value'] = 'unknown';
-  $form_state['values']['field_resource_type'][0]['value'] = 'file';
-  $form_state['values']['field_file'][0]['fid'] = $file->fid;
+  // Store images in the image field; all other files go into the file field
+  if (in_array($file->filemime, array('image/png', 'image/jpeg', 'image/gif'))) {
+    $form_state['values']['field_resource_type'][0]['value'] = 'image';
+    $form_state['values']['field_image'][0]['fid'] = $file->fid;
+    $form_state['values']['field_image'][0]['list'] = 1;
+  }
+  else {
+    $form_state['values']['field_resource_type'][0]['value'] = 'file';
+    $form_state['values']['field_file'][0]['fid'] = $file->fid;
+    $form_state['values']['field_file'][0]['list'] = 1;
+  }
   $form_state['values']['field_creators'][0]['value'] = $parent->field_creators[0]['value'];
   $form_state['values']['field_contributors'][0]['value'] = $parent->field_contributors[0]['value'];
   $form_state['values']['field_publisher'][0]['value'] = $parent->field_publisher[0]['value'];
+  _drupal_execute('material_node_form', $form_state, (object) $node);
+  // Reload node to save Creative Commons license.
+  $node = node_load($form_state['nid']);
   $form_state['values']['creativecommons']['select_license_form']['cc_license_uri'] = $parent->cc->uri;
   $form_state['values']['creativecommons']['metadata']['attributionName'] = $parent->cc->metadata['attributionName'];
   $form_state['values']['creativecommons']['metadata']['attributionURL'] = $parent->cc->metadata['attributionURL'];
@@ -159,7 +171,8 @@ function zip_upload_create_material($file, $nid) {
   $form_state['values']['creativecommons']['metadata']['creator'] = $parent->cc->metadata['creator'];
   $form_state['values']['creativecommons']['metadata']['rights'] = $parent->cc->metadata['rights'];
   $form_state['values']['creativecommons']['metadata']['date'] = $parent->cc->metadata['date'];
-  _drupal_execute('material_node_form', $form_state, (object) $node);
+  $cc = new creativecommons_license($form_state['values']['creativecommons']['select_license_form']['cc_license_uri'], $form_state['values']['creativecommons']['metadata']);
+  $cc->save($node->nid, 'update');
 }
 
 /**
@@ -179,6 +192,7 @@ function _drupal_execute($form_id, &$form_state) {
   drupal_prepare_form($form_id, $form, $form_state);
   _drupal_process_form($form_id, $form, $form_state);
 }
+
 function _drupal_process_form($form_id, &$form, &$form_state) {
   $form_state['values'] = array();
 
