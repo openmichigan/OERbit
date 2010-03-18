@@ -84,7 +84,7 @@ function bulkupload_upload_page()
  */
 function bulkupload_upload_files(){
   // Output a postlet error if the user isn't allowed to upload.
-  if (!user_access('create images')){
+  if (false && !user_access('create images')){
     ?>
 POSTLET REPLY
 POSTLET:NO
