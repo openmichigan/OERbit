@@ -98,8 +98,9 @@ END POSTLET REPLY
     // User is allowed to upload, well lets do it
     $uploaded = 0;
     // The image module doesn't rename the files when it moves them, so we need to do that first
-    $upload_path = file_directory_path().'/'.$_FILES['userfile']['name'];
-    if (file_copy($_FILES['userfile']['tmp_name'], $upload_path))
+    $upload_path = $_SERVER['DOCUMENT_ROOT'].'/'.file_directory_path().'/'.$_FILES['userfile']['name'];
+    $source_path = $_FILES['userfile']['tmp_name'];
+    if (file_copy($source_path, $upload_path))
     {
     	file_delete ($_FILES['userfile']['tmp_name']);
     }
