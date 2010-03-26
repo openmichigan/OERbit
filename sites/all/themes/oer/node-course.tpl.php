@@ -96,6 +96,7 @@
   	  if ($section) {
   	    print $node->content[$section . '_links_node_content_1']['#value'];
      	  print $node->content[$section . '_node_content_1']['#value'];
+     	  print $node->content[$section . '_node_content_2']['#value'];
       }
       else {
         if (arg(2) == 'nodereferrer_create_content') {

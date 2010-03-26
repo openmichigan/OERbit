@@ -190,7 +190,7 @@ a.social:hover span {
 	padding:2px;
 	width:164px;
 }
-#header #block-search-0 input#edit-submit, #header #block-search-0 input#edit-submit-1 { 
+#header #block-search-0 input#edit-submit, #header #block-search-0 input#edit-submit-1, #header #block-search-0 input#edit-submit-2 { 
 	width: 22px;
 	height: 18px;
 	margin: 1px 0 0 5px;
@@ -333,15 +333,16 @@ ul.navigation-current-unit li ul {
 #sidebar-left-inner #block-navigation-navigation .item-list ul li li a,
 #sidebar-left-inner #block-navigation-navigation .item-list ul.navigation-current-unit li a {
 	display: block;
-	padding: 0 0 0 18px;
+	padding: 2px 0 5px 18px;
 	text-transform: lowercase;
 	font-weight: normal;
 	font-size:100%;
+	line-height: 13px;
 	background: url(images/bg-sidenav-arrow.png) 10px 7px no-repeat;
 }
 #sidebar-left-inner #block-navigation-navigation .item-list ul.navigation-current-unit li li a {
 	display: block;
-	padding: 0 0 0 18px;
+	padding: 5px 0 5px 18px;
 	text-transform: lowercase;
 	font-weight: normal;
 	font-size:90%;
@@ -388,6 +389,77 @@ ul.navigation-current-unit li ul {
 #sidebar-right-inner a {
 	text-decoration: none;
 }
+
+#block-revisioning-0 h2 {
+	border: 2px solid #FFFF77;
+	font-size: .95em;
+	background: #FFFFCC url(images/arrow-revisions.png) right center no-repeat;
+	padding: 0;
+}
+#block-revisioning-0 h2 a {
+	text-decoration: none;
+	display: block;
+	padding: 5px 7px;
+}
+
+#block-revisioning-0 .edit {
+	margin: -20px 0 0 0;
+}
+
+
+
+/*** course navigation - tabs ***/
+ul.tabs li a {
+	font-weight: normal !important;
+	font-size: 85% !important;
+}
+#block-course-course-navigation {
+	margin-bottom:30px;
+	background:url("/sites/all/themes/zen/zen/images/tab-bar.png") repeat-x scroll left bottom transparent;
+	float: left;
+	width: 100%;
+}
+#block-course-course-navigation ul.course-navigation {
+	list-style:none;
+	margin:0;
+	padding:0;
+}
+ul.course-navigation li {
+	float:left;
+	margin:0;
+	padding:0 0 0 5px;
+	display:inline;
+	background:url("/sites/all/themes/zen/zen/images/tab-left.png") no-repeat scroll left -38px transparent;
+}
+ul.course-navigation li a {
+	color:#1B335C;
+	display:block;
+	font-weight:bold;
+	height:20px;
+	margin:0;
+	padding:4px 13px 0 6px;
+	line-height:20px;
+	text-decoration:none;
+	background:url("/sites/all/themes/zen/zen/images/tab-right.png") no-repeat scroll right -38px transparent;
+}
+ul.course-navigation li:hover {
+	background-position: left -76px;
+}
+ul.course-navigation li a:hover {
+	background-position: right -76px;
+	color: #996633;
+}
+ul.course-navigation li.active, ul.course-navigation li.active:hover {
+	background-position: left 0;
+}
+ul.course-navigation li.active a, ul.course-navigation li.active a:hover {
+	background-position: right 0;
+	color: #996633;
+}
+
+
+
+
 
 .view-materials-links h3, .view-sessions-links h3 {
 	margin: 0;
@@ -509,6 +581,16 @@ h1, h2, h3, h4, h5, h6 {
 	display:block;
 	padding:8px;
 }
+.page-share-use .imgCapR img, 
+.page-share-share .imgCapR img, 
+.page-connect-community .imgCapR img,
+.page-connect-projects .imgCapR img {
+	border:0;
+	padding:0;
+}
+.page-connect-projects .imgCapR, .page-connect-services .imgCapR {
+	width: auto;
+}
 .imgCapR p {
 	font-size: 80%;
 	margin:10px 0 0;
@@ -516,7 +598,36 @@ h1, h2, h3, h4, h5, h6 {
 }
 .imgCapR a {
 	text-decoration:none;
+}.imgCapL {
+	float: left;
+	margin: 0 0 2em 2em;
 }
+
+.imgCapL p {
+	font-size: x-small;
+	margin-bottom: 0;
+}
+
+.imgCapL a {
+	font-size: x-small;
+	text-decoration: none;
+}
+
+.imgCapList {
+	margin: 1em 1em 2em 2em;
+}
+
+.imgCapList p {
+	font-size: x-small;
+	margin-bottom: 0;
+}
+
+.imgCapList a {
+	font-size: x-small;
+	text-decoration: none;
+}
+
+
 
 .coursefooter {
 	clear: both;
@@ -532,15 +643,15 @@ ul.groupLinks {
 	padding: 0px;
 	list-style: none;
 	overflow: hidden;
-	background: white;
+	/*background: white;*/
 }
 
 ul.groupLinks li {
 	float: left;
-	margin: 0;
+	margin: 0 3px 5px 0;
 	padding: 0px;
-	background: #ffffff url(images/grouplinks_bg.gif) bottom left repeat-x;
-	border-right: 3px solid white;
+	background: url(images/grouplinks_bg.gif) bottom left repeat-x;
+	/*border-right: 3px solid white;*/
 }
 
 ul.groupLinks li.lc {
@@ -550,7 +661,7 @@ ul.groupLinks li a {
 	display: block;
 	padding: 2px 8px;
 	text-decoration: none;
-	font-size: 95%;
+	font-size: 82%;
 	border: 1px solid #a6b6cf;
 }
 
@@ -637,6 +748,10 @@ ul.groupLinks li a.pdf {
 .view-materials-embed table.views-table th.views-field-edit-node {
 	width: 5%;
 	font-size: 75%;
+}
+.view-materials-embed table.views-table td.views-field-edit-node,
+.view-materials table.views-table td.views-field-edit-node {
+	font-size: 85%;
 }
 /*.view-materials table.views-table tbody tr td .filefield-icon {
 	display: none;
@@ -960,11 +1075,11 @@ p.top a {
 	font-size: 85%;
 	text-decoration: none;
 	padding-left: 11px;
-	background: url(../images/top-off.gif) 0 0.5em no-repeat;
+	background: url(images/top-off.gif) 0 0.5em no-repeat;
 }
 
 p.top a:hover {
-	background: url(../images/top-on.gif) 0 0.5em no-repeat;
+	background: url(images/top-on.gif) 0 0.5em no-repeat;
 }
 
 
@@ -991,12 +1106,20 @@ div#block-print-0 div.edit, div#block-node-0 div.edit, div#block-block-11 div.ed
 
 /*** Find page ***/
 
-#block-block-7 label {
+#search-course-form label {
 	font-weight: bold;
 }
-#block-block-7 input.input-text {
+#search-course-form input.input-text {
 	width: 400px;
 }
+
+#search-course-form input.search-button { 
+	margin: 0;
+	position: relative;
+	top:6px;
+ }
+
+
 .view-id-find .view-content .views-row {
 	clear: left;
 }
@@ -1125,15 +1248,6 @@ ul.tabs li.active a:hover
 }
 
 
-.view-materials .views-field-edit-node {
-	display: none;
-}
-.logged-in .view-materials .views-field-edit-node {
-	display: inline !important;
-}
-.views-field-edit-node, .views-field-nothing, .views-field-body {
-	/*clear: both;*/
-}
 
 .publishedinfo, .editlink {
 	display: block;
@@ -1412,4 +1526,165 @@ div.nodereferrer-create-items ul li a {
 color:#1B335C;
 font-size:90%;
 text-decoration:none;
+}
+
+
+
+/*** STYLE IMPORTED FROM OLD SITE FOR CONTENT PAGES ***/
+.thumbs {
+	margin-top: 2em;
+	margin-left: 90px;
+}
+
+.thumbBox {
+	border: 1px solid #a6b6cf;
+	float: left;
+	width: 100px;
+	padding: 4px;
+	background: #ffffff url(images/thumb_bg.jpg) top left repeat-x;
+	text-align: center;
+	margin-right: 16px;
+}
+
+.thumbBoxCurrent {
+	border: 1px solid #a6b6cf;
+	float: left;
+	width: 100px;
+	padding: 4px;
+	background: #DDDDDD top left no-repeat;
+	text-align: center;
+	margin-right: 16px;
+}
+
+.thumbBoxCurrent img {
+	border: 1px solid #a6b6cf;
+	margin-bottom: 6px;
+	
+}
+
+.thumbBox img {
+
+	border: 1px solid #a6b6cf;
+	margin-bottom: 6px;
+	
+}
+
+.thumbBox a {
+	display: block;
+	text-decoration: none;
+	outline: none;
+}
+
+.cols {
+	padding: 1em 0;
+	width: 100%;
+}
+
+.column-button {
+	float: left;
+	padding: 0;
+	width: 125px;
+}
+
+.column-button a {
+	display: block;
+	text-decoration: none;
+	outline: none;
+	color:#0056AE;
+	font-size:120%;
+	font-weight:bold;
+	padding: 2px;
+}
+
+.column-button img {
+
+	border: 1px solid #a6b6cf;
+	margin-bottom: 6px;
+	
+}
+
+.column-desc {
+	float: left;
+	padding: 0;
+	width: 70%;
+	min-height: 150px;
+
+}
+
+.thumbsHead {
+	margin-top: 2em;
+	width: 500px;
+	min-height: 115px;
+	margin-bottom: 2em;
+}
+
+.thumbsHead a {
+	text-decoration: none;
+	outline: none;
+}
+
+.thumbBoxHead {
+	border: 1px solid #a6b6cf;
+	float: left;
+	width: 20%;
+	padding: 2px;
+	background: #ffffff url(../images/thumb_bg.jpg) top left repeat-x;
+	text-align: center;
+	margin-right: 16px;
+
+}
+
+.thumbBoxHead img {
+
+	border: 1px solid #a6b6cf;
+	margin-bottom: 6px;
+	
+}
+
+.thumbBoxHead a {
+	display: block;
+	text-decoration: none;
+	outline: none;
+	color:#0056AE;
+	font-size:130%;
+	font-weight:bold;
+	padding: 2px;
+}
+#listing {
+	padding: 20px 0px 0px 0px;
+	float: left;
+}
+
+#listing h2 {
+	margin: 0 0 12px 0;
+}
+
+#listing h3 {
+	margin: 18px 0px 6px 0px;
+}
+
+img.right {
+	float: right;
+	margin: 0 0 10px 10px;
+}
+
+img.left {
+	float: left;
+	margin: 0 10px 10px 0;
+}
+
+img.center {
+	display: block;
+	text-align: center;
+}
+
+
+#print-mail-form .form-item { clear: both; }
+
+
+.views-admin-links { 
+	margin:-5px 0 0 0 !important; 
+}
+.views-admin-links ul { 
+	margin: 0 !important; 
 }

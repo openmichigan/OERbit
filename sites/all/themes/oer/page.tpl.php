@@ -173,6 +173,10 @@
             <?php print $help; ?>
           </div> <!-- /#content-header -->
         <?php endif; ?>
+        
+        <?php if ($course_nav): ?>
+          <?php print $course_nav; ?>
+        <?php endif; ?>
 
         <div id="content-area">
           <?php print $content; ?>

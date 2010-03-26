@@ -63,6 +63,7 @@ regions[content_bottom] = content bottom
 regions[header]         = header
 regions[footer]         = footer
 regions[closure_region] = closure
+regions[course_nav] 	= course navigation
 
   ; Various page elements output by the theme can be toggled on and off. The
   ; "features" control which of these check boxes display on the
@@ -88,5 +89,5 @@ settings[zen_breadcrumb_separator] = ' › '
 settings[zen_breadcrumb_home]      = 1
 settings[zen_breadcrumb_trailing]  = 1
 settings[zen_breadcrumb_title]     = 0
-settings[zen_rebuild_registry]     = 1
+settings[zen_rebuild_registry]     = 0
 settings[zen_wireframes]           = 0

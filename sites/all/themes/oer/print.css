@@ -16,6 +16,9 @@ body {
 #header #header-blocks { display: none; }
 #header { height: auto; padding-bottom: 20px; }
 #content-top { display: none; }
+#header, #main-inner, #footer-inner {
+	width: 100%;
+}
 
 #footer {
 	background: none;
@@ -82,3 +85,25 @@ body {
   {
     overflow-y: visible;
   }
+  
+  
+  /*** Additions ***/
+.sidebar-left #content {
+	margin: 0;
+	width:100%;
+}
+.content-course {
+	width: 100%;
+	float: none;
+}
+#image-course { display: none; }
+.accordion-content { display: block !important; }
+.coursefooter ul.links { visibility: visible;}
+
+.view-materials .field-item, .view-materials-embed .field-item {
+	display: block
+}
+.view-materials .views-field-field-file-fid a, .view-materials-embed .views-field-field-file-fid a {
+	min-width:20px;
+	width: auto
+}
