@@ -332,7 +332,7 @@ function theme_nodereference_formatter_full_teaser($element) {
 function _nodereference_titles($nid, $known_title = NULL) {
   static $titles = array();
   if (!isset($titles[$nid])) {
-    $title = $known_title ? $known_title : db_result(db_query("SELECT title FROM {node} WHERE nid=%d", $nid));
+    $title = $known_title ? $known_title : db_result(db_query("SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid=%d", $nid));
     $titles[$nid] = $title ? $title : '';
   }
   return $titles[$nid];
@@ -520,7 +520,7 @@ function nodereference_autocomplete_value($element, $edit = FALSE) {
   $field_key  = $element['#columns'][0];
   if (!empty($element['#default_value'][$field_key])) {
     $nid = $element['#default_value'][$field_key];
-    $value = db_result(db_query(db_rewrite_sql('SELECT n.title FROM {node} n WHERE n.nid = %d'), $nid));
+    $value = db_result(db_query(db_rewrite_sql('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d'), $nid));
     $value .= ' [nid:'. $nid .']';
     return array($field_key => $value);
   }
