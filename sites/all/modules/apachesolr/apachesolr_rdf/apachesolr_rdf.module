@@ -1,0 +1,1238 @@
+<?php
+// $Id: apachesolr_rdf.module,v 1.1.2.23 2009/11/01 23:31:38 drunkenmonkey Exp $
+
+/**
+ * Define constants for the three frequently needed predicate URIs.
+ */
+define('APACHESOLR_RDF_TYPE',
+    'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+define('APACHESOLR_RDF_LABEL', 'http://www.w3.org/2000/01/rdf-schema#label');
+define('APACHESOLR_RDF_COMMENT',
+    'http://www.w3.org/2000/01/rdf-schema#comment');
+
+/**
+ * Implementation of hook_help().
+ */
+function apachesolr_rdf_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#apachesolr_rdf':
+      return '<p>' . t('The Apache Solr RDF Support module allows you, with ' .
+          'the help of the Apache Solr Search Integration module, to make ' .
+          'arbitrary RDF content (as exposed to the RDF module) searchable ' .
+          'via Solr.') . '</p>';
+      break;
+    case 'admin/settings/apachesolr_rdf':
+      return '<p>' . t('This page shows an overview of data currently ' .
+          'indexed and searchable with the Apachesolr RDF module.') . '</p>';
+      break;
+    // TODO: Add help for all other settings pages
+  }
+  if ($arg[0] == 'search' && $arg[1] == 'apachesolr_rdf' && !empty($arg[2])) {
+    $id = $arg[2];
+    $info = apachesolr_rdf_search_load($id);
+    if ($info['enabled'] && !empty($info['description'])) {
+      return '<p>' . str_replace("\n", "</p>\n<p>",
+          check_plain($info['description'])) . '</p>';
+    }
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function apachesolr_rdf_menu() {
+  $items = array();
+
+  // autocomplete contexts
+  $items['apachesolr_rdf/autocomplete/context'] = array(
+    'title' => 'Context autocomplete',
+    'page callback' => 'apachesolr_rdf_context_autocomplete',
+    'access arguments' => array('access RDF data'),
+    'type' => MENU_CALLBACK,
+    'file' => 'apachesolr_rdf.pages.inc',
+  );
+  // autocomplete permissions
+  $items['apachesolr_rdf/autocomplete/permission'] = array(
+    'title' => 'Context autocomplete',
+    'page callback' => 'apachesolr_rdf_permission_autocomplete',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'apachesolr_rdf.pages.inc',
+  );
+
+  // settings
+  $items['admin/settings/apachesolr_rdf'] = array(
+    'title'              => 'Apache Solr RDF',
+    'description'        => 'Configure the "Apache Solr RDF Support" module.',
+    'page callback'      => 'apachesolr_rdf_settings_overview',
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/server/add'] = array(
+    'title'              => 'Add server',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_settings_server_edit'),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server'] = array(
+    'title callback'     => 'apachesolr_rdf_settings_title',
+    'title arguments'    => array('server', 4),
+    'page callback'      => 'apachesolr_rdf_settings_object_view',
+    'page arguments'     => array('server', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server/view'] =
+  array(
+    'title'              => 'View',
+    'type'               => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -50,
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server/edit'] =
+  array(
+    'title'              => 'Edit',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_settings_server_edit', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -40,
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server/clear'] =
+  array(
+    'title'              => 'Clear',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_confirm_form', 3, 5, 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -20,
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server/delete'] =
+  array(
+    'title'              => 'Delete',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_confirm_form', 3, 5, 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -10,
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server/enable'] =
+  array(
+    'title'              => 'Enable',
+    'page callback'      => 'apachesolr_rdf_settings_object_enable',
+    'page arguments'     => array('server', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server' .
+      '/dynamic_field/add'] = array(
+    'title'              => 'Add dynamic field',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_dynamic_field_edit', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server' .
+      '/dynamic_field/defaults'] = array(
+    'page callback'      => 'apachesolr_rdf_dynamic_field_defaults',
+    'page arguments'     => array(4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/server/%apachesolr_rdf_server' .
+      '/dynamic_field/%'] = array(
+    'title'              => 'Edit dynamic field',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_dynamic_field_edit', 4, 6),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/index/add'] = array(
+    'title'              => 'Add index',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_settings_index_edit'),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/index/%apachesolr_rdf_index'] = array(
+    'title callback'     => 'apachesolr_rdf_settings_title',
+    'title arguments'    => array('index', 4),
+    'page callback'      => 'apachesolr_rdf_settings_object_view',
+    'page arguments'     => array('index', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/index/%apachesolr_rdf_index/view'] =
+  array(
+    'title'              => 'View',
+    'type'               => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -50,
+  );
+  $items['admin/settings/apachesolr_rdf/index/%apachesolr_rdf_index/edit'] =
+  array(
+    'title'              => 'Edit',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_settings_index_edit', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -40,
+  );
+  $items['admin/settings/apachesolr_rdf/index/%apachesolr_rdf_index/reindex'] =
+  array(
+    'title'              => 'Re-index',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_confirm_form', 3, 5, 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -30,
+  );
+  $items['admin/settings/apachesolr_rdf/index/%apachesolr_rdf_index/clear'] =
+  array(
+    'title'              => 'Clear',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_confirm_form', 3, 5, 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -20,
+  );
+  $items['admin/settings/apachesolr_rdf/index/%apachesolr_rdf_index/delete'] =
+  array(
+    'title'              => 'Delete',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_confirm_form', 3, 5, 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -10,
+  );
+  $items['admin/settings/apachesolr_rdf/index/%apachesolr_rdf_index/enable'] =
+  array(
+    'title'              => 'Enable',
+    'page callback'      => 'apachesolr_rdf_settings_object_enable',
+    'page arguments'     => array('index', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/search/add'] = array(
+    'title'              => 'Add search',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_settings_search_edit'),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/search/%apachesolr_rdf_search'] =
+  array(
+    'title callback'     => 'apachesolr_rdf_settings_title',
+    'title arguments'    => array('search', 4),
+    'page callback'      => 'apachesolr_rdf_settings_object_view',
+    'page arguments'     => array('search', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  $items['admin/settings/apachesolr_rdf/search/%apachesolr_rdf_search/view'] =
+  array(
+    'title'              => 'View',
+    'type'               => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -50,
+  );
+  $items['admin/settings/apachesolr_rdf/search/%apachesolr_rdf_search/edit'] =
+  array(
+    'title'              => 'Edit',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_settings_search_edit', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -40,
+  );
+  $items['admin/settings/apachesolr_rdf/search/%apachesolr_rdf_search/delete'] =
+  array(
+    'title'              => 'Delete',
+    'page callback'      => 'drupal_get_form',
+    'page arguments'     => array('apachesolr_rdf_confirm_form', 3, 5, 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_LOCAL_TASK,
+    'access arguments'   => array('administer site configuration'),
+    'weight'             => -10,
+  );
+  $items['admin/settings/apachesolr_rdf/search/%apachesolr_rdf_search/enable'] =
+  array(
+    'title'              => 'Enable',
+    'page callback'      => 'apachesolr_rdf_settings_object_enable',
+    'page arguments'     => array('search', 4),
+    'file'               => 'apachesolr_rdf.admin.inc',
+    'type'               => MENU_CALLBACK,
+    'access arguments'   => array('administer site configuration'),
+  );
+  // IDEA: List of available schemas, with descriptions and usage?
+
+  // search pages
+  foreach (_apachesolr_rdf_searches(TRUE) as $id => $info) {
+    $items["search/apachesolr_rdf_$id"] = array(
+      'title'              => "{$info['name']}",
+      'title callback'     => FALSE,
+      'page callback'      => 'apachesolr_rdf_show_search',
+      'page arguments'     => array($info),
+      'access arguments'   => array($info['permission']),
+      'file'               => 'apachesolr_rdf.pages.inc',
+      'type'               => MENU_LOCAL_TASK,
+      'access arguments'   => array('administer site configuration'),
+    );
+  }
+
+  return $items;
+}
+
+/**
+ * Returns the title that should be used when viewing a specific settings
+ * object.
+ */
+function apachesolr_rdf_settings_title($type, $info) {
+  return isset($info['name']) ? $info['name'] : t("Unknown $type");
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ *
+ * Used to alter the search form to be appropriate for the specific RDF search.
+ */
+function apachesolr_rdf_form_search_form_alter(&$form, &$form_state) {
+  if (_apachesolr_rdf_starts_with(
+      $form['module']['#value'], 'apachesolr_rdf_')) {
+    // Drops the 'apachesolr_rdf_' at the value's beginning
+    $id = substr($form['module']['#value'], 15);
+
+    $form['apachesolr_rdf_id'] = array(
+      '#type' => 'value',
+      '#value' => $id,
+    );
+
+    $info = apachesolr_rdf_search_load($id);
+    if (!$info) {
+      return;
+    }
+    $func = _apachesolr_rdf_get_schema_function(
+        'search_form_alter', $info['schema']);
+    if (!$func) {
+      return;
+    }
+    $func($form, $form_state, $id, $info['schema_args']);
+  }
+}
+
+/**
+ * Implementation of hook_cron().
+ *
+ * Selects resources that still need to be indexed for the different index
+ * groups and indexes their corresponding data.
+ */
+function apachesolr_rdf_cron() {
+  $updated = variable_get('apachesolr_rdf_updated_resources', array());
+  if (!empty($updated)) {
+    foreach ($updated as $uri) {
+      apachesolr_rdf_update_resource($uri);
+    }
+    variable_set('apachesolr_rdf_updated_resources', array());
+  }
+
+  foreach (_apachesolr_rdf_indexes(TRUE) as $info) {
+    // Allow schemas to define their own way of retreiving resources
+    $func = _apachesolr_rdf_get_schema_function('index_resources',
+        $info['schema']);
+    if ($func) {
+      $func($info);
+      continue;
+    }
+    // Otherwise, fall back to default retrieval from RDF storage
+    $uris = _apachesolr_rdf_get_resources_to_index($info);
+    if ($uris) {
+      module_load_include('index.inc', 'apachesolr_rdf');
+      apachesolr_rdf_index_resources($uris, $info);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_apachesolr_rdf_schemas().
+ */
+function apachesolr_rdf_apachesolr_rdf_schemas() {
+  $path = drupal_get_path('module', 'apachesolr_rdf');
+  $real_path = realpath($path);
+  if ($real_path) {
+    $path = $real_path;
+  }
+
+  return array(
+    'apachesolr_rdf_dynamic' => array(
+      'name' => t('Dynamic fields'),
+      'description' => t('<p>This schema uses dynamic fields to store ' .
+          'predicates related to their objects. This allows for exact ' .
+          'queries using the resource URIs, and for facetting/filtering ' .
+          'according to specific property values, in addition to normal ' .
+          'text searches. This schema is best suited for data of a fixed ' .
+          'schema, with some properties that most resources will have.</p><p>' .
+          'Use the "~.dynamic_fields.xml" schema and solrconfig ' .
+          'files from @dir for Solr servers with this schema. You will also ' .
+          'have to copy or link the ' .
+          "sindice-url-preserving-tokenizer.jar file from there to Solr's " .
+          'lib directory ($SOLR_HOME/example/solr/lib if using the example ' .
+          'application).</p>', array('@dir' => $path)),
+      'module' => 'apachesolr_rdf',
+      'create_document' => array(
+        'file' => 'apachesolr_rdf.index.inc',
+        'function' => 'apachesolr_rdf_create_document_dynamic',
+      ),
+      'search_form_alter' => array(
+        'file' => 'apachesolr_rdf.pages.inc',
+        'function' => 'apachesolr_rdf_search_form_alter_dynamic',
+      ),
+      'execute_search' => array(
+        'file' => 'apachesolr_rdf.pages.inc',
+        'function' => 'apachesolr_rdf_execute_search_dynamic',
+      ),
+      'schema_arguments_form' => array(
+        'file' => 'apachesolr_rdf.admin.inc',
+        'function' => 'apachesolr_rdf_schema_arguments_form_dynamic',
+      ),
+      'search_options_form' => array(
+        'file' => 'apachesolr_rdf.admin.inc',
+        'function' => 'apachesolr_rdf_search_options_form',
+      ),
+    ),
+    'apachesolr_rdf_text_data' => array(
+      'name' => t('Text data'),
+      'description' => t('<p>This schema specializes in indexing the text ' .
+          'data associated with a resource, without storing the exact ' .
+          'resource informations. It is suitable for almost any data that ' .
+          "contains at least a few literals, but it doesn't provide the " .
+          'possibility to facet/filter on specific properties (except ' .
+          'rdf:type), only on the existence of properties of a resource.' .
+          '</p><p>To setup a Solr server with this schema, use the ' .
+          '"~.text_data.xml" schema and solrconfig files from @dir.</p>',
+          array('@dir' => $path)),
+      'module' => 'apachesolr_rdf',
+      'create_document' => array(
+        'file' => 'apachesolr_rdf.index.inc',
+        'function' => 'apachesolr_rdf_create_document_text_data',
+      ),
+      'search_form_alter' => array(
+        'file' => 'apachesolr_rdf.pages.inc',
+        'function' => 'apachesolr_rdf_search_form_alter_text_data',
+      ),
+      'execute_search' => array(
+        'file' => 'apachesolr_rdf.pages.inc',
+        'function' => 'apachesolr_rdf_execute_search_text_data',
+      ),
+      'search_options_form' => array(
+        'file' => 'apachesolr_rdf.admin.inc',
+        'function' => 'apachesolr_rdf_search_options_form',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_rdf().
+ * Schedules an according update of the apachesolr_rdf_resources table.
+ */
+function apachesolr_rdf_rdf($op, $subject, $predicate, $object) {
+  switch ($op) {
+    case 'insert':
+    case 'delete':
+      $updated = variable_get('apachesolr_rdf_updated_resources', array());
+      if (!isset($updated[$subject])) {
+        $updated[$subject] = TRUE;
+        variable_set('apachesolr_rdf_updated_resources', $updated);
+      }
+      break;
+  }
+}
+
+/**
+ * Updates the statement counts and according "changed" flag of the specified
+ * resource in all enabled indexes.
+ */
+function apachesolr_rdf_update_resource($uri) {
+  foreach (_apachesolr_rdf_indexes(TRUE) as $info) {
+    apachesolr_rdf_update_index_data($info, $uri);
+  }
+}
+
+/**
+ * Inserts/updates the status of all resources (or only $subject, if set) in the
+ * specified index in the resources table.
+ * If $rebuild is set, the index' data is completely rebuilt. (Usage along with
+ * $subject isn't sensible.)
+ */
+function apachesolr_rdf_update_index_data($info, $subject = NULL,
+    $rebuild = FALSE) {
+  $resources = $info['resources'];
+  $resources += array(
+    'context'   => NULL,
+    'subject'   => NULL,
+    'predicate' => NULL,
+    'object'    => NULL,
+  );
+  if ($subject && !$rebuild) {
+    $resources['subject'] = $subject;
+  }
+
+  if ($rebuild) {
+    db_query('DELETE FROM {apachesolr_rdf_resources} WHERE index_id = %d',
+        $info['id']);
+  }
+
+  if (empty($resources['context'])) {
+    $cont_counts = apachesolr_rdf_statement_count(NULL,
+        $resources['subject'], $resources['predicate'], $resources['object']);
+    $counts = array();
+    foreach ($cont_counts as $cs) {
+      foreach ($cs as $s => $count) {
+        if (!isset($counts[$s])) {
+          $counts[$s] = 0;
+        }
+        $counts[$s] += $count;
+      }
+    }
+  }
+  else {
+    $counts = apachesolr_rdf_statement_count($resources['context'],
+        $resources['subject'], $resources['predicate'], $resources['object']);
+  }
+
+  foreach ($counts as $uri => $count) {
+    if (!$rebuild) {
+      $result = db_result(db_query("SELECT statements FROM " .
+          "{apachesolr_rdf_resources} WHERE uri = '%s' AND index_id = %d",
+          $uri, $info['id']));
+    }
+    if ($rebuild || $result === FALSE) {
+      db_query("INSERT INTO {apachesolr_rdf_resources} " .
+          "(uri, index_id, statements, changed) VALUES ('%s', %d, %d, 1)",
+          $uri, $info['id'], $count);
+    }
+    else if ($result != $count) {
+      db_query("UPDATE {apachesolr_rdf_resources} SET " .
+          "statements = %d, changed = 1 WHERE uri = '%s' AND index_id = %d",
+          $count, $uri, $info['id']);
+    }
+  }
+}
+
+/**
+ * Returns an associative array with different contexts as keys and associative
+ * arrays of the form ($uri => $statements) as values, counting the statements
+ * made about specific resources in each enabled context.
+ * (This function counts statements exposed by the RDF module, not those
+ * already indexed by this module.)
+ *
+ * @param $uri If set, return only statements about the specified resource.
+ * @param $context If set, return only the sub-array corresponding to the
+ *                 specified context.
+ */
+function apachesolr_rdf_statement_count($context = NULL, $s = NULL, $p = NULL,
+    $o = NULL) {
+  $ret = array();
+  if ($context) {
+    $stats = rdf_query($s, $p, $o, array('context' => $context));
+    $stats = rdf_normalize($stats->to_array());
+    foreach ($stats as $subject => $preds) {
+      $ret[$subject] = _apachesolr_rdf_count_recursive($preds);
+    }
+    return $ret;
+  }
+  foreach (rdf_get_contexts() as $context) {
+    $ret[$context] = apachesolr_rdf_statement_count($context, $s, $p, $o);
+  }
+  return $ret;
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function apachesolr_rdf_requirements($phase) {
+  // When not called on the status report page this is necessary for the
+  // REQUIREMENT_* constants.
+  include_once('./includes/install.inc');
+
+  if ($phase == 'runtime') {
+    $available = array();
+    $unavailable = array();
+
+    foreach (_apachesolr_rdf_servers(TRUE) as $server => $info) {
+      $host = $info['host'];
+      $port = $info['port'];
+      $path = $info['path'];
+      $url = "admin/settings/apachesolr_rdf/server/{$info['id']}";
+
+      $status = apachesolr_rdf_server_status($host, $port, $path);
+
+      if ($status) {
+        $available[] = l($info['name'], $url);
+      }
+      else {
+        $unavailable[] = l($info['name'], $url);
+      }
+    }
+
+    if (empty($unavailable)) {
+      $value =  t('All enabled Apache Solr RDF servers are available.');
+      $description = theme('item_list', $available);
+      $severity = REQUIREMENT_OK;
+    }
+    else {
+      $value =  t('Some enabled Apache Solr RDF servers are not available.');
+      $description = '<p>' . t('The following servers could not be reached:') .
+          '</p>' . theme('item_list', $unavailable);
+      $severity = REQUIREMENT_ERROR;
+    }
+
+    $requirements['apachesolr_rdf'] = array(
+      'title' => t('Apache Solr RDF'),
+      'value' => $value,
+      'description' => $description,
+      'severity' => $severity,
+    );
+    return $requirements;
+  }
+}
+
+/**
+ * Checks if a specific Apache Solr server is available.
+ *
+ * @return boolean True iff the server can be pinged.
+ */
+/*
+ * TODO: This should probably be in the apachesolr module.
+ */
+function apachesolr_rdf_server_status($host, $port, $path) {
+  $ping = FALSE;
+  try {
+    $solr = apachesolr_get_solr($host, $port, $path);
+    $ping = @$solr->ping(variable_get('apachesolr_ping_timeout', 4));
+  }
+  catch (Exception $e) {
+    watchdog('Apache Solr RDF', check_plain($e->getMessage()), NULL,
+        WATCHDOG_ERROR);
+  }
+  return $ping;
+}
+
+/**
+ * Implementation of hook_apachesolr_rdf_dynamic_datatypes().
+ *
+ * Just a stub for the names and descriptions - no functions needed since the
+ * module treats these types itself.
+ */
+// TODO: Add descriptions
+function apachesolr_rdf_apachesolr_rdf_dynamic_datatypes() {
+  return array(
+    'text' => array(
+      'name' => t('Text'),
+      'description' => t(''),
+    ),
+    'string' => array(
+      'name' => t('String'),
+      'description' => t(''),
+    ),
+    'integer' => array(
+      'name' => t('Integer'),
+      'description' => t(''),
+    ),
+    'float' => array(
+      'name' => t('Floating point number'),
+      'description' => t(''),
+    ),
+    'boolean' => array(
+      'name' => t('Boolean'),
+      'description' => t(''),
+    ),
+    'date' => array(
+      'name' => t('Date'),
+      'description' => t(''),
+    ),
+    'resource' => array(
+      'name' => t('Resource'),
+      'description' => t(''),
+    ),
+  );
+}
+
+/**
+ * Returns the current search keys for the search with id $id, if any.
+ */
+function apachesolr_rdf_search_keys($id) {
+  $id = urldecode($id);
+  $pos = strpos($_GET['q'], $id);
+  if ($pos === FALSE) {
+    return FALSE;
+  }
+  // Will automatically return FALSE when id isn't followed by something.
+  return substr($_GET['q'], $pos + strlen($id) + 1);
+}
+
+/**
+ * Completely wipes the index of the specified server.
+ */
+function apachesolr_rdf_clear_server($server) {
+  if (!_apachesolr_rdf_delete_by_query($server, '*:*')) {
+    return FALSE;
+  }
+
+  $ok = TRUE;
+  $result = db_query('SELECT id FROM {apachesolr_rdf_indexes} ' .
+      'WHERE server = %d', $server);
+  while ($row = db_fetch_array($result)) {
+    $ok = $ok && apachesolr_rdf_clear_index($row['id']);
+  }
+
+  return $ok;
+}
+
+/**
+ * Wipes the data of the specified index.
+ */
+function apachesolr_rdf_clear_index($index) {
+  $info = apachesolr_rdf_index_load($index);
+  if (!$info) {
+    return FALSE;
+  }
+  if (!_apachesolr_rdf_delete_by_query($info['server'], 'index:' . $index)) {
+    return FALSE;
+  }
+
+  return apachesolr_rdf_reindex_index($index);
+}
+
+/**
+ * Schedules the data of the specified index for re-indexing.
+ */
+function apachesolr_rdf_reindex_index($index) {
+  $info = apachesolr_rdf_index_load($index);
+  if (!$info) {
+    return FALSE;
+  }
+
+  apachesolr_rdf_update_index_data($info, NULL, TRUE);
+  return TRUE;
+}
+
+/**
+ * Deletes the specified server. This will wipe the server's index and delete
+ * all associated settings, indexes and searches.
+ */
+function apachesolr_rdf_delete_server($id) {
+  if (!_apachesolr_rdf_delete_by_query($id, '*:*')) {
+    drupal_set_message(t('The server could not be cleared before deleting. ' .
+        'You will have to do this manually.'), 'error');
+  }
+
+  db_query('DELETE FROM {apachesolr_rdf_resources} WHERE index_id IN ' .
+      '(SELECT i.id FROM {apachesolr_rdf_indexes} i WHERE i.server = %d)', $id);
+  db_query('DELETE FROM {apachesolr_rdf_indexes} WHERE server = %d', $id);
+  db_query('DELETE FROM {apachesolr_rdf_searches} WHERE server = %d', $id);
+  db_query('DELETE FROM {apachesolr_rdf_servers} WHERE id = %d', $id);
+
+  return TRUE;
+}
+
+/**
+ * Deletes the specified index definition and clears all data indexed by it.
+ */
+function apachesolr_rdf_delete_index($id) {
+  $info = apachesolr_rdf_index_load($id);
+  if (!$info) {
+    return FALSE;
+  }
+  if (!_apachesolr_rdf_delete_by_query($info['server'], 'index:' . $id)) {
+    return FALSE;
+  }
+
+  db_query('DELETE FROM {apachesolr_rdf_resources} WHERE index_id = %d', $id);
+  db_query('DELETE FROM {apachesolr_rdf_indexes} WHERE id = %d', $id);
+
+  return TRUE;
+}
+
+/**
+ * Deletes the specified search.
+ */
+function apachesolr_rdf_delete_search($id) {
+  db_query("DELETE FROM {apachesolr_rdf_searches} WHERE id = '%s'", $id);
+  menu_rebuild();
+
+  return TRUE;
+}
+
+/**
+ * Returns information about the server with the specified id.
+ */
+function apachesolr_rdf_server_load($id) {
+  $query = 'SELECT * FROM {apachesolr_rdf_servers} WHERE id = %d';
+  $info = db_fetch_array(db_query($query, $id));
+  if ($info) {
+    $info['schema'] = $info['schema_id'];
+    $info['schema_args'] = unserialize($info['schema_args']);
+    return $info;
+  }
+
+  watchdog('Apache Solr RDF', 'Unknown server with id @id.',
+      array('@id' => $id), WATCHDOG_ERROR);
+  return FALSE;
+}
+
+/**
+ * Returns information about the index with the specified id.
+ */
+function apachesolr_rdf_index_load($id) {
+  $query = 'SELECT i.id, i.name, i.description, i.server, i.resources, ' .
+      'i.cron_limit, i.options, i.enabled, s.schema_id "schema", ' .
+      's.schema_args FROM {apachesolr_rdf_indexes} i JOIN ' .
+      '{apachesolr_rdf_servers} s ON i.server = s.id WHERE i.id = %d';
+  $info = db_fetch_array(db_query($query, $id));
+  if ($info) {
+    $info['resources'] = unserialize($info['resources']);
+    $info['options'] = unserialize($info['options']);
+    $info['schema_args'] = unserialize($info['schema_args']);
+    return $info;
+  }
+
+  watchdog('Apache Solr RDF', 'Unknown index with id @id.',
+      array('@id' => $id), WATCHDOG_ERROR);
+  return FALSE;
+}
+
+/**
+ * Returns information about the search with the specified id.
+ */
+function apachesolr_rdf_search_load($id) {
+  $query = 'SELECT s.id, s.name, s.description, s.server, s.options, ' .
+      's.permission, s.enabled, server.schema_id "schema", ' .
+      'server.schema_args FROM {apachesolr_rdf_searches} s JOIN ' .
+      '{apachesolr_rdf_servers} server ON s.server = server.id WHERE ' .
+      "s.id = '%s'";
+  $info = db_fetch_array(db_query($query, $id));
+  if ($info) {
+    $info['options'] = unserialize($info['options']);
+    $info['schema_args'] = unserialize($info['schema_args']);
+    return $info;
+  }
+  else {
+    watchdog('Apache Solr RDF', 'Unknown search: @id.',
+        array('@id' => $id), WATCHDOG_ERROR);
+    return FALSE;
+  }
+}
+
+/**
+ * Returns information about the schema with the specified id.
+ */
+function apachesolr_rdf_schema_load($schema) {
+  $schemas = _apachesolr_rdf_schemas();
+  if (!isset($schemas[$schema])) {
+    watchdog('Apache Solr RDF', 'Unknown schema: @schema.',
+        array('@schema' => $schema), WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return $schemas[$schema];
+}
+
+//
+// "Private" helper functions
+//
+
+/**
+ * Returns an array of all schemas as exposed by hook_apachesolr_rdf_schemas.
+ */
+function _apachesolr_rdf_schemas() {
+  static $schemas = FALSE;
+  if ($schemas === FALSE) {
+    $schemas = module_invoke_all('apachesolr_rdf_schemas');
+  }
+  return $schemas;
+}
+
+/**
+ * Loads and returns the specified function for the specified schema, if it
+ * exists.
+ */
+function _apachesolr_rdf_get_schema_function($function, $schema) {
+  // Optional schema functions
+  $optional = array(
+    'schema_arguments_form' => TRUE,
+    'index_options_form' => TRUE,
+    'search_options_form' => TRUE,
+    'index_resources' => TRUE,
+  );
+
+  $schema = apachesolr_rdf_schema_load($schema);
+  if (!$schema || empty($schema[$function])) {
+    if (empty($schema[$function]) && empty($optional[$function])) {
+      watchdog('Apache Solr RDF', 'Unknown schema function "@function" for ' .
+          'schema "@schema".', array('@function' => $function,
+          '@schema' => $schema['name']), WATCHDOG_ERROR);
+    }
+    return FALSE;
+  }
+  $method = $schema[$function] + $schema;
+  $file = drupal_get_path('module', $method['module']) . '/' . $method['file'];
+  if (is_file($file)) {
+    include_once($file);
+  }
+  if (!function_exists($method['function'])) {
+    watchdog('Apache Solr RDF', 'The schema function "@function", as ' .
+        'specified by schema "@schema", could not be found.',
+        array('@function' => $method['function'],
+        '@schema' => $schema['name']), WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return $method['function'];
+}
+
+/**
+ * Returns the information for the specified datatype, if it exists.
+ */
+function _apachesolr_rdf_get_dynamic_type_info($type) {
+  static $types = NULL;
+
+  if (!isset($types)) {
+    $types = module_invoke_all('apachesolr_rdf_dynamic_datatypes');
+  }
+  if (isset($types[$type])) {
+    return $types[$type];
+  }
+  return FALSE;
+}
+
+/**
+ * Loads and returns the specified function for the specified datatype, if it
+ * exists.
+ */
+function _apachesolr_rdf_get_dynamic_type_function($function, $type) {
+  $info = _apachesolr_rdf_get_dynamic_type_info($type);
+  if (isset($info[$function])) {
+    $f = $info[$function];
+    if (!isset($f['function'])) {
+      if (is_string($f)) {
+        $f = array('function' => $f);
+      }
+      else {
+        return FALSE;
+      }
+    }
+    // Insert default values for 'module' and 'file' from outer array.
+    $f += $info;
+    // Include file, if one is specified
+    if (isset($f['file'])) {
+      if (isset($f['module'])) {
+        module_load_include('', $f['module'], $f['file']);
+      }
+      else {
+        require_once($f['file']);
+      }
+    }
+    return $f['function'];
+  }
+  return FALSE;
+}
+
+/**
+ * Return all indexes along with their options (or only enabled ones, if
+ * $only_enabled is set).
+ *
+ * If $cache_reset is set, clear the cached data instead (and don't return
+ * anything!).
+ */
+function _apachesolr_rdf_indexes($only_enabled = FALSE, $cache_reset = FALSE) {
+  static $indexes = array();
+  if ($cache_reset) {
+    $indexes = array();
+    return;
+  }
+  if (!isset($indexes[(int) $only_enabled])) {
+    if ($only_enabled && isset($indexes[FALSE])) {
+      // If we got all indexes, but only enabled ones are desired, we can take a
+      // shortcut, avoiding the db query
+      $indexes[TRUE] = array_map(
+          '_apachesolr_rdf_filter_enabled', $indexes[FALSE]);
+      return $indexes[TRUE];
+    }
+    $indexes[(int) $only_enabled] = array();
+    $query = 'SELECT i.id, i.name, i.description, i.server, i.resources, ' .
+        'i.cron_limit, i.options, i.enabled, s.schema_id "schema", ' .
+        's.schema_args FROM {apachesolr_rdf_indexes} i JOIN ' .
+        '{apachesolr_rdf_servers} s ON i.server = s.id';
+    if ($only_enabled) {
+      $query .= ' WHERE i.enabled = 1 ORDER BY i.name ASC';
+    }
+    else {
+      $query .= ' ORDER BY i.enabled DESC, i.name ASC';
+    }
+    $result = db_query($query);
+
+    while ($row = db_fetch_array($result)) {
+      $row['resources'] = unserialize($row['resources']);
+      $row['options'] = unserialize($row['options']);
+      $row['schema_args'] = unserialize($row['schema_args']);
+      $indexes[(int) $only_enabled][$row['id']] = $row;
+    }
+  }
+  return $indexes[(int) $only_enabled];
+}
+
+/**
+ * Return all searches along with their options (or only enabled ones, if
+ * $only_enabled is set).
+ *
+ * If $cache_reset is set, clear the cached data instead (and don't return
+ * anything!).
+ */
+function _apachesolr_rdf_searches($only_enabled = FALSE, $cache_reset = FALSE) {
+  static $searches = array();
+  if ($cache_reset) {
+    $searches = array();
+    return;
+  }
+  if (!isset($searches[(int) $only_enabled])) {
+    if ($only_enabled && isset($searches[FALSE])) {
+      // If we got all indexes, but only enabled ones are desired, we can take a
+      // shortcut, avoiding the db query
+      $searches[TRUE] = array_map(
+          '_apachesolr_rdf_filter_enabled', $searches[FALSE]);
+      return $searches[TRUE];
+    }
+    $searches[(int) $only_enabled] = array();
+    $query = 'SELECT s.id, s.name, s.description, s.server, s.options, ' .
+        's.permission, s.enabled, server.schema_id "schema", ' .
+        'server.schema_args FROM {apachesolr_rdf_searches} s JOIN ' .
+        '{apachesolr_rdf_servers} server ON s.server = server.id';
+    if ($only_enabled) {
+      $query .= ' WHERE s.enabled = 1 ORDER BY s.name ASC';
+    }
+    else {
+      $query .= ' ORDER BY s.enabled DESC, s.name ASC';
+    }
+    $result = db_query($query);
+
+    while ($row = db_fetch_array($result)) {
+      $row['options'] = unserialize($row['options']);
+      $row['schema_args'] = unserialize($row['schema_args']);
+      $searches[(int) $only_enabled][$row['id']] = $row;
+    }
+  }
+  return $searches[(int) $only_enabled];
+}
+
+/**
+ * Return all servers along with their options (or only enabled ones, if
+ * $only_enabled is set).
+ *
+ * If $cache_reset is set, clear the cached data instead (and don't return
+ * anything!).
+ */
+function _apachesolr_rdf_servers($only_enabled = FALSE, $cache_reset = FALSE) {
+  static $servers = array();
+  if ($cache_reset) {
+    $servers = array();
+    return;
+  }
+  if (!isset($servers[(int) $only_enabled])) {
+    if ($only_enabled && isset($servers[FALSE])) {
+      // If we got all indexes, but only enabled ones are desired, we can take a
+      // shortcut, avoiding the db query
+      $servers[TRUE] = array_map(
+          '_apachesolr_rdf_filter_enabled', $servers[FALSE]);
+      return $servers[TRUE];
+    }
+    $servers[(int) $only_enabled] = array();
+    $query = 'SELECT * FROM {apachesolr_rdf_servers}';
+    if ($only_enabled) {
+      $query .= ' WHERE enabled = 1 ORDER BY name ASC';
+    }
+    else {
+      $query .= ' ORDER BY enabled DESC, name ASC';
+    }
+    $result = db_query($query);
+
+    while ($row = db_fetch_array($result)) {
+      $row['schema'] = $row['schema_id'];
+      $row['schema_args'] = unserialize($row['schema_args']);
+      $servers[(int) $only_enabled][$row['id']] = $row;
+    }
+  }
+  return $servers[(int) $only_enabled];
+}
+
+/**
+ * Deletes documents from the specified server according to the given query.
+ *
+ * @return TRUE if the documents were successfully deleted, FALSE otherwise.
+ */
+function _apachesolr_rdf_delete_by_query($server, $query = '*:*') {
+  $info = apachesolr_rdf_server_load($server);
+  try {
+    $solr = apachesolr_get_solr($info['host'], $info['port'], $info['path']);
+    $solr->deleteByQuery($query);
+    $solr->commit();
+  }
+  catch (Exception $e) {
+    watchdog('Apache Solr RDF', check_plain($e->getMessage()), NULL,
+        WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Gets all defined dynamic fields for the specified server, along with options.
+ *
+ * Returns an associative array of field ids mapped to field data. Field data is
+ * an associative array with indices "id", "name", "uri", "type", "facet" and
+ * "multiValued".
+ *
+ * If $cache_reset is set, clear that server's field cache instead.
+ */
+function _apachesolr_rdf_get_dynamic_fields($server, $cache_reset = FALSE) {
+  static $fields = array();
+
+  $id = $server['id'];
+  if ($cache_reset) {
+    unset($fields[$id]);
+    return;
+  }
+
+  if (!isset($fields[$id])) {
+    $result = db_query('SELECT id, name, uri, type, facet, multiValued ' .
+        "FROM {apachesolr_rdf_dynamic_fields} WHERE server = '%s'", $id);
+    $fields[$id] = array();
+    while ($row = db_fetch_array($result)) {
+      $fields[$id][$row['id']] = $row;
+    }
+  }
+  return $fields[$id];
+}
+
+/**
+ * Retrieves all dynamic fields for the specified predicate.
+ */
+function _apachesolr_rdf_get_dynamic_fields_by_uri($fields, $uri) {
+  $ret = array();
+  foreach ($fields as $k => $v) {
+    if ($v['uri'] == $uri) {
+      $ret[$k] = $v;
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Returns an array of $info['cron_limit'] resources that need to be indexed
+ * (again) for the given indexing group.
+ */
+function _apachesolr_rdf_get_resources_to_index($info) {
+  $limit = $info['cron_limit'];
+  $result = db_query_range('SELECT uri FROM {apachesolr_rdf_resources} ' .
+      "WHERE index_id = %d AND changed = 1", $info['id'], 0, $limit);
+  $ret = array();
+  while ($row = db_fetch_array($result)) {
+    $ret[] = $row['uri'];
+  }
+  return $ret;
+}
+
+/**
+ * Return an URL representation of the specified server.
+ */
+function _apachesolr_rdf_server_url($info) {
+  return "http://{$info['host']}:{$info['port']}{$info['path']}";
+}
+
+/**
+ * Returns a count of all leaves (i.e., non-array values) contained in the
+ * specified array, or 1 if $var is no array.
+ */
+function _apachesolr_rdf_count_recursive($var) {
+  if (!is_array($var)) {
+    return 1;
+  }
+  $count = 0;
+  foreach ($var as $v) {
+    $count += _apachesolr_rdf_count_recursive($v);
+  }
+  return $count;
+}
+
+/**
+ * Returns TRUE iff $string starts with $prefix.
+ */
+function _apachesolr_rdf_starts_with($string, $prefix) {
+  if (substr($string, 0, strlen($prefix)) == $prefix) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Filters values with array element "enabled" set to TRUE.
+ */
+function _apachesolr_rdf_filter_enabled($value) {
+  if (is_array($value) && !empty($value['enabled'])) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Returns all path elements, beginning at the one specified by $index, in one
+ * string.
+ */
+function _apachesolr_rdf_path_tail($index) {
+  $v = explode('/', $_GET['q'], $index + 1);
+  if (count($v) <= $index) {
+    return '';
+  }
+  return $v[$index];
+}
+
+/**
+ * Dummy function for the t() calls used in apachesolr_rdf functions.
+ */
+function _apachesolr_rdf_dummy() {
+  t('Add new server');
+  t('Add new index');
+  t('Add new search');
+
+  t('Unknown server');
+  t('Unknown index');
+  t('Unknown search');
+
+  t('The server was successfully enabled.');
+  t('The server was successfully disabled.');
+  t('The index was successfully enabled.');
+  t('The index was successfully disabled.');
+  t('The search was successfully enabled.');
+  t('The search was successfully disabled.');
+
+  t('There are currently no indexes defined.');
+  t('There are currently no searches defined.');
+}

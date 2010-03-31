@@ -1,0 +1,16 @@
+; $Id: apachesolr_rdf.info,v 1.1.2.1 2009/08/14 20:36:06 drunkenmonkey Exp $
+
+name = Apache Solr RDF Integration
+description = A module which allows the indexing and searching of RDF data with Solr.
+core = 6.x
+package = Apache Solr
+dependencies[] = apachesolr
+dependencies[] = rdf
+dependencies[] = search
+
+; Information added by drupal.org packaging script on 2009-11-02
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "apachesolr_rdf"
+datestamp = "1257163310"
+

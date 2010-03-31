@@ -1,0 +1,322 @@
+<?php
+// $Id: apachesolr_rdf.install,v 1.1.2.11 2009/11/01 23:31:38 drunkenmonkey Exp $
+
+/**
+ * Implementation of hook_install().
+ */
+function apachesolr_rdf_install() {
+  // Create tables
+  drupal_install_schema('apachesolr_rdf');
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function apachesolr_rdf_enable() {
+  // Make sure we don't have stale data
+  db_query('DELETE FROM {apachesolr_rdf_resources}');
+
+  // Populate table
+  module_load_include('module', 'apachesolr_rdf');
+  foreach (_apachesolr_rdf_indexes(TRUE) as $info) {
+    apachesolr_rdf_update_index_data($info);
+  }
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function apachesolr_rdf_schema() {
+  $schema['apachesolr_rdf_resources'] = array(
+    'description' => t('Stores for each resource, whether it is indexed ' .
+        'already with its current triples.'),
+    'fields' => array(
+      'uri' => array(
+        'description' => t('The primary identifier for a resource.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'index_id' => array(
+        'description' => t('The {apachesolr_rdf_indexes}.id to which this ' .
+            'entry belongs.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'statements' => array(
+        'description' => t('The number of statements about this resource ' .
+            'that should be indexed on the server.'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => t('A flag indicating whether there are new triples ' .
+            'for this resource that should be indexed on this server.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'indexes' => array(
+      'changed' => array('changed'),
+      'index_id'   => array('index_id'),
+    ),
+    'primary key' => array('uri', 'index_id'),
+  );
+  $schema['apachesolr_rdf_servers'] = array(
+    'description' => t('Stores all configured servers.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('An integer identifying the server.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => t('A name to be displayed for the server.'),
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'description' => t("A string describing the server's use to users."),
+        'type' => 'text',
+      ),
+      'host' => array(
+        'description' => t("The server's host name."),
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'port' => array(
+        'description' => t("The server's port number."),
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+      ),
+      'path' => array(
+        'description' => t('The path to solr on this server.'),
+        'type' => 'varchar',
+        'length' => 40,
+        'not null' => TRUE,
+      ),
+      'schema_id' => array(
+        'description' => t('The {apachesolr_rdf_schemas}.id of the schema ' .
+            'used.'),
+        'type' => 'varchar',
+        'length' => 40,
+        'not null' => TRUE,
+      ),
+      'schema_args' => array(
+        'description' => t('An array of additional arguments to be passed ' .
+            'to schema functions for this server.'),
+        'type' => 'text',
+        'serialize' => TRUE,
+        'not null' => TRUE,
+      ),
+      'enabled' => array(
+        'description' => t('A flag indicating whether this server is enabled.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'indexes' => array(
+      'enabled' => array('enabled'),
+    ),
+    'unique keys' => array(
+      'host_url' => array('host', 'port', 'path'),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['apachesolr_rdf_indexes'] = array(
+    'description' => t('Stores the information what data should be indexed ' .
+        'on which server.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('An integer identifying the index.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => t('A name to be displayed for the index.'),
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'description' => t("A string describing the index' use to users."),
+        'type' => 'text',
+      ),
+      'server' => array(
+        'description' => t('The {apachesolr_rdf_servers}.id on which data ' .
+            'should be indexed.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'resources' => array(
+        'description' => t('Information for identifying the resources to be ' .
+            'stored in this index.'),
+        'type' => 'text',
+        'serialize' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cron_limit' => array(
+        'description' => t('Maximum number of resources to be indexed in one ' .
+            'cron run for this index.'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 50,
+      ),
+      'options' => array(
+        'description' => t('An array of additional arguments to be passed ' .
+            'to schema functions for this index.'),
+        'type' => 'text',
+        'serialize' => TRUE,
+        'not null' => TRUE,
+      ),
+      'enabled' => array(
+        'description' => t('A flag indicating whether this index is enabled.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'indexes' => array(
+      'enabled' => array('enabled'),
+      'server' => array('server'),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['apachesolr_rdf_searches'] = array(
+    'description' => t('Stores all available searches and their information.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('A unique string identifying the search.'),
+        'type' => 'varchar',
+        'length' => 30,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => t('A name to be displayed for the search.'),
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'description' => t("A string describing the search's purpose to " .
+            'users.'),
+        'type' => 'text',
+      ),
+      'server' => array(
+        'description' => t('The {apachesolr_rdf_servers}.id this search ' .
+            'should use.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'options' => array(
+        'description' => t('An array containing options for the search, e.g. ' .
+            'filters to be added to each query.'),
+        'type' => 'text',
+        'serialize' => TRUE,
+        'not null' => TRUE,
+      ),
+      'permission' => array(
+        'description' => t('The permission needed to access this search.'),
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+      ),
+      'enabled' => array(
+        'description' => t('A flag indicating whether this search is enabled.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'indexes' => array(
+      'enabled' => array('enabled'),
+      'server' => array('server'),
+    ),
+    'primary key' => array('id'),
+  );
+
+  // Table for fields in the "dynamic fields" schema.
+  $schema['apachesolr_rdf_dynamic_fields'] = array(
+    'description' => t('Stores the dynamic fields defined for each server.'),
+    'fields' => array(
+      'server' => array(
+        'description' => t('The {apachesolr_rdf_servers}.id this field ' .
+            'definition belongs to.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'id' => array(
+        'description' => t("The field's internal identifier, which is also " .
+            'used for constructing the Solr field name.'),
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => t("The field's displayed name."),
+        'type' => 'varchar',
+        'length' => 50,
+      ),
+      'uri' => array(
+        'description' => t("The predicate's URI."),
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => t("The field's type."),
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'facet' => array(
+        'description' => t('Whether to create a facet for this field.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ),
+      'multiValued' => array(
+        'description' => t('Whether this field may have multiple values.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'server' => array('server'),
+      'uri' => array('uri'),
+    ),
+    'primary key' => array('server', 'id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall()
+ */
+function apachesolr_rdf_uninstall() {
+  variable_del('apachesolr_rdf_updated_resources');
+  // Delete servers
+  foreach(_apachesolr_rdf_servers() as $server) {
+    apachesolr_rdf_delete_server($server['id']);
+  }
+  // Remove tables.
+  drupal_uninstall_schema('apachesolr_rdf');
+}

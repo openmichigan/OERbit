@@ -1,0 +1,12 @@
+These are just the little TODOs, bigger ones (like facets, …) will have entries
+in the issue queue.
+
+* Example search queries in README (maybe seperate READMEs for different
+  schemas?)
+* Provide richer search results
+* Use theme function for theming single search results according to type or
+  other properties
+* Index resources with correct data types in "dynamic fields" schema
+* Is it useful to be able to create the same index on several servers? If not,
+  resources to be indexed could/should be assigned directly to servers.
+* Rename "index" to "index component" for clarity
