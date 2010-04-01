@@ -56,6 +56,9 @@ function zip_upload_form_submit($form, &$form_state) {
   $file = file_save_upload('zip_upload', array(), file_directory_path());
   if ($file != 0) {
     zip_upload_process($file, $form_state['values']['nid']);
+    drupal_get_messages();
+    drupal_set_message(t('Your upload has successfully completed. Click !here to view your files', array('!here' => l('here','node/' . $form_state['values']['nid'] . '/materials', array('fragment' => 'Unknown')))));
+    drupal_goto('node/' . $form_state['values']['nid'] . '/materials');
   }
   else {
     form_set_error('zip_upload', t('Failed to save the file.'));
@@ -168,8 +171,12 @@ function zip_upload_create_material($file, $nid) {
     $form_state['values']['field_file'][0]['fid'] = $file->fid;
     $form_state['values']['field_file'][0]['list'] = 1;
   }
-  $form_state['values']['field_creators'][0]['value'] = $parent->field_creators[0]['value'];
-  $form_state['values']['field_contributors'][0]['value'] = $parent->field_contributors[0]['value'];
+  foreach ($parent->field_creators as $key => $creator) {
+    $form_state['values']['field_creators'][$key]['value'] = $creator['value'];
+  }
+  foreach ($parent->field_contributors as $key => $contributors) {
+    $form_state['values']['field_contributors'][$key]['value'] = $contributors['value'];
+  }
   $form_state['values']['field_publisher'][0]['value'] = $parent->field_publisher[0]['value'];
   _drupal_execute('material_node_form', $form_state, (object) $node);
   // Reload node to save Creative Commons license.
