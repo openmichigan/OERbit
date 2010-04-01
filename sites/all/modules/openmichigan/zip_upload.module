@@ -77,17 +77,29 @@ function zip_upload_process(&$file, $nid) {
   }
   while($zip_content = zip_read($zip)) {
     $zip_file = zip_entry_name($zip_content);
-    if(strpos($zip_file, '.')) {
+    $zip_name = basename ($zip_file);
+    if (preg_match ('/__MACOSX/', $zip_file) || preg_match ('/^\.|~$/', $zip_name)) {
+      //
+      // skip macos special directories, dot or tilde files...
+      //
+    }
+    else if (preg_match ('/\/$/', $zip_file)) {
+    	//
+    	// it's a directory path
+    	//
+    	@mkdir($target . '/' . $zip_file);
+    } else {
+      //
+      // regular file, okay to unzip it...
+      //
       $data = zip_entry_read($zip_content, zip_entry_filesize($zip_content));
       $target_path = $target . '/' . $zip_file;
       $resource = zip_upload_save_file($data, $target_path, $zip_file, $zip_content);
       zip_upload_create_material($resource, $nid);
       unset($resource);
-    } 
-    else {
-      @mkdir($target . '/' . $zip_file);
     }
   }
+  unlink ($file->filepath);
 }
 
 /**
@@ -107,7 +119,7 @@ function zip_upload_save_file($data, $target_path, $zip_file, $zip_content) {
     $resource->destination = $resource->filepath;
     $resource->filesize = zip_entry_filesize($zip_content);
     // Rename potentially executable files, to help prevent exploits
-    if (preg_match('/\.(php|pl|py|cgi|asp|js)$/i', $resource->filename) && (substr($resource->filename, -4) != '.txt')) {      
+    if (preg_match('/\.(php|pl|py|cgi|asp|js)$/i', $resource->filename) && (substr($resource->filename, -4) != '.txt')) {
       $resource->filemime = 'text/plain';
       $resource->filepath .= '.txt';
       $resource->filename .= '.txt';
