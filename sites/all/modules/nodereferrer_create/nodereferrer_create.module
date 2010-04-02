@@ -123,6 +123,9 @@ function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
   if (variable_get('nodereferrer_redirect_after_create', 0)) {
     $destination = array('query' => array('destination' => 'node/' . $node->nid));
   }
+  if (!is_array($node->referrers)) {
+    return $menu_items;
+  }
   foreach($node->referrers as $i => $ref) {
     $items = array();
     
@@ -200,6 +203,9 @@ function _nodereferrer_create_nodeapi_view_reference(&$node, $teaser, $page) {
   $destination = array();
   if (variable_get('nodereferrer_redirect_after_create', 0)) {
     $destination = array('query' => array('destination' => 'node/' . $node->nid));
+  }
+  if (!is_array($node->referrers)) {
+    return $menu_items;
   }
   foreach($node->reference_fields as $i => $ref) {
     $multiple = $ref['multiple'] == 1;
