@@ -18,22 +18,26 @@ function material_resource_type() {
   $("#edit-field-link-0-url").attr("disabled", "disabled");
   $("#edit-field-link-0-url-wrapper").hide();
   switch ($("#edit-field-resource-type-value").val()) {
-    case "file":
+    case 'file':
       $("input[name^='files\[field_file_']").removeAttr("disabled");
       $("#field-file-items").show();
       break;
-    case "image":
+    case 'image':
       $("#edit-field-image-0-upload").removeAttr("disabled");
       $("#edit-field-image-0-wrapper").show();
       break;
-    case "video":
+    case 'video':
       $("#edit-field-video-0-embed").removeAttr("disabled");
       $("#edit-field-video-0-embed-wrapper").show();
       $("#edit-field-video-0-embed-wrapper + .form-item").show();
       break;
-    case "link":
+    case 'link':
       $("#edit-field-link-0-url").removeAttr("disabled");
       $("#edit-field-link-0-url-wrapper").show();
+      break;
+    case 'audio':
+      $("input[name^='files\[field_file_']").removeAttr("disabled");
+      $("#field-file-items").show();
       break;
   }
 }

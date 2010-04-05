@@ -121,7 +121,7 @@ function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
   $menu_items = array();
   $destination = array();
   if (variable_get('nodereferrer_redirect_after_create', 0)) {
-    $destination = array('query' => array('destination' => 'node/' . $node->nid));
+    $destination = array('query' => array('destination' => 'node/' . $node->nid . '/' . arg(2)));
   }
   if (!is_array($node->referrers)) {
     return $menu_items;
@@ -202,7 +202,7 @@ function _nodereferrer_create_nodeapi_view_reference(&$node, $teaser, $page) {
   $menu_items = array();
   $destination = array();
   if (variable_get('nodereferrer_redirect_after_create', 0)) {
-    $destination = array('query' => array('destination' => 'node/' . $node->nid));
+    $destination = array('query' => array('destination' => 'node/' . $node->nid . '/' . arg(2)));
   }
   if (!is_array($node->referrers)) {
     return $menu_items;

@@ -2,47 +2,15 @@
 // $Id$
 
 /**
- * Implementation of hook_menu().
+ * Implementation of hook_menu_alter().
  */
-function course_menu() {
-  $items = array();
-  $items['node/%node/overview'] = array(
-    'title' => 'Overview',
-    'page callback' => 'course_display',
-    'page arguments' => array(1, 2),
-    'access callback' => 'course_local_task_access',
-    'access arguments' => array(1, 'overview'),
-    'weight' => -10,
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-  $items['node/%node/sessions'] = array(
-    'title' => 'Sessions',
-    'page callback' => 'course_display',
-    'page arguments' => array(1, 2),
-    'access callback' => 'course_local_task_access',
-    'access arguments' => array(1, 'sessions'),
-    'weight' => -9,
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items['node/%node/materials'] = array(
-    'title' => 'Materials',
-    'page callback' => 'course_display',
-    'page arguments' => array(1, 2),
-    'access callback' => 'course_local_task_access',
-    'access arguments' => array(1, 'materials'),
-    'weight' => -9,
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items['node/%node/highlights'] = array(
-    'title' => 'Highlights',
-    'page callback' => 'course_display',
-    'page arguments' => array(1, 2),
-    'access callback' => 'course_local_task_access',
-    'access arguments' => array(1, 'highlights'),
-    'weight' => -9,
-    'type' => MENU_LOCAL_TASK,
-  );
-  return $items;
+function course_menu_alter(&$items) {
+  $items['node/%node/view']['weight'] = -10;
+  $items['node/%node/edit']['weight'] = -9;
+  $items['node/%node/revisions']['weight'] = -8;
+  $items['node/%node/accessibility']['weight'] = -7;
+  $items['node/%node/track']['weight'] = -6;
+  $items['node/%node/nodereferrer_create_content']['access callback'] = FALSE;
 }
 
 /**
@@ -52,44 +20,29 @@ function course_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
     case 'list':
       $blocks['course-feed'] = array('info' => 'Course Feed');
+      $blocks['course-navigation'] = array('info' => 'Course Navigation');
       return $blocks;
     case 'view':
-      $block = array(
-        'subject' => t('Course Feed'),
-        'content' => course_get_feed_link(),
-      );
-      return $block;
+      switch ($delta) {
+        case 'course-feed':
+          $block = array(
+            'subject' => t('Course Feed'),
+            'content' => course_get_feed_link(),
+          );
+          return $block;
+        case 'course-navigation':
+          if (arg(0) == 'node' && is_numeric(arg(1))) {
+            $course = node_load(arg(1));
+            if ($course->type == 'course') {
+              $block = array(
+                'subject' => t('Course Navigation'),
+                'content' => course_get_navigation_links($course),
+              );
+              return $block;
+            }
+          }
+      }
   }
-}
-
-/**
- * Determines whether the current node is a course.
- */
-function course_local_task_access($node, $section) {
-  if ($node->type == 'course') {
-    switch ($section) {
-      case 'overview':
-        //return !empty($node->field_course_information);
-        return FALSE;
-      case 'sessions':
-        return !empty($node->field_course_sessions);
-      case 'materials':
-        return !empty($node->field_course_materials);
-      case 'highlights':
-        return !empty($node->field_course_highlights);
-      default:
-        return TRUE;
-    }
-  }
-  return FALSE;
-}
-
-/**
- * Display all the course information.
- */
-function course_display(&$node, $section) {
-  drupal_set_title($node->title);
-  return node_view($node, false, true, true);
 }
 
 /**
@@ -102,10 +55,88 @@ function course_get_feed_link() {
   if ($alias && in_array($node->type, array('course', 'unit'))) {
     $link = '<a href="/' . $alias . '" class="feed-icon">' . $icon . '</a>';
   }
+  elseif (arg(0) == 'taxonomy') {
+    $link = '<a href="/' . $_GET['q'] . '/0/feed" class="feed-icon">' . $icon . '</a>';
+  }
   else {
     $link = '<a href="/feed" class="feed-icon">' . $icon . '</a>';
   }
   return '<span class="print_rss">' . $link . '</span>';
+}
+
+/**
+ * Display the course navigation tabs.
+ */
+function course_get_navigation_links(&$course) {
+  $message = '';
+  $tabs = array();
+  if (user_is_anonymous()) {
+    if (is_array($course->field_course_highlights[0]['items'])
+    || is_array($course->field_course_materials[0]['items'])
+    || is_array($course->field_course_sessions[0]['items'])) {
+      $tabs[] = array('data' => l(t('Overview'), $course->path), 'class' => course_navigation_active($course->path));
+    }
+    if (is_array($course->field_course_highlights[0]['items'])) {
+      $tabs[] = array('data' => l(t('Highlights'), $course->path . '/highlights'), 'class' => course_navigation_active($course->path . '/highlights'));
+    }
+    if (is_array($course->field_course_materials[0]['items'])) {
+      $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials'));
+    }
+    if (is_array($course->field_course_sessions[0]['items'])) {
+      $tabs[] = array('data' => l(t('Sessions'), $course->path . '/sessions'), 'class' => course_navigation_active($course->path . '/sessions'));
+    }
+  }
+  else {
+    if (user_access('edit revisions')
+    && (!is_null(course_navigation_active($course->path . '/highlights'))
+    || !is_null(course_navigation_active($course->path . '/materials'))
+    || !is_null(course_navigation_active($course->path . '/sessions')))) {
+      $message = '<div class="help">' . t('The navigation tabs above are specific to the course, not its sub-elements.') . '</div>';
+    }
+    $tabs[] = array('data' => l(t('Overview'), $course->path), 'class' => course_navigation_active($course->path) . course_navigation_empty($course, 'overview'));
+    $tabs[] = array('data' => l(t('Highlights'), $course->path . '/highlights'), 'class' => course_navigation_active($course->path . '/highlights') . course_navigation_empty($course, 'highlights'));
+    $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials') . course_navigation_empty($course, 'materials'));
+    $tabs[] = array('data' => l(t('Sessions'), $course->path . '/sessions'), 'class' => course_navigation_active($course->path . '/sessions') . course_navigation_empty($course, 'sessions'));
+  }
+  return $message . theme_item_list($tabs, NULL, 'ul', array('class' => 'course-navigation links inline'));
+}
+
+/**
+ * Determines the active menu item.
+ */
+function course_navigation_active($path) {
+  if (drupal_get_path_alias($_GET['q']) == $path) {
+    return 'active';
+  }
+  return NULL;
+}
+
+/**
+ * Determines whether the tab contains information.
+ */
+function course_navigation_empty(&$course, $section = 'overview') {
+  switch ($section) {
+    case 'overview':
+      if (!is_array($course->field_course_information[0]['items'])) {
+        return ' empty';
+      }
+      break;
+    case 'highlights':
+      if (!is_array($course->field_course_highlights[0]['items'])) {
+        return ' empty';
+      }
+      break;
+    case 'materials':
+      if (!is_array($course->field_course_materials[0]['items'])) {
+        return ' empty';
+      }
+      break;
+    case 'sessions':
+      if (!is_array($course->field_course_sessions[0]['items'])) {
+        return ' empty';
+      }
+      break;
+  }
 }
 
 /**
@@ -144,11 +175,15 @@ function course_form_alter(&$form, &$form_state, $form_id) {
   if (!in_array($form_id, array('information_node_form', 'session_node_form', 'material_node_form', 'other_node_form'))) {
     return;
   }
-  if ($form['#node']->nid) {
-    return;
-  }
+  $parent = NULL;
   if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'create_referrer') {
     $parent = node_load(arg(1));
+  }
+  elseif (!empty($form['field_course_reference'][0]['#default_value']['nid'])) {
+    $parent = node_load($form['field_course_reference'][0]['#default_value']['nid']);
+  }
+  // Pre-populate course information
+  if (!$form['#node']->nid) {
     $form_state['values']['creativecommons']['select_license_form']['cc_license_uri'] = $parent->cc->uri;
     $form_state['values']['creativecommons']['metadata']['attributionName'] = $parent->cc->metadata['attributionName'];
     $form_state['values']['creativecommons']['metadata']['attributionURL'] = $parent->cc->metadata['attributionURL'];
@@ -168,10 +203,101 @@ function course_form_alter(&$form, &$form_state, $form_id) {
     $form['creativecommons']['metadata']['creator']['#default_value'] = $parent->cc->metadata['creator'];
     $form['creativecommons']['metadata']['rights']['#default_value'] = $parent->cc->metadata['rights'];
     $form['creativecommons']['metadata']['date']['#default_value'] = $parent->cc->metadata['date'];
-    $form['field_creators'][0]['#default_value']['value'] = $parent->field_creators[0]['value'];
-    $form['field_creators'][1]['#default_value']['value'] = $parent->field_creators[1]['value'];
-    $form['field_contributors'][0]['#default_value']['value'] = $parent->field_contributors[0]['value'];
-    $form['field_contributors'][1]['#default_value']['value'] = $parent->field_contributors[1]['value'];
+    foreach ($parent->field_creators as $key => $creator) {
+      $form['field_creators'][$key]['#default_value']['value'] = $creator['value'];
+    }
+    foreach ($parent->field_contributors as $key => $contributors) {
+      $form['field_contributors'][$key]['#default_value']['value'] = $contributors['value'];
+    }
     $form['field_publisher'][0]['#default_value']['value'] = $parent->field_publisher[0]['value'];
+  }
+  // Populate Materials Reference checkboxes
+  if (isset($form['field_content_reference'])) {
+    $form['field_content_reference']['#after_build'][] = 'course_materials_reference';
+  }
+  // Add Cancel to the form
+  $form['buttons']['cancel'] = array(
+    '#type' => 'markup',
+    '#value' => l(t('Cancel'), 'node/' . $parent->nid),
+    '#weight' => 999,
+  );
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function course_form_course_node_form_alter(&$form, &$form_state) {
+  $form['#after_build'][] = 'course_populate_fields';
+  // Add Cancel to the form
+  $destination = '<front>';
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'create_referrer') {
+    $destination = 'node/' . arg(1);
+  }
+  elseif ($form['#node']->nid) {
+    $destination = 'node/' . $form['#node']->nid;
+  }
+  $form['buttons']['cancel'] = array(
+    '#type' => 'markup',
+    '#value' => l(t('Cancel'), $destination),
+    '#weight' => 999,
+  );
+}
+
+/**
+ * Dynamically populate fields.
+ */
+function course_populate_fields($form) {
+  drupal_add_js(drupal_get_path('module', 'course') . '/course.js');
+  return $form;
+}
+
+/**
+ * List of materials to reference.
+ */
+function course_materials_reference($element) {
+  $course = NULL;
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+    if ($node->type == 'course') {
+      $course = node_load($node->nid);
+    }
+    elseif (!empty($node->field_course_reference[0]['nid'])) {
+      $course = node_load($node->field_course_reference[0]['nid']);
+    }
+  }
+  $query = db_query('SELECT DISTINCT(n.nid) AS nid, r.title AS title FROM {content_field_course_reference} n INNER JOIN {node_revisions} r ON n.nid = r.nid WHERE n.field_course_reference_nid = %d', $course->nid);
+  $materials = array();
+  while ($material = db_fetch_object($query)) {
+    $materials[$material->nid] = $material->title;
+  }
+  foreach ($element['nid']['nid'] as $nid => $value) {
+    if (is_numeric($nid)) {
+      if (!in_array($nid, array_keys($materials))) {
+        unset($element['nid']['nid'][$nid]);
+      }
+      else {
+        $material = node_load($nid);
+        $element['nid']['nid'][$nid]['#title'] = '<span title="' . date('F j, Y', $material->created) . ' - '
+          . $material->field_link[0]['url']
+          . $material->field_file[0]['filename']
+          . $material->field_image[0]['filename']
+          . $material->field_video[0]['value'] . '">'
+          . ucfirst($material->field_resource_type[0]['value']) . ' - ' . $material->title . '</span>';
+      }
+    }
+  }
+  $element['nid']['nid']['#options'] = $materials;
+  return $element;
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function course_cron() {
+  $query = db_query('SELECT n.vid AS vid, n.changed AS changed FROM {node} n INNER JOIN {content_type_course} c ON n.vid = c.vid WHERE c.field_course_featured_value = "Yes"');
+  while ($featured = db_fetch_object($query)) {
+    if (date('U', strtotime('-6 months')) > $featured->changed) {
+      db_query('UPDATE {content_type_course} SET field_course_featured_value = "No" WHERE vid = %d', $featured->vid);
+    }
   }
 }

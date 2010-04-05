@@ -12,7 +12,15 @@ function material_form_material_node_form_alter(&$form, &$form_state) {
  * Prevents the user from selecting multiple resource types.
  */
 function material_resource_type($form) {
-  //dpm($form['field_resource_type']);
   drupal_add_js(drupal_get_path('module', 'material') . '/material.js');
   return $form;
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function material_form_views_bulk_operations_form__1_alter(&$form, &$form_state) {
+  if (is_array($form['operation']) || is_array($form['confirm'])) {
+    $form['#attributes']['class'] = 'views-bulk-operation-form';
+  }
 }

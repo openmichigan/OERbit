@@ -1,0 +1,112 @@
+<?php
+// $Id: workflow_post_install.module,v 1.2 2009/04/20 04:45:16 rdeboer Exp $
+
+/**
+ * @file
+ * Defines a link to make content created before the workflow module was
+ * installed accessible and usable in a workflow. Should be used once only
+ * after the workflow module has been installed.
+ * Deliberately no menu created for this link. Invoke by typing the following
+ * URI in your browser:
+ *
+ *   .../content/set_workflow_state/<state>
+ *
+ * where <state> is the name of an existing state you want to put all content
+ * (provided it is of a type that participates in workflows, i.e. as set on the
+ * Administer >> Site building >> Workflow page).
+ * Note, the logged-in user must have the "administer nodes" permission to
+ * be authorised to use this link.
+ *
+ * WARNING: this action cannot be undone
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function workflow_post_install_menu() {
+  $items = array();
+
+  // "Secret" link to place all stateless nodes in a workflow state, which is
+  // supplied by name as the last arg of the URL, like "in-review":
+  //
+  //   /content/set_workflow_state/in-review
+  //
+  $items['content/set_workflow_state'] = array(
+    'page callback' => 'workflow_create_state_for_stateless_nodes',
+    'access arguments' => array('administer nodes'),
+    'type' => MENU_CALLBACK
+  );
+  return $items;
+}
+
+/**
+ * Create states for all nodes that do not have a workflow state assigned.
+ *
+ * The state name is taken from the tail end of the URL, e.g:
+ *   /content/set_workflow_state/in-draft
+ *
+ * Note, this function assumes the state name is unique amongst all workflows
+ * defined.
+ * WARNING: be careful, this action cannot be undone!
+ */
+function workflow_create_state_for_stateless_nodes() {
+  // Get workflow state id from last argument of URL and look up associated id.
+  $state_name = end(arg());
+  $count = 0;
+  $sid = db_result(db_query("SELECT sid FROM {workflow_states} WHERE state='%s'", $state_name));
+  if (empty($sid)) {
+    drupal_set_message(t('Invalid workflow state: "@state"', array('@state' => $state_name)), 'error');
+  }
+  else {
+    $count = _create_workflow_state_for_nodes($sid);
+    if ($count > 0) {
+      drupal_set_message(t('The content access permissions need to be rebuilt. Please visit <a href="@rebuild-permissions-page">this page</a>.', array('@rebuild-permissions-page' => url('admin/content/node-settings/rebuild'))), 'error');
+    }
+    else {
+      drupal_set_message(t('All workflow-related content already has states assigned.'), 'warning');
+    }
+  }
+  return '<p>'. t('<strong>!count node(s) were put in the "@state" state.</strong>', array('!count' => $count, '@state' => $state_name)) .'</p>';
+}
+
+/**
+ * Put nodes that are in 'No state' (AND are of a type that participates in
+ * workflows) in the supplied workflow state.
+ * The node's uid is used as the uid "owning" the workflow state.
+ *
+ * @param $sid
+ *  The workflow state id as used in the workflow_states table
+ * @return
+ *  The number of nodes that had a state created.
+ */
+function _create_workflow_state_for_nodes($sid) {
+  $now = time();
+  $count = 0;
+  $result = db_query('SELECT n.nid, n.uid, ws.state FROM {node} n INNER JOIN {workflow_type_map} wtm ON n.type=wtm.type LEFT JOIN {workflow_node} wn ON n.nid=wn.nid LEFT JOIN {workflow_states} ws ON wn.sid=ws.sid WHERE wtm.wid > 0');
+  while ($node = db_fetch_object($result)) {
+    if (empty($node->state)) { // i.e. 'No state'
+      if (_create_workflow_state_for_node($node->nid, $sid, $node->uid, $now)) {
+        $count++;
+      }
+    }
+  }
+  return $count;
+}
+
+/**
+ * Put a node in the supplied workflow state.
+ *
+ * @param $nid
+ *  Node id of the node.
+ * @param $sid
+ *  The workflow state id as used in the workflow_states table
+ * @param $uid
+ *  The id of the user that put the node in this state; defaults to 1 i.e. admin
+ * @param $stamp
+ *  The time at which this supposedly happened
+ * @return
+ *  boolean indicating whether SQL executed successfully
+ */
+function _create_workflow_state_for_node($nid, $sid, $uid = 1, $stamp = 0) {
+  return db_query('INSERT INTO {workflow_node} (nid, sid, uid, stamp) VALUES (%d, %d, %d, %d)', $nid, $sid, $uid, $stamp);
+}

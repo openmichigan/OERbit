@@ -1,0 +1,13 @@
+; $Id: workflow_post_install.info,v 1.2 2009/04/20 04:45:16 rdeboer Exp $
+name = Workflow post install
+description = Allows you to put workflow-related content in a valid state after Workflow has been enabled.
+dependencies[] = workflow
+package = Workflow
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-04-20
+version = "6.x-1.1"
+core = "6.x"
+project = "workflow_post_install"
+datestamp = "1240203373"
+

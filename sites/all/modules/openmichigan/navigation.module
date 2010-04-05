@@ -25,14 +25,16 @@ function navigation_block($op = 'list', $delta = 0, $edit = array()) {
  */
 function navigation_display() {
   $node = node_load(arg(1));
+  $node->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $node->nid))->title;  
   $menu = '';
   $attributes = array('class' => '');
   switch ($node->type) {
     case 'course':
       $node = node_load($node->field_parent_unit[0]['nid']);
+      $node->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $node->nid))->title;
     case 'unit':
       $attributes['class'] = 'navigation-schools-colleges';
-      $menu .= theme_item_list(array('data' => l('All Schools & Colleges', 'education/schools-colleges')), NULL, 'ul', $attributes);
+      $menu .= theme_item_list(array('data' => l(t('All Academic Units'), 'education/schools-colleges')), NULL, 'ul', $attributes);
       $parents = array();
       $siblings = array();
       navigation_get_parents($node, $parents, $node->nid);
@@ -49,6 +51,7 @@ function navigation_display() {
         $attributes['class'] = 'navigation-current-unit';
         foreach ($siblings as $key => $values) {
           $item = node_load($key);
+          $item->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $item->nid))->title;
           if (!empty($item->field_unit_top[0]['nid'])) {
             $attributes['class'] = 'navigation-top-unit';
           }
@@ -59,14 +62,14 @@ function navigation_display() {
     default:
       $path = drupal_get_path_alias($_GET['q']);
       $path = explode('/', $path);
-      if ($path[0] == 'education') {
+      //if ($path[0] == 'education') {
         $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL AND status=1 ORDER BY node.title ASC');
         $children = array();
         while ($top = db_fetch_array($query)) {
           $children[$top['nid']] = l($top['title'], 'node/' . $top['nid']);
         }
         $menu .= theme_item_list($children, NULL, 'ul', array('class' => 'navigation-academic-sub-units'));
-      }
+      //}
       break;
   }
   return $menu;
@@ -83,6 +86,7 @@ function navigation_get_parents(&$node, &$parents, $nid) {
   }
   elseif (!empty($node->field_parent_unit[0]['nid'])) {
     $parent = node_load($node->field_parent_unit[0]['nid']);
+    $parent->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $parent->nid))->title;
     if ($node->nid != $nid) {
       $parents[$node->nid] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-units')));
     }
@@ -97,6 +101,7 @@ function navigation_get_siblings(&$node) {
   $siblings = array();
   if (!empty($node->field_parent_unit[0]['nid'])) {
     $parent = node_load($node->field_parent_unit[0]['nid']);
+    $parent->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $parent->nid))->title;
     if (!empty($parent->field_unit_sub_unit[0]['items'])) {
       foreach ($parent->field_unit_sub_unit[0]['items'] as $sibling) {
         $siblings[$sibling['nid']]['data'] = l($sibling['title'], 'node/' . $sibling['nid'], array('attributes' => array('class' => 'navigation-siblings')));
@@ -123,6 +128,7 @@ function navigation_get_children(&$node) {
       else {
         $attributes['class'] = 'navigation-courses';
       }
+      $item['title'] = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $item['nid']))->title;
       $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
   }

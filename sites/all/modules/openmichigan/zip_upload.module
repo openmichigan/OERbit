@@ -13,7 +13,7 @@ function zip_upload_menu() {
     'page arguments' => array('zip_upload_form', 1),
     'access callback' => 'zip_upload_access',
     'access arguments' => array(1, 'create material content'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
   );
   return $items;
 }

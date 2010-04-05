@@ -745,7 +745,7 @@ function creativecommons_get_licenses($options = NULL, $value_as_type = FALSE) {
   // License classes
   $licenses[t('Creative Commons')] = array();
   $licenses[t('Public Domain')] = array();
-  //$licenses[t('Software')] = array(); // victor.kareh
+  //$licenses[t('Software')] = array(); // switchback
 
   // Manual adjustments for 'standard' class
   $parser = xml_parser_create();
@@ -803,9 +803,9 @@ function creativecommons_license_sort($x, $y) {
     'by-nc' => 5,
     'by-nc-sa' => 6,
     'by-nc-nd' => 7,
-    //'gpl' => 8, // victor.kareh
-    //'lgpl' => 9, // victor.kareh
-    //'bsd' => 10, // victor.kareh
+    //'gpl' => 8, // switchback
+    //'lgpl' => 9, // switchback
+    //'bsd' => 10, // switchback
   );
 
   // Need to extract types
@@ -2004,7 +2004,7 @@ function creativecommons_user($op, &$edit, &$account, $category = NULL) {
       $form['creativecommons_user_defaults']['license_type'] = array(
         '#type' => 'select',
         '#title' => t('License type'),
-        '#default_value' => $account->creativecommons['license_type'],
+        '#default_value' => !empty($account->creativecommons['license_type']) ? $account->creativecommons['license_type'] : 'site', // switchback case #1813
         '#options' => $available_license_types,
         '#description' => t('Select your default license type for new content.') .' '. t('If none set, site default will be used.'),
       );
@@ -2030,7 +2030,7 @@ function creativecommons_user($op, &$edit, &$account, $category = NULL) {
       // Load fields for query
       $fields = array('uid', 'license_type', 'jurisdiction');
       $values = array('%d', "'%s'", "'%s'");
-      $args = array($account->uid, $edit['license_type'], $edit['jurisdiction']);
+      $args = array($account->uid, (!empty($edit['license_type']) ? $edit['license_type'] : 'site'), $edit['jurisdiction']); // switchback case #1813
 
       // Load available user specific metadata fields
       foreach (array('attributionName', 'attributionURL') as $key) {
