@@ -51,7 +51,6 @@ function navigation_display() {
         $attributes['class'] = 'navigation-current-unit';
         foreach ($siblings as $key => $values) {
           $item = node_load($key);
-          $item->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $item->nid))->title;
           if (!empty($item->field_unit_top[0]['nid'])) {
             $attributes['class'] = 'navigation-top-unit';
           }
@@ -62,14 +61,24 @@ function navigation_display() {
     default:
       $path = drupal_get_path_alias($_GET['q']);
       $path = explode('/', $path);
-      //if ($path[0] == 'education') {
-        $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL AND status=1 ORDER BY node.title ASC');
+      if ($path[0] == 'education' || (arg(0) == 'node' && arg(2) == 'edit')) {
+        global $user;
+        if (user_is_anonymous()) {
+          $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL AND status=1 ORDER BY node.sticky ASC, node.title ASC');
+        }
+        else {
+          $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL ORDER BY node.sticky ASC, node.title ASC');
+        }
         $children = array();
         while ($top = db_fetch_array($query)) {
-          $children[$top['nid']] = l($top['title'], 'node/' . $top['nid']);
+          $status = '';
+          if (!node_load($top['nid'])->status) {
+            $status = 'unpublished';
+          }
+          $children[$top['nid']] = l($top['title'], 'node/' . $top['nid'], array('attributes' => array('class' => $status)));
         }
         $menu .= theme_item_list($children, NULL, 'ul', array('class' => 'navigation-academic-sub-units'));
-      //}
+      }
       break;
   }
   return $menu;
@@ -81,14 +90,20 @@ function navigation_display() {
 function navigation_get_parents(&$node, &$parents, $nid) {
   if (!empty($node->field_unit_top[0]['nid'])) {
     if ($node->nid != $nid) {
-      $parents[$node->nid] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-top')));
+      if (!$node->status) {
+        $status = ' unpublished';
+      }
+      $parents[$node->nid] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-top' . $status)));
     }
   }
   elseif (!empty($node->field_parent_unit[0]['nid'])) {
     $parent = node_load($node->field_parent_unit[0]['nid']);
     $parent->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $parent->nid))->title;
     if ($node->nid != $nid) {
-      $parents[$node->nid] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-units')));
+      if (!$node->status) {
+        $status = ' unpublished';
+      }
+      $parents[$node->nid] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-units' . $status)));
     }
     navigation_get_parents($parent, $parents, $nid);
   }
@@ -101,15 +116,22 @@ function navigation_get_siblings(&$node) {
   $siblings = array();
   if (!empty($node->field_parent_unit[0]['nid'])) {
     $parent = node_load($node->field_parent_unit[0]['nid']);
-    $parent->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $parent->nid))->title;
+    //$parent->title = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $parent->nid))->title;
     if (!empty($parent->field_unit_sub_unit[0]['items'])) {
       foreach ($parent->field_unit_sub_unit[0]['items'] as $sibling) {
-        $siblings[$sibling['nid']]['data'] = l($sibling['title'], 'node/' . $sibling['nid'], array('attributes' => array('class' => 'navigation-siblings')));
+        $status = '';
+        if (!node_load($sibling['nid'])->status) {
+          $status = ' unpublished';
+        }
+        $siblings[$sibling['nid']]['data'] = l($sibling['title'], 'node/' . $sibling['nid'], array('attributes' => array('class' => 'navigation-siblings' . $status)));
       }
     }
   }
   if (!empty($node->field_unit_top[0]['nid'])) {
-    $siblings[$node->nid]['data'] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-self')));
+    if (!$node->status) {
+      $status = ' unpublished';
+    }
+    $siblings[$node->nid]['data'] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-self' . $status)));
   }
   return $siblings;
 }
@@ -129,12 +151,18 @@ function navigation_get_children(&$node) {
         $attributes['class'] = 'navigation-courses';
       }
       $item['title'] = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $item['nid']))->title;
+      if (!node_load($item['nid'])->status) {
+        $attributes['class'] .= ' unpublished';
+      }
       $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
   }
   $attributes['class'] = 'navigation-sub-units';
   if (is_array($node->field_unit_sub_unit[0]['items'])) {
     foreach ($node->field_unit_sub_unit[0]['items'] as $item) {
+      if (!node_load($item['nid'])->status) {
+        $attributes['class'] .= ' unpublished';
+      }
       $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
   }

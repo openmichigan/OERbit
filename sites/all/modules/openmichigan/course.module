@@ -172,6 +172,26 @@ function course_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * Set inherited values from parent element.
  */
 function course_form_alter(&$form, &$form_state, $form_id) {
+  // Do nothing if this is not a node-editing form.
+  if (substr_count($form_id, 'node_form') <= 0) {
+    return;
+  }
+  // Add Cancel to the form
+  $destination = '<front>';
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'create_referrer') {
+    $destination = 'node/' . arg(1);
+  }
+  elseif ($form['#node']->nid) {
+    $destination = 'node/' . $form['#node']->nid;
+  }
+  else {
+    $destination = referer_uri();
+  }
+  $form['buttons']['cancel'] = array(
+    '#type' => 'markup',
+    '#value' => l(t('Cancel'), $destination),
+    '#weight' => 999,
+  );
   if (!in_array($form_id, array('information_node_form', 'session_node_form', 'material_node_form', 'other_node_form'))) {
     return;
   }
@@ -216,6 +236,11 @@ function course_form_alter(&$form, &$form_state, $form_id) {
     $form['field_content_reference']['#after_build'][] = 'course_materials_reference';
   }
   // Add Cancel to the form
+  $form['cancel'] = array(
+    '#type' => 'markup',
+    '#value' => l(t('Back to Course'), 'node/' . $parent->nid),
+    '#weight' => -999,
+  );
   $form['buttons']['cancel'] = array(
     '#type' => 'markup',
     '#value' => l(t('Cancel'), 'node/' . $parent->nid),
@@ -228,19 +253,6 @@ function course_form_alter(&$form, &$form_state, $form_id) {
  */
 function course_form_course_node_form_alter(&$form, &$form_state) {
   $form['#after_build'][] = 'course_populate_fields';
-  // Add Cancel to the form
-  $destination = '<front>';
-  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'create_referrer') {
-    $destination = 'node/' . arg(1);
-  }
-  elseif ($form['#node']->nid) {
-    $destination = 'node/' . $form['#node']->nid;
-  }
-  $form['buttons']['cancel'] = array(
-    '#type' => 'markup',
-    '#value' => l(t('Cancel'), $destination),
-    '#weight' => 999,
-  );
 }
 
 /**
@@ -299,5 +311,46 @@ function course_cron() {
     if (date('U', strtotime('-6 months')) > $featured->changed) {
       db_query('UPDATE {content_type_course} SET field_course_featured_value = "No" WHERE vid = %d', $featured->vid);
     }
+  }
+}
+
+/**
+ * Implementation of hook_pathauto() for course aliases.
+ */
+function course_pathauto($op) {
+  switch ($op) {
+    case 'settings':
+      $settings = array();
+      $settings['module'] = 'course';
+      $settings['token_type'] = 'node';
+      $settings['groupheader'] = t('Course path settings');
+      $settings['patterndescr'] = t('Pattern for course page paths');
+      $settings['patterndefault'] = t('');
+      $settings['patternitems'] = array(
+        'overview' => t('Pattern for course overview'),
+        'sessions' => t('Pattern for course sessions'),
+        'materials' => t('Patern for course materials'),
+        'highlights' => t('Pattern for course highlights'),
+        'rss' => t('Pattern for course RSS Feed'),
+        'rdf' => t('Pattern for course RDF'),
+        'latest_course' => t('Pattern for latest course'),
+        'latest_overview' => t('Pattern for latest course overview'),
+        'latest_sessions' => t('Pattern for latest course sessions'),
+        'latest_materials' => t('Patern for latest course materials'),
+        'latest_highlights' => t('Pattern for latest course highlights'),
+        'latest_rss' => t('Pattern for latest course RSS Feed'),
+        'latest_rdf' => t('Pattern for latest course RDF'),
+      );
+      $patterns = token_get_list('node');
+      foreach ($patterns as $type => $pattern_set) {
+        if ($type != 'global') {
+          foreach ($pattern_set as $pattern => $description) {
+            $settings['placeholders']['['. $pattern .']'] = $description;
+          }
+        }
+      }
+      return (object) $settings;
+    default:
+      break;
   }
 }
