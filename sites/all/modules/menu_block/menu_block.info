@@ -1,14 +1,15 @@
-; $Id: menu_block.info,v 1.6 2008/08/05 03:45:10 johnalbin Exp $
+; $Id: menu_block.info,v 1.7 2010/03/17 07:27:33 johnalbin Exp $
 
 name = "Menu Block"
 description = "Provides configurable blocks of menu items."
 
 core = 6.x
+dependencies[] = block
 dependencies[] = menu
 
-; Information added by drupal.org packaging script on 2008-12-15
-version = "6.x-2.2"
+; Information added by drupal.org packaging script on 2010-03-24
+version = "6.x-2.3"
 core = "6.x"
 project = "menu_block"
-datestamp = "1229377222"
+datestamp = "1269474612"
 

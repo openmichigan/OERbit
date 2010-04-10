@@ -4,9 +4,9 @@ description = Allows users to add Creative Commons license to selected content.
 package = Licenses
 core = 6.x
 
-; Information added by drupal.org packaging script on 2009-11-10
-version = "6.x-1.0-beta3"
+; Information added by drupal.org packaging script on 2010-02-24
+version = "6.x-1.x-dev"
 core = "6.x"
 project = "creativecommons"
-datestamp = "1257888317"
+datestamp = "1266969840"
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: metacafe.inc,v 1.1.2.10 2009/10/29 13:29:51 aaron Exp $
+// $Id: metacafe.inc,v 1.1.2.11 2010/01/06 14:43:13 aaron Exp $
 
 /**
  * @file
@@ -47,7 +47,15 @@ function emvideo_metacafe_extract($embed) {
   return FALSE;
 }
 
-function emvideo_metacafe_video_link($video_code) {
+/**
+ * hook emvideo_PROVIDER_embedded_link($video_code)
+ * returns a link to view the video at the provider's site.
+ *  @param $video_code
+ *    The string containing the video to watch.
+ *  @return
+ *    A string containing the URL to view the video at the original provider's site.
+ */
+function emvideo_metacafe_embedded_link($video_code) {
   return 'http://www.metacafe.com/watch/'. $video_code .'/';
 }
 

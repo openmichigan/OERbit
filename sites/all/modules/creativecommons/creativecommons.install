@@ -1,5 +1,5 @@
 <?php
-// $Id: creativecommons.install,v 1.1.2.17 2009/11/04 08:40:49 balleyne Exp $
+// $Id: creativecommons.install,v 1.1.2.20 2010/02/11 22:05:23 balleyne Exp $
 
 /**
  * @file
@@ -143,7 +143,7 @@ function creativecommons_install() {
 
   // CC lite warning
   if (module_exists('creativecommons_lite')) {
-    drupal_set_message(st('To avoid confusion, it is not recommended to have both Creative Commons and Creative Commons Lite enabled at the same time.'), 'warning');
+    drupal_set_message(st('To avoid confusion, it is not recommended to have both Creative Commons and Creative Commons Lite enabled at the same time. ' . l('Import from CC Lite', 'admin/settings/creativecommons/import')), 'warning');
   }
 }
 
@@ -155,6 +155,7 @@ function creativecommons_uninstall() {
   drupal_uninstall_schema('creativecommons');
 
   // Uninstall settings variables
+  variable_del('creativecommons_locale');
   variable_del('creativecommons_available_license_types');
   variable_del('creativecommons_available_metadata');
   variable_del('creativecommons_required_metadata');
@@ -253,3 +254,18 @@ function creativecommons_update_3() {
   return $ret;
 }
 
+// Enable new user settings permission for roles with attach license perm
+function creativecommons_update_4() {
+  $ret = array();
+  $result = db_query("SELECT rid, perm FROM {permission} ORDER BY rid");
+  while ($role = db_fetch_object($result)) {
+    $renamed_permission = preg_replace('/(?<=^|,\ )attach\ creative\ commons(?=,|$)/', 'attach creative commons, use creative commons user defaults', $role->perm);
+    if ($renamed_permission != $role->perm) {
+      $ret[] = update_sql("UPDATE {permission} SET perm = '$renamed_permission' WHERE rid = $role->rid");
+    }    
+  }
+
+  // Notify user of new permission
+  drupal_set_message('The Creative Commons module now has a separate permission for allowing user defaults. It\'s been enabled for roles with the attach creative commons permission.');
+  return $ret;
+}

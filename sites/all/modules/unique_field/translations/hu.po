@@ -1,0 +1,129 @@
+# Hungarian translation of unique_field (6.x-1.0-beta2)
+# Copyright (c) 2009 by the Hungarian translation team
+# Generated from files:
+#  unique_field.module,v 1.6.2.3 2009/02/09 20:43:04 detour
+#  unique_field.info,v 1.2.2.3 2009/02/09 20:43:04 detour
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: unique_field (6.x-1.0-beta2)\n"
+"POT-Creation-Date: 2009-02-15 18:32-0600\n"
+"PO-Revision-Date: 2009-02-15 08:41-0600\n"
+"Last-Translator: Balogh Zoltán\n"
+"Language-Team: Hungarian http://forditas.mindworks.hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: unique_field.module:365
+msgid "Enabled"
+msgstr "Engedélyezett"
+
+#: unique_field.module:173,316,340
+msgid "Language"
+msgstr "Nyelv"
+
+#: unique_field.module:170,314
+msgid "Author"
+msgstr "Szerző"
+
+#: unique_field.module:339
+msgid "Content type"
+msgstr "Tartalomtípus"
+
+#: unique_field.module:257
+msgid ""
+"Could not formulate query for unique_field_match_value on @field with "
+"data type @dbtype."
+msgstr ""
+"@field mezőre nem lehet megfogalmazni a lekérdezést "
+"(unique_field_match_value) evvel az adattípusal (@dbtype)."
+
+#: unique_field.module:313
+msgid "title"
+msgstr "cím"
+
+#: unique_field.module:330
+msgid "Unique field configuration"
+msgstr "Mezőegyediség beállítása"
+
+#: unique_field.module:337
+msgid "Choose the scope for the unique values"
+msgstr "Az egyediség hatókörének kiválasztása"
+
+#: unique_field.module:341
+msgid "All nodes"
+msgstr "Minden tartalom"
+
+#: unique_field.module:342
+msgid "Single node only"
+msgstr "Csak egy tartalom"
+
+#: unique_field.module:345
+msgid ""
+"Choose whether the values in the specified fields must be unique among "
+"nodes of this content type, among all nodes, or only among the fields "
+"of the present node."
+msgstr ""
+"Ki kell választani, hogy a megadott mezőkben lévő értékeknek "
+"egyedinek kell lenni az adott típusú tartalmak között, minden "
+"tartalom között, vagy csak az aktuális tartalom mezői között."
+
+#: unique_field.module:349
+msgid "Choose whether values must be unique individually or in combination"
+msgstr ""
+"Ki kell választani, hogy az értékek egyenként legyenek egyediek, "
+"vagy kombinációban"
+
+#: unique_field.module:351
+msgid "Each of the specified fields must have a unique value."
+msgstr "Minden megadott mező értékének egyedinek kell lennie."
+
+#: unique_field.module:352
+msgid "The combination of values from the specified fields must be unique."
+msgstr ""
+"Egyedinek kell lennie a megadott mezők kombinációjából származó "
+"értéknek."
+
+#: unique_field.module:358
+msgid "Choose the fields that should be unique"
+msgstr "Az egyediséghez szükséges mezők kiválasztása"
+
+#: unique_field.module:364
+msgid ""
+"Check this box to show which nodes match when duplicate values are "
+"found"
+msgstr ""
+"Ezt bekapcsolva megmutatja, hogy mely tartalmak egyeznek, amikor "
+"duplikált értékeket talál"
+
+#: unique_field.module:378
+msgid "The scope of a single node requires that each field must be unique."
+msgstr "Egy tartalom hatókörében szükséges, hogy egy mező egyedi legyen."
+
+#: unique_field.module:381
+msgid ""
+"The author and language fields are not supported within the scope of a "
+"single node."
+msgstr ""
+"A szerző és a nyelv mezők nem támogatottak egy tartalom "
+"hatókörén belül."
+
+#: unique_field.module:0
+msgid "unique_field"
+msgstr "unique_field"
+
+#: unique_field.info:0
+msgid "Unique field"
+msgstr "Unique field"
+
+#: unique_field.info:0
+msgid ""
+"Provides content validation requirement that the node's title, author, "
+"language, or specified CCK fields are unique."
+msgstr ""
+"Olyan tartalom ellenőrzési követelményt támaszt, hogy a tartalom "
+"címe, szerzője, nyelve, vagy a megadott <em>CCK</em> mezők egyediek "
+"legyenek."
+

@@ -1,5 +1,5 @@
 <?php
-// $Id: menu_block.book.inc,v 1.1 2008/11/29 18:17:55 johnalbin Exp $
+// $Id: menu_block.book.inc,v 1.2 2010/03/12 16:14:17 johnalbin Exp $
 
 /**
  * @file
@@ -7,10 +7,7 @@
  */
 
 /**
- * Returns a list of book menus.
- *
- * @return
- *   array The list of book menus.
+ * Implements hook_get_menus().
  */
 function book_get_menus() {
   $menus = array();

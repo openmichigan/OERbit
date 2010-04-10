@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning.pages.inc,v 1.1 2010/02/08 05:53:24 rdeboer Exp $
+// $Id: revisioning.pages.inc,v 1.3 2010/04/05 23:46:22 rdeboer Exp $
 
 /**
  * @file
@@ -249,8 +249,9 @@ function _revisioning_set_info_message() {
  * revision we've just edited, so we get latest revision id from the database.
  */
 function _revisioning_form_submit($form, &$form_state) {
-  $nid = $form['#node']->nid;
-  if (!empty($nid)) { // don't redirect when creating new node
+  $nid = $form['#node']->nid; // Don't use $form_state['nid'], it will NOT be empty for a new node
+  // Don't redirect when creating new node or when content type is not subject to moderation
+  if (!empty($nid) && $form_state['node']['revision_moderation']) { 
     $vid = revisioning_get_latest_revision_id($nid);
     $form_state['redirect'] = "node/$nid/revisions/$vid/view";
   }

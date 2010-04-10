@@ -1,5 +1,5 @@
 <?php
-// $Id: youtube.inc,v 1.1.2.50 2009/11/18 21:25:17 aaron Exp $
+// $Id: youtube.inc,v 1.1.2.52 2010/01/08 21:28:06 alexua Exp $
 
 /**
  * @file
@@ -217,13 +217,45 @@ function emvideo_youtube_data($field, $item) {
   // Store the video's duration.
   $data['duration'] = intval($data['raw']['MEDIA:GROUP']['YT:DURATION'][1]['SECONDS']);
 
-  // Get the large thumbnail.
-  $data['thumbnail']['url'] = 'http://img.youtube.com/vi/'. $item['value'] .'/0.jpg';
+  
 
   // Gather info about the item's raw flash video.
   // RSS / MRSS feeds with the item would have enough info.
   // Alternatively try getting the minimum from an HTTP get.
-  $url = 'http://youtube.com/v/'. $item['value'];
+  
+  // Get info from a youtube playlist.
+  if (strpos($item['value'], 'PLAYLIST_') === 0) {
+    $playlist_id = substr($item['value'], 9);
+    $url = 'http://youtube.com/p/'. $playlist_id;
+    $data['playlist'] = 1;
+    
+    // Get the large thumbnail of the first video.
+    // Use the Youtube Google API to get this data.
+    $api_url = 'http://gdata.youtube.com/feeds/api/playlists/' . $playlist_id;
+    $result = drupal_http_request($api_url); 
+    if ($result->code == 200) {
+      $parser = drupal_xml_parser_create($result->data);
+      $vals = array();
+      $index = array();
+      xml_parse_into_struct($parser, $result->data, $vals, $index);
+      xml_parser_free($parser);
+      if (count($vals)) {
+        foreach ($vals as $val) {
+          if ($val['tag'] == 'MEDIA:THUMBNAIL' && $val['attributes']['HEIGHT'] == '240') {
+            $data['thumbnail']['url'] = $val['attributes']['URL'];
+            break;
+          }
+        }
+      }
+    }
+  }
+  // Get info from a single video.
+  else {
+    $url = 'http://youtube.com/v/'. $item['value'];
+    $data['playlist'] = 0;
+    // Get the large thumbnail.
+    $data['thumbnail']['url'] = 'http://img.youtube.com/vi/'. $item['value'] .'/0.jpg';
+  }
   $response = emfield_request_header('youtube', $url);
 
   if ($response->code == 200) {
@@ -232,7 +264,6 @@ function emvideo_youtube_data($field, $item) {
     $data['flash']['size'] = $response->headers['Content-Length'];
     $data['flash']['mime'] = $response->headers['Content-Type'];
   }
-
   return $data;
 }
 
@@ -290,13 +321,25 @@ function emvideo_youtube_request($code, $cached = TRUE) {
  *   otherwise, the calling function will handle testing the embed code against each regex string in the returned array.
  */
 function emvideo_youtube_extract($code = '') {
+  // Special extraction for playlists.
+  $playlist_regex = array(
+    '@youtube\.com/p/([^"\& ]+)@i', // A playlist
+    '@youtube\.com/view_play_list\?p=([^"\& ]+)@i', // A playlist
+  );
+  foreach ($playlist_regex as $regex) {
+    if (preg_match($regex, trim($code), $matches)) {
+      return 'PLAYLIST_'. $matches[1];
+    }
+  }
+  
+  // Single videos.
   // src="http://www.youtube.com/v/nvbQQnvxXDk"
   // http://youtube.com/watch?v=nvbQQnvxXDk
   // http://www.youtube.com/watch?v=YzFCA-xUc8w&feature=dir
   return array(
     '@youtube\.com/v/([^"\& ]+)@i',
     '@youtube\.com/watch\?v=([^"\& ]+)@i',
-     '@youtube\.com/\?v=([^"\& ]+)@i',
+    '@youtube\.com/\?v=([^"\& ]+)@i',
   );
 }
 
@@ -309,6 +352,9 @@ function emvideo_youtube_extract($code = '') {
  *    a string containing the URL to view the video at the original provider's site
  */
 function emvideo_youtube_embedded_link($video_code) {
+  if (strpos($video_code, 'PLAYLIST_') === 0) { // A youtube playlist
+    return 'http://youtube.com/p/'. substr($video_code, 9);
+  }
   return 'http://www.youtube.com/watch?v='. $video_code;
 }
 
@@ -387,9 +433,16 @@ function theme_emvideo_youtube_flash($code, $width, $height, $autoplay, $options
     // Whether to display the video's info from YouTube in the player.
     $display_info = isset($options['display_info']) ? $options['display_info'] : variable_get('emvideo_youtube_display_info', FALSE);
     $display_info  = $display_info  ? '&showinfo=0' : '';
-
+    
     // Create a URL from our options.
-    $url = check_plain("http://www.youtube.com/v/$code&$related$autoplay_value$colors$border$high_quality$display_info$enablejsapi$fs");
+    if ($options['item']['data']['playlist']) {
+      $code = substr($code, 9);
+      $url = check_plain("http://www.youtube.com/p/$code&$related$autoplay_value$colors$border$high_quality$display_info$enablejsapi$fs");
+    }
+    else {
+      $url = check_plain("http://www.youtube.com/v/$code&$related$autoplay_value$colors$border$high_quality$display_info$enablejsapi$fs");
+    }
+    
 
     // Find the path to the JW FLV Media Player.
     $path = emfield_flvmediaplayer_url();
@@ -511,7 +564,7 @@ function theme_emvideo_youtube_default_external($height, $width, $url, $id, $div
   $output = <<<FLASH
         <div id="$div_id"><object type="application/x-shockwave-flash" height="$height" width="$width" data="$url" id="$id">
           <param name="movie" value="$url" />
-          <param name="allowScriptAcess" value="sameDomain"/>
+          <param name="allowScriptAccess" value="sameDomain"/>
           <param name="quality" value="best"/>
           <param name="allowFullScreen" value="$fullscreen_value"/>
           <param name="bgcolor" value="#FFFFFF"/>
@@ -536,6 +589,9 @@ FLASH;
  *    a URL pointing to the thumbnail
  */
 function emvideo_youtube_thumbnail($field, $item, $formatter, $node, $width, $height, $options = array()) {
+  if ($item['data']['thumbnail']['url']) {
+    return $item['data']['thumbnail']['url'];
+  }
   // Always return the larger image, since we're storing images locally.
   $tn = "http://img.youtube.com/vi/{$item['value']}/0.jpg";
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: rules_admin.rule_forms.inc,v 1.1.2.8 2009/04/19 21:21:31 fago Exp $
+// $Id: rules_admin.rule_forms.inc,v 1.1.2.9 2009/11/02 13:34:46 fago Exp $
 
 
 /**
@@ -404,7 +404,7 @@ function rules_admin_form_unpack_storage($form, &$form_state) {
  *
  * @param $id The id of the the element where the condition / action is to be added
  */
-function rules_admin_form_edit(&$form_state, &$proxy, $element) {
+function rules_admin_form_edit(&$form_state, $proxy, $element) {
   if (!isset($form_state['element'])) {
     //initial step!
     $form_state += array('element' => $element, 'step' => 1);

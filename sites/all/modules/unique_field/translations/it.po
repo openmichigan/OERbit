@@ -1,0 +1,104 @@
+# Italian translation of unique_field (6.x-1.0-beta2)
+# Generated from files:
+#  unique_field.module,v 1.6.2.3 2009/02/09 20:43:04 detour
+#  unique_field.info,v 1.2.2.3 2009/02/09 20:43:04 detour
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: unique_field (6.x-1.0-beta2)\n"
+"POT-Creation-Date: 2009-02-15 18:32-0600\n"
+"PO-Revision-Date: 2009-05-16 20:19+0100\n"
+"Last-Translator: Eligio Colutta <e.colutta@pulsetech.it>\n"
+"Language-Team: Italian Translation provided by Pulse s.a.s. <info@pulsetech.it>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"X-Poedit-Language: Italian\n"
+"X-Poedit-Country: ITALY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: unique_field.module:365
+msgid "Enabled"
+msgstr "Abilitato"
+
+#: unique_field.module:173,316,340
+msgid "Language"
+msgstr "Lingua"
+
+#: unique_field.module:170,314
+msgid "Author"
+msgstr "Autore"
+
+#: unique_field.module:339
+msgid "Content type"
+msgstr "Tipo contenuto"
+
+#: unique_field.module:257
+msgid "Could not formulate query for unique_field_match_value on @field with data type @dbtype."
+msgstr "Non è possibile formulare una query per unique_field_match_value su @field con tipo di dato @dbtype"
+
+#: unique_field.module:313
+msgid "title"
+msgstr "titolo"
+
+#: unique_field.module:330
+msgid "Unique field configuration"
+msgstr "Configurazione Unique field"
+
+#: unique_field.module:337
+msgid "Choose the scope for the unique values"
+msgstr "Scegli lo scopo dei valori univoci"
+
+#: unique_field.module:341
+msgid "All nodes"
+msgstr "Tutti i nodi"
+
+#: unique_field.module:342
+msgid "Single node only"
+msgstr "Singolo nodo"
+
+#: unique_field.module:345
+msgid "Choose whether the values in the specified fields must be unique among nodes of this content type, among all nodes, or only among the fields of the present node."
+msgstr "Scegli se i valori nei campi specificati devono essere univoci per tutti i nodi di questo tipo di contenuto, per tutti i nodi o solo per i campi del nodo attuale."
+
+#: unique_field.module:349
+msgid "Choose whether values must be unique individually or in combination"
+msgstr "Scegli se i valori devono essere univoci individualmente o in combinazione"
+
+#: unique_field.module:351
+msgid "Each of the specified fields must have a unique value."
+msgstr "Ognuno dei campi specificati deve avere un valore univoco."
+
+#: unique_field.module:352
+msgid "The combination of values from the specified fields must be unique."
+msgstr "La combinazione di valori dei campi specificati deve essere univoca."
+
+#: unique_field.module:358
+msgid "Choose the fields that should be unique"
+msgstr "Scegli i campi che devono essere univoci"
+
+#: unique_field.module:364
+msgid "Check this box to show which nodes match when duplicate values are found"
+msgstr "Seleziona questo box per mostrare quali nodi corrispondono quando valori duplicati sono trovati"
+
+#: unique_field.module:378
+msgid "The scope of a single node requires that each field must be unique."
+msgstr "Lo scopo del singolo nodo richiede che ogni singolo campo sia univoco."
+
+#: unique_field.module:381
+msgid "The author and language fields are not supported within the scope of a single node."
+msgstr "I campi autore e lingua non sono supportati nello scopo di un singolo nodo."
+
+#: unique_field.module:0
+msgid "unique_field"
+msgstr "unique_field"
+
+#: unique_field.info:0
+msgid "Unique field"
+msgstr "Unique field"
+
+#: unique_field.info:0
+msgid "Provides content validation requirement that the node's title, author, language, or specified CCK fields are unique."
+msgstr "Fornisce la possibilità di definire univoci il titolo del nodo, autore, lingua o specifici campi CCK."
+

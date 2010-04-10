@@ -1,5 +1,5 @@
-<?php 
-// $Id: accessible_content.install,v 1.1.2.6 2010/01/08 20:07:26 kevee Exp $
+<?php
+// $Id: accessible_content.install,v 1.1.2.7 2010/04/07 02:20:10 kevee Exp $
 /**
 *   @file
 *   Install file for Accessible Content
@@ -20,7 +20,7 @@ function accessible_content_requirements($phase) {
     else {
       //Library does not exist and we throw an error with a link to download
       $requirements['accessible_content']['severity'] = REQUIREMENT_ERROR;
-      $requirements['accessible_content']['description'] = 'Accessible content module requires the Quail library. Please download and from '. 
+      $requirements['accessible_content']['description'] = 'Accessible content module requires the Quail library. Please download and from '.
       l('http://code.google.com/p/quail-lib', 'http://code.google.com/p/quail-lib') .
       ' and place the "quail" directory in the accessible_content directory';
 
@@ -44,7 +44,7 @@ function accessible_content_schema() {
     'fields' => array(
       'nid' => array(
         'description' => 'The node ID this record relates to',
-        'type' => 'int', 
+        'type' => 'int',
         'length' => 11,
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -52,7 +52,7 @@ function accessible_content_schema() {
       ),
       'vid' => array(
         'description' => 'The node version number this record relates to',
-        'type' => 'int', 
+        'type' => 'int',
         'length' => 11,
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -78,7 +78,7 @@ function accessible_content_schema() {
         'type' => 'text',
         'default' => '',
       ),
-      
+
     ),
     'unique_keys' => array(
       'nid_vid' => array('nid', 'vid'),
@@ -89,7 +89,7 @@ function accessible_content_schema() {
     'fields' => array(
       'nid' => array(
         'description' => 'The node ID this record relates to',
-        'type' => 'int', 
+        'type' => 'int',
         'length' => 11,
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -113,21 +113,21 @@ function accessible_content_schema() {
     'fields' => array(
       'guideline_nid' => array(
         'description' => 'The node ID this record relates to',
-        'type' => 'int', 
+        'type' => 'int',
         'length' => 11,
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'guideline_vid' => array(
         'description' => 'The node version number this record relates to',
-        'type' => 'int', 
+        'type' => 'int',
         'length' => 11,
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'test_nid' => array(
         'description' => 'The node ID of the test',
-        'type' => 'int', 
+        'type' => 'int',
         'length' => 11,
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -146,7 +146,7 @@ function accessible_content_schema() {
     'fields' => array(
       'nid' => array(
         'description' => 'The node ID this record relates to',
-        'type' => 'int', 
+        'type' => 'int',
         'length' => 11,
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -171,7 +171,7 @@ function accessible_content_schema() {
       ),
     ),
   );
-  
+
   return $schema;
 }
 /**
@@ -184,11 +184,11 @@ function accessible_content_install() {
   _accessible_content_define_default_types();
   _accessible_content_create_guidelines();
   if (!module_exists('beautytips')) {
-    drupal_set_message('For more helpful accessibility views, install the '. 
+    drupal_set_message('For more helpful accessibility views, install the '.
                      l('BeautyTips module', 'http://drupal.org/project/beautytips') .'.');
   }
   $allowed_html = variable_get("allowed_html_". variable_get('filter_default_format', 1), '');
-  if (strpos($allowed_html, '<h4>') === FALSE || 
+  if (strpos($allowed_html, '<h4>') === FALSE ||
      strpos($allowed_html, '<h5>') === FALSE ||
      strpos($allowed_html, '<code>') === FALSE ) {
     drupal_set_message('Accessibility tests are marked up with the following tags. Please consider enabling these HTML codes in your default input filter: &lt;h4&gt; &lt;h5&gt; &lt;code&gt;');
@@ -217,7 +217,7 @@ function _accessible_content_define_default_types() {
           db_query('INSERT INTO {accessible_content_node_test} (nid, test_name, severity) VALUES(%d, "%s", %d)',
             $node->nid,
              $test[0],
-             $test[3]);   
+             $test[3]);
     }
     }
   }
@@ -259,10 +259,10 @@ function  _accessible_content_create_guidelines() {
                  $node->vid,
                  $tests[$test]);
       }
-    }      
+    }
     }
   }
-  fclose($csv);  
+  fclose($csv);
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: emfield.cck.inc,v 1.1.2.30 2009/10/20 17:10:46 aaron Exp $
+// $Id: emfield.cck.inc,v 1.1.2.31 2010/02/18 22:42:42 aaron Exp $
 
 /**
  * @file
@@ -101,7 +101,9 @@ function _emfield_emfield_field($op, &$node, $field, &$items, $teaser, $page, $m
   if (in_array($op, array('insert', 'update'))) {
     foreach ($items as $delta => $item) {
       // We need to manually serialize the 'data' array.
-      $items[$delta]['data'] = serialize($items[$delta]['data']);
+      if(is_array($items[$delta]['data'])){
+        $items[$delta]['data'] = serialize($items[$delta]['data']);
+      }
     }
   }
   return $return;

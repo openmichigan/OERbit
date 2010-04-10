@@ -1,0 +1,17 @@
+<?php
+// $Id: unique_field.install,v 1.1.2.5 2009/11/13 01:30:14 detour Exp $
+
+/**
+ * @file
+ * Installation/uninstallation routines for the unique_field module.
+ */
+
+/**
+ * Implementation of hook_uninstall().
+ *
+ * Deletes all module variables and then clears the variables cache.
+ */
+function unique_field_uninstall() {
+  db_query("DELETE FROM {variable} WHERE name LIKE 'unique\_field\_%'");
+  cache_clear_all('variables', 'cache');
+}

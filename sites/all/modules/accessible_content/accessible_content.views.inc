@@ -1,5 +1,5 @@
 <?php
-// $Id: accessible_content.views.inc,v 1.1.2.1 2010/01/08 21:25:46 kevee Exp $
+// $Id: accessible_content.views.inc,v 1.1.2.2 2010/04/07 02:20:10 kevee Exp $
 /**
 *  @file
 *  Views integration

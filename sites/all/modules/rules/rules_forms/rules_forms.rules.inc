@@ -1,5 +1,5 @@
 <?php
-// $Id: rules_forms.rules.inc,v 1.1.2.5 2009/08/14 09:52:51 klausi Exp $
+// $Id: rules_forms.rules.inc,v 1.1.2.7 2009/09/01 20:32:56 klausi Exp $
 
 
 /**
@@ -181,7 +181,7 @@ function rules_forms_rules_data_type_info() {
       'module' => 'Rules Forms',
     ),
     'form_state' => array(
-      'label' => t('form_state'),
+      'label' => t('form state'),
       'class' => 'rules_data_type',
       'savable' => FALSE,
       'identifiable' => FALSE,
@@ -214,6 +214,7 @@ function rules_forms_action_disable_element(&$form, $disable) {
   // exsist yet.
   $form['#rules_forms']['#disable'][] = $disable;
   if (empty($form['#after_build']) || !in_array('rules_forms_element_action_after_build', $form['#after_build'])) {
+    $form['#after_build'][] = 'rules_forms_include_after_build';
     $form['#after_build'][] = 'rules_forms_element_action_after_build';
   }
 }

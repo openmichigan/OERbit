@@ -1,5 +1,5 @@
 <?php
-// $Id: creativecommons.views.inc,v 1.1.2.2 2009/08/25 15:14:09 balleyne Exp $
+// $Id: creativecommons.views.inc,v 1.1.2.3 2009/12/29 03:19:30 balleyne Exp $
 /**
  * @file
  * Provide views data and handler information for creativecommons.module.
@@ -56,6 +56,9 @@ function creativecommons_views_data() {
       'handler' => 'creativecommons_views_handler_argument_license_uri',
       'click sortable' => TRUE,
     ),
+    'filter' => array(
+      'handler' => 'creativecommons_views_handler_filter_license_uri',
+    ),
   );
 
   $data['creativecommons_node']['attribution'] = array(
@@ -109,6 +112,9 @@ function creativecommons_views_handlers() {
         'parent' => 'views_handler_field_url',
       ),
       // filter handlers
+      'creativecommons_views_handler_filter_license_uri' => array(
+        'parent' => 'views_handler_filter_in_operator',
+      ),
       // relationship handlers
       // sort handlers
     ),

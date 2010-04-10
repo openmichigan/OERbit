@@ -1,4 +1,4 @@
-/* $Id: README.txt,v 1.1.2.4 2009/08/25 15:09:30 balleyne Exp $ */
+/* $Id: README.txt,v 1.1.2.5 2009/12/23 13:00:57 balleyne Exp $ */
 
 -- SUMMARY --
 
@@ -39,13 +39,17 @@ None.
 
   - administer creative commons
 
-    Users in roles with the "administer creative commons" permission can
-    customize the module settings in Administer >> Settings >> Creative Commons
+    Users can customize the module settings in Administer >> Settings >> 
+    Creative Commons
 
   - attach creative commons
 
-    Users in roles with the "attach creative commons" permission will be able to
-    attach license information to the content of a node.
+    Users will be able to attach license information to the content of a node.
+
+  - use creative commons user defaults
+  
+    Users will be able to set their own defaults, independent of site defaults
+    (but still subject to site license availability settings).
 
 * Set available license types, required/available metadata and display settings
   Administer >> Settings >> Creative Commons. To make it mandatory to specify a

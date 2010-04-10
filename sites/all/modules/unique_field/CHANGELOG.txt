@@ -1,0 +1,77 @@
+/**
+ * Revisions log for unique_field
+ */
+
+version 2009/11/12 (6.x-1.2)
+-- added Italian translation [thanks to eliosh]
+-- improved user message that reports duplicate values when checking
+  fields in combination
+-- fixed support for datetime and other date-related database field
+  datatypes [thanks to Parkes Design]
+-- added permission that allows users to bypass the unique field
+  requirements after getting the warning message [thanks to benjah]
+
+version 2009/03/06 (6.x-1.1)
+-- fixed query generation for grouping OR clauses
+
+version 2009/03/06 (6.x-1.0)
+-- altered appearance of unique fields settings on the content type form:
+  moved unique field section to the bottom, added descriptions
+-- fixed compatibility with date module version 6.x-2.0
+-- fixed compatibility with content_permissions module [thanks to skassam]
+-- Hungarian translation added [thanks to Zoltan Balogh]
+
+version 2009/02/09 (6.x-1.0-beta2)
+-- improved handling of CCK values in single node scope
+-- fixed formatting bug in duplicate error message
+
+version 2009/02/07 (6.x-1.0-beta1)
+-- fixed handling of multiple values per CCK field
+-- added option for showing the nodes that match when a duplicate
+  value is found [thanks to crea]
+-- added node language as a query field and scope
+-- fixed handling of node revisions
+-- rewrote query generation routine
+-- added node author as a query field
+-- added hook_uninstall support for removing the module's variables
+  [thanks to markus_petrux]
+-- improved compliance with coding standards [thanks to deekayen]
+
+version 2008/10/24
+-- updated to compatibility with Drupal 6.x [thanks to Yur]
+-- added check for content.module for CCK-dependent code [thanks to sigsby]
+-- removed all MySQL database-specific code [thanks to rssaddict]
+
+version 2008/03/15
+-- fixed to use node title label from node type data [thanks to tj2653]
+
+version 2008/03/14
+-- changed behavior so that if a field value is null or empty it matches
+  no other node (including other nodes with null or empty values)
+  [thanks to scedwar]
+
+version 2008/03/13
+-- fixed support for node and user reference fields in single node scope,
+  verified support for both in other scopes
+
+version 2008/03/12
+-- added single node scope to require that specified fields on a node
+  have unique values
+-- improved error messages to specify which fields must be unique
+  and which include duplicates
+
+version 2008/02/22
+-- fixed queries to support table prefixes
+
+version 2008/02/18
+-- initial release
+
+TO-DO
+-- add SimpleTest test
+-- fix use of t() to eliminate the use of variables inside
+-- fix consistent case-sensitivity of database queries, add option
+  for whether to use case-sensitive comparisons (see #333137)
+-- add validation before submission via AJAX (see #338744)
+-- add taxonomy vocabulary/term as query field and scope (see #227254)
+-- add views as a query scope (see #223792)
+-- allow multiple types of constraints (see #347327)

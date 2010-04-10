@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning_api.inc,v 1.5 2010/01/28 01:09:32 rdeboer Exp $
+// $Id: revisioning_api.inc,v 1.11 2010/03/22 01:19:24 rdeboer Exp $
 
 /**
  * @file
@@ -37,13 +37,14 @@ define('REVISION_PENDING', 2);
  * @return
  *  if $state is provided, state name. Otherwise, state names array keyed by state id.
  */
-function _revisioning_revision_states($state = NULL) {
+function revisioning_revision_states($state = NULL) {
+  static $states;
   $states = array(
-    REVISION_PENDING  => t('Pending'),
-    REVISION_CURRENT  => t('Current, published'),
     REVISION_ARCHIVED => t('Archived'),
+    REVISION_CURRENT  => t('Current, published'),
+    REVISION_PENDING  => t('Pending'),
   );
-  return empty($state) ? $states : $states[$state];
+  return $state === NULL ? $states : $states[$state];
 }
 
 /**
@@ -79,7 +80,7 @@ function _revisioning_node_is_pending($node) {
  *
  * @TODO: Add more operations if needed.
  */
-function revisioning_revisionapi($op, &$node) {
+function revisioning_revisionapi($op, $node) {
   switch ($op) {
     case 'pre revert':
       // Invoke corresponding Rules event
@@ -91,7 +92,7 @@ function revisioning_revisionapi($op, &$node) {
     case 'post revert':
       // Invoke the revisioning trigger passing 'revert' as the operation
       if (module_exists('trigger')) {
-        module_invoke_all('revisioning', 'revert');
+        module_invoke_all('revisioning', 'revert', $node, $node->vid);
       }
       // Invoke corresponding Rules event
       if (module_exists('rules')) {
@@ -109,7 +110,7 @@ function revisioning_revisionapi($op, &$node) {
     case 'post publish':
       // Invoke the revisioning trigger passing 'publish' as the operation
       if (module_exists('trigger')) {
-        module_invoke_all('revisioning', 'publish');
+        module_invoke_all('revisioning', 'publish', $node);
       }
       // Invoke corresponding Rules event
       if (module_exists('rules')) {
@@ -120,10 +121,10 @@ function revisioning_revisionapi($op, &$node) {
   //case 'pre unpublish':
       // Not implemented: do we really need it ?
 
-      case 'post unpublish':
+    case 'post unpublish':
       // Invoke the revisioning trigger passing 'unpublish' as the operation
       if (module_exists('trigger')) {
-        module_invoke_all('revisioning', 'unpublish');
+        module_invoke_all('revisioning', 'unpublish', $node);
       }
       // Invoke corresponding Rules event
       if (module_exists('rules')) {
@@ -457,4 +458,20 @@ function revisioning_user_all_access($permissions, $account = NULL) {
     }
   }
   return TRUE;
+}
+
+/**
+ * Return an array of names of content types that are subject to moderation.
+ *
+ * @return array of strings, may be empty
+ */
+function revisioning_moderated_content_types() {
+  $moderated_content_types = array();
+  foreach (node_get_types() as $type) {
+    $content_type = check_plain($type->type);
+    if (node_tools_content_is_moderated($content_type)) {
+      $moderated_content_types[] = $content_type;
+    }
+  }
+  return $moderated_content_types;
 }

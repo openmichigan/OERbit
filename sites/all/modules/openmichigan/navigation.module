@@ -71,7 +71,7 @@ function navigation_display() {
         }
         $children = array();
         while ($top = db_fetch_array($query)) {
-          $status = '';
+          $status = 'published';
           if (!node_load($top['nid'])->status) {
             $status = 'unpublished';
           }

@@ -1,9 +1,14 @@
-/* $Id: CHANGELOG.txt,v 1.1.2.43 2009/12/07 22:24:59 aaron Exp $ */
+/* $Id: CHANGELOG.txt,v 1.1.2.47 2010/01/06 16:53:47 aaron Exp $ */
 
 /**
  *  @file
  *  Changelog for Embedded Video Field (emvideo).
  */
+
+by aaron: Tweak spike's regex.
+by aaron: Fix spike's emvideo_PROVIDER_embedded_link.
+by aaron: Fix metacafe's emvideo_PROVIDER_embedded_link.
+#663836 by ressa: Fix typo in youtube.inc.
 
 ================
  DRUPAL-6--1-18

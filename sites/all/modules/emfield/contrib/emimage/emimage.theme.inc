@@ -1,5 +1,5 @@
 <?php
-// $Id: emimage.theme.inc,v 1.1.2.6 2009/09/21 16:20:09 aaron Exp $
+// $Id: emimage.theme.inc,v 1.1.2.7 2010/02/18 23:20:16 aaron Exp $
 
 /**
  *  @file
@@ -60,7 +60,7 @@ function theme_emimage_image_thumbnail($field, $item, $formatter, $node, $option
     $code = $item['value'];
     $width = isset($options['width']) ? $options['width'] : $field['widget']['thumbnail_width'];
     $height = isset($options['height']) ? $options['height'] : $field['widget']['thumbnail_height'];
-    $link = isset($options['preview_link']) ? $options['preview_link'] : $field['widget']['preview_link'];
+    $link = isset($options['thumbnail_link']) ? $options['thumbnail_link'] : $field['widget']['thumbnail_link'];
     if ($link == EMIMAGE_LINK_CONTENT) {
       $link = 'node/'. $node->nid;
     }
@@ -89,7 +89,7 @@ function theme_emimage_image_full($field, $item, $formatter, $node, $options = a
     $code = $item['value'];
     $width = isset($options['width']) ? $options['width'] : $field['widget']['full_width'];
     $height = isset($options['height']) ? $options['height'] : $field['widget']['full_height'];
-    $link = isset($options['preview_link']) ? $options['preview_link'] : $field['widget']['preview_link'];
+    $link = isset($options['full_link']) ? $options['full_link'] : $field['widget']['full_link'];
     if ($link == EMIMAGE_LINK_CONTENT) {
       $link = 'node/'. $node->nid;
     }

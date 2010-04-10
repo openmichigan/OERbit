@@ -1,5 +1,5 @@
 <?php
-// $Id: accessible_content.module,v 1.1.2.19 2010/02/21 20:08:51 kevee Exp $
+// $Id: accessible_content.module,v 1.1.2.21 2010/04/07 02:20:10 kevee Exp $
 
 /**
 *  @file
@@ -77,6 +77,16 @@ function accessible_content_menu() {
   $items['node/%node/accessibility'] = array(
     'type' => MENU_LOCAL_TASK,
     'title' => 'Accessibility',
+    'page callback' => 'drupal_get_form',
+    'file' => 'accessible_content.pages.inc',
+    'access callback' => 'accessible_content_node_page_access',
+    'access arguments' => array(1),
+    'page arguments' => array('accessible_content_accessibility_tab_form'),
+  );
+
+  $items['node/%node/accessibility/list'] = array(
+    'type' => MENU_LOCAL_TASK,
+    'title' => 'List View',
     'page callback' => 'drupal_get_form',
     'file' => 'accessible_content.pages.inc',
     'access callback' => 'accessible_content_node_page_access',

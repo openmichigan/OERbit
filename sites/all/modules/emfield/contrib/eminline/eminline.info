@@ -4,9 +4,9 @@ description = Allows users to embed media into text-areas.
 dependencies[] = emfield
 core = 6.x
 
-; Information added by drupal.org packaging script on 2009-12-07
-version = "6.x-1.18"
+; Information added by drupal.org packaging script on 2010-03-22
+version = "6.x-1.19"
 core = "6.x"
 project = "emfield"
-datestamp = "1260225034"
+datestamp = "1269278707"
 

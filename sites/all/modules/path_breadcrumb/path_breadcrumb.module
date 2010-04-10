@@ -21,7 +21,12 @@ function path_breadcrumb_menu() {
  */
 function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   // Only set breadcrumbs when loading a full node page.
-  if (!$a4) {
+  if (!$a4 && $node->nid == arg(1)) {
+    drupal_set_breadcrumb(array());
+    return;
+  }
+  if (drupal_is_front_page()) {
+    drupal_set_breadcrumb(array());
     return;
   }
   // Check whether the current node type has path breadcrumb enabled
@@ -37,21 +42,25 @@ function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       $breadcrumb = array();
       $count = count($path);
       $path_count = $count;
+      $unique = array();
       do {
         if (!empty($path)) {
           if ($count != $path_count || variable_get('path_breadcrumb_current', 0) != 0) {
             $normal = drupal_get_normal_path(implode('/', $path));
             $morsel = menu_get_object('node', 1, $normal);
-            if ($count == 1 && variable_get('path_breadcrumb_first', '') != '') {
-              $breadcrumb[] = l(variable_get('path_breadcrumb_first', ''), $morsel->path);
-            }
-            else {
-              if ($count == $path_count && variable_get('path_breadcrumb_current_link', 0) == 0) {
-                $breadcrumb[] = $morsel->title;
+            if (!empty($morsel)) {
+              if ($count == 1 && variable_get('path_breadcrumb_first', '') != '') {
+                $breadcrumb[] = l(variable_get('path_breadcrumb_first', ''), $morsel->path);
               }
               else {
-                $breadcrumb[] = l($morsel->title, $morsel->path);
+                if ($count == $path_count && variable_get('path_breadcrumb_current_link', 0) == 0) {
+                  $breadcrumb[] = $morsel->title;
+                }
+                else {
+                  $breadcrumb[] = l($morsel->title, $morsel->path);
+                }
               }
+              $unique[] = $morsel->title;
             }
           }
         }
@@ -60,6 +69,9 @@ function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       if (variable_get('path_breadcrumb_home', 0) != 0) {
         $breadcrumb[] = l(variable_get('path_breadcrumb_home_text', t('Home')), '<front>');
       }
-      drupal_set_breadcrumb(array_reverse($breadcrumb));
+      $breadcrumb = array_unique($breadcrumb);
+      $breadcrumb = array_reverse($breadcrumb);
+      drupal_set_breadcrumb($breadcrumb);
+      break;
   }
 }

@@ -1,4 +1,4 @@
-# $Id: sv.po,v 1.1.2.1 2009/04/30 14:12:22 fago Exp $
+# $Id: sv.po,v 1.1.2.2 2009/08/28 20:03:00 fago Exp $
 #
 # Swedish translation of Drupal (rules_scheduler)
 # Generated from files:
@@ -23,7 +23,7 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 
 #: rules_scheduler.rules.inc:22
-msgid "Schedule @set"
+msgid "Schedule "@set""
 msgstr "Schemalägg @set"
 
 #: rules_scheduler.rules.inc:26

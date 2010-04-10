@@ -1,5 +1,5 @@
 <?php
-// $Id: rules_admin.module,v 1.1.2.6 2009/08/03 16:42:25 fago Exp $
+// $Id: rules_admin.module,v 1.1.2.7 2009/08/28 19:11:16 fago Exp $
 
 
 /**
@@ -192,6 +192,7 @@ function rules_admin_menu() {
     'page arguments' => array('rules_admin_form_add_rule_set', 2),
     'access arguments' => array('administer rules'),
     'file' => 'rules_admin.sets.inc',
+    'weight' => 3,
   );
 
   $items[RULES_ADMIN_SET_PATH .'/js'] = array(

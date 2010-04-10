@@ -1,5 +1,5 @@
 <?php
-// $Id: emfield.module,v 1.12.4.46 2009/11/04 21:43:34 aaron Exp $
+// $Id: emfield.module,v 1.12.4.47 2010/03/22 17:15:06 aaron Exp $
 
 /**
  * @file
@@ -521,19 +521,48 @@ function emfield_set_error($error) {
  *   An array of file objects optionally matching $provider.
  */
 function emfield_system_list($module, $provider = NULL, $load = TRUE) {
-  $override_files = module_invoke_all('emfield_providers', $module, $provider);
-  $files = drupal_system_listing("$provider\.inc$", drupal_get_path('module', $module) ."/providers", 'name', 0);
-  $files = array_merge($files, $override_files);
+  // Maintain a static list of providers.
+  static $files;
 
-  ksort($files);
+  if (!isset($files)) {
+    // Initialize our static variable.
+    $files = array();
+  }
+  if (!isset($files[$module])) {
+    // Initialize the file listing for the invoking module.
+    $files[$module] = array();
+  }
+
+  if ((!isset($provider) && empty($files[$module])) || (isset($provider) && !isset($files[$module][$provider]))) {
+    // First find any providers external to the emfield set of modules.
+    $override_files = module_invoke_all('emfield_providers', $module, $provider);
+
+    // Next get the default providers. Note this is being phased out in v2.
+    $provider_files = drupal_system_listing("$provider\.inc$", drupal_get_path('module', $module) ."/providers", 'name', 0);
+
+    // Merge the files, allowing provider overrides.
+    $provider_files = array_merge($provider_files, $override_files);
+    $files[$module] = array_merge($files[$module], $provider_files);
+
+    // Sort the providers alphabetically.
+    ksort($files[$module]);
+  }
 
   if ($load) {
-    foreach ($files as $file) {
-      emfield_include_list($file);
+    if (isset($provider) && isset($files[$module][$provider])) {
+      emfield_include_list($files[$module][$provider]);
+    }
+    else {
+      foreach ($files[$module] as $key => $file) {
+        emfield_include_list($file);
+      }
     }
   }
 
-  return $files;
+  if (isset($provider)) {
+    return $files[$module][$provider];
+  }
+  return $files[$module];
 }
 
 /**

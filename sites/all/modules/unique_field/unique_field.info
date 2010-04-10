@@ -1,0 +1,11 @@
+; $Id: unique_field.info,v 1.2.2.6 2009/11/13 01:30:13 detour Exp $
+name = Unique field
+description = "Provides content validation requirement that the node's title, author, language, or specified CCK fields are unique."
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-11-13
+version = "6.x-1.2"
+core = "6.x"
+project = "unique_field"
+datestamp = "1258076784"
+

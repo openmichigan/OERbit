@@ -1,5 +1,5 @@
 <?php
-// $Id: rules.rules.inc,v 1.1.2.41 2009/08/10 15:40:56 fago Exp $
+// $Id: rules.rules.inc,v 1.1.2.42 2010/03/08 18:22:32 fago Exp $
 
 
 /**
@@ -19,7 +19,7 @@ function rules_rules_data_type_info() {
       'class' => 'rules_data_type_string',
       'identifiable' => FALSE,
       'eval input' => TRUE,
-      'token type' => FALSE,
+      'token type' => 'string',
     ),
     'number' => array(
       'label' => t('number'),

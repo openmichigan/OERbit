@@ -1,5 +1,5 @@
 <?php
-// $Id: apachesolr_search.module,v 1.1.2.6.2.131 2009/12/27 16:47:37 pwolanin Exp $
+// $Id: apachesolr_search.module,v 1.1.2.6.2.133 2010/02/24 23:00:01 pwolanin Exp $
 
 /**
  * @file
@@ -431,6 +431,11 @@ function apachesolr_process_response($response, $query, $params) {
       drupal_alter('apachesolr_search_result', $doc);
       // Copy code from comment_nodeapi().
       $extra[] = format_plural($doc->comment_count, '1 comment', '@count comments');
+      $fields = array();
+      foreach ($doc->getFieldNames() as $field_name) {
+        $fields[$field_name] = $doc->$field_name;
+      }
+
       $results[] = array(
         'link' => url($doc->path, array('absolute' => TRUE)),
         'type' => apachesolr_search_get_type($doc->type),
@@ -443,6 +448,7 @@ function apachesolr_process_response($response, $query, $params) {
         'extra' => $extra,
         'score' => $doc->score,
         'snippet' => $snippet,
+        'fields' => $fields,
       );
     }
 
@@ -585,10 +591,6 @@ function apachesolr_search_block($op = 'list', $delta = 0, $edit = array()) {
           return;
         }
 
-        // Get information needed by the taxonomy blocks about limits.
-        $initial_limits = variable_get('apachesolr_facet_query_initial_limits', array());
-        $limit_default = variable_get('apachesolr_facet_query_initial_limit_default', 10);
-
         // Handle taxonomy vocabulary facets
         if ((strpos($delta, 'im_vid_') === 0)) {
           return apachesolr_search_taxonomy_facet_block($response, $query, $delta);
@@ -729,6 +731,10 @@ function apachesolr_search_taxonomy_facet_block($response, $query, $delta) {
     $items = apachesolr_search_nested_facet_items($query, $facets, $response->response->numFound);
     // Process all terms into an item list
     if ($items && ($response->response->numFound > 1 || $contains_active)) {
+      // Get information needed by the taxonomy blocks about limits.
+      $initial_limits = variable_get('apachesolr_facet_query_initial_limits', array());
+      $limit_default = variable_get('apachesolr_facet_query_initial_limit_default', 10);
+
       $limit = isset($initial_limits['apachesolr_search'][$delta]) ? $initial_limits['apachesolr_search'][$delta] : $limit_default;
       return array(
         'subject' => t('Filter by @name', array('@name' => $vocab->name)),

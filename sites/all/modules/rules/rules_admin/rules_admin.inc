@@ -1,5 +1,5 @@
 <?php
-// $Id: rules_admin.inc,v 1.1.2.12 2009/08/19 15:24:41 fago Exp $
+// $Id: rules_admin.inc,v 1.1.2.13 2009/11/02 11:34:33 fago Exp $
 
 
 /**
@@ -372,6 +372,7 @@ function rules_admin_fix_breadcrumb($rule, $name) {
   }
   if (arg(5)) {
     // Also add a crumb to the rule itself.
+    array_unshift($crumbs, l(t('Rules'), RULES_ADMIN_PATH));
     $crumbs[] = l($rule['#label'], RULES_ADMIN_RULE_PATH .'/'. $name);
   }
   rules_admin_add_crumbs($crumbs);

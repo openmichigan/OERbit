@@ -1,5 +1,5 @@
 <?php
-// $Id: apachesolr.module,v 1.1.2.12.2.182 2010/01/02 13:48:14 robertDouglass Exp $
+// $Id: apachesolr.module,v 1.1.2.12.2.183 2010/03/04 04:17:20 pwolanin Exp $
 
 /**
  * @file
@@ -1537,7 +1537,8 @@ function theme_apachesolr_facet_list($items, $display_limit = 0) {
       if (!is_array($hidden_item)) {
         $hidden_item = array('data' => $hidden_item);
       }
-      $items[] = $hidden_item + array('class' => 'apachesolr-hidden-facet');
+      $hidden_item['class'] = isset($hidden_item['class']) ? $hidden_item['class'] . ' apachesolr-hidden-facet' : 'apachesolr-hidden-facet';
+      $items[] = $hidden_item;
     }
   }
   $admin_link = '';

@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.7 2009/12/16 03:49:21 rdeboer Exp $
+$Id: README.txt,v 1.8 2010/03/22 01:20:34 rdeboer Exp $
 
 DESCRIPTION
 ===========
@@ -32,12 +32,15 @@ Unlike RM, Revisioning does not require any additional database tables.
 
 INSTALLATION
 ============
-0. Install the Module Grants module as per its README instructions (includes
-   Module Grants Monitor).
-   Optionally install the Diff module if you want to compare revisions and
+0. Install the Module Grants module. This is a package containing 4 modules.
+   Although highly recommended the main module in this package is not required,
+   but the Node Tools submodule is. Module Grants Monitor is also recommended,
+   although Revisioning features similar functionality through a canned view
+   (for which, you'll naturally have to install Views).
+1. Optionally install the Diff module if you want to compare revisions and
    highlight the differences.
-1. Place the "revisioning" folder in your "sites/all/modules" directory.
-2. Enable the module under Administer >> Site building >> Modules.
+2. Place the "revisioning" folder in your "sites/all/modules" directory.
+   Enable Revisioning under Administer >> Site building >> Modules.
 
 CONFIGURATION
 =============
@@ -58,11 +61,12 @@ CONFIGURATION
    be applied to the same copy, i.e. no new revision is created when one 
    already exists. On the other hand there are situations, for instance with a
    Wiki page with multiple authors editing the same copy, where you do want 
-   every Save to create a new draft (revision), so that contributors can 
+   every Save to create a new draft (revision), so that contributors can
    compare what was changed between saves. The Diff module is a good addition
    to Revisioning for this.
-4. Revisioning builds on the Accessible content menu item, adding the
-   "In draft/Pending publication" filter to the double row of tabs.
+4. Revisioning builds on the Accessible content menu item (if you have enabled
+   Module Grants Monitor), adding the "In draft/Pending publication" filter to
+   the double row of tabs.
 5. Grant to the various roles the view/delete/revert revisions permissions
    (node access section) and the "edit revisions" permission (revisioning
    section). Typically you'd give authors the "view revisions" and
@@ -105,5 +109,4 @@ page http://drupal.org/project/revisioning.
 
 AUTHOR
 ======
-Rik de Boer, Melbourne, Australia; inspired by the Revision Moderation module
-by Angie Byron (www.lullabot.com)
+Rik de Boer, Melbourne, Australia; inspired by the Revision Moderation module.

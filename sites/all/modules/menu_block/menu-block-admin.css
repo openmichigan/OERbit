@@ -1,79 +1,21 @@
-/* $Id: menu-block-admin.css,v 1.2 2008/12/01 09:56:56 johnalbin Exp $ */
+/* $Id: menu-block-admin.css,v 1.5 2010/03/22 19:58:31 johnalbin Exp $ */
 
-#menu-block-settings .form-item
-{
-  padding-left: 200px;
+#edit-admin-title-wrapper,
+#edit-parent-wrapper,
+#edit-depth-wrapper {
+  margin-bottom: 2.5em;
 }
 
-#menu-block-settings .form-checkboxes .form-item,
-#menu-block-settings .form-radios .form-item
-{
-  padding-left: 0;
+#edit-parent-menu-wrapper {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
-#menu-block-settings .form-item label
-{
-  float: left;
-  width: 190px;
-  margin-left: -200px;
-  margin-right: 10px;
-  text-align: right;
-  _display: inline-block; /* IE6 is dumb. */
-}
-
-#menu-block-settings .form-item label.option,
-.form-item #edit-parent-menu-wrapper label,
-.form-item label#item-label,
-#edit-follow-parent-wrapper.form-item label
-{
-  float: none;
-  width: auto;
-  margin-left: 0;
-  margin-right: 0;
-  text-align: left;
-}
-
-.form-item #edit-parent-menu-wrapper
-{
-  padding-left: 0;
-  margin: 0;
-}
-
-.form-item #edit-parent-menu-wrapper label,
-.form-item label#item-label
-{
-  _display: block; /* IE6 is dumb. */
-  font-weight: normal;
-  font-style: italic;
-}
-
-#edit-follow-parent-wrapper.form-item label
-{
-  display: inline;
+#edit-parent-menu-wrapper label,
+label#item-label {
   font-weight: normal;
 }
 
-#expanded-wrapper strong,
-#sort-wrapper strong
-{
-  float: left;
-  width: 190px;
-  margin-left: 0;
-  margin-right: 10px;
-  text-align: right;
-}
-
-#expanded-wrapper fieldset .form-item,
-#sort-wrapper fieldset .form-item
-{
-  display: inline;
-  margin-left: 0;
-  padding-left: 0;
-}
-
-#expanded-wrapper fieldset .form-item .description,
-#sort-wrapper fieldset .form-item .description
-{
-  display: block;
-  margin-left: 200px;
+#edit-depth-wrapper {
+  margin-top: 2.5em;
 }

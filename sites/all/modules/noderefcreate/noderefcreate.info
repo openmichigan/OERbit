@@ -1,0 +1,10 @@
+name = noderefcreate
+description = create a node when the reference doesnt exist
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-07-03
+version = "6.x-1.0"
+core = "6.x"
+project = "noderefcreate"
+datestamp = "1246609547"
+

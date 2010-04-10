@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning.rules.inc,v 1.5 2010/01/28 01:09:32 rdeboer Exp $
+// $Id: revisioning.rules.inc,v 1.6 2010/03/16 06:13:34 rdeboer Exp $
 
 /**
  * @file
@@ -55,7 +55,7 @@ function revisioning_condition_revision_is_form($settings = array(), &$form) {
   $form['settings']['revision_type'] = array(
     '#type' => 'select',
     '#title' => t('Is one of'),
-    '#options' => _revisioning_revision_states(),
+    '#options' => revisioning_revision_states(),
     '#multiple' => TRUE,
     '#default_value' => isset($settings['revision_type']) ? $settings['revision_type'] : array(),
     '#required' => TRUE,
@@ -66,7 +66,7 @@ function revisioning_condition_revision_is_form($settings = array(), &$form) {
  * Label callback for "revisioning_revision_is" condition.
  */
 function revisioning_condition_revision_is_label($settings, $argument_labels) {
-  $names = array_intersect_key(_revisioning_revision_states(), $settings['revision_type']);
+  $names = array_intersect_key(revisioning_revision_states(), $settings['revision_type']);
   return t('Revision status of @node is: @type', $argument_labels + array('@type' => implode(' or ', $names)));
 }
 

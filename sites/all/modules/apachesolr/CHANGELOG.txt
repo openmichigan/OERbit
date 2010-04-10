@@ -1,10 +1,18 @@
-// $Id: CHANGELOG.txt,v 1.1.2.153 2010/01/05 04:58:16 pwolanin Exp $
+// $Id: CHANGELOG.txt,v 1.1.2.158 2010/03/04 04:17:20 pwolanin Exp $
 
 Apache Solr Search Integration x.x-x.x, xxxx-xx-xx
 ------------------------------
 
 Apache Solr Search Integration 6.x-1.x, xxxx-xx-xx
 ------------------------------
+
+Apache Solr Search Integration 6.x-1.0, 2010-03-03
+------------------------------
+#686390 by justindodge, pwolanin don't overwite existing class for facets.
+#623046 by robertDouglass, pwolanin make the results array more useful.
+#666936 by justindodge, pwolanin make Drupal.behaviors.apachesolr respect context.
+#672882 by David Lesieur, Fix Show more links on taxonomy facets.
+#679522 by pwolanin, Add gettableFiles to solr admin interface config.
 
 Apache Solr Search Integration 6.x-1.0-RC5, 2010-01-04
 ------------------------------

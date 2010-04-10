@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning.module,v 1.81 2010/03/05 05:49:07 rdeboer Exp $
+// $Id: revisioning.module,v 1.91 2010/04/05 23:46:22 rdeboer Exp $
 
 /**
  * @file
@@ -386,12 +386,11 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
           // Update the $node object just before it is saved to the db
           $node->revision = FALSE;
         }
-        if (!$node->status && user_access('publish revisions') && variable_get('revisioning_auto_publish_'. $node->type, FALSE)) {
+        if (user_access('publish revisions') && variable_get('revisioning_auto_publish_'. $node->type, FALSE)) {
           drupal_set_message(t('Auto-publishing this revision.'));
           $node->status = TRUE;
-          // Make sure current_revision_id is pointing to right revision or
-          // subsequent $op='update' will reset it
-          $node->current_revision_id = $node->vid;
+          // Make sure the 'update' does NOT reset vid, so that new revision becomes current
+          unset($node->current_revision_id);
         }
       }
       break;
@@ -400,9 +399,9 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       _revisioning_insert_msg($node);
       break;
 
-    case 'update':  // new node, called from node_save(), after _node_save_revision()
-      if ($node->revision_moderation &&
-          isset($node->current_revision_id) && $node->current_revision_id != $node->vid) {
+    case 'update':  // edited node, called from node_save(), after _node_save_revision()
+      if ($node->revision_moderation && $node->current_revision_id // i.e. set and not 0
+          && $node->current_revision_id != $node->vid) {
         // Resetting vid back to its originial value, thus creating pending revision
         db_query('UPDATE {node} SET vid=%d WHERE nid=%d', $node->current_revision_id, $node->nid);
       //$node->is_pending = TRUE;
@@ -481,7 +480,7 @@ function revisioning_block($op = 'list', $delta = 0, $edit = array()) {
 function revisioning_views_api() {
   return array(
     'api' => views_api_version(),
-    'path' => drupal_get_path('module', 'revisioning')
+    'path' => drupal_get_path('module', 'revisioning') .'/views'
   );
 }
 
@@ -537,7 +536,7 @@ function revisioning_user_node_access($revision_op, $node) {
       if (user_access('view revisions of any '. $type .' content', $user)) {
         break;
       }
-      if (($node->uid == $account->uid) && user_access('view revisions of own '. $type .' content', $user)) {
+      if (($node->uid == $user->uid) && user_access('view revisions of own '. $type .' content', $user)) {
         break;
       }
       return FALSE;
@@ -602,9 +601,9 @@ function _revisioning_operation_appropriate($revision_op, $node) {
       break;
 
     case 'publish revisions':
-      // If the node isn't meant to be moderated or the node isn't pending,
-      // disallow publication.
-      if (!$node->revision_moderation || !$node->is_pending) {
+      // If the node isn't meant to be moderated or the revision is not either
+      // pending or current but not published, then disallow publication.
+      if (!$node->revision_moderation || !($node->is_pending || ($node->is_current && !$node->status))) {
         return FALSE;
       }
       break;
@@ -683,7 +682,7 @@ function _revisioning_node_revision_access($revision_op, $node) {
  */
 function _revisioning_view_edit_access_callback($op, $node) {
 
-  $load_op = _revisioning_load_op($node, $op, TRUE);
+  $load_op = _revisioning_load_op($node, $op);
 
   $vid = arg(3);
   if (is_numeric($vid)) {
@@ -707,28 +706,30 @@ function _revisioning_view_edit_access_callback($op, $node) {
   return _revisioning_node_revision_access($revision_op, $node);
 }
 
-function _revisioning_load_op($node, $op, $check_access = FALSE) {
-  $view_mode = (int)variable_get('revisioning_view_callback', REVISIONING_LOAD_CURRENT);
-  $edit_mode = (int)variable_get('revisioning_edit_callback', REVISIONING_LOAD_CURRENT);
-  $load_op = ($op == 'edit') ? $edit_mode : $view_mode;
-  if ($load_op == REVISIONING_LOAD_LATEST) {
-    // Site is configured to load latest revision, but we'll only do this if
-    // the user has the permission to do so.
-    $latest_vid = revisioning_get_latest_revision_id($node->nid);
-    if ($latest_vid != $node->current_revision_id) {
-      if (!$check_access) {
-        return REVISIONING_LOAD_LATEST;
-      }
-      $original_vid = $node->vid;
-      $node->vid = $latest_vid;
-      $node->is_current = node_tools_revision_is_current($node);
-      $revision_op = ($op == 'view') ? 'view revisions' : 'edit revisions';
-      $access = _revisioning_node_revision_access($revision_op, $node);
-      // Restore $node (even though called by value), so that it remains consistent
-      $node->vid = $original_vid;
-      $node->is_current = node_tools_revision_is_current($node);
-      if ($access) {
-        return REVISIONING_LOAD_LATEST;
+function _revisioning_load_op($node, $op, $check_access = TRUE) {
+  if ($node->revision_moderation) {
+    $view_mode = (int)variable_get('revisioning_view_callback', REVISIONING_LOAD_CURRENT);
+    $edit_mode = (int)variable_get('revisioning_edit_callback', REVISIONING_LOAD_CURRENT);
+    $load_op = ($op == 'edit') ? $edit_mode : $view_mode;
+    if ($load_op == REVISIONING_LOAD_LATEST) {
+      // Site is configured to load latest revision, but we'll only do this if
+      // the latest isn't loaded already and the user has the permission to do so.
+      $latest_vid = revisioning_get_latest_revision_id($node->nid);
+      if ($latest_vid != $node->current_revision_id) {
+        if (!$check_access) {
+          return REVISIONING_LOAD_LATEST;
+        }
+        $original_vid = $node->vid;
+        $node->vid = $latest_vid;
+        $node->is_current = node_tools_revision_is_current($node);
+        $revision_op = ($op == 'view') ? 'view revisions' : 'edit revisions';
+        $access = _revisioning_node_revision_access($revision_op, $node);
+        // Restore $node (even though called by value), so that it remains consistent
+        $node->vid = $original_vid;
+        $node->is_current = node_tools_revision_is_current($node);
+        if ($access) {
+          return REVISIONING_LOAD_LATEST;
+        }
       }
     }
   }
@@ -776,7 +777,7 @@ function _revisioning_view($node) {
   // In node.module, node_page_view() is used to display the current, while
   // node_show() is used for any other revision. The difference between the
   // two is that node_page_view() surpresses the message that tells us we're
-  // viewing a revision, which is what we use here because we have our own
+  // viewing a revision. That's what we use here because we have our own
   // configurable message.
   return node_page_view($node);
 }
@@ -806,11 +807,10 @@ function _revisioning_edit($node) {
  * @return string
  */
 function _revisioning_title_for_tab($node, $edit = FALSE) {
-  if ($node->num_revisions <= 1) {
+  if ($node->num_revisions <= 1 || !$node->revision_moderation) {
     return $edit ? t('Edit') : t('View');
   }
-  $op = $edit ? 'edit' : 'view';
-  if (_revisioning_load_op($node, $op) == REVISIONING_LOAD_LATEST) {
+  if (_revisioning_load_op($node, $edit ? 'edit' : 'view') == REVISIONING_LOAD_LATEST) {
     return $edit ? t('Edit latest') : t('View latest');
   }
   return $edit ? t('Edit current') : t('View current');

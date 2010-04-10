@@ -1,5 +1,5 @@
 <?php
-// $Id: menu_block.install,v 1.15 2008/12/01 09:56:56 johnalbin Exp $
+// $Id: menu_block.install,v 1.18 2010/03/22 07:12:51 johnalbin Exp $
 
 /**
  * @file
@@ -12,6 +12,8 @@
 function menu_block_uninstall() {
   // Delete menu block variables.
   foreach (variable_get('menu_block_ids', array()) AS $delta) {
+    variable_del("menu_block_{$delta}_title_link");
+    variable_del("menu_block_{$delta}_admin_title");
     variable_del("menu_block_{$delta}_parent");
     variable_del("menu_block_{$delta}_level");
     variable_del("menu_block_{$delta}_follow");
@@ -20,6 +22,7 @@ function menu_block_uninstall() {
     variable_del("menu_block_{$delta}_sort");
   }
   variable_del('menu_block_ids');
+  variable_del('menu_block_menu_order');
   // Remove block configurations.
   db_query("DELETE FROM {blocks} WHERE module = 'menu_block'");
   db_query("DELETE FROM {blocks_roles} WHERE module = 'menu_block'");

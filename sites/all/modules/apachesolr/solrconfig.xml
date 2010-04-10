@@ -720,6 +720,16 @@
   <admin>
     <defaultQuery>solr</defaultQuery>
 
+    <gettableFiles>
+         solrconfig.xml
+         schema.xml
+         elevate.xml
+         mapping-ISOLatin1Accent.txt
+         protwords.txt
+         stopwords.txt
+         synonyms.txt
+    </gettableFiles>   
+
     <!-- configure a healthcheck file for servers behind a loadbalancer
     <healthcheck type="file">server-enabled</healthcheck>
     -->
