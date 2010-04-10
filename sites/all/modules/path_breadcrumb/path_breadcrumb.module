@@ -50,7 +50,13 @@ function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
             $morsel = menu_get_object('node', 1, $normal);
             if (!empty($morsel)) {
               if ($count == 1 && variable_get('path_breadcrumb_first', '') != '') {
-                $breadcrumb[] = l(variable_get('path_breadcrumb_first', ''), $morsel->path);
+                //$breadcrumb[] = l(variable_get('path_breadcrumb_first', ''), $morsel->path);
+                if ($path[0] == 'education') {
+                  $breadcrumb[] = l(variable_get('path_breadcrumb_first', ''), $morsel->path);
+                }
+                else {
+                  $breadcrumb[] = l($path[0], $morsel->path);
+                }
               }
               else {
                 if ($count == $path_count && variable_get('path_breadcrumb_current_link', 0) == 0) {
