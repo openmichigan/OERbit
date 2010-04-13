@@ -179,7 +179,19 @@ function zip_upload_create_material($file, $nid) {
   }
   $form_state['values']['field_publisher'][0]['value'] = $parent->field_publisher[0]['value'];
   _drupal_execute('material_node_form', $form_state, (object) $node);
-  // Reload node to save Creative Commons license.
+  // Let other modules do their thing.
+  $node = node_load($form_state['nid']);
+  $node->changed = time();
+  module_invoke_all('nodeapi', $node, 'insert', NULL, NULL);
+  module_invoke_all('nodeapi', $node, 'update', NULL, NULL);
+  // Let revisioning do its magic
+  module_invoke_all('revisionapi', 'pre publish', $node);
+  _revisioning_publish_latest_revision($node);
+  module_invoke_all('revisionapi', 'post publish', $node);
+  // Finally create new revision
+  _node_save_revision($node, $user->uid);
+  module_invoke_all('nodeapi', $node, 'update', NULL, NULL);
+  // Set Creative Commons license.
   $node = node_load($form_state['nid']);
   $form_state['values']['creativecommons']['select_license_form']['cc_license_uri'] = $parent->cc->uri;
   $form_state['values']['creativecommons']['metadata']['attributionName'] = $parent->cc->metadata['attributionName'];

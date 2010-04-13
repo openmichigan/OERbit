@@ -156,6 +156,9 @@ function navigation_get_children(&$node) {
       }
       $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
+    if (!empty($children)) {
+      navigation_clean_children($children);
+    }
   }
   $attributes['class'] = 'navigation-sub-units';
   if (is_array($node->field_unit_sub_unit[0]['items'])) {
@@ -167,4 +170,44 @@ function navigation_get_children(&$node) {
     }
   }
   return $children;
+}
+
+/**
+ * Remove different versions of the same course.
+ */
+function navigation_clean_children(&$children) {
+  foreach ($children as $nid => $course) {
+    $node = node_load($nid);
+    if ($node->type == 'course') {
+      $query = db_query("SELECT DISTINCT(nid) AS nid FROM {content_type_course} WHERE field_course_code_value='%s' ORDER BY field_course_year_value DESC, field_course_term_value ASC", $node->field_course_code[0]['value']);
+      $latest = db_fetch_object($query);
+      $previous = db_fetch_object($query);
+      if (!empty($previous) && $latest->nid != $node->nid) {
+        unset($children[$node->nid]);
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_views_pre_render().
+ */
+function navigation_views_pre_render(&$view) {
+  // Only alter the course navigation view
+  if ($view->name != 'courses') {
+    return;
+  }
+  if (!empty($view->result)) {
+    foreach ($view->result as $key => $course) {
+      if ($course->node_type == 'course') {
+        $node = node_load($course->nid);
+        $query = db_query("SELECT DISTINCT(nid) AS nid FROM {content_type_course} WHERE field_course_code_value='%s' ORDER BY field_course_year_value DESC, field_course_term_value ASC", $node->field_course_code[0]['value']);
+        $latest = db_fetch_object($query);
+        $previous = db_fetch_object($query);
+        if (!empty($previous) && $latest->nid != $node->nid) {
+          unset($view->result[$key]);
+        }
+      }
+    }
+  }
 }

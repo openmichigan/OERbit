@@ -187,6 +187,12 @@ function course_form_alter(&$form, &$form_state, $form_id) {
   else {
     $destination = referer_uri();
   }
+  // Add Cancel to the form
+  $form['cancel'] = array(
+    '#type' => 'markup',
+    '#value' => l(t('Back'), $destination),
+    '#weight' => -999,
+  );
   $form['buttons']['cancel'] = array(
     '#type' => 'markup',
     '#value' => l(t('Cancel'), $destination),
