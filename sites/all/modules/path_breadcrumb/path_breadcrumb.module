@@ -48,7 +48,7 @@ function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
           if ($count != $path_count || variable_get('path_breadcrumb_current', 0) != 0) {
             $normal = drupal_get_normal_path(implode('/', $path));
             $morsel = menu_get_object('node', 1, $normal);
-            if (!empty($morsel)) {
+            if (!empty($morsel) && $morsel->path != $normal) {
               if ($count == 1 && variable_get('path_breadcrumb_first', '') != '') {
                 //$breadcrumb[] = l(variable_get('path_breadcrumb_first', ''), $morsel->path);
                 if ($path[0] == 'education') {
@@ -59,12 +59,38 @@ function path_breadcrumb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
                 }
               }
               else {
+                // Account for different versions of the course
+                $term = NULL;
+                if ($morsel->type == 'course') {
+                  $query = db_query("SELECT DISTINCT(c.nid) AS nid, n.title AS title FROM {node} n INNER JOIN {content_type_course} c ON n.nid = c.nid WHERE c.field_course_code_value='%s' ORDER BY c.field_course_year_value DESC, c.field_course_term_value ASC", $morsel->field_course_code[0]['value']);
+                  $latest = db_fetch_object($query);
+                  $previous = db_fetch_object($query);
+                  if (!empty($previous) && $latest->nid != $node->nid) {
+                    $term = $node->field_course_term[0]['value'] . ' ' . substr($node->field_course_year[0]['value'], 0, 4);
+                  }
+                }
                 if ($count == $path_count && variable_get('path_breadcrumb_current_link', 0) == 0) {
-                  $breadcrumb[] = $morsel->title;
+                  if (!empty($term)) {
+                    $breadcrumb[] = $term;
+                  }
+                  else {
+                    $breadcrumb[] = $morsel->title;
+                  }
                 }
                 else {
-                  $breadcrumb[] = l($morsel->title, $morsel->path);
+                  if (!empty($term)) {
+                    if ($node->nid == $morsel->nid) {
+                      $breadcrumb[] = l($term, $morsel->path);
+                    }
+                    else {
+                      $breadcrumb[] = l($previous->title, $morsel->path);
+                    }
+                  }
+                  else {
+                    $breadcrumb[] = l($morsel->title, $morsel->path);
+                  }
                 }
+                unset($term);
               }
               $unique[] = $morsel->title;
             }
