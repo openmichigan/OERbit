@@ -80,7 +80,12 @@ function course_get_navigation_links(&$course) {
       $tabs[] = array('data' => l(t('Highlights'), $course->path . '/highlights'), 'class' => course_navigation_active($course->path . '/highlights'));
     }
     if (is_array($course->field_course_materials[0]['items'])) {
-      $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials'));
+      foreach ($course->field_course_materials[0]['items'] as $material) {
+        $node = node_load($material['nid']);
+        if ($node->status && $node->field_material_type[0]['value'] != 'unknown') {
+          $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials'));
+        }
+      }
     }
     if (is_array($course->field_course_sessions[0]['items'])) {
       $tabs[] = array('data' => l(t('Sessions'), $course->path . '/sessions'), 'class' => course_navigation_active($course->path . '/sessions'));
@@ -130,6 +135,15 @@ function course_navigation_empty(&$course, $section = 'overview') {
       if (!is_array($course->field_course_materials[0]['items'])) {
         return ' empty';
       }
+      else {
+        foreach ($course->field_course_materials[0]['items'] as $material) {
+          $node = node_load($material['nid']);
+          if ($node->status && $node->field_material_type[0]['value'] != 'unknown') {
+            return;
+          }
+        }
+        return ' empty';
+      }
       break;
     case 'sessions':
       if (!is_array($course->field_course_sessions[0]['items'])) {
@@ -175,6 +189,11 @@ function course_form_alter(&$form, &$form_state, $form_id) {
   // Do nothing if this is not a node-editing form.
   if (substr_count($form_id, 'node_form') <= 0) {
     return;
+  }
+  if ($form_id == 'unit_node_form') {
+    $form['field_unit_top']['#description'] = '<input type="checkbox" value="0" /> <span class="fake-field-content">No, this is not a top level unit. Its parent unit is:</span>';
+    $form['field_parent_unit']['#prefix'] = '<div class="fake-field-no-content">';
+    $form['field_parent_unit']['#suffix'] = '</div>';
   }
   // Add Cancel to the form
   $destination = '<front>';

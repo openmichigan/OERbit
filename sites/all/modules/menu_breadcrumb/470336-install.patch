@@ -1,0 +1,10 @@
+--- menu_breadcrumb.install.old	2010-04-10 21:00:39.000000000 +0000
++++ menu_breadcrumb.install	2010-04-10 21:00:43.000000000 +0000
+@@ -17,6 +17,7 @@ function menu_breadcrumb_uninstall() {
+   variable_del('menu_breadcrumb_menus');
+   variable_del('menu_breadcrumb_pattern_matches');
+   variable_del('menu_breadcrumb_pattern_matches_rebuild');
++  variable_del('menu_breadcrumb_show_frontpage');
+ }
+ 
+ /**

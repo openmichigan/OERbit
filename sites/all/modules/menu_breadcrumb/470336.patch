@@ -1,0 +1,30 @@
+--- menu_breadcrumb.module.old	2010-04-10 20:57:52.000000000 +0000
++++ menu_breadcrumb.module	2010-04-10 21:05:28.000000000 +0000
+@@ -334,8 +334,12 @@ function menu_breadcrumb_init() {
+     }
+   }
+ 
++  $breadcrumb = array();  
++  if (variable_get('menu_breadcrumb_show_frontpage', 0)) {
++    $breadcrumb[] = l(t('Home'), '<front>');
++  }
+   // Generate the breadcrumbs using the active menu.
+-  $breadcrumb = drupal_get_breadcrumb();
++  $breadcrumb = array_merge($breadcrumb, drupal_get_breadcrumb());
+ 
+   if (variable_get('menu_breadcrumb_append_node_title', 0) == 1) {
+     if (variable_get('menu_breadcrumb_append_node_url', 0) == 1) {
+@@ -387,6 +391,13 @@ function menu_breadcrumb_admin_settings_
+     '#description' => t('Choose whether or not the breadcrumb should be hidden if the breadcrumb only contains a link to the front page (<em>Home</em>.).'),
+     '#default_value' => variable_get('menu_breadcrumb_hide_on_single_item', 0),
+   );
++  
++  $form['menu_breadcrumb_show_frontpage'] = array(
++    '#type' => 'checkbox',
++    '#title' => t('Always show a link to the front page.'),
++    '#description' => t('Choose whether or not to show a link to the front page (<em>Home</em>) as the first item in the breadcrumb.'),
++    '#default_value' => variable_get('menu_breadcrumb_show_frontpage', 0),
++  );
+ 
+   $form['include_exclude'] = array(
+     '#type' => 'fieldset',

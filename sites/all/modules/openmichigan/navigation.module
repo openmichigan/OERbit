@@ -201,6 +201,11 @@ function navigation_views_pre_render(&$view) {
     foreach ($view->result as $key => $course) {
       if ($course->node_type == 'course') {
         $node = node_load($course->nid);
+      }
+      elseif (!empty($course->node_node_nid)) {
+        $node = node_load($course->node_node_nid);
+      }
+      if ($node->type == 'course') {
         $query = db_query("SELECT DISTINCT(nid) AS nid FROM {content_type_course} WHERE field_course_code_value='%s' ORDER BY field_course_year_value DESC, field_course_term_value ASC", $node->field_course_code[0]['value']);
         $latest = db_fetch_object($query);
         $previous = db_fetch_object($query);

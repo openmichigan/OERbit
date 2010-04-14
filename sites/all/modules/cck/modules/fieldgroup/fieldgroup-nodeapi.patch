@@ -1,0 +1,11 @@
+--- fieldgroup.module.old	2010-04-13 02:16:16.000000000 +0000
++++ fieldgroup.module	2010-04-13 02:16:44.000000000 +0000
+@@ -538,7 +538,7 @@ function fieldgroup_field_remove_form_su
+ /**
+  * Implementation of hook_nodeapi().
+  */
+-function fieldgroup_nodeapi(&$node, $op, $teaser, $page) {
++function fieldgroup_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+   switch ($op) {
+     case 'view':
+       // Prevent against invalid 'nodes' built by broken 3rd party code.
