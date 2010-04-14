@@ -20,7 +20,7 @@ function course_pathauto_alias(&$node, $op) {
         pathauto_create_alias('course', $op, $placeholders, $alias . '/rss', $node->nid, 'rss');
         pathauto_create_alias('course', $op, $placeholders, $alias . '/rdf', $node->nid, 'rdf');
         // Update aliases for the latest version of this course
-        $query = db_query("SELECT DISTINCT(nid) AS nid FROM {content_type_course} WHERE field_course_code_value='%s' ORDER BY field_course_year_value DESC, field_course_term_value ASC", $node->field_course_code[0]['value']);
+        $query = db_query("SELECT DISTINCT(course.nid) AS nid FROM {content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid WHERE code.field_code_value='%s' ORDER BY course.field_course_year_value DESC, course.field_course_term_value ASC", $node->field_code[0]['value']);
         $latest = db_fetch_object($query);
         $previous = db_fetch_object($query);
         if ($latest->nid == $node->nid) {
@@ -72,7 +72,7 @@ function course_pathauto_alias(&$node, $op) {
         path_set_alias('node/' . $node->nid . '/rss');
         path_set_alias('node/' . $node->nid . '/rdf');
         // Revert paths to previous version
-        $latest = db_fetch_object(db_query("SELECT DISTINCT(nid) AS nid FROM {content_type_course} WHERE field_course_code_value='%s' AND nid <> %d ORDER BY field_course_year_value DESC, field_course_term_value ASC", $node->field_course_code[0]['value'], $node->nid));
+        $latest = db_fetch_object(db_query("SELECT DISTINCT(course.nid) AS nid FROM {content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid WHERE code.field_code_value='%s' AND course.nid <> %d ORDER BY course.field_course_year_value DESC, course.field_course_term_value ASC", $node->field_code[0]['value'], $node->nid));
         if (!empty($latest->nid)) {
           $latest = node_load($latest->nid);
           $alias = 'node/' . $latest->nid;

@@ -70,22 +70,26 @@ function course_get_feed_link() {
 function course_get_navigation_links(&$course) {
   $message = '';
   $tabs = array();
+  $materials = FALSE;
+  if (is_array($course->field_course_materials[0]['items'])) {
+    foreach ($course->field_course_materials[0]['items'] as $material) {
+      $node = node_load($material['nid']);
+      if ($node->status && $node->field_material_type[0]['value'] != 'unknown') {
+        $materials = TRUE;
+      }
+    }
+  }
   if (user_is_anonymous()) {
-    if (is_array($course->field_course_highlights[0]['items'])
-    || is_array($course->field_course_materials[0]['items'])
+    if ($materials
+    || is_array($course->field_course_highlights[0]['items'])
     || is_array($course->field_course_sessions[0]['items'])) {
       $tabs[] = array('data' => l(t('Overview'), $course->path), 'class' => course_navigation_active($course->path));
     }
     if (is_array($course->field_course_highlights[0]['items'])) {
       $tabs[] = array('data' => l(t('Highlights'), $course->path . '/highlights'), 'class' => course_navigation_active($course->path . '/highlights'));
     }
-    if (is_array($course->field_course_materials[0]['items'])) {
-      foreach ($course->field_course_materials[0]['items'] as $material) {
-        $node = node_load($material['nid']);
-        if ($node->status && $node->field_material_type[0]['value'] != 'unknown') {
-          $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials'));
-        }
-      }
+    if ($materials) {
+      $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials'));
     }
     if (is_array($course->field_course_sessions[0]['items'])) {
       $tabs[] = array('data' => l(t('Sessions'), $course->path . '/sessions'), 'class' => course_navigation_active($course->path . '/sessions'));

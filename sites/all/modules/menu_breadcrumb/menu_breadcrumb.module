@@ -354,7 +354,7 @@ function menu_breadcrumb_init() {
     $breadcrumb = array();
   }
   // switchback case #1965
-  if (arg(0) == 'node' && is_numeric(arg(1)) && in_array(arg(2), array('edit', 'revisions', 'create_referrer'))) {
+  if (arg(0) == 'node' && is_numeric(arg(1)) && in_array(arg(2), array('edit', 'revisions', 'create_referrer', 'accessibility'))) {
     $breadcrumb = array();
   }
 

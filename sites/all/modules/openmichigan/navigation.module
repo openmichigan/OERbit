@@ -120,10 +120,14 @@ function navigation_get_siblings(&$node) {
     if (!empty($parent->field_unit_sub_unit[0]['items'])) {
       foreach ($parent->field_unit_sub_unit[0]['items'] as $sibling) {
         $status = '';
-        if (!node_load($sibling['nid'])->status) {
+        $status_node = node_load($sibling['nid']);
+        if (!$status_node->status) {
           $status = ' unpublished';
         }
         $siblings[$sibling['nid']]['data'] = l($sibling['title'], 'node/' . $sibling['nid'], array('attributes' => array('class' => 'navigation-siblings' . $status)));
+        if (user_is_anonymous() && !$status_node->status) {
+          unset($siblings[$sibling['nid']]);
+        }
       }
     }
   }
@@ -132,6 +136,9 @@ function navigation_get_siblings(&$node) {
       $status = ' unpublished';
     }
     $siblings[$node->nid]['data'] = l($node->title, 'node/' . $node->nid, array('attributes' => array('class' => 'navigation-self' . $status)));
+    if (user_is_anonymous() && !$node->status) {
+      unset($siblings[$node->nid]);
+    }
   }
   return $siblings;
 }
@@ -179,12 +186,15 @@ function navigation_clean_children(&$children) {
   foreach ($children as $nid => $course) {
     $node = node_load($nid);
     if ($node->type == 'course') {
-      $query = db_query("SELECT DISTINCT(nid) AS nid FROM {content_type_course} WHERE field_course_code_value='%s' ORDER BY field_course_year_value DESC, field_course_term_value ASC", $node->field_course_code[0]['value']);
+      $query = db_query("SELECT DISTINCT(course.nid) AS nid FROM {content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid WHERE code.field_code_value='%s' ORDER BY course.field_course_year_value DESC, course.field_course_term_value DESC", $node->field_code[0]['value']);
       $latest = db_fetch_object($query);
       $previous = db_fetch_object($query);
       if (!empty($previous) && $latest->nid != $node->nid) {
         unset($children[$node->nid]);
       }
+    }
+    if (user_is_anonymous() && !$node->status) {
+      unset($children[$node->nid]);
     }
   }
 }
@@ -206,10 +216,13 @@ function navigation_views_pre_render(&$view) {
         $node = node_load($course->node_node_nid);
       }
       if ($node->type == 'course') {
-        $query = db_query("SELECT DISTINCT(nid) AS nid FROM {content_type_course} WHERE field_course_code_value='%s' ORDER BY field_course_year_value DESC, field_course_term_value ASC", $node->field_course_code[0]['value']);
+        $query = db_query("SELECT DISTINCT(course.nid) AS nid FROM {content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid WHERE code.field_code_value='%s' ORDER BY course.field_course_year_value DESC, course.field_course_term_value DESC", $node->field_code[0]['value']);
         $latest = db_fetch_object($query);
         $previous = db_fetch_object($query);
         if (!empty($previous) && $latest->nid != $node->nid) {
+          unset($view->result[$key]);
+        }
+        if (user_is_anonymous() && !$node->status) {
           unset($view->result[$key]);
         }
       }
