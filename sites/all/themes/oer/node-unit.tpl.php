@@ -78,7 +78,17 @@
   <?php endif; ?>
 
 
-  	 <?php //print $content ."<hr />"; ?>
+  	 <?php /*print $content ."<hr />";*/ ?>
+  	 
+  <!-- Create related content menu -->
+  <?php
+    $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
+    print '<div class="nodereferrer-links" >';
+    foreach ($menu_items as $menu_item) {
+      print $menu_item['items'][0];
+    }
+    print '</div><div style="clear: left;"></div>';
+  ?>
 
   <?php
    $unitImage = $node->field_unit_image[0]['view'];
@@ -86,37 +96,51 @@
    	if ($unitImage == "") { $contentarea = "content-course-full"; } else { $contentarea = "content-course"; } 
   ?>
 <!-- Start the content -->  
-  <div class="<?php print $contentarea; ?>">
+<div class="content-course-full" style="clear: both;">
+
+
+  <?php if($unitImage != "") { ?>
+    <div class="course-image">
+  	  <?php print $unitImage; ?>
+  	  <?php print $unitImageCaption; ?>
+    </div>
+  <?php } ?>
+
+
+
+
+
+
     <!-- Create related content menu -->
     <?php print $node->content['nodereferrer_create_menu']['#value']; ?>
+    
   	<!-- Content -->
   	<?php print $node->content['body']['#value']; ?>
+  	
   	<!-- Website link -->
   	<?php if (!empty($node->field_website[0]['url'])) { ?>
   	  <div class="unit-website">
-  	    <a href="<?php print $node->field_website[0]['url']; ?>" target="<?php print $node->field_website[0]['attributes']['target']; ?>"><?php print $node->field_website[0]['display_title']; ?></a>
+  	    <a class="ext" href="<?php print $node->field_website[0]['url']; ?>" target="<?php print $node->field_website[0]['attributes']['target']; ?>"><?php print $node->field_website[0]['display_title']; ?></a>
   	  </div>
   	<?php } ?>
+  	
   	<!-- Unit/Course listing -->
   	<div class="unit-course-list">
   	  <?php
-  	    print $node->content['courses_node_content_1']['#value'];
-    	  print $node->content['courses_node_content_2']['#value'];
+    	  if (user_is_anonymous()) {
+      	  print $node->content['courses_node_content_3']['#value'];
+    	    print $node->content['courses_node_content_4']['#value'];
+    	  }
+    	  else {
+    	    print $node->content['courses_node_content_1']['#value'];
+    	    print $node->content['courses_node_content_2']['#value'];
+    	  }
     	?>
     </div>
+    
   </div>
   
- <?php if ($unitImage != "") {  ?> 
-  <div class="imgCapR" id="image-course">
-  	<?php print $unitImage; ?>
-  	<?php print $unitImageCaption; ?>
-  </div>
- <?php } ?>
- 
-   <div class="coursefooter">
-   
-   
-   </div>
+
 
 	<?php //print "<pre>"; print_r($node); print "</pre>"; ?>
   <?php print $links; ?>

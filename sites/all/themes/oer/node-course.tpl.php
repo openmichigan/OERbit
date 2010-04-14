@@ -47,16 +47,30 @@
  * @see template_preprocess()
  * @see template_preprocess_node()
  */
+ 
+ /*** CUSTOM ADDITIONS ***/
+   $courseImage = $node->field_course_image[0]['view'];
+   $courseImageCaption = $node->field_course_image_caption[0]['value'];
+   $courseDownload = $node->field_course_download_display[0]['value'];
+   $courseTerm = $node->field_course_term[0]['value']." ". $node->field_course_year[0]['view'];
+   
+   if ($terms) { $courseKeywords = '<div class="course-keywords">Keywords: <div class="terms terms-inline" property="dc:subject">'. $terms . '</div></div>'; } else { $courseKeywords = ''; }
+   
+   
+   
+   
 ?>
 
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"><div class="node-inner">
 
-  <?php print $picture; ?>
-
+  <?php /*print $picture;*/ ?>
+  
+  
+  
+  
+<!-- TITLE -->
   <?php if (!$page): ?>
-    <h2 class="title">
-      <a href="<?php print $node_url; ?>" title="<?php print $title ?>"><?php print $title; ?></a>
-    </h2>
+    <h2 class="title"><a href="<?php print $node_url; ?>" title="<?php print $title ?>"><?php print $title; ?></a></h2>
   <?php endif; ?>
 
   <?php if ($unpublished): ?>
@@ -70,24 +84,41 @@
         </div>
     </div>
   <?php endif; ?>
+  
+<div class="content-course-full" style="clear: both;">
 
+<!-- Course Image -->
+  
+  <?php if($courseImage != "") { ?>
+    <div class="course-image">
+  	  <?php print $courseImage; ?>
+  	  <?php print $courseImageCaption; ?>
+    </div>
+  <?php } ?>
 
-   
-  <?php 
-   $courseImage = $node->field_course_image[0]['view'];
-   $courseImageCaption = $node->field_course_image_caption[0]['value'];
-   $courseDownload = $node->field_course_download_display[0]['value'];
-   
-   	if ($courseImage == "") { $contentarea = "content-course-full"; } else { $contentarea = "content-course"; } 
-  ?>
-<!-- Start the content -->  
-  <div class="<?php print $contentarea; ?>">
-    <!-- Create related content menu -->
-    <?php print $node->content['nodereferrer_create_menu']['#value']; ?>
-    <!-- Term -->
-  	<div class="term-year"><strong>Term:</strong> <?php print $node->field_course_term[0]['value']." ". $node->field_course_year[0]['view']; ?></div>
-  	<!-- Publsihed & Revised Dates -->
-  	<div class="dates"><span class="published"><strong>Published:</strong> <span property="dc:created"><?php print date('F j, Y',$node->created); ?></span></span> <span class="revised"><strong>Revised:</strong> <span property="dc:available"><?php print date('F j, Y',$node->changed); ?></span></span></div>
+ <table class="courseinfo" style="width: auto;">
+ 	<tr>
+ 		<td><!-- Term -->
+  	<?php if ($courseTerm != '') { ?>
+  	<div class="term-year">
+  		<strong>Term:</strong> <?php print $courseTerm; ?>
+  	</div>
+  	<?php } ?></td>
+ 		<td><span class="published"><strong>Published:</strong> <span property="dc:created"><?php print date('F j, Y',$node->created); ?></span></span></td>
+ 	</tr>
+ 	<tr>
+ 		<td><!-- Download Course -->
+  	<?php if($courseDownload != 'No') { ?>
+   	<div class="course-download">
+    	<a href="#">Download all materials</a>
+   	</div>
+  	<?php } ?></td>
+ 		<td valign="top"><span class="revised"><strong>Revised:</strong> <span property="dc:available"><?php print date('F j, Y',$node->changed); ?></span></span></td>
+ 	</tr>
+ </table>
+  
+  	
+  	  
   	
   	<!-- Content -->
   	
@@ -95,62 +126,102 @@
   	<?php
   	  if ($section) {
   	    print $node->content[$section . '_links_node_content_1']['#value'];
-     	  print $node->content[$section . '_node_content_1']['#value'];
-     	  print $node->content[$section . '_node_content_2']['#value'];
+  	    print $courseKeywords;
+  	      ?>
+     
+    <!-- Create related content menu -->
+    <?php
+      $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
+      print '<div class="nodereferrer-links" >';
+      switch ($section) {
+        case 'highlights':
+          print $menu_items[1]['items'][0];
+          break;
+        case 'materials':
+          print $menu_items[2]['items'][0];
+          if (user_access('create material content')) {
+            print '<br />' . l('Zip Upload', 'node/' . $node->nid . '/zip_upload');
+          }
+          break;
+        case 'sessions':
+          print $menu_items[3]['items'][0];
+          break;
+        case 'information':
+        default:
+          print $menu_items[0]['items'][0];
+          break;
+      }
+      print '</div><div style="clear: left;"></div>';
+    ?>
+
+  	    
+  	    <?php
+  	    if (user_is_anonymous()) {
+     	    print $node->content[$section . '_node_content_1']['#value'];
+     	  }
+     	  else {
+     	    print $node->content[$section . '_node_content_2']['#value'];
+     	  }
       }
       else {
-        if (arg(2) == 'nodereferrer_create_content') {
-          if (module_exists('bulkupload')) {
-            print bulkupload_upload_page();
-          }
+        print $node->content['body']['#value'];
+  	    print $courseKeywords;
+        ?>
+     
+     
+     <!-- Create related content menu -->
+    <?php
+      $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
+      print '<div class="nodereferrer-links">';
+      switch ($section) {
+        case 'highlights':
+          print $menu_items[1]['items'][0];
+          break;
+        case 'materials':
+          print $menu_items[2]['items'][0];
+          print '<br />' . l('Zip Upload', 'node/' . $node->nid . '/zip_upload');
+          break;
+        case 'sessions':
+          print $menu_items[3]['items'][0];
+          break;
+        case 'information':
+        default:
+          print $menu_items[0]['items'][0];
+          break;
+      }
+      print '</div>';
+    ?>
+     
+     
+     
+     
+        <?php
+        if (user_is_anonymous()) {
+          print $node->content['overview_node_content_1']['#value'];
         }
         else {
-          print $node->content['body']['#value'];
-          print $node->content['overview_node_content_1']['#value'];
-          print $node->content['instructor_node_content_1']['#value'];
+          print $node->content['overview_node_content_2']['#value'];
         }
+        print $node->content['instructor_node_content_1']['#value'];
       }
   	?>
   	<!-- End of VIEW -->
   	
-  </div>
-  
-  
-   
-<?php if($courseDownload != 'No' || $courseImage != "") { ?>
-  <div class="imgCapR" id="image-course">
-    
-  <!-- Download Course -->
-  <?php if($courseDownload != 'No') { ?>
-   <div class="course-download">
-    <a href="#">Download the full course resources</a>
-   </div>
-  <?php } ?>
-  
   	
- <?php if ($courseImage != "") {  ?>
-  	<!-- Course Image -->
-  	<?php print $courseImage; ?>
-  	<?php print $courseImageCaption; ?>
   	
- <?php } ?>
+  	
+
+  
+</div>
+
  
- 
-  	<!-- Previous Terms -->
-  	<!-- <div class="course-previous-terms">
-  	PREVIOUS TERMS<br />
-  	
-  	</div> -->
-  </div>
-  
- <?php } ?>
  
    <div class="coursefooter">
-   <!--  Keywords -->
-     <?php if ($terms): ?><div class="course-keywords">Keywords: <div class="terms terms-inline" property="dc:subject"><?php print $terms; ?></div></div><?php endif; ?>
-   
-     <?php print $node->cc->get_html(); ?>
-   
+     <?php
+       if (isset($node->cc)) {
+         print $node->cc->get_html();
+       }
+     ?>
    </div>
 
   <?php print $links; ?>

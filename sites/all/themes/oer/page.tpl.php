@@ -84,7 +84,7 @@
 <!-- 
 ************************************************
 ************************************************
-      SITE BUILT BY Switchback CMS
+      SITE BUILT BY Switchback
       WWW.SWITCHBACKCMS.COM
 ************************************************
 ************************************************
@@ -102,7 +102,7 @@
 
   <div id="page"><div id="page-inner">
 
-    <a name="navigation-top" id="navigation-top"></a>
+    <a id="navigation-top"></a>
     <div id="skip-to-nav"><a href="#navigation"><?php print t('Skip to Navigation'); ?></a> | <a href="#content-area"><?php print t('Skip to Content'); ?></a></div>
 
     <div id="header"><div id="header-inner" class="clear-block">
@@ -139,7 +139,7 @@
 
       <?php if ($header): ?>
         <div id="header-blocks" class="region region-header">
-          <a name="navigation" id="navigation"></a>
+          <a id="navigation"></a>
           <?php print $header; ?>
         </div> <!-- /#header-blocks -->
       <?php endif; ?>
