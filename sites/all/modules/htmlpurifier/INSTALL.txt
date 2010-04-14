@@ -1,0 +1,21 @@
+PREREQUISITES: Make sure you check HTML Purifier and make sure that you
+have fulfilled all of its requirements before running this.  Specifically,
+you'll need the PHP extension ctype (in almost all PHP distributions),
+and it's nice to have dom and iconv.
+
+* Place the htmlpurifier folder in your drupal modules directory.
+
+* Download HTML Purifier from http://htmlpurifier.org/ You will need
+  4.0.0 or later.
+
+* Extract the "library" folder and place it inside your modules/htmlpurifier
+  directory.
+
+* Go to Administer > Site building > Modules and enable this module
+
+* You can now create a new input format or add the HTML Purifier to an 
+  existing input format. It is recommended that you place HTML Purifier as 
+  the last filter in the input format. Reorder the filters if necessary.
+
+WARNING: Due to HTML Purifier's caching mechanism, dynamic filters MUST NOT
+be placed before HTML Purifier.

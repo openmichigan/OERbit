@@ -1,0 +1,105 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ */
+function htmlpurifier_schema() {
+  $schema['cache_htmlpurifier'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_htmlpurifier']['description'] = t(<<<DESCRIPTION
+Cache table for the HTML Purifier module just like cache_filter, except that
+cached text is stored permanently until flushed or manually invalidated.
+This helps prevent recurrent cache slams on pages with lots of segments of HTML.
+DESCRIPTION
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function htmlpurifier_install() {
+  drupal_install_schema('htmlpurifier');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function htmlpurifier_uninstall() {
+  drupal_uninstall_schema('htmlpurifier');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'htmlpurifier%%'");
+}
+
+/**
+ * Implementation of hook_requirements().
+ *
+ * Checks the version of HTML Purifier on install and issues an error if there is a problem
+ */
+function htmlpurifier_requirements($phase) {
+  // This version of HTML Purifier is required
+  static $req_version = '4.0.0';
+  $requirements = array();
+  
+  // Can't use drupal_get_path, since module may not have been installed.
+  $module_path = dirname(__FILE__);
+  $s = DIRECTORY_SEPARATOR;
+  if (!file_exists("$module_path/library/HTMLPurifier.auto.php")) {
+    $requirements['htmlpurifier'] = array (
+      'severity' => REQUIREMENT_ERROR,
+      'description' => t("Could not find HTML Purifier
+          installation in @path. Please copy contents
+          of the library folder in the HTML Purifier tarball or zip
+          to this folder or ensure HTMLPurifier.auto.php exists.
+          You can download HTML Purifier at
+          <a href=\"http://htmlpurifier.org/download.html\">htmlpurifier.org</a>.", array('@path' => "$module_path{$s}library")
+      ),
+    );
+  }
+  else {
+    require_once "$module_path/library/HTMLPurifier.auto.php";
+    if (!defined('HTMLPurifier::VERSION') || version_compare($old = HTMLPurifier::VERSION, $req_version, '<')) {
+
+      $requirements['htmlpurifier'] = array (
+        'severity' => REQUIREMENT_ERROR,
+        'description' => t("HTML Purifier @old is not compatible
+          with this module: HTML Purifier <strong>@required</strong> or later is required.
+          If the required version is a dev version, you will need to
+          <a href=\"http://htmlpurifier.org/download.html#Subversion\">check
+          code out of Subversion</a> or
+          <a href=\"http://htmlpurifier.org/download.html#NightlyBuilds\">download a nightly</a>
+          to use this module.", array('@old' => $old, '@required' => $req_version)
+        ),
+      );
+    }
+  }
+  
+  return $requirements;
+}
+
+// -- Update functions ------------------------------------------------------ //
+
+function htmlpurifier_update_6200() {
+  // Migrate any old-style filter variables to new style.
+  $formats = filter_formats();
+  foreach ($formats as $format => $info) {
+    $filters = filter_list_format($format);
+    if (!isset($filters['htmlpurifier/0'])) continue;
+    $config_data = array(
+      'URI.DisableExternalResources' => variable_get("htmlpurifier_externalresources_$format", TRUE),
+      'Attr.EnableID' => variable_get("htmlpurifier_enableattrid_$format", FALSE),
+      'AutoFormat.Linkify' => variable_get("htmlpurifier_linkify_$format", TRUE),
+      'AutoFormat.AutoParagraph' => variable_get("htmlpurifier_autoparagraph_$format", TRUE),
+      'Null_HTML.Allowed' => !variable_get("htmlpurifier_allowedhtml_enabled_$format", FALSE),
+      'HTML.Allowed' => variable_get("htmlpurifier_allowedhtml_$format", ''),
+      'Filter.YouTube' => variable_get("htmlpurifier_preserveyoutube_$format", FALSE),
+    );
+    if (defined('HTMLPurifier::VERSION') && version_compare(HTMLPurifier::VERSION, '3.1.0-dev', '>=')) {
+      $config_data['HTML.ForbiddenElements']   = variable_get("htmlpurifier_forbiddenelements_$format", '');
+      $config_data['HTML.ForbiddenAttributes'] = variable_get("htmlpurifier_forbiddenattributes_$format", '');
+    }
+    variable_set("htmlpurifier_config_$format", $config_data);
+  }
+  
+  return array();
+}
+
+function htmlpurifier_update_6201() {}
