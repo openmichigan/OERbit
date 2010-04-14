@@ -1,0 +1,32 @@
+<?php
+// $Id: custom_search.install,v 1.1.2.3 2010/03/28 14:51:45 jdanthinne Exp $
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the custom search module.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function custom_search_install() {
+  db_query("UPDATE {system} SET weight = 100 WHERE name = 'custom_search'");
+  drupal_set_message(st('Custom Search enabled. Don\'t forget to <a href="!basepath/admin/user/permissions#module-custom_search">set permissions</a>.', array('!basepath', base_path())));
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function custom_search_enable() {
+  drupal_set_message(t('Custom Search enabled. Don\'t forget to <a href="!basepath/admin/user/permissions#module-custom_search">set permissions</a>.', array('!basepath', base_path())));
+}
+
+/**
+ * Increase the module weight.
+ */
+function custom_search_update_6100() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {system} SET weight = 100 WHERE name = 'custom_search'");
+  return $ret;
+}
+

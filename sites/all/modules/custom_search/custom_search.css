@@ -1,0 +1,8 @@
+/* $Id: custom_search.css,v 1.1 2010/03/03 11:01:05 jdanthinne Exp $ */
+
+input.custom-search-default-value { color:#999;}
+.element-invisible {
+  height: 0;
+  overflow: hidden;
+  position: absolute;
+}

@@ -1,0 +1,323 @@
+# $Id: custom_search.pot,v 1.1.2.1 2010/03/28 14:51:45 jdanthinne Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  custom_search.admin.inc,v 1.1.2.5 2010/03/26 10:04:00 jdanthinne
+#  custom_search.module,v 1.1.2.13 2010/03/26 10:04:00 jdanthinne
+#  custom_search.info,v 1.1 2010/03/03 11:01:05 jdanthinne
+#  custom_search.install,v 1.1.2.2 2010/03/26 16:05:47 jdanthinne
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-03-28 14:28+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: custom_search.admin.inc:15
+msgid "Select the search types to present as search options in the search block. If none is selected, no selector will be displayed. <strong>Note</strong>: if there's only one type checked, the selector won't be displayed BUT only this type will be searched."
+msgstr ""
+
+#: custom_search.admin.inc:18
+msgid "Select the vocabularies to present as search options in the search block. If none is selected, no selector will be displayed."
+msgstr ""
+
+#: custom_search.admin.inc:37
+msgid "Search box"
+msgstr ""
+
+#: custom_search.admin.inc:41;262;308
+msgid "Display label"
+msgstr ""
+
+#: custom_search.admin.inc:46
+msgid "Search box label"
+msgstr ""
+
+#: custom_search.admin.inc:48
+msgid "Enter the label text for the search box. The default value is \"!default\"."
+msgstr ""
+
+#: custom_search.admin.inc:52
+msgid "Search box default text"
+msgstr ""
+
+#: custom_search.admin.inc:54
+msgid "This will change the default text inside the search form. Leave blank for no text. This field is blank by default."
+msgstr ""
+
+#: custom_search.admin.inc:60;188
+msgid "Submit button"
+msgstr ""
+
+#: custom_search.admin.inc:64
+msgid "Submit button text"
+msgstr ""
+
+#: custom_search.admin.inc:66
+msgid "Enter the text for the submit button. Leave blank to hide it. The default value is \"!default\"."
+msgstr ""
+
+#: custom_search.admin.inc:70
+msgid "Submit image path"
+msgstr ""
+
+#: custom_search.admin.inc:71
+msgid "The path to the file you would like to use as submit button instead of the default text button."
+msgstr ""
+
+#: custom_search.admin.inc:76
+msgid "Submit image"
+msgstr ""
+
+#: custom_search.admin.inc:77
+msgid "If you don't have direct file access to the server, use this field to upload your image."
+msgstr ""
+
+#: custom_search.admin.inc:83
+msgid "Advanced search criteria"
+msgstr ""
+
+#: custom_search.admin.inc:87
+msgid "Or"
+msgstr ""
+
+#: custom_search.admin.inc:93;110;127
+msgid "Display"
+msgstr ""
+
+#: custom_search.admin.inc:98;115;132
+msgid "Label"
+msgstr ""
+
+#: custom_search.admin.inc:100;117;134
+msgid "Enter the label text for this field. The default value is \"!default\"."
+msgstr ""
+
+#: custom_search.admin.inc:104
+msgid "Phrase"
+msgstr ""
+
+#: custom_search.admin.inc:121
+msgid "Negative"
+msgstr ""
+
+#: custom_search.admin.inc:140
+msgid "Elements ordering"
+msgstr ""
+
+#: custom_search.admin.inc:147
+msgid "Search Box"
+msgstr ""
+
+#: custom_search.admin.inc:153
+msgid "Content Types"
+msgstr ""
+
+#: custom_search.admin.inc:164 custom_search.module:48
+msgid "Taxonomy"
+msgstr ""
+
+#: custom_search.admin.inc:173
+msgid "Advanced search criterion: Or"
+msgstr ""
+
+#: custom_search.admin.inc:178
+msgid "Advanced search criterion: Phrase"
+msgstr ""
+
+#: custom_search.admin.inc:183
+msgid "Advanced search criterion: Negative"
+msgstr ""
+
+#: custom_search.admin.inc:212
+msgid "Elements"
+msgstr ""
+
+#: custom_search.admin.inc:229
+msgid "Content types"
+msgstr ""
+
+#: custom_search.admin.inc:243
+msgid "Other searches"
+msgstr ""
+
+#: custom_search.admin.inc:250;295
+msgid "Selector type"
+msgstr ""
+
+#: custom_search.admin.inc:252;298
+msgid "Drop-down list"
+msgstr ""
+
+#: custom_search.admin.inc:253;299
+msgid "Drop-down list with multiple choices"
+msgstr ""
+
+#: custom_search.admin.inc:254;300
+msgid "Radio buttons"
+msgstr ""
+
+#: custom_search.admin.inc:255;301
+msgid "Checkboxes"
+msgstr ""
+
+#: custom_search.admin.inc:257
+msgid "Choose which selector type to use. Note: content types and other searches cannot be combined in a single search."
+msgstr ""
+
+#: custom_search.admin.inc:267;313
+msgid "Label text"
+msgstr ""
+
+#: custom_search.admin.inc:269;315
+msgid "Enter the label text for the selector. The default value is \"!default\"."
+msgstr ""
+
+#: custom_search.admin.inc:273
+msgid "-Any content type- text"
+msgstr ""
+
+#: custom_search.admin.inc:276
+msgid "Enter the text for \"any content type\" choice. The default value is \"!default\"."
+msgstr ""
+
+#: custom_search.admin.inc:297
+msgid "Disabled"
+msgstr ""
+
+#: custom_search.admin.inc:303
+msgid "Choose which selector type to use."
+msgstr ""
+
+#: custom_search.admin.inc:319
+msgid "-Any- text"
+msgstr ""
+
+#: custom_search.admin.inc:322
+msgid "Enter the text for \"any term\" choice. The default value is \"!default\"."
+msgstr ""
+
+#: custom_search.admin.inc:333
+msgid "Search form"
+msgstr ""
+
+#: custom_search.admin.inc:337
+msgid "Display basic search"
+msgstr ""
+
+#: custom_search.admin.inc:342
+msgid "Display advanced search"
+msgstr ""
+
+#: custom_search.admin.inc:347
+msgid "Filter"
+msgstr ""
+
+#: custom_search.admin.inc:348
+msgid "Add links to filter the results by content type."
+msgstr ""
+
+#: custom_search.admin.inc:352
+msgid "Position"
+msgstr ""
+
+#: custom_search.admin.inc:355
+msgid "Above results"
+msgstr ""
+
+#: custom_search.admin.inc:356
+msgid "Below results"
+msgstr ""
+
+#: custom_search.admin.inc:360
+msgid "Enter the label text for the list. The default value is "!default"."
+msgstr ""
+
+#: custom_search.module:11
+msgid "Search this site"
+msgstr ""
+
+#: custom_search.module:12
+msgid "Search"
+msgstr ""
+
+#: custom_search.module:13
+msgid "Search for"
+msgstr ""
+
+#: custom_search.module:14
+msgid "-Any-"
+msgstr ""
+
+#: custom_search.module:15
+msgid "Containing any of the words"
+msgstr ""
+
+#: custom_search.module:16
+msgid "Containing the phrase"
+msgstr ""
+
+#: custom_search.module:17
+msgid "Containing none of the words"
+msgstr ""
+
+#: custom_search.module:18
+msgid "Filter the results"
+msgstr ""
+
+#: custom_search.module:328;24 custom_search.info:0
+msgid "Custom Search"
+msgstr ""
+
+#: custom_search.module:72
+msgid "administer custom search"
+msgstr ""
+
+#: custom_search.module:72
+msgid "use custom search"
+msgstr ""
+
+#: custom_search.module:25 custom_search.info:0
+msgid "Customize the default search, change labels, default texts, ordering, and display content types and taxonomy selectors."
+msgstr ""
+
+#: custom_search.module:32
+msgid "Settings"
+msgstr ""
+
+#: custom_search.module:33
+msgid "Change the labels, the default texts and the ordering of elements."
+msgstr ""
+
+#: custom_search.module:39
+msgid "Content"
+msgstr ""
+
+#: custom_search.module:40
+msgid "Select the content types to present as search options in the search block."
+msgstr ""
+
+#: custom_search.module:49
+msgid "Select the vocabularies to present as search options in the search block."
+msgstr ""
+
+#: custom_search.module:57
+msgid "Results page"
+msgstr ""
+
+#: custom_search.module:58
+msgid "Customize the search results page."
+msgstr ""
+
+#: custom_search.install:21
+msgid "Custom Search enabled. Don't forget to <a href=\"!basepath/admin/user/permissions#module-custom_search\">set permissions</a>."
+msgstr ""
+

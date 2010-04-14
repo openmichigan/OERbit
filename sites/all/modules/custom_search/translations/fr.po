@@ -1,0 +1,323 @@
+# $Id: fr.po,v 1.1.2.1 2010/03/28 14:51:45 jdanthinne Exp $
+#
+# French translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  custom_search.admin.inc,v 1.1.2.5 2010/03/26 10:04:00 jdanthinne
+#  custom_search.module,v 1.1.2.13 2010/03/26 10:04:00 jdanthinne
+#  custom_search.info,v 1.1 2010/03/03 11:01:05 jdanthinne
+#  custom_search.install,v 1.1.2.2 2010/03/26 16:05:47 jdanthinne
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-03-28 14:29+0200\n"
+"PO-Revision-Date: 2010-03-28 14:29+0200\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: French <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+#: custom_search.admin.inc:15
+msgid "Select the search types to present as search options in the search block. If none is selected, no selector will be displayed. <strong>Note</strong>: if there's only one type checked, the selector won't be displayed BUT only this type will be searched."
+msgstr "Sélectionnez les types de recherche à afficher comme options de recherche. Si aucun n'est sélectionné, aucun sélecteur ne sera affiché. <strong>Note</strong>: s'il n'y a qu'un type sélectionné, le sélecteur ne sera pas affiché MAIS la recherche ne portera que sur ce type."
+
+#: custom_search.admin.inc:18
+msgid "Select the vocabularies to present as search options in the search block. If none is selected, no selector will be displayed."
+msgstr "Sélectionnez les vocabulaires à afficher comme options de recherche. Si aucun n'est sélectionné, aucun sélecteur ne sera affiché."
+
+#: custom_search.admin.inc:37
+msgid "Search box"
+msgstr "Champ de recherche"
+
+#: custom_search.admin.inc:41;262;308
+msgid "Display label"
+msgstr "Afficher l'libellé"
+
+#: custom_search.admin.inc:46
+msgid "Search box label"
+msgstr "Libellé du champ de recherche"
+
+#: custom_search.admin.inc:48
+msgid "Enter the label text for the search box. The default value is \"!default\"."
+msgstr "Entrez l'libellé du champ de recherche. La valeur par défaut est \"!default\"."
+
+#: custom_search.admin.inc:52
+msgid "Search box default text"
+msgstr "Texte par défaut du champ de recherche"
+
+#: custom_search.admin.inc:54
+msgid "This will change the default text inside the search form. Leave blank for no text. This field is blank by default."
+msgstr "Ceci changera le texte par défaut dans le champ de recherche. Laissez blanc pour ne rien afficher (par défaut)."
+
+#: custom_search.admin.inc:60;188
+msgid "Submit button"
+msgstr "Bouton de recherche"
+
+#: custom_search.admin.inc:64
+msgid "Submit button text"
+msgstr "Texte du bouton de recherche"
+
+#: custom_search.admin.inc:66
+msgid "Enter the text for the submit button. Leave blank to hide it. The default value is \"!default\"."
+msgstr "Entrer le texte pour le bouton de recherche. Laissez blanc pour le cacher. La valeur par défaut est \"!default\"."
+
+#: custom_search.admin.inc:70
+msgid "Submit image path"
+msgstr "Chemin de l'image du bouton de recherche"
+
+#: custom_search.admin.inc:71
+msgid "The path to the file you would like to use as submit button instead of the default text button."
+msgstr "Le chemin de l'image que vous désirez utiliser comme bouton de recherche à la place du texte par défaut."
+
+#: custom_search.admin.inc:76
+msgid "Submit image"
+msgstr "Image du bouton de recherche"
+
+#: custom_search.admin.inc:77
+msgid "If you don't have direct file access to the server, use this field to upload your image."
+msgstr "Si vous n'avez pas d'accès direct aux fichiers du serveur, utilisez ce champs pour transférer votre image."
+
+#: custom_search.admin.inc:83
+msgid "Advanced search criteria"
+msgstr "Critères de recherche avancée"
+
+#: custom_search.admin.inc:87
+msgid "Or"
+msgstr "Un des mots"
+
+#: custom_search.admin.inc:93;110;127
+msgid "Display"
+msgstr "Afficher"
+
+#: custom_search.admin.inc:98;115;132
+msgid "Label"
+msgstr "Étiquette"
+
+#: custom_search.admin.inc:100;117;134
+msgid "Enter the label text for this field. The default value is \"!default\"."
+msgstr "Entrez le libellé pour ce champs. La valeur par défaut est \"!default\"."
+
+#: custom_search.admin.inc:104
+msgid "Phrase"
+msgstr "Expression entière"
+
+#: custom_search.admin.inc:121
+msgid "Negative"
+msgstr "Pas les mots"
+
+#: custom_search.admin.inc:140
+msgid "Elements ordering"
+msgstr "Ordre des éléments"
+
+#: custom_search.admin.inc:147
+msgid "Search Box"
+msgstr "Champs de recherche"
+
+#: custom_search.admin.inc:153
+msgid "Content Types"
+msgstr "Types de contenu"
+
+#: custom_search.admin.inc:164 custom_search.module:48
+msgid "Taxonomy"
+msgstr "Taxonomie"
+
+#: custom_search.admin.inc:173
+msgid "Advanced search criterion: Or"
+msgstr "Critère de recherche avancée: un des mots"
+
+#: custom_search.admin.inc:178
+msgid "Advanced search criterion: Phrase"
+msgstr "Critère de recherche avancée: expression entière"
+
+#: custom_search.admin.inc:183
+msgid "Advanced search criterion: Negative"
+msgstr "Critère de recherche avancée: pas les mots"
+
+#: custom_search.admin.inc:212
+msgid "Elements"
+msgstr "Eléments"
+
+#: custom_search.admin.inc:229
+msgid "Content types"
+msgstr "Types de contenu"
+
+#: custom_search.admin.inc:243
+msgid "Other searches"
+msgstr "Autres type de recherches"
+
+#: custom_search.admin.inc:250;295
+msgid "Selector type"
+msgstr "Type de sélecteur"
+
+#: custom_search.admin.inc:252;298
+msgid "Drop-down list"
+msgstr "Liste déroulante"
+
+#: custom_search.admin.inc:253;299
+msgid "Drop-down list with multiple choices"
+msgstr "Liste à choix multiple"
+
+#: custom_search.admin.inc:254;300
+msgid "Radio buttons"
+msgstr "Boutons radio"
+
+#: custom_search.admin.inc:255;301
+msgid "Checkboxes"
+msgstr "Cases à cocher"
+
+#: custom_search.admin.inc:257
+msgid "Choose which selector type to use. Note: content types and other searches cannot be combined in a single search."
+msgstr "Choisissez le sélecteur à utiliser. Note: les types de contenu et les autres types de recherche ne peuvent être combinés en une seule recherche."
+
+#: custom_search.admin.inc:267;313
+msgid "Label text"
+msgstr "Libellé"
+
+#: custom_search.admin.inc:269;315
+msgid "Enter the label text for the selector. The default value is \"!default\"."
+msgstr "Entrez le libellé pour le sélecteur. La valeur par défaut est \"!default\"."
+
+#: custom_search.admin.inc:273
+msgid "-Any content type- text"
+msgstr "Texte pour -Tout-"
+
+#: custom_search.admin.inc:276
+msgid "Enter the text for \"any content type\" choice. The default value is \"!default\"."
+msgstr "Entrez le texte pour le choix \"n'importe quel type de contenu\". La valeur par défaut est \"!default\"."
+
+#: custom_search.admin.inc:297
+msgid "Disabled"
+msgstr "Désactivé"
+
+#: custom_search.admin.inc:303
+msgid "Choose which selector type to use."
+msgstr "Choisissez le type de sélecteur à utiliser."
+
+#: custom_search.admin.inc:319
+msgid "-Any- text"
+msgstr "Texte pour -Tout-"
+
+#: custom_search.admin.inc:322
+msgid "Enter the text for \"any term\" choice. The default value is \"!default\"."
+msgstr "Entrez le texte pour le choix \"n'importe quel terme\". La valeur par défaut est \"!default\"."
+
+#: custom_search.admin.inc:333
+msgid "Search form"
+msgstr "Formulaire de recherche"
+
+#: custom_search.admin.inc:337
+msgid "Display basic search"
+msgstr "Afficher la recherche basique"
+
+#: custom_search.admin.inc:342
+msgid "Display advanced search"
+msgstr "Afficher la recherche avancée"
+
+#: custom_search.admin.inc:347
+msgid "Filter"
+msgstr "Filtre"
+
+#: custom_search.admin.inc:348
+msgid "Add links to filter the results by content type."
+msgstr "Ajouter des liens pour filtrer les résultats par type de contenu."
+
+#: custom_search.admin.inc:352
+msgid "Position"
+msgstr "Position"
+
+#: custom_search.admin.inc:355
+msgid "Above results"
+msgstr "Au-dessus des résultats"
+
+#: custom_search.admin.inc:356
+msgid "Below results"
+msgstr "En-dessous des résultats"
+
+#: custom_search.admin.inc:360
+msgid "Enter the label text for the list. The default value is "!default"."
+msgstr "Entrez le libellé pour la liste. La valeur par défault est "!default"."
+
+#: custom_search.module:11
+msgid "Search this site"
+msgstr "Chercher dans ce site"
+
+#: custom_search.module:12
+msgid "Search"
+msgstr "Recherche"
+
+#: custom_search.module:13
+msgid "Search for"
+msgstr "Rechercher dans"
+
+#: custom_search.module:14
+msgid "-Any-"
+msgstr "-Tout-"
+
+#: custom_search.module:15
+msgid "Containing any of the words"
+msgstr "Contenant l'un des mots"
+
+#: custom_search.module:16
+msgid "Containing the phrase"
+msgstr "Contenant l'expression entière"
+
+#: custom_search.module:17
+msgid "Containing none of the words"
+msgstr "Ne contenant pas les mots"
+
+#: custom_search.module:18
+msgid "Filter the results"
+msgstr "Filtrer les résultats"
+
+#: custom_search.module:328;24 custom_search.info:0
+msgid "Custom Search"
+msgstr "Custom Search"
+
+#: custom_search.module:72
+msgid "administer custom search"
+msgstr "administrer la recherche personnalisée"
+
+#: custom_search.module:72
+msgid "use custom search"
+msgstr "utiliser la recherche personnalisée"
+
+#: custom_search.module:25 custom_search.info:0
+msgid "Customize the default search, change labels, default texts, ordering, and display content types and taxonomy selectors."
+msgstr "Personnaliser la recherce par défaut, changer les libellés, les textes par défaut, l'ordre et présenter des sélecteur de types de contenu et de vocabulaires."
+
+#: custom_search.module:32
+msgid "Settings"
+msgstr "Paramètres"
+
+#: custom_search.module:33
+msgid "Change the labels, the default texts and the ordering of elements."
+msgstr "Changer les libellés, les textes par défaut et l'ordre des éléments."
+
+#: custom_search.module:39
+msgid "Content"
+msgstr "Contenu"
+
+#: custom_search.module:40
+msgid "Select the content types to present as search options in the search block."
+msgstr "Sélectionner les types de contenu à présenter comme options de recherche."
+
+#: custom_search.module:49
+msgid "Select the vocabularies to present as search options in the search block."
+msgstr "Sélectionner les vocabulaires à présenter comme options de recherche."
+
+#: custom_search.module:57
+msgid "Results page"
+msgstr "Page des résultats"
+
+#: custom_search.module:58
+msgid "Customize the search results page."
+msgstr "Personnaliser la page des résultats de la recherche."
+
+#: custom_search.install:21
+msgid "Custom Search enabled. Don't forget to <a href=\"!basepath/admin/user/permissions#module-custom_search\">set permissions</a>."
+msgstr "Custom Search est activé. N'oubliez pas d'<a href=\"!basepath/admin/user/permissions#module-custom_search\">attribuer les permissions</a>."
+

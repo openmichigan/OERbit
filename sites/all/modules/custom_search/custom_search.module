@@ -1,0 +1,424 @@
+<?php
+// $Id: custom_search.module,v 1.1.2.14 2010/03/28 14:51:45 jdanthinne Exp $
+
+/**
+ * @file
+ * Bring customizations to the default search box
+ *
+ * Adds node types and taxonomy options to the search form
+ */
+
+define('CUSTOM_SEARCH_LABEL_DEFAULT', t('Search this site'));
+define('CUSTOM_SEARCH_SUBMIT_TEXT_DEFAULT', t('Search'));
+define('CUSTOM_SEARCH_TYPE_SELECTOR_LABEL_DEFAULT', t('Search for'));
+define('CUSTOM_SEARCH_ALL_TEXT_DEFAULT', t('-Any-'));
+define('CUSTOM_SEARCH_CRITERIA_OR_LABEL_DEFAULT', t('Containing any of the words'));
+define('CUSTOM_SEARCH_CRITERIA_PHRASE_LABEL_DEFAULT', t('Containing the phrase'));
+define('CUSTOM_SEARCH_CRITERIA_NEGATIVE_LABEL_DEFAULT', t('Containing none of the words'));
+define('CUSTOM_SEARCH_FILTER_LABEL_DEFAULT', t('Filter the results'));
+
+/**
+ * Implementation of hook_menu().
+ */
+function custom_search_menu() {
+  $items['admin/settings/custom_search'] = array(
+    'title'             => 'Custom Search',
+    'description'       => 'Customize the default search, change labels, default texts, ordering, and display content types and taxonomy selectors.',
+    'page callback'     => 'drupal_get_form',
+    'page arguments'    => array('custom_search_admin'),
+    'access arguments'  => array('administer custom search'),
+    'file'              => 'custom_search.admin.inc',
+  );
+  $items['admin/settings/custom_search/settings'] = array(
+    'title'             => 'Settings',
+    'description'       => 'Change the labels, the default texts and the ordering of elements.',
+    'access arguments'  => array('administer custom search'),
+    'type'              => MENU_DEFAULT_LOCAL_TASK,
+    'weight'            => 0,
+  );
+  $items['admin/settings/custom_search/content'] = array(
+    'title'             => 'Content',
+    'description'       => 'Select the content types to present as search options in the search block.',
+    'page arguments'    => array('custom_search_content_admin'),
+    'access arguments'  => array('administer custom search'),
+    'file'              => 'custom_search.admin.inc',
+    'type'              => MENU_LOCAL_TASK,
+    'weight'            => 1,
+  );
+  $items['admin/settings/custom_search/taxonomy'] = array(
+    'title'             => 'Taxonomy',
+    'description'       => 'Select the vocabularies to present as search options in the search block.',
+    'page arguments'    => array('custom_search_taxonomy_admin'),
+    'access arguments'  => array('administer custom search'),
+    'file'              => 'custom_search.admin.inc',
+    'type'              => MENU_LOCAL_TASK,
+    'weight'            => 2,
+  );
+  $items['admin/settings/custom_search/results'] = array(
+    'title'             => 'Results page',
+    'description'       => 'Customize the search results page.',
+    'page arguments'    => array('custom_search_results_admin'),
+    'access arguments'  => array('administer custom search'),
+    'file'              => 'custom_search.admin.inc',
+    'type'              => MENU_LOCAL_TASK,
+    'weight'            => 3,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function custom_search_perm() {
+  return array('administer custom search', 'use custom search');
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function custom_search_form_alter(&$form, $form_state, $form_id) {
+
+  if ($form_id == 'search_form') {
+    if (variable_get('custom_search_results_search', TRUE) == FALSE) $form['basic'] = array();
+    if (variable_get('custom_search_results_advanced_search', TRUE) == FALSE) $form['advanced'] = array();
+  }
+  elseif (user_access('use custom search') && ($form_id == 'search_theme_form' || $form_id == 'search_block_form')) {
+
+    // Get values.
+    if (module_exists('i18nstrings')) {
+      $title = tt('custom_search:custom_search:label', variable_get('custom_search_label', CUSTOM_SEARCH_LABEL_DEFAULT), NULL, TRUE);
+      $text = tt('custom_search:custom_search:text', variable_get('custom_search_text', ''), NULL, TRUE);
+      $submit_text = tt('custom_search:custom_search:submit_text', variable_get('custom_search_submit_text', CUSTOM_SEARCH_SUBMIT_TEXT_DEFAULT), NULL, TRUE);
+      $type_selector_label = tt('custom_search:custom_search:type_selector_label', variable_get('custom_search_type_selector_label', CUSTOM_SEARCH_TYPE_SELECTOR_LABEL_DEFAULT), NULL, TRUE);
+      $type_selector_all = tt('custom_search:custom_search:type_selector_all', variable_get('custom_search_type_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT), NULL, TRUE);
+      $criteria_or_label = tt('custom_search:custom_search:criteria_or_label', variable_get('custom_search_criteria_or_label', CUSTOM_SEARCH_CRITERIA_OR_LABEL_DEFAULT), NULL, TRUE);
+      $criteria_phrase_label = tt('custom_search:custom_search:criteria_phrase_label', variable_get('custom_search_criteria_phrase_label', CUSTOM_SEARCH_CRITERIA_PHRASE_LABEL_DEFAULT), NULL, TRUE);
+      $criteria_negative_label = tt('custom_search:custom_search:criteria_negative_label', variable_get('custom_search_criteria_negative_label', CUSTOM_SEARCH_CRITERIA_NEGATIVE_LABEL_DEFAULT), NULL, TRUE);
+      if (module_exists('taxonomy')) {
+        $vocabulary_selector_label = array();
+        $vocabulary_selector_all = array();
+        $vocabularies = taxonomy_get_vocabularies();
+        foreach ($vocabularies as $voc) {
+          $vocabulary_selector_label[$voc->vid] = tt('custom_search:custom_search:voc' . $voc->vid . '_selector_label', variable_get('custom_search_voc' . $voc->vid . '_selector_label', $voc->name), NULL, TRUE);
+          $vocabulary_selector_all[$voc->vid] = tt('custom_search:custom_search:voc' . $voc->vid . '_selector_all', variable_get('custom_search_voc' . $voc->vid . '_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT), NULL, TRUE);
+        }
+      }
+    }
+    else {
+      $title = variable_get('custom_search_label', CUSTOM_SEARCH_LABEL_DEFAULT);
+      $text = variable_get('custom_search_text', '');
+      $submit_text = variable_get('custom_search_submit_text', CUSTOM_SEARCH_SUBMIT_TEXT_DEFAULT);
+      $type_selector_label = variable_get('custom_search_type_selector_label', CUSTOM_SEARCH_TYPE_SELECTOR_LABEL_DEFAULT);
+      $type_selector_all = variable_get('custom_search_type_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT);
+      $criteria_or_label = variable_get('custom_search_criteria_or_label', CUSTOM_SEARCH_CRITERIA_OR_LABEL_DEFAULT);
+      $criteria_phrase_label = variable_get('custom_search_criteria_phrase_label', CUSTOM_SEARCH_CRITERIA_PHRASE_LABEL_DEFAULT);
+      $criteria_negative_label = variable_get('custom_search_criteria_negative_label', CUSTOM_SEARCH_CRITERIA_NEGATIVE_LABEL_DEFAULT);
+      if (module_exists('taxonomy')) {
+        $vocabulary_selector_label = array();
+        $vocabulary_selector_all = array();
+        $vocabularies = taxonomy_get_vocabularies();
+        foreach ($vocabularies as $voc) {
+          $vocabulary_selector_label[$voc->vid] = variable_get('custom_search_voc' . $voc->vid . '_selector_label', $voc->name);
+          $vocabulary_selector_all[$voc->vid] = variable_get('custom_search_voc' . $voc->vid . '_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT);
+        }
+      }
+    }
+
+    // Title.
+    $form[$form_id]['#title'] = $title;
+    if (!variable_get('custom_search_label_visibility', TRUE)) $form[$form_id]['#post_render'] = array('_custom_search_hide_label');
+
+    // Search box.
+    $form[$form_id]['#default_value'] = $text;
+    $form[$form_id]['#weight'] = variable_get('custom_search_search_box_weight', 0);
+    $form[$form_id]['#attributes']['class'] .= ' custom-search-default-value';
+
+    drupal_add_js(array('custom_search' => array(str_replace('_', '-', $form_id) . '_default_value' => $text)), 'setting');
+
+    $path = drupal_get_path('module', 'custom_search');
+    drupal_add_css($path . '/custom_search.css', 'module');
+
+    // Criterion
+    if (variable_get('custom_search_criteria_or_display', FALSE) == TRUE) {
+      $form['custom_search_criteria_or'] = array(
+        '#type'       => 'textfield',
+        '#title'      => $criteria_or_label,
+        '#size'       => 15,
+        '#maxlength'  => 255,
+        '#weight'     => variable_get('custom_search_criteria_or_weight', 7),
+      );
+    }
+    if (variable_get('custom_search_criteria_phrase_display', FALSE) == TRUE) {
+      $form['custom_search_criteria_phrase'] = array(
+        '#type'       => 'textfield',
+        '#title'      => $criteria_phrase_label,
+        '#size'       => 15,
+        '#maxlength'  => 255,
+        '#weight'     => variable_get('custom_search_criteria_phrase_weight', 8),
+      );
+    }
+    if (variable_get('custom_search_criteria_negative_display', FALSE) == TRUE) {
+      $form['custom_search_criteria_negative'] = array(
+        '#type'       => 'textfield',
+        '#title'      => $criteria_negative_label,
+        '#size'       => 15,
+        '#maxlength'  => 255,
+        '#weight'     => variable_get('custom_search_criteria_negative_weight', 9),
+      );
+    }
+
+    // Content type & other searches.
+    // Content types.
+    $toptions = array();
+    $types = array_keys(array_filter(variable_get('custom_search_node_types', array())));
+    if (count($types)) {
+      $names = node_get_types('names');
+      if (count($types) > 1) $toptions['c-' . 'all'] = $type_selector_all;
+      foreach ($types as $type) {
+        $toptions['c-' . $type] = $names[$type];
+      }
+    }
+    $options = array();
+    // Other searches.
+    $others = array_keys(array_filter(variable_get('custom_search_other', array())));
+    // If content types and other searches are combined, make an optgroup.
+    if (count($others) && count($toptions) && variable_get('custom_search_type_selector', 'select') == 'select') {
+      $content = module_invoke('node', 'search', 'name');
+      $options[$content] = $toptions;
+    }
+    else {
+      $options = $toptions;
+    }
+    foreach (module_implements('search') as $module) {
+      if ($module != 'node' && $name = module_invoke($module, 'search', 'name')) {
+        if (in_array($module, $others)) $options['o-' . $module] = $name;
+      }
+    }
+    if (count($options)) {
+      $selector_type = variable_get('custom_search_type_selector', 'select');
+      if ($selector_type == 'selectmultiple') {
+        $selector_type = 'select';
+        $multiple = TRUE;
+      }
+      else $multiple = FALSE;
+      $form['custom_search_types'] = array(
+        '#type'           => $selector_type,
+        '#multiple'       => $multiple,
+        '#title'          => $type_selector_label,
+        '#options'        => $options,
+        '#default_value'  => ((variable_get('custom_search_type_selector', 'select') == 'checkboxes') ? array('c-all') : 'c-all'),
+        '#attributes'     => array('class' => 'custom-search-selector custom-search-types'),
+        '#weight'         => variable_get('custom_search_content_types_weight', 1),
+      );
+
+      // If there's only one type, hide the selector
+      if (count($others) + count($types) == 1) {
+        $form['custom_search_types']['#type'] = 'hidden';
+        $default_value = array_keys(array_slice($options, count($options)-1));
+        $form['custom_search_types']['#default_value'] = $default_value[0];
+      }
+
+      if (!variable_get('custom_search_type_selector_label_visibility', TRUE)) $form['custom_search_types']['#post_render'] = array('_custom_search_hide_label');
+    }
+
+    // Taxonomy.
+    if (module_exists('taxonomy')) {
+      $vocabularies = taxonomy_get_vocabularies();
+      foreach ($vocabularies as $voc) {
+        if (variable_get('custom_search_voc' . $voc->vid . '_selector', 'disabled') != 'disabled') {
+          $options = array();
+          $options['c-all'] = $vocabulary_selector_all[$voc->vid];
+          $terms = taxonomy_get_tree($voc->vid);
+          foreach ($terms as $term) {
+            $options['c-' . $term->tid] = (drupal_substr(variable_get('custom_search_voc' . $voc->vid . '_selector', 'disabled'), 0, 6) == 'select') ? str_repeat('- ', $term->depth) . $term->name : $term->name ;
+          }
+          $selector_type = variable_get('custom_search_voc' . $voc->vid . '_selector', 'select');
+          if ($selector_type == 'selectmultiple') {
+            $selector_type = 'select';
+            $multiple = TRUE;
+          }
+          else $multiple = FALSE;
+          $form['custom_search_vocabulary_' . $voc->vid] = array(
+            '#type'           => $selector_type,
+            '#multiple'       => $multiple,
+            '#title'          => $vocabulary_selector_label[$voc->vid],
+            '#options'        => $options,
+            '#default_value'  => ((variable_get('custom_search_voc' . $voc->vid . '_selector', 'select') == 'checkboxes') ? array('c-all') : 'c-all'),
+            '#attributes'     => array('class' => 'custom-search-selector custom-search-vocabulary'),
+            '#weight'         => variable_get('custom_search_taxonomy' . $voc->vid . '_weight', 2),
+          );
+          if (!variable_get('custom_search_voc' . $voc->vid . '_selector_label_visibility', TRUE)) $form['custom_search_vocabulary_' . $voc->vid]['#post_render'] = array('_custom_search_hide_label');
+        }
+      }
+    }
+
+    // Submit button.
+    if (variable_get('custom_search_image_path', '') != '') {
+      $form['submit']['#type'] = 'image_button';
+      $form['submit']['#src'] = variable_get('custom_search_image_path', '');
+      $form['submit']['#name'] = 'op';
+    }
+    else {
+      $form['submit']['#value'] = $submit_text;
+      if ($submit_text == '') {
+        $form['submit']['#attributes'] = array('style' => 'display:none;');
+      }
+    }
+    $form['submit']['#weight'] = variable_get('custom_search_submit_button_weight', 3);
+
+    // Custom callback.
+    $form['#submit'][] = 'custom_search_submit';
+
+  }
+
+}
+
+/**
+ * Alter the search to respect the search modes selected.
+ */
+function custom_search_submit($form, &$form_state) {
+  $type = 'node';
+  $keys = $form_state['values'][$form_state['values']['form_id']];
+
+  $types = $form_state['values']['custom_search_types'];
+  if (!is_array($types)) $types = array($types);
+  $types = array_map('_custom_search_filter_keys', array_filter($types));
+
+  if (module_exists('taxonomy')) {
+    $terms = array();
+    $vocabularies = taxonomy_get_vocabularies();
+    foreach ($vocabularies as $voc) {
+      if (variable_get('custom_search_voc' . $voc->vid . '_selector', 'disabled') != 'disabled') {
+        $vterms = $form_state['values']['custom_search_vocabulary_' . $voc->vid];
+        if (!is_array($vterms)) $vterms = array($vterms);
+        $terms = array_merge($terms, $vterms);
+      }
+    }
+    $terms = array_map('_custom_search_filter_keys', array_values(array_filter($terms)));
+    // if one or more -Any- is selected, delete them
+    while (($index = array_search('all', $terms)) !== FALSE) array_splice($terms, $index, 1);
+  }
+
+  $search_types = module_implements('search');
+  $values = array_values($types); // temp transform of the array to have numerical index for the next test
+  if (in_array($values[0], $search_types)) {
+    $type = $values[0];
+  }
+  else {
+    if (trim($form_state['values']['custom_search_criteria_or']) != '') $keys .= ' ' . str_replace(' ', ' OR ', trim($form_state['values']['custom_search_criteria_or']));
+    if (trim($form_state['values']['custom_search_criteria_negative']) != '') $keys .= ' -' . str_replace(' ', ' -', trim($form_state['values']['custom_search_criteria_negative']));
+    if (trim($form_state['values']['custom_search_criteria_phrase']) != '') $keys .= ' "' . trim($form_state['values']['custom_search_criteria_phrase']) . '"';
+    if (count($types) && !in_array('all', $types)) {
+      $keys = search_query_insert($keys, 'type', implode(',', $types));
+    }
+    if (module_exists('taxonomy') && count($terms)) {
+      $keys = search_query_insert($keys, 'category', implode(',', $terms));
+    }
+  }
+
+  $form_state['redirect'] = 'search/'. $type .'/'. $keys;
+
+}
+
+/*
+ * Presents links to filter the search results.
+ */
+function custom_search_preprocess_search_results(&$variables) {
+  $position = variable_get('custom_search_filter', 'disabled');
+  if (user_access('use custom search') && $position != 'disabled') {
+    // Get search words (minus type:node_type)
+    $keys = search_get_keys();
+    if (strpos($keys, 'type:') !== FALSE) {
+      $keys = drupal_substr($keys, 0, strpos($keys, 'type:')-1);
+    }
+    // Get Custom Search authorised types
+    $searchable_node_types = variable_get('custom_search_node_types', array());
+    $searchable_node_types = array_keys(array_filter($searchable_node_types, 'custom_search_filter_array'));
+    if (!count($searchable_node_types)) $searchable_node_types = array_keys(node_get_types('names'));
+    $node_types = db_query("SELECT type, name FROM {node_type} WHERE type IN (" . db_placeholders($searchable_node_types, 'varchar') . ")", $searchable_node_types);
+    // Build menu
+    $items = array();
+    $items[] = l(variable_get('custom_search_type_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT), 'search/node/' . $keys);
+    while ($node_type = db_fetch_array($node_types)) {
+      $items[] = l($node_type['name'], 'search/node/' . $keys .' type:' . $node_type['type']);
+    }
+    if (module_exists('i18nstrings')) $title = tt('custom_search:custom_search:filter_label', variable_get('custom_search_filter_label', CUSTOM_SEARCH_FILTER_LABEL_DEFAULT), NULL, TRUE);
+    else $title = variable_get('custom_search_filter_label', CUSTOM_SEARCH_FILTER_LABEL_DEFAULT);
+    if ($position == 'above') $variables['search_results'] = theme('item_list', $items, $title) . $variables['search_results'];
+    else $variables['search_results'] .= theme('item_list', $items, $title);
+  }
+}
+
+/**
+ * Implementation of hook_locale().
+ */
+function custom_search_locale($op = 'groups', $group = NULL) {
+  switch ($op) {
+    case 'groups':
+      return array('custom_search' => t('Custom Search'));
+    case 'refresh':
+      if (module_exists('i18nstrings')) {
+        tt('custom_search:custom_search:label', variable_get('custom_search_label', CUSTOM_SEARCH_LABEL_DEFAULT), NULL, TRUE);
+        tt('custom_search:custom_search:text', variable_get('custom_search_text', ''), NULL, TRUE);
+        tt('custom_search:custom_search:submit_text', variable_get('custom_search_submit_text', CUSTOM_SEARCH_SUBMIT_TEXT_DEFAULT), NULL, TRUE);
+        tt('custom_search:custom_search:type_selector_label', variable_get('custom_search_type_selector_label', CUSTOM_SEARCH_TYPE_SELECTOR_LABEL_DEFAULT), NULL, TRUE);
+        tt('custom_search:custom_search:type_selector_all', variable_get('custom_search_type_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT), NULL, TRUE);
+        tt('custom_search:custom_search:criteria_or_label', variable_get('custom_search_criteria_or_label', CUSTOM_SEARCH_CRITERIA_OR_LABEL_DEFAULT), NULL, TRUE);
+        tt('custom_search:custom_search:criteria_phrase_label', variable_get('custom_search_criteria_phrase_label', CUSTOM_SEARCH_CRITERIA_PHRASE_LABEL_DEFAULT), NULL, TRUE);
+        tt('custom_search:custom_search:criteria_negative_label', variable_get('custom_search_criteria_negative_label', CUSTOM_SEARCH_CRITERIA_NEGATIVE_LABEL_DEFAULT), NULL, TRUE);
+        tt('custom_search:custom_search:filter_label', variable_get('custom_search_filter_label', CUSTOM_SEARCH_FILTER_LABEL_DEFAULT), NULL, TRUE);
+        if (module_exists('taxonomy')) {
+          $vocabularies = taxonomy_get_vocabularies();
+          foreach ($vocabularies as $voc) {
+            tt('custom_search:custom_search:voc' . $voc->vid . '_selector_label', variable_get('custom_search_voc' . $voc->vid . '_selector_label', $voc->name), NULL, TRUE);
+            tt('custom_search:custom_search:voc' . $voc->vid . '_selector_all', variable_get('custom_search_voc' . $voc->vid . '_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT), NULL, TRUE);
+          }
+        }
+      }
+  }
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function custom_search_init() {
+  if (user_access('use custom search')) {
+    drupal_add_js(drupal_get_path('module', 'custom_search') . '/custom_search.js');
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function custom_search_theme() {
+  if (user_access('use custom search')) {
+    return array(
+      'custom_search_javascript'  => array('arguments' => array()),
+      'custom_search_sort_form'   => array('arguments' => array('form' => NULL)),
+    );
+  }
+  else return array();
+}
+
+/**
+ * Filter the types.
+ */
+function _custom_search_filter_keys($val) {
+  return drupal_substr($val, 2);
+}
+
+/**
+ * Remove the label by adding a class.
+ */
+function _custom_search_hide_label($content, $elements) {
+  if (strpos($content, '<label class') !== FALSE) $content = str_replace('<label class="', '<label class="element-invisible ', $content);
+  else $content = str_replace('<label', '<label class="element-invisible"', $content);
+  return $content;
+}
+
+/**
+ * Function used to filter node_type array to only filter those that are configured in Custom Search Form
+ */
+function custom_search_filter_array($value = FALSE) {
+  return $value !== 0;
+}
