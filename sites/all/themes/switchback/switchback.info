@@ -3,7 +3,7 @@
 
   ; The name and description of the theme used on the admin/build/themes page.
 name        = Switchback Admin
-description = This theme was designed by <a href="http://www.switchbackcms.com">Switchback CMS</a>.
+description = This theme was designed by <a href="http://www.switchbackcms.com">Switchback</a>.
 
   ; The screenshot used on the admin/build/themes page.
 screenshot = screenshot.png

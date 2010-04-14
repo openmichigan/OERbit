@@ -81,7 +81,14 @@
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language; ?>" lang="<?php print $language->language; ?>" dir="<?php print $language->dir; ?>">
-
+<!-- 
+************************************************
+************************************************
+      SITE BUILT BY Switchback
+      WWW.SWITCHBACKCMS.COM
+************************************************
+************************************************
+-->
 <head>
   <title><?php print $head_title; ?></title>
   <?php print $head; ?>
@@ -112,7 +119,7 @@
                 <a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home">
                 <?php print $site_name; ?>
                 </a>
-              </strong> by Switchback CMS <a href="http://www.switchbackcms.com" class="crediturl">www.switchbackcms.com</a></div>
+              </strong> by Switchback <a href="http://www.switchbackcms.com" class="crediturl">www.switchbackcms.com</a></div>
             <?php else: ?>
               <h1 id="site-name">
                 <a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home">
@@ -231,7 +238,7 @@
         <?php endif; ?>
 
         <?php print $footer_admin; ?>
-
+ 
       </div></div> <!-- /#footer-inner, /#footer -->
     <?php endif; ?>
 
@@ -242,6 +249,6 @@
   <?php endif; ?>
 
   <?php print $closure; ?>
-
+<div id="credits">Developed by Switchback <a href="http://www.switchbackcms.com" class="crediturl">www.switchbackcms.com</a></div>
 </body>
 </html>

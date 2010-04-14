@@ -98,6 +98,7 @@
 /** main (container for everything else) **/
   #main
   {
+  margin-top: 20px;
   }
 
   #main-inner
@@ -785,7 +786,7 @@
   #header #block-menu_block-2  {
   	position: absolute;
   	right:0;
-  	bottom: -10px;
+  	bottom: -43px;
   }
   #header #block-menu_block-2 ul {
   	margin: 0;
@@ -808,4 +809,8 @@
   }
   a:hover {
   	color: #903921;
+  }
+  
+  #credits {
+  	margin: 20px 0;
   }
