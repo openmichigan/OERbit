@@ -786,7 +786,7 @@
   #header #block-menu_block-2  {
   	position: absolute;
   	right:0;
-  	bottom: -43px;
+  	bottom: -12px;
   }
   #header #block-menu_block-2 ul {
   	margin: 0;
@@ -798,6 +798,14 @@
   	padding: 0 5px;
   	display: inline;
   	border-left: 1px solid #ddd;
+  }
+  #header #block-menu_block-2 ul li a {
+  	color: #FFF;
+  	text-decoration: none;
+  }
+  #header #block-menu_block-2 ul li a:hover {
+  	color: #FFF;
+  	text-decoration: underline;
   }
   #header #block-menu_block-2 ul li.first {
   	padding: 0;
