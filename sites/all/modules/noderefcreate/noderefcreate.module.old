@@ -1,0 +1,141 @@
+<?php 
+
+function noderefcreate_widget_info() {
+  return array(
+    'noderefcreate_autocomplete' => array(
+      'label' => t('Autocomplete text field with create'),
+      'field types' => array('nodereference'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+      'callbacks' => array(
+        'default value' => CONTENT_CALLBACK_DEFAULT,
+      ),
+    ),
+  );
+}
+
+
+function noderefcreate_widget_settings($op, $widget) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+      $match = isset($widget['autocomplete_match']) ? $widget['autocomplete_match'] : 'contains';
+      if ($widget['type'] == 'noderefcreate_autocomplete') {
+        $form['autocomplete_match'] = array(
+          '#type' => 'select',
+          '#title' => t('Autocomplete matching'),
+          '#default_value' => $match,
+          '#options' => array(
+            'starts_with' => t('Starts with'),
+            'contains' => t('Contains'),
+          ),
+          '#description' => t('Select the method used to collect autocomplete suggestions. Note that <em>Contains</em> can cause performance issues on sites with thousands of nodes.'),
+        );
+      }
+      else {
+        $form['autocomplete_match'] = array('#type' => 'hidden', '#value' => $match);
+      }
+      return $form;
+
+    case 'save':
+      return array('autocomplete_match');
+  }
+}
+
+function noderefcreate_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  switch ($field['widget']['type']) {
+    case 'noderefcreate_autocomplete':
+      $element = array(
+        '#type' => 'nodereference_autocomplete',
+        '#default_value' => isset($items[$delta]) ? $items[$delta] : NULL,
+        '#value_callback' => 'nodereference_autocomplete_value',
+      	'#process' => array('noderefcreate_autocomplete_process'),
+      );
+      break;
+  }
+  return $element;
+}
+
+
+function noderefcreate_autocomplete_process($element, $edit, $form_state, $form) {
+
+  // The nodereference autocomplete widget doesn't need to create its own
+  // element, it can wrap around the text_textfield element and add an autocomplete
+  // path and some extra processing to it.
+  // Add a validation step where the value can be unwrapped.
+  $field_key  = $element['#columns'][0];
+
+  $element[$field_key] = array(
+    '#type' => 'text_textfield',
+    '#default_value' => isset($element['#value']) ? $element['#value'] : '',
+    '#autocomplete_path' => 'nodereference/autocomplete/'. $element['#field_name'],
+    // The following values were set by the content module and need
+    // to be passed down to the nested element.
+    '#title' => $element['#title'],
+    '#required' => $element['#required'],
+    '#description' => $element['#description'],
+    '#field_name' => $element['#field_name'],
+    '#type_name' => $element['#type_name'],
+    '#delta' => $element['#delta'],
+    '#columns' => $element['#columns'],
+  );
+  if (empty($element[$field_key]['#element_validate'])) {
+    $element[$field_key]['#element_validate'] = array();
+  }
+  array_unshift($element[$field_key]['#element_validate'], 'noderefcreate_autocomplete_validate');
+
+  // Used so that hook_field('validate') knows where to flag an error.
+  $element['_error_element'] = array(
+    '#type' => 'value',
+    // Wrapping the element around a text_textfield element creates a
+    // nested element, so the final id will look like 'field-name-0-nid-nid'.
+    '#value' => implode('][', array_merge($element['#parents'], array($field_key, $field_key))),
+  );
+  return $element;
+}
+
+
+function noderefcreate_autocomplete_validate($element, &$form_state) {
+  $field_name = $element['#field_name'];
+  $type_name = $element['#type_name'];
+  $field = content_fields($field_name, $type_name);
+  $field_key  = $element['#columns'][0];
+  $delta = $element['#delta'];
+  $value = $element['#value'][$field_key];
+  $nid = NULL;
+  if (!empty($value)) {
+    preg_match('/^(?:\s*|(.*) )?\[\s*nid\s*:\s*(\d+)\s*\]$/', $value, $matches);
+    if (!empty($matches)) {
+      // Explicit [nid:n].
+      list(, $title, $nid) = $matches;
+      if (!empty($title) && ($n = node_load($nid)) && $title != $n->title) {
+        form_error($element[$field_key], t('%name: title mismatch. Please check your selection.', array('%name' => t($field['widget']['label']))));
+      }
+    }
+    else {
+      // No explicit nid.
+      $reference = _nodereference_potential_references($field, $value, 'equals', NULL, 1);
+      if (empty($reference)) {
+        $newnode = NULL;
+        if (is_array($field['referenceable_types'])) {
+          foreach (array_filter($field['referenceable_types']) as $related_type) {
+            $newnode->type = $related_type;
+          }
+        }
+        global $user;
+        $newnode->uid = $user->uid;
+        $newnode->title = $value;
+        node_save($newnode);
+        $nid = $newnode->nid;
+      }
+      else {
+        // TODO:
+        // the best thing would be to present the user with an additional form,
+        // allowing the user to choose between valid candidates with the same title
+        // ATM, we pick the first matching candidate...
+        $nid = key($reference);
+      }
+    }
+  }
+  form_set_value($element, $nid, $form_state);
+}
+

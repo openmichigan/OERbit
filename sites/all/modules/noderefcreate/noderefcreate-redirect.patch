@@ -1,0 +1,35 @@
+--- noderefcreate.module.old	2010-04-05 22:28:09.000000000 +0000
++++ noderefcreate.module	2010-04-06 14:34:52.000000000 +0000
+@@ -30,6 +30,12 @@ function noderefcreate_widget_settings($
+           ),
+           '#description' => t('Select the method used to collect autocomplete suggestions. Note that <em>Contains</em> can cause performance issues on sites with thousands of nodes.'),
+         );
++        $form['redirect_after_create'] = array(
++          '#type' => 'checkbox',
++          '#title' => t('Redirect to node upon submission'),
++          '#default_value' => isset($widget['redirect_after_create']) ? $widget['redirect_after_create'] : 0,
++          '#description' => t('Check this box to redirect the user to the newly created node after the form is submitted.'),
++        );
+       }
+       else {
+         $form['autocomplete_match'] = array('#type' => 'hidden', '#value' => $match);
+@@ -37,7 +43,7 @@ function noderefcreate_widget_settings($
+       return $form;
+ 
+     case 'save':
+-      return array('autocomplete_match');
++      return array('autocomplete_match', 'redirect_after_create');
+   }
+ }
+ 
+@@ -126,6 +132,10 @@ function noderefcreate_autocomplete_vali
+         $newnode->title = $value;
+         node_save($newnode);
+         $nid = $newnode->nid;
++        if ($field['widget']['redirect_after_create']) {
++          $_REQUEST['destination'] = 'node/' . $nid . '/edit';
++          drupal_set_message(t('!title was created. Please enter the rest of the information.', array('!title' => $newnode->title)));
++        }
+       }
+       else {
+         // TODO:
