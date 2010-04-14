@@ -1,0 +1,5 @@
+; $Id$
+name = Hierarchical Permissions
+description = Gives certain users access to a section of the course hierarchy
+package = Open Michigan
+core = 6.x

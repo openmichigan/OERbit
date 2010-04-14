@@ -1,0 +1,330 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_menu().
+ */
+function hierarchical_permissions_menu() {
+  $items = array();
+  $items['user/%user/hierarchical_permissions'] = array(
+    'title' => 'Hierarchical Permissions',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hierarchical_permissions_user_settings_form'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ */
+function hierarchical_permissions_menu_alter(&$items) {
+  $items['node/%node/edit']['access callback'] = 'hierarchical_permissions_access';
+}
+
+/**
+ * Returns whether a user is admin of this node.
+ */
+function hierarchical_permissions_access($op, $node, $account = NULL) {
+  if ($op == 'edit' && in_array($node->type, array('unit', 'course', 'information', 'material', 'session', 'other'))) {
+    if (empty($account)) {
+      global $user;
+      $account = $user;
+    }
+    if ($account->uid == 1 || in_array('site admin', $account->roles) || in_array('content manager', $account->roles)) {
+      return TRUE;
+    }
+    if (in_array('unit manager', $account->roles) && in_array('resource manager', $account->roles)) {
+      if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d', $uid, $node->nid))) {
+        return TRUE;
+      }
+      $nodes = hierarchical_permissions_get_all_by_user($account);
+      if (in_array($node->nid, array_keys($nodes))) {
+        return TRUE;
+      }
+    }
+    if ($node->type == 'unit' && in_array('unit manager', $account->roles)) {
+      if (db_result(db_query("SELECT * FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='unit' AND p.uid=%d AND p.nid=%d", $account->uid, $node->nid))) {
+        return TRUE;
+      }
+      $units = hierarchical_permissions_get_units_by_user($account);
+      if (in_array($node->nid, array_keys($units))) {
+        return TRUE;
+      }
+    }
+    if (in_array('resource manager', $account->roles)) {
+      if (db_result(db_query("SELECT * FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='course' AND p.uid=%d AND p.nid=%d", $account->uid, $node->nid))) {
+        return TRUE;
+      }
+      $courses = hierarchical_permissions_get_courses_by_user($account);
+      if (in_array($node->nid, array_keys($courses))) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+  if (module_exists('revisioning')) {
+    return _revisioning_view_edit_access_callback($op, $node);
+  }
+  return node_access($op, $node, $account);
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function hierarchical_permissions_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks['hierarchical-permissions'] = array(
+        'info' => t('Admin Permissions'),
+        'cache' => BLOCK_CACHE_PER_PAGE,
+      );
+      return $blocks;
+    case 'view':
+      if (arg(0) == 'node' && is_numeric(arg(1))) {
+        return _hierarchical_permissions_block(arg(1));
+      }
+  }
+}
+
+/**
+ * Generates a list of users with permissions to modify this node.
+ */
+function _hierarchical_permissions_block($nid) {
+  $users = array();
+  if (!empty($nid)) {
+    if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE nid=%d', $nid))) {
+      $query = db_query('SELECT p.uid AS uid, u.name AS name FROM {hierarchical_permissions} p INNER JOIN {users} u ON p.uid = u.uid WHERE nid=%d', $nid);
+      while ($user = db_fetch_object($query)) {
+        $users[] = array(
+          'data' => l($user->name, 'user/' . $user->uid),
+        );
+      }
+    }
+    else {
+      $query = db_query('SELECT uid, name FROM {users} WHERE status=1');
+      while ($account = db_fetch_object($query)) {
+        $nodes = hierarchical_permissions_get_units_by_user($account);
+        if (in_array($nid, array_keys($nodes))) {
+          $users[] = array(
+            'data' => l($account->name, 'user/' . $account->uid),
+          );
+        }
+        $nodes = hierarchical_permissions_get_courses_by_user($account);
+        if (in_array($nid, array_keys($nodes))) {
+          $users[] = array(
+            'data' => l($account->name, 'user/' . $account->uid),
+          );
+        }
+        $nodes = hierarchical_permissions_get_all_by_user($account);
+        if (in_array($nid, array_keys($nodes))) {
+          $users[] = array(
+            'data' => l($account->name, 'user/' . $account->uid),
+          );
+        }
+      }
+    }
+  }
+  if (!empty($users)) {
+    return array(
+      'subject' => t('Admin Permissions'),
+      'content' => theme_item_list($users),
+    );
+  }
+}
+
+/**
+ * Hierarchical permissions settings for user account.
+ */
+function hierarchical_permissions_user_settings_form(&$form_state) {
+  if (arg(0) == 'user' && is_numeric(arg(1))) {
+    $account = user_load(arg(1));
+  }
+  if (empty($account)) {
+    return;
+  }
+  $units = hierarchical_permissions_get_units_by_user($account, 'admin');
+  $courses = hierarchical_permissions_get_courses_by_user($account, 'admin');
+  $form['academic_units'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Academic Units'),
+    '#description' => t('Select the academic unit that user %user should be admin of. User %user will be admin of all units that belong to the selected ones.', array('%user' => $account->name)),
+    '#options' => hierarchical_permissions_get_units(),
+    '#default_value' => $units,
+    '#access' => in_array('unit manager', $account->roles),
+  );
+  $form['courses_resources'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Courses/Resources'),
+    '#description' => t('Select the courses/resources that user %user should be admin of. User %user will be admin of all elements that belong to the selected courses/resources.', array('%user' => $account->name)),
+    '#options' => hierarchical_permissions_get_courses(),
+    '#default_value' => $courses,
+    '#access' => in_array('resource manager', $account->roles),
+  );
+  $form['account'] = array(
+    '#type' => 'value',
+    '#value' => $account->uid,
+  );
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save'),
+      '#weight' => 10,
+    );
+  $form['#submit'] = array('hierarchical_permissions_user_settings_form_submit');
+  return $form;
+}
+
+/**
+ * Stores the user-node combination for admin permissions.
+ */
+function hierarchical_permissions_user_settings_form_submit($form, &$form_state) {
+  $record['uid'] = $form_state['values']['account'];
+  db_query('DELETE FROM {hierarchical_permissions} WHERE uid=%d', $record['uid']);
+  foreach ($form_state['values']['academic_units'] as $key => $nid) {
+    if (!empty($nid)) {
+      $record['nid'] = $nid;
+      drupal_write_record('hierarchical_permissions', $record);
+      unset($record['nid']);
+    }
+  }
+  foreach ($form_state['values']['courses_resources'] as $key => $nid) {
+    if (!empty($nid)) {
+      $record['nid'] = $nid;
+      drupal_write_record('hierarchical_permissions', $record);
+      unset($record['nid']);
+    }
+  }
+  drupal_set_message('Your settings have been saved.');
+}
+
+/**
+ * Returns the academic unit hierarchy from the specified starting node.
+ */
+function hierarchical_permissions_get_units($parent = NULL) {
+  $units = array();
+  hierarchical_permissions_get_unit_children($units, $parent);
+  asort($units);
+  return $units;
+}
+
+/**
+ * Returns the courses in the hierarchy from the specified starting node.
+ */
+function hierarchical_permissions_get_courses($parent = NULL) {
+  $courses = array();
+  if (empty($parent)) {
+    $query = db_query("SELECT nid, title FROM {node} WHERE type='course' ORDER BY title");
+    while ($course = db_fetch_object($query)) {
+      $courses[$course->nid] = $course->title;
+    }
+  }
+  else {
+    hierarchical_permissions_get_courses_by_unit($courses, $parent);
+    asort($courses);
+  }
+  return $courses;
+}
+
+/**
+ * Returns a list of units the user is an admin of.
+ */
+function hierarchical_permissions_get_units_by_user($account = NULL, $op = 'node') {
+  $units = array();
+  $query = db_query("SELECT p.nid AS nid FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='unit' AND p.uid=%d", $account->uid);
+  switch ($op) {
+    case 'admin':
+      while ($unit = db_fetch_object($query)) {
+        $units[] = $unit->nid;
+      }
+      break;
+    case 'node':
+      while ($unit = db_fetch_object($query)) {
+        $node = node_load($unit->nid);
+        hierarchical_permissions_get_unit_children($units, $node);
+      }
+      break;
+  }
+  return $units;
+}
+
+/**
+ * Returns a list of courses the user is an admin of.
+ */
+function hierarchical_permissions_get_courses_by_user($account, $op = 'node') {
+  $courses = array();
+  $query = db_query("SELECT p.nid AS nid FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='course' AND p.uid=%d", $account->uid);
+  switch ($op) {
+    case 'admin':
+      while ($course = db_fetch_object($query)) {
+        $courses[] = $course->nid;
+      }
+      break;
+    case 'node':
+      while ($course = db_fetch_object($query)) {
+        $node = node_load($course->nid);
+        hierarchical_permissions_get_course_children($courses, $node);
+      }
+      break;
+  }
+  return $courses;
+}
+
+/**
+ * Returns a list of all nodes the user is an admin of.
+ */
+function hierarchical_permissions_get_all_by_user($account) {
+  $nodes = hierarchical_permissions_get_units_by_user($account);
+  foreach ($nodes as $nid => $values) {
+    hierarchical_permissions_get_courses_by_unit($nodes, node_load($nid));
+  }
+  return $nodes;
+}
+
+/**
+ * Recursively gets a list of child units for the current academic unit.
+ */
+function hierarchical_permissions_get_unit_children(&$units, $node) {
+  if (empty($node)) {
+    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field_parent_unit_nid IS NULL AND node.type = 'unit'");
+  }
+  else {
+    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d AND node.type = 'unit'", $node->nid);
+  }
+  while ($unit = db_fetch_object($query)) {
+    if (!empty($node)) {
+      $units[$node->nid] = $node->title;
+    }
+    if (!empty($unit->title)) {
+      $units[$unit->nid] = $unit->title;
+    }
+    hierarchical_permissions_get_unit_children($units, $unit);
+  }
+}
+
+/**
+ * Get all the elements that belong to a course.
+ */
+function hierarchical_permissions_get_course_children(&$courses, $node) {
+  if (!empty($node)) {
+    $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_course_reference} ref ON ref.nid = node.nid WHERE field_course_reference_nid=%d', $node->nid);
+    while ($course = db_fetch_object($query)) {
+      $courses[$course->nid] = $course->title;
+    }
+  }
+}
+
+/**
+ * Recursively gets a list of courses current academic unit.
+ */
+function hierarchical_permissions_get_courses_by_unit(&$courses, $node) {
+  $query = db_query('SELECT field.nid AS nid, node.title AS title, node.type AS type FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d', $node->nid);
+  while ($child = db_fetch_object($query)) {
+    if ($child->type == 'course') {
+      $courses[$child->nid] = $child->title;
+    }
+    elseif ($child->type == 'unit') {
+      hierarchical_permissions_get_courses_by_unit($courses, $child);
+    }
+  }
+}

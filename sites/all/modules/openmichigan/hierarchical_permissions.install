@@ -1,0 +1,73 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function hierarchical_permissions_install() {
+  drupal_install_schema('hierarchical_permissions');
+  db_query("UPDATE {system} SET weight=1 WHERE name='hierarchical_permissions'");
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function hierarchical_permissions_uninstall() {
+  drupal_uninstall_schema('hierarchical_permissions');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function hierarchical_permissions_schema() {
+  $schema['hierarchical_permissions'] = array(
+    'fields' => array(
+      'uid' => array(
+        'description' => 'The primary identifier for a user.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'The primary identifier for a node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('uid', 'nid'),
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_update_N().
+ */
+function hierarchical_permissions_update_6000() {
+  $schema['hierarchical_permissions'] = array(
+    'fields' => array(
+      'uid' => array(
+        'description' => 'The primary identifier for a user.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'The primary identifier for a node.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('uid', 'nid'),
+  );
+  $ret = array();
+  db_create_table($ret, 'hierarchical_permissions', $schema['hierarchical_permissions']);
+  return $ret;
+}
+
+function hierarchical_permissions_update_6001() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {system} SET weight=1 WHERE name='hierarchical_permissions'");
+  return $ret;
+}

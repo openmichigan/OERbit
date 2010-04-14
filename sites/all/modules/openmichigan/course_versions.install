@@ -1,0 +1,23 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function course_versions_install() {
+  drupal_install_schema('course_versions');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function course_versions_uninstall() {
+  drupal_uninstall_schema('course_versions');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function course_versions_schema() {
+  
+}

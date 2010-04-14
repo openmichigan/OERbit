@@ -1,0 +1,6 @@
+; $Id$
+name = Course Versions
+description = Keeps track of similar courses throughout different terms.
+dependencies[] = course
+package = Open Michigan
+core = 6.x
