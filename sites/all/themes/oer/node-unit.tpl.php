@@ -82,12 +82,15 @@
   	 
   <!-- Create related content menu -->
   <?php
-    $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
-    print '<div class="nodereferrer-links" >';
-    foreach ($menu_items as $menu_item) {
-      print $menu_item['items'][0];
+    $is_admin = hierarchical_permissions_access('edit', $node);
+    if ($is_admin) {
+      $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
+      print '<div class="nodereferrer-links" >';
+      foreach ($menu_items as $menu_item) {
+        print $menu_item['items'][0];
+      }
+      print '</div><div style="clear: left;"></div>';
     }
-    print '</div><div style="clear: left;"></div>';
   ?>
 
   <?php
@@ -112,7 +115,11 @@
 
 
     <!-- Create related content menu -->
-    <?php print $node->content['nodereferrer_create_menu']['#value']; ?>
+    <?php
+      if ($is_admin) {
+        print $node->content['nodereferrer_create_menu']['#value'];
+      }
+    ?>
     
   	<!-- Content -->
   	<?php print $node->content['body']['#value']; ?>
@@ -127,13 +134,13 @@
   	<!-- Unit/Course listing -->
   	<div class="unit-course-list">
   	  <?php
-    	  if (user_is_anonymous()) {
-      	  print $node->content['courses_node_content_3']['#value'];
-    	    print $node->content['courses_node_content_4']['#value'];
+    	  if ($is_admin) {
+      	  print $node->content['courses_node_content_1']['#value'];
+    	    print $node->content['courses_node_content_2']['#value'];
     	  }
     	  else {
-    	    print $node->content['courses_node_content_1']['#value'];
-    	    print $node->content['courses_node_content_2']['#value'];
+    	    print $node->content['courses_node_content_3']['#value'];
+    	    print $node->content['courses_node_content_4']['#value'];
     	  }
     	?>
     </div>

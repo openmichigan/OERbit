@@ -124,6 +124,7 @@
   	
   	<!-- VIEW -->
   	<?php
+  	  $is_admin = hierarchical_permissions_access('edit', $node);
   	  if ($section) {
   	    print $node->content[$section . '_links_node_content_1']['#value'];
   	    print $courseKeywords;
@@ -131,36 +132,38 @@
      
     <!-- Create related content menu -->
     <?php
-      $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
-      print '<div class="nodereferrer-links" >';
-      switch ($section) {
-        case 'highlights':
-          print $menu_items[1]['items'][0];
-          break;
-        case 'materials':
-          print $menu_items[2]['items'][0];
-          if (user_access('create material content')) {
-            print '<br />' . l('Zip Upload', 'node/' . $node->nid . '/zip_upload');
-          }
-          break;
-        case 'sessions':
-          print $menu_items[3]['items'][0];
-          break;
-        case 'information':
-        default:
-          print $menu_items[0]['items'][0];
-          break;
+      if ($is_admin) {
+        $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
+        print '<div class="nodereferrer-links" >';
+        switch ($section) {
+          case 'highlights':
+            print $menu_items[1]['items'][0];
+            break;
+          case 'materials':
+            print $menu_items[2]['items'][0];
+            if (user_access('create material content')) {
+              print '<br />' . l('Zip Upload', 'node/' . $node->nid . '/zip_upload');
+            }
+            break;
+          case 'sessions':
+            print $menu_items[3]['items'][0];
+            break;
+          case 'information':
+          default:
+            print $menu_items[0]['items'][0];
+            break;
+        }
+        print '</div><div style="clear: left;"></div>';
       }
-      print '</div><div style="clear: left;"></div>';
     ?>
 
   	    
   	    <?php
-  	    if (user_is_anonymous()) {
+  	    if ($is_admin) {
+  	      print $node->content[$section . '_node_content_2']['#value'];
+  	    }
+  	    else {
      	    print $node->content[$section . '_node_content_1']['#value'];
-     	  }
-     	  else {
-     	    print $node->content[$section . '_node_content_2']['#value'];
      	  }
       }
       else {
@@ -171,36 +174,38 @@
      
      <!-- Create related content menu -->
     <?php
-      $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
-      print '<div class="nodereferrer-links">';
-      switch ($section) {
-        case 'highlights':
-          print $menu_items[1]['items'][0];
-          break;
-        case 'materials':
-          print $menu_items[2]['items'][0];
-          print '<br />' . l('Zip Upload', 'node/' . $node->nid . '/zip_upload');
-          break;
-        case 'sessions':
-          print $menu_items[3]['items'][0];
-          break;
-        case 'information':
-        default:
-          print $menu_items[0]['items'][0];
-          break;
+      if ($is_admin) {
+        $menu_items = _nodereferrer_create_nodeapi_view_referrer($node, FALSE, TRUE);
+        print '<div class="nodereferrer-links">';
+        switch ($section) {
+          case 'highlights':
+            print $menu_items[1]['items'][0];
+            break;
+          case 'materials':
+            print $menu_items[2]['items'][0];
+            print '<br />' . l('Zip Upload', 'node/' . $node->nid . '/zip_upload');
+            break;
+          case 'sessions':
+            print $menu_items[3]['items'][0];
+            break;
+          case 'information':
+          default:
+            print $menu_items[0]['items'][0];
+            break;
+        }
+        print '</div>';
       }
-      print '</div>';
     ?>
      
      
      
      
         <?php
-        if (user_is_anonymous()) {
-          print $node->content['overview_node_content_1']['#value'];
+        if ($is_admin) {
+          print $node->content['overview_node_content_2']['#value'];
         }
         else {
-          print $node->content['overview_node_content_2']['#value'];
+          print $node->content['overview_node_content_1']['#value'];
         }
         print $node->content['instructor_node_content_1']['#value'];
       }

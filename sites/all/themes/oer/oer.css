@@ -807,11 +807,11 @@ a.unpublished {
 }
 .view-materials table.views-table th.views-field-title,
 .view-materials-embed table.views-table th.views-field-title {
-	width: 50%;
+	width: 45%;
 }
 .view-materials table.views-table th.views-field-field-creators-value,
 .view-materials-embed table.views-table th.views-field-field-creators-value {
-	width: 15%;
+	width: 20%;
 }
 .view-materials table.views-table th.views-field-title.views-field-field-file-fid,
 .view-materials-embed table.views-table th.views-field-title.views-field-field-file-fid {
@@ -829,6 +829,11 @@ a.unpublished {
 .view-materials-embed table.views-table td.views-field-edit-node,
 .view-materials table.views-table td.views-field-edit-node {
 	font-size: 85%;
+}
+
+td.views-field-field-creators-value .field-item {
+	display: block;
+	float: none;
 }
 /*.view-materials table.views-table tbody tr td .filefield-icon {
 	display: none;
@@ -1354,6 +1359,10 @@ ul.tabs li.active a:hover
 	padding: 5px 0;
 	float: left;
 	width: 50%;
+}
+.published-state {
+	font-weight: normal;
+	font-size: 85%;
 }
 .view-highlights .publishedinfo, .view-highlights .editlink {
 	width: 27%;
