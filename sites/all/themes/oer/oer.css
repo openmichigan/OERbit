@@ -834,6 +834,8 @@ a.unpublished {
 td.views-field-field-creators-value .field-item {
 	display: block;
 	float: none;
+	line-height: 115%;
+	margin: 2px 0 8px 0;
 }
 /*.view-materials table.views-table tbody tr td .filefield-icon {
 	display: none;
@@ -1716,7 +1718,21 @@ ul.tabs li.active a:hover
 .view-materials-embed .views-field-field-file-fid a[href$='.png'], 
 .view-materials-embed .views-field-field-file-fid a[href$='.bmp'], 
 .view-materials-embed .views-field-field-file-fid a[href$='.jpeg'], 
-.view-materials-embed .views-field-field-file-fid a[href$='.svg'] {
+.view-materials-embed .views-field-field-file-fid a[href$='.svg'],
+
+.view-materials .views-field-field-file-fid a[href$='.JPG'], 
+.view-materials .views-field-field-file-fid a[href$='.GIF'], 
+.view-materials .views-field-field-file-fid a[href$='.PNG'], 
+.view-materials .views-field-field-file-fid a[href$='.BMP'], 
+.view-materials .views-field-field-file-fid a[href$='.JPEG'], 
+.view-materials .views-field-field-file-fid a[href$='.SVG'], 
+
+.view-materials-embed .views-field-field-file-fid a[href$='.JPG'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.GIF'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.PNG'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.BMP'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.JPEG'], 
+.view-materials-embed .views-field-field-file-fid a[href$='.SVG'] {
 	background: transparent url(images/icon_pic.gif) no-repeat !important;
 }
  
@@ -2057,4 +2073,29 @@ filter: alpha(opacity=100) !important;
 
 .Revision {
 	color: red;
+}
+.node-unpublished {
+	background-color: transparent;
+}
+
+
+
+#block-views-course_versions-block_1 h2 {
+	font-size:0.95em;
+	background: #CEDDE4 url(images/arrow.png) right 12px no-repeat;
+	border-bottom:1px solid #97A6C7;
+	font-weight:bold;
+	padding:0.35em 0.8em;
+	margin: 0;
+}
+#sidebar-left-inner #block-views-course_versions-block_1 .view-content .item-list ul {
+	border-top: 0;
+}
+#sidebar-left-inner #block-views-course_versions-block_1 .view-content .item-list ul li a {
+	background:url(images/bg-sidenav-arrow.png) 10px 7px no-repeat;
+	display:block;
+	font-size:100%;
+	font-weight:normal;
+	line-height:13px;
+	padding:2px 0 5px 18px;
 }
