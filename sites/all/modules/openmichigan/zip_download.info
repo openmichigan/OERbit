@@ -1,0 +1,6 @@
+; $Id$
+name = Zip Download
+description = Package and download content files as a Zip file.
+dependencies[] = material
+package = Open Michigan
+core = 6.x

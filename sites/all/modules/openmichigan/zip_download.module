@@ -1,0 +1,169 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_menu().
+ */
+function zip_download_menu() {
+	$items = array();
+  	$items['node/%node/zip_download'] = array(
+		'title' => 'Zip download',
+		'description' => 'Lets you download files attached to nodes as a zip package.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('zip_download_form', 1),
+//		'page callback' => 'zip_download_process',
+//		'page arguments' => array(1),
+		'access callback' => 'zip_download_access',
+		'access arguments' => array(1, 'access content'),
+		'type' => MENU_CALLBACK,
+	);
+  	return $items;
+}
+
+/**
+ * Decides whether to show the Zip Upload tab.
+ */
+function zip_download_access(&$node, $permission) {
+	if ($node->type == 'course' && user_access($permission)) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * Displays an upload form.
+ */
+function zip_download_form(&$form_state, $node) {
+  $form['filename'] = array(
+ 	'#type' => 'textfield',
+  	'#title' => t('Save Zip Archive to'),
+  	'#default_value' => "Archive.zip",
+  	'#size' => 60,
+  	'#maxlength' => 64,
+  	'#description' => t('Save the download archive file with this name.')
+  );
+  $form['submit'] = array(
+    	'#type' => 'submit',
+    	'#value' => t('Download'),
+  );
+  $form['nid'] = array(
+    '#type' => 'value',
+    '#value' => $node->nid,
+  );
+  $form['#attributes'] = array('enctype' => "multipart/form-data");
+  return $form;
+}
+
+/**
+ * Submits the form and starts the processing.
+ */
+function zip_download_form_submit($form, &$form_state) {
+	$node = node_load ($form_state['values']['nid']);
+	zip_download_process($node, $form_state['values']['filename']);
+}
+/**
+ * Find files associated with course materials and return list of file paths.
+ *
+ * requires view 'materials_download_filelist'
+ *
+ */
+function zip_download_get_material_files($nid) {
+	//
+	// uses views module to search for files associated with the course node at $nid
+	//
+	$results = array ();
+	$file_list = views_get_view('materials_download_filelist', 'default');
+	if (is_numeric ($nid) && isset ($file_list)) {
+		$file_list->set_arguments(array ($nid));
+    	$file_list->execute();
+    	foreach ($file_list->result as $r) {
+			if ($r->files_node_data_field_file_filepath != null) {
+				//
+				// reference to a file, save the path
+				//
+				$results [$r->nid] = $r->files_node_data_field_file_filepath;
+			}
+			else if ($r->node_data_field_image_field_image_fid != null) {
+				//
+				// reference to an image, dig out the image path
+				//
+				$image = node_load ($r->nid);
+				if (isset ($image)) {
+					$results [$r->nid] = $image->field_image[0]['filepath'];
+				}
+			}
+		}
+	}
+	return $results;
+}
+
+/**
+ * create archive and add files.
+ *
+ */
+function zip_download_create_archive($path, &$files) {
+	$n = 0;
+	$zip = new ZipArchive ();
+	if ($zip->open ($path, ZipArchive::CREATE) === TRUE) {
+		foreach ($files as $nid => $path) {
+			$path = $_SERVER['DOCUMENT_ROOT']."/".$path;
+			if (is_readable ($path) === TRUE) {
+				$n += $zip->addFile($path, basename ($path));
+			}
+		}
+		$zip->close ();
+	}
+	return ($n > 0);
+}
+
+/**
+ * create archive and add files.
+ *
+ */
+function zip_download_file_transfer($source) {
+	if (ob_get_level()) {
+		ob_end_clean();
+	}
+	$headers[] = 'Content-Disposition: attachment; filename=Archive.zip; Content-Length: '.filesize($source);
+	$headers[] = 'Content-Type: octet/stream';
+	$headers[] = 'Content-Type: application/force-download';
+	$headers[] = 'Content-Type: application/x-zip-compressed';
+	$headers[] = 'Content-Transfer-Encoding: binary';
+
+	foreach ($headers as $header) {
+		// To prevent HTTP header injection, we delete new lines that are
+		// not followed by a space or a tab.
+		// See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+		$header = preg_replace('/\r?\n(?!\t| )/', '', $header);
+		drupal_set_header($header);
+	}
+
+	$source = file_create_path($source);
+
+	// Transfer file in 1024 byte chunks to save memory usage.
+	if ($fd = fopen($source, 'rb')) {
+		while (!feof($fd)) {
+			print fread($fd, 1024);
+		}
+		fclose($fd);
+	}
+	else {
+		drupal_not_found();
+	}
+}
+
+/**
+ * Process material files download.
+ */
+function zip_download_process(&$node, $filename = "Archive.zip") {
+	$files = zip_download_get_material_files ($node->nid);
+	if (count ($files) > 0) {
+		$tmp = tempnam ("/tmp", "ZIPDL_");
+		if (zip_download_create_archive ($tmp, $files)) {
+			zip_download_file_transfer ($tmp);
+			unlink ($tmp);
+//			exit;
+		}
+	}
+	return true;
+}
