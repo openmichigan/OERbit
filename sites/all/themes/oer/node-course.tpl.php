@@ -110,7 +110,7 @@
  		<td><!-- Download Course -->
   	<?php if($courseDownload != 'No') { ?>
    	<div class="course-download">
-    	<a href="#">Download all materials</a>
+	   	<?php print l('Download all materials', 'node/' . $node->nid . '/zip_download') ?>
    	</div>
   	<?php } ?></td>
  		<td valign="top"><span class="revised"><strong>Revised:</strong> <span property="dc:available"><?php print date('F j, Y',$node->changed); ?></span></span></td>
