@@ -232,7 +232,7 @@ function zip_download_file_transfer($source) {
 function zip_download_process(&$node, $filename = "Archive.zip") {
 	$files = zip_download_get_material_files ($node->nid);
 	if (count ($files) > 0) {
-		$tmp = tempnam ("/tmp", "ZIPDL_");
+		$tmp = tempnam (file_directory_temp(), "ZIPDL_");
 		if (zip_download_create_archive ($tmp, $files)) {
 			zip_download_file_transfer ($tmp);
 			unlink ($tmp);
