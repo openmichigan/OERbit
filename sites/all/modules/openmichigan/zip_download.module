@@ -1,6 +1,31 @@
 <?php
 // $Id$
 
+function zip_download_debug ($dbgmsg)
+{
+	$filename = "debug.txt";
+	$dbg = fopen($filename, 'a') or die("can't open debug file");
+	$dbgmsg .= "\n\n";
+	fwrite ($dbg, $dbgmsg);
+	fclose ($dbg);
+}
+
+function zip_download_backtrace_files ($backtrace)
+{
+	$backtrace_file_stack = array ();
+	foreach ($backtrace as $backtrace_value)
+	{
+		if (array_key_exists('file', $backtrace_value))
+		{
+			$backtrace_file_stack[] = 
+				$backtrace_value['file'] . " : " . 
+				$backtrace_value['function'] . " : " . 
+				$backtrace_value['line'];
+		}
+	}
+	return $backtrace_file_stack;
+}
+
 /**
  * Implementation of hook_menu().
  */
@@ -232,7 +257,10 @@ function zip_download_file_transfer($source) {
 function zip_download_process(&$node, $filename = "Archive.zip") {
 	$files = zip_download_get_material_files ($node->nid);
 	if (count ($files) > 0) {
-		$tmp = tempnam (file_directory_temp(), "ZIPDL_");
+		$tmpdir = file_directory_temp();
+		zip_download_debug ($tmpdir);
+		$tmp = tempnam ($tmpdir, "ZIPDL_");
+		zip_download_debug ($tmp);
 		if (zip_download_create_archive ($tmp, $files)) {
 			zip_download_file_transfer ($tmp);
 			unlink ($tmp);
