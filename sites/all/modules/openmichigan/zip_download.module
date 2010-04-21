@@ -1,29 +1,13 @@
 <?php
 // $Id$
 
-function zip_download_debug ($dbgmsg)
+function _zip_download_debug ($dbgmsg)
 {
-	$filename = "debug.txt";
-	$dbg = fopen($filename, 'a') or die("can't open debug file");
-	$dbgmsg .= "\n\n";
-	fwrite ($dbg, $dbgmsg);
-	fclose ($dbg);
-}
-
-function zip_download_backtrace_files ($backtrace)
-{
-	$backtrace_file_stack = array ();
-	foreach ($backtrace as $backtrace_value)
-	{
-		if (array_key_exists('file', $backtrace_value))
-		{
-			$backtrace_file_stack[] = 
-				$backtrace_value['file'] . " : " . 
-				$backtrace_value['function'] . " : " . 
-				$backtrace_value['line'];
-		}
-	}
-	return $backtrace_file_stack;
+// 	$filename = "debug.txt";
+// 	$dbg = fopen($filename, 'a') or die("can't open debug file");
+// 	$dbgmsg .= "\n";
+// 	fwrite ($dbg, $dbgmsg);
+// 	fclose ($dbg);
 }
 
 /**
@@ -63,7 +47,7 @@ function zip_download_access(&$node, $permission) {
 
 
 /**
- * Decides whether to show the Zip Upload tab.
+ * Responds to ajax for download progress/status.
  */
 function zip_download_progress() {
 	$progress['status'] = "Working...";
@@ -73,7 +57,6 @@ function zip_download_progress() {
 	}
 	if (isset ($_SESSION['zip_download_progress'])) {
 		$progress['percent'] = $_SESSION['zip_download_progress'];
-////	$_SESSION['zip_download_progress'] = $_SESSION['zip_download_progress'] + 20;
 	}
 	$js = drupal_to_js ($progress);
 	drupal_json ($progress);
@@ -135,8 +118,11 @@ function zip_download_form(&$form_state, $node) {
 function zip_download_form_submit($form, &$form_state) {
 	$node = node_load ($form_state['values']['nid']);
 	if ($form_state['values']['op'] == 'Download')  {
-		zip_download_process($node, $form_state['values']['filename']);
-		exit;
+		if (zip_download_process($node, $form_state['values']['filename']))
+		{
+			drupal_set_message (t("Archive created and downloaded successfully."), 'status');
+			exit;
+		}
 	}
 	else {
 		if (isset ($_SESSION['zip_download_done_redirect'])) {
@@ -211,7 +197,7 @@ function zip_download_create_archive($path, &$files) {
  * create archive and add files.
  *
  */
-function zip_download_file_transfer($source) {
+function zip_download_file_transfer($source, $download_name) {
 	if (ob_get_level()) {
 		ob_end_clean();
 	}
@@ -220,7 +206,7 @@ function zip_download_file_transfer($source) {
 
 	$filesize = filesize ($source);
 
-	$headers[] = 'Content-Disposition: attachment; filename=Archive.zip; Content-Length: '.$filesize;
+	$headers[] = 'Content-Disposition: attachment; filename='.$download_name.'; Content-Length: '.$filesize;
 	$headers[] = 'Content-Type: octet/stream';
 	$headers[] = 'Content-Type: application/force-download';
 	$headers[] = 'Content-Type: application/x-zip-compressed';
@@ -245,27 +231,37 @@ function zip_download_file_transfer($source) {
 			print fread($fd, 1024);
 		}
 		fclose($fd);
+		return true;
 	}
 	else {
+		drupal_set_message (t("Download failed. Archived file count not be opened."), 'error');
 		drupal_not_found();
 	}
+	return false;
 }
 
 /**
  * Process material files download.
  */
 function zip_download_process(&$node, $filename = "Archive.zip") {
+	$downloaded = false;
+
 	$files = zip_download_get_material_files ($node->nid);
-	if (count ($files) > 0) {
-		$tmpdir = file_directory_temp();
-		zip_download_debug ($tmpdir);
-		$tmp = tempnam ($tmpdir, "ZIPDL_");
-		zip_download_debug ($tmp);
-		if (zip_download_create_archive ($tmp, $files)) {
-			zip_download_file_transfer ($tmp);
-			unlink ($tmp);
-			exit;
-		}
+	
+	if (count ($files) == 0)
+	{
+		drupal_set_message (t("No files were found to add to the zip archive. Either none were attached or the attached files are missing?"), 'warning');
+		return false;
 	}
-	return true;
+
+	if (count ($files) > 0) {
+		$tmp = tempnam (file_directory_temp(), "ZIPDL_");
+		if (zip_download_create_archive ($tmp, $files)) {
+			if (zip_download_file_transfer ($tmp, $filename)) {
+				$downloaded = true;
+			}
+		}
+		unlink ($tmp);
+	}
+	return $downloaded;
 }
