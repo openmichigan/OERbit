@@ -18,7 +18,7 @@ function zip_download_menu() {
   	$items['node/%node/zip_download/progress'] = array(
 		'title' => 'Zip download progress',
 		'description' => 'returns status information on zip download in progress.',
-    	'page callback' => 'zip_download_progress_js',
+    	'page callback' => 'zip_download_progress',
     	'access callback' => 'zip_download_access',
   		'access arguments' => array(1, 'access content'),
 		'type' => MENU_CALLBACK,
@@ -36,39 +36,72 @@ function zip_download_access(&$node, $permission) {
 	return FALSE;
 }
 
+
+/**
+ * Decides whether to show the Zip Upload tab.
+ */
+function zip_download_progress() {
+	$progress['status'] = "Working...";
+	$progress['percent'] = 0;
+	if (isset ($_SESSION['zip_download_status'])) {
+		$progress['status'] = $_SESSION['zip_download_status'];
+	}
+	if (isset ($_SESSION['zip_download_progress'])) {
+		$progress['percent'] = $_SESSION['zip_download_progress'];
+////	$_SESSION['zip_download_progress'] = $_SESSION['zip_download_progress'] + 20;
+	}
+	$js = drupal_to_js ($progress);
+	drupal_json ($progress);
+}
+
+
 /**
  * Displays an upload form.
  */
 function zip_download_form(&$form_state, $node) {
-  $form['filename'] = array(
- 	'#type' => 'textfield',
-  	'#title' => t('Save Zip Archive to'),
-  	'#default_value' => "Archive.zip",
-  	'#size' => 60,
-  	'#maxlength' => 64,
-  	'#description' => t('Save the download archive file with this name.')
-  );
-  $form['submit'] = array(
-  	'#type' => 'submit',
-    '#value' => t('Download'),
-    '#submit' => array('zip_download_form_submit'),
-  );
-  $form['done'] = array(
-  	'#type' => 'submit',
-    '#value' => t('Done'),
-    '#submit' => array('zip_download_form_submit'),
-  );
-  $form['nid'] = array(
-    '#type' => 'value',
-    '#value' => $node->nid,
-  );
-  $form['#attributes'] = array('enctype' => "multipart/form-data");
+	$modpath = drupal_get_path('module', 'zip_download');
 
-  if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-  	$_SESSION['zip_download_done_redirect'] = $_SERVER['HTTP_REFERER'];
-  }
+//	drupal_add_css ("misc/jquery-ui.css");
+//	drupal_add_js ("misc/jquery-ui.js");
+//	drupal_add_css ($modpath."/zip_download.css");
+//	drupal_add_js ($modpath."/zip_download.js", 'module', 'header', FALSE, FALSE);
+	
+	unset ($_SESSION['zip_download_status']);
+	unset ($_SESSION['zip_download_progress']);
 
-  return $form;
+	$form['filename'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Save Zip Archive to'),
+		'#default_value' => "Archive.zip",
+		'#size' => 60,
+		'#maxlength' => 64,
+		'#description' => t('Save the download archive file with this name.')
+	);
+
+	$form['progressbar'] = array('#type' => 'markup', '#value' => '<div id="progressbar"></div>');
+
+	$form['download'] = array(
+		'#type' => 'submit',
+		'#value' => t('Download'),
+		'#submit' => array('zip_download_form_submit'),
+	);
+	$form['done'] = array(
+		'#type' => 'submit',
+		'#value' => t('Done'),
+		'#submit' => array('zip_download_form_submit'),
+	);
+	$form['nid'] = array(
+		'#type' => 'value',
+		'#value' => $node->nid,
+	);
+	
+	$form['#attributes'] = array('enctype' => "multipart/form-data");
+	
+	if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+		$_SESSION['zip_download_done_redirect'] = $_SERVER['HTTP_REFERER'];
+	}
+	
+	return $form;
 }
 
 /**
@@ -102,6 +135,8 @@ function zip_download_get_material_files($nid) {
 	//
 	// uses views module to search for files associated with the course node at $nid
 	//
+	$_SESSION['zip_download_status'] = "Zipping...";
+	
 	$results = array ();
 	$file_list = views_get_view('materials_download_filelist', 'default');
 	if (is_numeric ($nid) && isset ($file_list)) {
@@ -155,6 +190,9 @@ function zip_download_file_transfer($source) {
 	if (ob_get_level()) {
 		ob_end_clean();
 	}
+
+	$_SESSION['zip_download_status'] = "Downloading...";
+
 	$filesize = filesize ($source);
 
 	$headers[] = 'Content-Disposition: attachment; filename=Archive.zip; Content-Length: '.$filesize;
@@ -182,7 +220,6 @@ function zip_download_file_transfer($source) {
 			print fread($fd, 1024);
 		}
 		fclose($fd);
-		$_SESSION['zip_download_progress'] = 100;
 	}
 	else {
 		drupal_not_found();
