@@ -2,5 +2,6 @@
 name = Zip Download
 description = Package and download content files as a Zip file.
 dependencies[] = material
+dependencies[] = views
 package = Open Michigan
 core = 6.x

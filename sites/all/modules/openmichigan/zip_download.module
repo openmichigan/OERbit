@@ -265,3 +265,13 @@ function zip_download_process(&$node, $filename = "Archive.zip") {
 	}
 	return $downloaded;
 }
+
+/**
+ * Required so Views will load the default views for this module.
+ */
+function zip_download_views_api() {
+  return array(
+    'api' => 2.0,
+    'path' => drupal_get_path('module', 'zip_download') .'/includes',
+  );
+}

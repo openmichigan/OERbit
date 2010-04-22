@@ -1,0 +1,8 @@
+.ui-progressbar-value
+{ 
+	background-image: url(/images/pbar-ani.gif);
+}
+#progressbar 
+{ 
+	height: 14px; width: 200px; 
+}
