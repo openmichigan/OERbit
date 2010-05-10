@@ -156,7 +156,7 @@ function zip_upload_create_material($file, $nid) {
   $form_state['values']['title'] = $file->filename;
   $form_state['values']['body'] = '';
   $form_state['values']['name'] = $user->name;
-  $form_state['values']['status'] = 0;
+  $form_state['values']['status'] = 1;
   $form_state['values']['op'] = t('Save');
   $form_state['values']['field_course_reference'][0]['nid']['nid'] = $parent->title . ' [nid:' . $parent->nid . ']';
   $form_state['values']['field_material_type'][0]['value'] = 'unknown';
