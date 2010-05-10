@@ -238,7 +238,7 @@ function zip_download_file_transfer($source, $download_name) {
 		return true;
 	}
 	else {
-		drupal_set_message (t("Download failed. Archived file count not be opened."), 'error');
+		drupal_set_message (t("Download failed. Archived file could not be opened."), 'error');
 		drupal_not_found();
 	}
 	return false;
@@ -255,6 +255,7 @@ function zip_download_process(&$node, $filename = "Archive.zip") {
 	if (count ($files) == 0)
 	{
 		drupal_set_message (t("No files were found to add to the zip archive. Either none were attached or the attached files are missing?"), 'warning');
+		drupal_goto ("node/".$node->nid);
 		return FALSE;
 	}
 
