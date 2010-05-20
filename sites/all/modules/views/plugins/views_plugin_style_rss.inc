@@ -95,6 +95,9 @@ class views_plugin_style_rss extends views_plugin_style {
       }
     }
 
+    $row = new stdClass();
+    $row->nid = $this->view->args[0];
+    $rows = $this->row_plugin->render($row);
     foreach ($this->view->result as $row) {
       $rows .= $this->row_plugin->render($row);
     }
