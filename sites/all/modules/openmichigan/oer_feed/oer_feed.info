@@ -1,0 +1,6 @@
+; $Id$
+name = OER RSS Feed
+description = Implements a customized RSS feed view plugin to provide an extended RSS feed.
+dependencies[] = views
+package = Open Michigan
+core = 6.x
