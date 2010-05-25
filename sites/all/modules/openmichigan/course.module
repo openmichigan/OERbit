@@ -70,6 +70,24 @@ function course_get_feed_link() {
 function course_get_navigation_links(&$course) {
   $message = '';
   $tabs = array();
+  $overview = FALSE;
+  if (is_array($course->field_course_information[0]['items'])) {
+    foreach ($course->field_course_information[0]['items'] as $information) {
+      $node = node_load($information['nid']);
+      if ($node->status) {
+        $overview = TRUE;
+      }
+    }
+  }
+  $highlights = FALSE;
+  if (is_array($course->field_course_highlights[0]['items'])) {
+    foreach ($course->field_course_highlights[0]['items'] as $highlight) {
+      $node = node_load($highlight['nid']);
+      if ($node->status) {
+        $highlights = TRUE;
+      }
+    }
+  }
   $materials = FALSE;
   if (is_array($course->field_course_materials[0]['items'])) {
     foreach ($course->field_course_materials[0]['items'] as $material) {
@@ -79,19 +97,26 @@ function course_get_navigation_links(&$course) {
       }
     }
   }
+  $sessions = FALSE;
+  if (is_array($course->field_course_sessions[0]['items'])) {
+    foreach ($course->field_course_sessions[0]['items'] as $session) {
+      $node = node_load($session['nid']);
+      if ($node->status) {
+        $sessions = TRUE;
+      }
+    }
+  }
   if (user_is_anonymous()) {
-    if ($materials
-    || is_array($course->field_course_highlights[0]['items'])
-    || is_array($course->field_course_sessions[0]['items'])) {
+    if ($materials || $highlights || $sessions) {
       $tabs[] = array('data' => l(t('Overview'), $course->path), 'class' => course_navigation_active($course->path));
     }
-    if (is_array($course->field_course_highlights[0]['items'])) {
+    if ($highlights) {
       $tabs[] = array('data' => l(t('Highlights'), $course->path . '/highlights'), 'class' => course_navigation_active($course->path . '/highlights'));
     }
     if ($materials) {
       $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials'));
     }
-    if (is_array($course->field_course_sessions[0]['items'])) {
+    if ($sessions) {
       $tabs[] = array('data' => l(t('Sessions'), $course->path . '/sessions'), 'class' => course_navigation_active($course->path . '/sessions'));
     }
   }
@@ -102,10 +127,10 @@ function course_get_navigation_links(&$course) {
     || !is_null(course_navigation_active($course->path . '/sessions')))) {
       $message = '<div class="help">' . t('The navigation tabs above are specific to the course, not its sub-elements.') . '</div>';
     }
-    $tabs[] = array('data' => l(t('Overview'), $course->path), 'class' => course_navigation_active($course->path) . course_navigation_empty($course, 'overview'));
-    $tabs[] = array('data' => l(t('Highlights'), $course->path . '/highlights'), 'class' => course_navigation_active($course->path . '/highlights') . course_navigation_empty($course, 'highlights'));
-    $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials') . course_navigation_empty($course, 'materials'));
-    $tabs[] = array('data' => l(t('Sessions'), $course->path . '/sessions'), 'class' => course_navigation_active($course->path . '/sessions') . course_navigation_empty($course, 'sessions'));
+    $tabs[] = array('data' => l(t('Overview'), $course->path), 'class' => course_navigation_active($course->path) . (!$overview ? ' empty' : ''));
+    $tabs[] = array('data' => l(t('Highlights'), $course->path . '/highlights'), 'class' => course_navigation_active($course->path . '/highlights') . (!$highlights ? ' empty' : ''));
+    $tabs[] = array('data' => l(t('Materials'), $course->path . '/materials'), 'class' => course_navigation_active($course->path . '/materials') . (!$materials ? ' empty' : ''));
+    $tabs[] = array('data' => l(t('Sessions'), $course->path . '/sessions'), 'class' => course_navigation_active($course->path . '/sessions') . (!$sessions ? ' empty' : ''));
   }
   return $message . theme_item_list($tabs, NULL, 'ul', array('class' => 'course-navigation links inline'));
 }
@@ -115,7 +140,7 @@ function course_get_navigation_links(&$course) {
  */
 function course_navigation_active($path) {
   if (drupal_get_path_alias($_GET['q']) == $path) {
-    return 'active';
+    return ' active';
   }
   return NULL;
 }
@@ -362,13 +387,13 @@ function course_pathauto($op) {
         'highlights' => t('Pattern for course highlights'),
         'rss' => t('Pattern for course RSS Feed'),
         'rdf' => t('Pattern for course RDF'),
-        'latest_course' => t('Pattern for latest course'),
-        'latest_overview' => t('Pattern for latest course overview'),
-        'latest_sessions' => t('Pattern for latest course sessions'),
-        'latest_materials' => t('Patern for latest course materials'),
-        'latest_highlights' => t('Pattern for latest course highlights'),
-        'latest_rss' => t('Pattern for latest course RSS Feed'),
-        'latest_rdf' => t('Pattern for latest course RDF'),
+        //'latest_course' => t('Pattern for latest course'),
+        //'latest_overview' => t('Pattern for latest course overview'),
+        //'latest_sessions' => t('Pattern for latest course sessions'),
+        //'latest_materials' => t('Patern for latest course materials'),
+        //'latest_highlights' => t('Pattern for latest course highlights'),
+        //'latest_rss' => t('Pattern for latest course RSS Feed'),
+        //'latest_rdf' => t('Pattern for latest course RDF'),
       );
       $patterns = token_get_list('node');
       foreach ($patterns as $type => $pattern_set) {
@@ -381,5 +406,23 @@ function course_pathauto($op) {
       return (object) $settings;
     default:
       break;
+  }
+}
+
+/**
+ * Implementation of hook_views_pre_render().
+ */
+function course_views_post_render(&$view, &$output, &$cache) {
+  // Only alter the course version view
+  if ($view->name != 'course_versions') {
+    return;
+  }
+  if (!empty($view->result)) {
+    foreach ($view->result as $key => $course) {
+      if ($course->nid == arg(1)) {
+        // Add "active" class to current node
+        $output = str_replace('<li class="views-row views-row-' . ($key + 1), '<li class="views-row views-row-' . ($key + 1) . ' active', $output);
+      }
+    }
   }
 }
