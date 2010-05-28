@@ -46,6 +46,7 @@ function rdf_init() {
     // Implement hook_exit() to mark us as incompatible with aggressive caching:
     function rdf_exit($destination = NULL) {}
     // Don't replace RDFa into AJAX requests
+    // @see http://drupal.org/node/476280#comment-2790886 - hack by switchback
     if (arg(0) != 'admin' && arg(0) != 'filefield' && arg(1) != 'js_add_more' && arg(1) != 'js') {
       ob_start('_rdf_ob_handler');
     }
