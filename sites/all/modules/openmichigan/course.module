@@ -51,12 +51,12 @@ function course_block($op = 'list', $delta = 0, $edit = array()) {
 function course_get_feed_link() {
   $node = menu_get_object('node', 1, $_GET['q']);
   $alias = drupal_lookup_path('alias', 'node/' . $node->nid . ($node->type == 'course' ? '/rss' : '/feed'));
-  $icon = '<img src="misc/feed.png" alt="Syndicate content" title="Syndicate" width="16" height="16" />';
+  $icon = '<img src="' . url('misc/feed.png') . '" alt="Syndicate content" title="Syndicate" width="16" height="16" />';
   if ($alias && in_array($node->type, array('course', 'unit'))) {
-    $link = '<a href="' . $alias . '" class="feed-icon">' . $icon . '</a>';
+    $link = '<a href="' . url($alias) . '" class="feed-icon">' . $icon . '</a>';
   }
   elseif (arg(0) == 'taxonomy') {
-    $link = '<a href="' . $_GET['q'] . '/0/feed" class="feed-icon">' . $icon . '</a>';
+    $link = '<a href="' . url($_GET['q']) . '/0/feed" class="feed-icon">' . $icon . '</a>';
   }
   else {
     $link = '<a href="feed" class="feed-icon">' . $icon . '</a>';
