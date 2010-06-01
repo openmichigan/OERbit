@@ -93,7 +93,7 @@
   
   <?php if ($pageImage != "") {  ?>  
   <div class="imgCapR">
-  	<img src="/<?php print $pageImage; ?>" alt="" />
+  	<img src="<?php print $pageImage; ?>" alt="" />
   	<?php print $pageImageCaption; ?>
   </div>
   <?php } ?>
