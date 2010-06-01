@@ -1,0 +1,195 @@
+<?php
+// $Id: pathologic.module,v 1.4.2.2 2010/01/09 07:23:30 garrettalbright Exp $
+
+/**
+ * @file
+ * Pathologic text filter for Drupal.
+ *
+ * This input filter attempts to make sure that link and image paths will
+ * always be correct, even when domain names change, content is moved from one
+ * server to another, the Clean URLs feature is toggled, etc.
+ */
+
+/**
+ * Implementation of hook_filter().
+ */
+function pathologic_filter($op, $delta = 0, $format = -1, $text = '') {
+  if ($op === 'process' && $text !== '') {
+    if (variable_get('filter_pathologic_href_' . $format, TRUE)) {
+      // Do transformation on href paths.
+      // Make relative.
+      $text = preg_replace_callback(_pathologic_abs_regex('href', $format), '_pathologic_abs_to_rel', $text);
+      // Transform attributes.
+      // The "internal:" bit in the regex makes life easier for those migrating
+      // from the Path Filter module.
+      $text = preg_replace_callback('|href="(internal:)?([^/#][^:"#\?]+)([\?]([^#]+))?(#([^:"]*))?"|', '_pathologic_do_href', $text);
+    }
+    if (variable_get('filter_pathologic_src_' . $format, TRUE)) {
+      // Do transformation on src paths.
+      // Make relative.
+      $text = preg_replace_callback(_pathologic_abs_regex('src', $format), '_pathologic_abs_to_rel', $text);
+      // Transform attributes.
+      // The "internal:" bit in the regex makes life easier for those migrating
+      // from the Path Filter module.
+      $text = preg_replace_callback('|src="(internal:)?([^/][^:"\?]+)([\?]([^#]+))?"|', '_pathologic_do_src', $text);
+    }
+    return $text;
+  }
+  elseif ($op === 'list') {
+    return array(t('Pathologic'));
+  }
+  elseif ($op === 'description') {
+    return t('Corrects paths in links and images in your Drupal content in situations which would otherwise cause them to &ldquo;break.&rdquo;');
+  }
+  elseif ($op === 'settings') {
+    return array('filter_pathologic' => array(
+        '#type' => 'fieldset',
+        '#title' => t('Pathologic'),
+        '#collapsible' => TRUE,
+        'filter_pathologic_href_' . $format => array(
+          '#type' => 'checkbox',
+          '#title' => t('Transform values of <em>href</em> attributes'),
+          '#default_value' => intval(variable_get('filter_pathologic_href_' . $format, 1)),
+          '#description' => t('<em>href</em> attributes are used in link tags.'),
+        ),
+        'filter_pathologic_src_' . $format => array(
+          '#type' => 'checkbox',
+          '#title' => t('Transform values of <em>src</em> attributes'),
+          '#default_value' => intval(variable_get('filter_pathologic_src_' . $format, 1)),
+          '#description' => t('<em>src</em> attributes are used in image tags and tags for other types of embedded media.'),
+        ),
+        'filter_pathologic_abs_paths_' . $format => array(
+          '#type' => 'textarea',
+          '#title' => t('Additional paths to be considered local'),
+          '#default_value' => variable_get('filter_pathologic_abs_paths_' . $format, ''),
+          '#description' => t('Enter URIs of other Drupal installations which should be considered local in addition to the one for this particular Drupal installation (which is %path). If in doubt, enter the path to the Drupal installation&rsquo;s front page. Enter one path per line.', array('%path' => _pathologic_url('<front>'))),
+        ),
+      ),
+    );
+  }
+  return $text;
+}
+
+/**
+ * Return the hard part of the regular expression to be used when making paths
+ * relative.
+ *
+ * @param $attr
+ *   The attribute holding paths we're looking for. Should be 'href' or 'src'.
+ * @param $format
+ *   The ID of the input format being used.
+ * @return string
+ *   Part of a regular expression to be used to find paths to act upon.
+ */
+function _pathologic_abs_regex($attr, $format) {
+  static $pathstr = FALSE;
+
+  if ($pathstr === FALSE) {
+    $paths_field = trim(variable_get('filter_pathologic_abs_paths_' . $format, ''));
+    if ($paths_field !== '') {
+      // Get rid of spirious white space on each line.
+      $paths = array_map('trim', explode("\n", $paths_field));
+    }
+    else {
+      $paths = array();
+    }
+    $paths[] = _pathologic_url('<front>');
+    // It's possible the user entered the path for the current site in the box,
+    // especially if the DB contents are shared between two different servers
+    // (likely if it's a testing/production server thing). This won't screw up
+    // the regex, but it will unnecessarily complicate it, so let's remove
+    // duplicates from the array.
+    $paths = array_unique($paths);
+    // We need to account for the fact that http://example.com/foo,
+    // http://example.com/?q=foo and http://example.com/index.php?q=foo are all
+    // valid.
+    $pathstr = ')="(' . implode('/?(index.php)?(\?q=)?|', $paths) . '/?(index.php)?(\?q=)?)([^"]*)"`';
+    // $pathstr now looks like:
+    // )="(http://example.com//?(index.php)?(\?q=)?|http://example.org//?(index.php)?(\?q=)?)([^"]*)";
+  }
+  return '`(' . $attr . $pathstr;
+  // Returned value looks like:
+  // (href)="(http://example.com//?(index.php)?(\?q=)?|http://example.org//?(index.php)?(\?q=)?)([^"]*)"
+  // We want to match the attribute so that the callback
+  // _pathologic_abs_to_rel() below can return a value with the attribute
+  // without special trickery or creating duplicate functions.
+}
+
+/**
+ * Aid in turning an absolute path on the local server to a relative one.
+ *
+ * preg_replace_callback() callback function.
+ */
+function _pathologic_abs_to_rel($matches) {
+  // The attribute will be the first match (after 0), and the path will be the
+  // last.
+  $path = array_pop($matches);
+  if ($path === '') {
+    // It looks like this was meant to be a link to the front page.
+    return $matches[1] . '="<front>"';
+  }
+  return $matches[1] . '="' . $path . '"';
+}
+
+/**
+ * Properly format an HREF element.
+ *
+ * Here's where the magic happens. preg_replace_callback() callback function.
+ */
+function _pathologic_do_href($matches) {
+  return 'href="' . _pathologic_url($matches[2], isset($matches[4]) ? $matches[4] : NULL, isset($matches[6]) ? $matches[6] : NULL) . '"';
+}
+
+/**
+ * Return a formatted SRC attribute.
+ *
+ * You might think SRC attributes will always be disk files instead of Drupal
+ * paths, but that's not always the case - paths to files processed by
+ * Imagecache point to non-existant files the first time, at which time they go
+ * through the standard menu router to be caught and handled by Imagecache.
+ * preg_replace_callback() callback function.
+ */
+function _pathologic_do_src($matches) {
+  if (file_exists($matches[2])) {
+    global $base_url;
+    return "src=\"{$base_url}/{$matches[2]}\"";
+  }
+  return 'src="' . _pathologic_url($matches[2], isset($matches[4]) ? $matches[4] : NULL) . '"';
+}
+
+/**
+ * Run the path parts through url() to puild a correct URL if the path looks
+ * like it links to a local Drupal path.
+ *
+ * Otherwise, it's a link to a file or something -- try to return it in one
+ * piece.
+ *
+ * @param $path
+ *   The path to check.
+ * @param $query
+ *   The query fragment of the path, if any (comes after ?).
+ * @param $fragment
+ *   The anchor fragment of the path, if any (comes after #).
+ * @return string
+ *   The corrected path, if necessary. Else, the reconstructed path.
+ */
+function _pathologic_url($path, $query = NULL, $fragment = NULL) {
+  // We're unescaping HTML entities like &amp; in the hope of avoiding double-
+  // encoding. See: http://drupal.org/node/665900
+  $path = html_entity_decode($path, ENT_COMPAT, 'UTF-8');
+  // Does this look like an internal URL?
+  if ($path !== '<front>' && !menu_get_item($path) && !drupal_lookup_path('source', $path)) {
+    // It's not.
+    global $base_url;
+
+    $return = $base_url . '/' . $path;
+    if ($query !== NULL && $query !== '') {
+      $return .= '?' . $query;
+    }
+    if ($fragment !== NULL && $fragment !== '') {
+      $return .= '#' . $fragment;
+    }
+    return $return;
+  }
+  return url($path, array('query' => $query, 'fragment' => $fragment, 'absolute' => TRUE));
+}
