@@ -51,15 +51,15 @@ function course_block($op = 'list', $delta = 0, $edit = array()) {
 function course_get_feed_link() {
   $node = menu_get_object('node', 1, $_GET['q']);
   $alias = drupal_lookup_path('alias', 'node/' . $node->nid . ($node->type == 'course' ? '/rss' : '/feed'));
-  $icon = '<img src="/misc/feed.png" alt="Syndicate content" title="Syndicate" width="16" height="16" />';
+  $icon = '<img src="misc/feed.png" alt="Syndicate content" title="Syndicate" width="16" height="16" />';
   if ($alias && in_array($node->type, array('course', 'unit'))) {
-    $link = '<a href="/' . $alias . '" class="feed-icon">' . $icon . '</a>';
+    $link = '<a href="' . $alias . '" class="feed-icon">' . $icon . '</a>';
   }
   elseif (arg(0) == 'taxonomy') {
-    $link = '<a href="/' . $_GET['q'] . '/0/feed" class="feed-icon">' . $icon . '</a>';
+    $link = '<a href="' . $_GET['q'] . '/0/feed" class="feed-icon">' . $icon . '</a>';
   }
   else {
-    $link = '<a href="/feed" class="feed-icon">' . $icon . '</a>';
+    $link = '<a href="feed" class="feed-icon">' . $icon . '</a>';
   }
   return '<span class="print_rss">' . $link . '</span>';
 }
@@ -424,5 +424,37 @@ function course_views_post_render(&$view, &$output, &$cache) {
         $output = str_replace('<li class="views-row views-row-' . ($key + 1), '<li class="views-row views-row-' . ($key + 1) . ' active', $output);
       }
     }
+  }
+}
+
+/**
+ * Implementation of hook_token_list().
+ */
+function course_token_list($type = 'all') {
+  if ($type == 'node' || $type == 'all') {
+    $tokens = array();
+    $tokens['course']['parent_node-path']  = t('Relative path alias of the parent node of the node.');
+    return $tokens;
+  }
+}
+
+/**
+ * Implementation of hook_token_values().
+ */
+function course_token_values($type, $node = NULL) {
+  if ($type == 'node') {
+    $parent = NULL;
+    if (!empty($node->field_unit_top[0]['nid'])) {
+      $parent = node_load($node->field_unit_top[0]['nid']);
+    }
+    elseif (!empty($node->field_parent_unit[0]['nid'])) {
+      $parent = node_load($node->field_parent_unit[0]['nid']);
+    }
+    elseif (!empty($node->field_course_reference[0]['nid'])) {
+      $parent = node_load($node->field_course_reference[0]['nid']);
+    }
+    $tokens = array();
+    $tokens['parent_node-path'] = !empty($parent->path) ? $parent->path : '';
+    return $tokens;
   }
 }
