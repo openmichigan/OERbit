@@ -64,10 +64,10 @@ function navigation_display() {
       if ($path[0] == 'education' || (arg(0) == 'node' && arg(2) == 'edit')) {
         global $user;
         if (user_is_anonymous()) {
-          $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL AND status=1 ORDER BY node.sticky ASC, node.title ASC');
+          $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL AND status=1 ORDER BY node.sticky DESC, node.title ASC');
         }
         else {
-          $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL ORDER BY node.sticky ASC, node.title ASC');
+          $query = db_query('SELECT node.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_unit_top} top ON node.nid = top.nid WHERE field_unit_top_nid IS NOT NULL ORDER BY node.sticky DESC, node.title ASC');
         }
         $children = array();
         while ($top = db_fetch_array($query)) {
@@ -175,6 +175,9 @@ function navigation_get_children(&$node) {
       }
       $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
+    if (!empty($children)) {
+      navigation_clean_children($children);
+    }
   }
   return $children;
 }
@@ -186,7 +189,7 @@ function navigation_clean_children(&$children) {
   foreach ($children as $nid => $course) {
     $node = node_load($nid);
     if ($node->type == 'course') {
-      $query = db_query("SELECT DISTINCT(course.nid) AS nid FROM {content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid WHERE code.field_code_value='%s' ORDER BY course.field_course_year_value DESC, course.field_course_term_value DESC", $node->field_code[0]['value']);
+      $query = db_query("SELECT DISTINCT(course.nid) AS nid FROM ({content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid) INNER JOIN {node} node ON node.nid=course.nid WHERE node.status=1 AND code.field_code_value='%s' ORDER BY course.field_course_year_value DESC, course.field_course_term_value DESC", $node->field_code[0]['value']);
       $latest = db_fetch_object($query);
       $previous = db_fetch_object($query);
       if (!empty($previous) && $latest->nid != $node->nid) {
@@ -216,7 +219,7 @@ function navigation_views_pre_render(&$view) {
         $node = node_load($course->node_node_nid);
       }
       if ($node->type == 'course') {
-        $query = db_query("SELECT DISTINCT(course.nid) AS nid FROM {content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid WHERE code.field_code_value='%s' ORDER BY course.field_course_year_value DESC, course.field_course_term_value DESC", $node->field_code[0]['value']);
+        $query = db_query("SELECT DISTINCT(course.nid) AS nid FROM ({content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid) INNER JOIN {node} node ON node.nid=course.nid WHERE node.status=1 AND code.field_code_value='%s' ORDER BY course.field_course_year_value DESC, course.field_course_term_value DESC", $node->field_code[0]['value']);
         $latest = db_fetch_object($query);
         $previous = db_fetch_object($query);
         if (!empty($previous) && $latest->nid != $node->nid) {

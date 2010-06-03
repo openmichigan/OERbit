@@ -157,6 +157,8 @@ function zip_upload_create_material($file, $nid) {
   $form_state['values']['body'] = '';
   $form_state['values']['name'] = $user->name;
   $form_state['values']['status'] = 1;
+  $form_state['values']['created'] = time();
+  $form_state['values']['changed'] = time();
   $form_state['values']['op'] = t('Save');
   $form_state['values']['field_course_reference'][0]['nid']['nid'] = $parent->title . ' [nid:' . $parent->nid . ']';
   $form_state['values']['field_material_type'][0]['value'] = 'unknown';
@@ -181,7 +183,6 @@ function zip_upload_create_material($file, $nid) {
   _drupal_execute('material_node_form', $form_state, (object) $node);
   // Let other modules do their thing.
   $node = node_load($form_state['nid']);
-  $node->changed = time();
   module_invoke_all('nodeapi', $node, 'insert', NULL, NULL);
   module_invoke_all('nodeapi', $node, 'update', NULL, NULL);
   // Let revisioning do its magic
@@ -191,6 +192,7 @@ function zip_upload_create_material($file, $nid) {
   // Finally create new revision
   _node_save_revision($node, $user->uid);
   module_invoke_all('nodeapi', $node, 'update', NULL, NULL);
+  db_query('UPDATE {node_revisions} SET timestamp=%d WHERE nid=%d', time(), $form_state['nid']);
   // Set Creative Commons license.
   $node = node_load($form_state['nid']);
   $form_state['values']['creativecommons']['select_license_form']['cc_license_uri'] = $parent->cc->uri;
