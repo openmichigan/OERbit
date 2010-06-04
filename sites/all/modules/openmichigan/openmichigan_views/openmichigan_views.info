@@ -1,0 +1,11 @@
+; $Id$
+
+name = Exported Views
+description = Exported views for Open Michigan
+dependencies[] = views
+dependencies[] = course
+dependencies[] = hierarchical_permissions
+dependencies[] = material
+dependencies[] = navigation
+package = Open Michigan
+core = 6.x
