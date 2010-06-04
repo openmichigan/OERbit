@@ -968,13 +968,13 @@ function accessible_content_views_api() {
 *  Implementation of hook_menu_alter()
 *  This is to support modules which implment the hook_accessible_content_install_tests()
 *  We're calling this hook because it is called after modules are installed.
-*/
+*
 function accessible_content_menu_alter($menu) {
   accessible_content_include_library();
   $tests = module_invoke_all('accessible_content_install_tests');
   $files = array();
   foreach ($tests as $test_name => $test) {
-    $existing = db_result(db_query('SELECT nid FROM {accessible_content_node_test} WHERE test_name = "%s"',
+    $existing = db_result(db_query("SELECT nid FROM {accessible_content_node_test} WHERE test_name = '%s'",
                 $test_name));
     if (!$existing) {
       $node = new stdClass();
@@ -994,8 +994,8 @@ function accessible_content_menu_alter($menu) {
 }
 
 /**
-*  Implementation of hook_perm
-*/
+ *  Implementation of hook_perm
+ */
 function accessible_content_perm() {
 
   return array('access accessibility guidelines',
