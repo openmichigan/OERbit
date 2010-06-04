@@ -357,6 +357,9 @@ function menu_breadcrumb_init() {
   if (arg(0) == 'node' && is_numeric(arg(1)) && in_array(arg(2), array('edit', 'revisions', 'create_referrer', 'accessibility'))) {
     $breadcrumb = array();
   }
+  if ($_GET['q'] == 'education/instructors' || arg(1) == 'add') {
+    $breadcrumb = array();
+  }
 
   drupal_set_breadcrumb($breadcrumb);
 }
