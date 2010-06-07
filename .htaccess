@@ -106,10 +106,13 @@ DirectoryIndex index.php
   # uncomment the following line:
   # RewriteBase /
 
+  #  http://ets.tlt.psu.edu/wiki/Drupal_auth has example of cosign fix
+
   # Rewrite URLs of the form 'x' to the form 'index.php?q=x'.
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_URI} !=/favicon.ico
+  RewriteCond %{REQUEST_URI} !^/cosign/
   RewriteRule ^(.*)$ index.php?q=$1 [L,QSA]
 </IfModule>
 
