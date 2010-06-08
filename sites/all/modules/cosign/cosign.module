@@ -1,0 +1,274 @@
+<?php
+// $Id: cosign.module,v 1.9.2.3 2008/12/18 17:24:41 ksteinhoff Exp $
+
+/**
+ * @file
+ * The Cosign Module
+ *
+ * This module manages automatic user login and supplies cosign logout bar.
+ * It depends on the webserver auth module.
+ */
+
+function cosign_init() {
+  global $user;
+
+  if ($_GET['q'] == 'logout') {
+    watchdog('cosign', "logout: $user->name");
+    cosign_logout();
+  }
+  elseif ($user->uid) {
+    // do nothing, user is logged in, and not logging out...
+  }
+  else {
+    watchdog('cosign', "login: $user->name");
+    webserver_auth_init();
+  }
+
+  return TRUE;
+}
+
+// Not a hook.  Defines the admin form which is referenced in the _menu hook.
+function cosign_admin() {
+
+  $logout_machine = 'https://' . $_SERVER[ 'SERVER_NAME' ];
+  $script_path = '/cgi-bin/logout';
+  $logout_path = $logout_machine . $script_path;
+
+  $form['cosign_logout_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Logout Path'),
+    '#default_value' => variable_get('cosign_logout_path', $logout_path),
+    '#size' => 80,
+    '#maxlength' => 200,
+    '#description' => t("The address (including http(s)) of the machine and script path for logging out."),
+  );
+
+  $logout_to =  'http://' . $_SERVER[ 'SERVER_NAME' ] . base_path();
+
+  $form['cosign_logout_to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Logout to'),
+    '#default_value' => variable_get('cosign_logout_to', $logout_to),
+    '#size' => 80,
+    '#maxlength' => 200,
+    '#description' => t("The address to redirect users to after they have logged out."),
+  );
+
+  return system_settings_form($form);
+}
+
+function cosign_menu() {
+  $items['admin/settings/cosign'] = array(
+    'title' => 'Cosign',
+    'description' => 'Control the Cosign module behavior',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cosign_admin'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+
+function cosign_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == "user_register") {
+    drupal_goto('https://' . $_SERVER['SERVER_NAME'] . base_path());
+  }
+
+  if ($form_id == "user_admin_settings") {
+    $form['registration']['#title'] = t( $form['registration']['#title'] ) . " (disabled by the cosign module) ";
+    $form['registration']['#collapsible'] = TRUE;
+    $form['registration']['#collapsed'] = TRUE;
+    $form['registration']['user_register']['#default_value'] = 1;
+    $form['email']['#title'] = t( $form['email']['#title'] ) . " (disabled by the cosign module) ";
+    $form['email']['#collapsible'] = TRUE;
+    $form['email']['#collapsed'] = TRUE;
+    foreach ($form['registration'] as $k => $item) {
+      if (is_array($item)) {
+        $form['registration'][$k]['#disabled'] = TRUE;
+      }
+    }
+    foreach ($form['email'] as $k => $item) {
+      if (is_array($item)) {
+        $form['email'][$k]['#disabled'] = TRUE;
+      }
+    }
+  }
+  if ($form_id == "user_login_block") {
+    $form['#action'] = 'user/login';
+    unset($form['name']);
+    unset($form['pass']);
+    unset($form['submit']);
+    $form['links']['#value'] = '<a href="https://' . $_SERVER['HTTP_HOST'] . request_uri() . '">Login</a>';
+  }
+
+  if ($form_id == "user_login") {
+    drupal_goto('https://' . $_SERVER['SERVER_NAME'] . base_path());
+  }
+
+  if ($form_id == "user_profile_form") {
+    if (isset($form['account']['name'])) {
+      $form['account']['name']['#type']='hidden';
+    }
+    unset($form['account']['pass']);
+  }
+}
+
+function cosign_help($path, $arg) {
+  switch ($path) {
+    case 'admin/modules#description':
+      return t("Allows users to authenticate via Cosign.");
+
+    case "admin/help#cosign":
+      return '<p>' . t("Allows users to authenticate via Cosign") . '</p>';
+  }
+}
+
+function cosign_logout() {
+  global $user;
+
+  watchdog(
+    'user',
+    t('Session closed for %name.',
+    array('%name' => $user->name))
+  );
+
+  // Destroy the current session:
+  session_destroy();
+  module_invoke_all('user', 'logout', NULL, $user);
+
+  // Load the anonymous user
+  $user = drupal_anonymous_user();
+
+  $default_logout_path = 'https://' . $_SERVER[ 'SERVER_NAME' ] . '/cgi-bin/logout';
+  $default_logout_to =   'http://' . $_SERVER[ 'SERVER_NAME' ] . base_path();
+
+  $logout_path = variable_get('cosign_logout_path', $default_logout_path);
+  $logout_to = variable_get('cosign_logout_to', $default_logout_to);
+
+  drupal_goto($logout_path . '?' . $logout_to);
+
+  return TRUE;
+}
+
+function cosign_block($op='list', $delta=0) {
+  global $user;
+
+  switch ($op) {
+    case 'list':
+      $blocks[0]["info"] = t("Cosign status and logout");
+      return $blocks;
+    case 'save':
+      return;
+    case 'configure':
+      return;
+    case 'view': default:
+      $block['content'] = 'logout <a href="' . base_path() . '?q=logout">' .
+        $user->name . '</a>';
+  }
+
+  return $block;
+}
+
+function cosign_disable() {
+  $module = 'cosign';
+
+  db_query("UPDATE {system} SET status = 0 WHERE type = 'module' AND name =
+    '%s'", $module);
+  drupal_set_message(t('Cosign module has been disabled'));
+}
+
+function cosign_enable() {
+  $errmsg = '';
+  $realm = '';
+
+  if (isset($_SERVER[REMOTE_REALM])) {
+    $realm = '@' . $_SERVER[REMOTE_REALM];
+  }
+
+  // This is a fresh install, don't bother copying users
+  if (basename($_SERVER['SCRIPT_NAME']) == "install.php") {
+    drupal_set_message(t('Cosign module has been enabled'));
+    return TRUE;
+  }
+
+  // look for REMOTE_USER, only enable if it's set
+  $cosign_user = $_SERVER['REMOTE_USER'];
+  if (!isset($cosign_user) || empty($cosign_user)) {
+    cosign_disable();
+    drupal_error_handler(1, 'Could not detect your username from ' .
+      '$_SERVER[\'REMOTE_USER\'], cosign was not enabled<br />',
+      __FILE__, __LINE__, 0);
+    return FALSE;
+  }
+
+  // is REMOTE_USER registered as a local user?
+  $sql = "SELECT uid, name FROM {users} WHERE name='$cosign_user'";
+  $local_result = db_query($sql);
+  $local_user = db_fetch_object($local_result);
+
+  /*
+   * REMOTE_USER isn't locally registered, so delete the admin user
+   * and insert (create) a new admin based on the cosign user
+   */
+  if (empty($local_user)) {
+    $del_sql = 'DELETE FROM {users} WHERE uid=1';
+    if (!(db_query($del_sql))) {
+      $errmsg .= 'unable to delete old admin user ';
+    }
+
+    $ins_sql = 'INSERT INTO {users} (uid, name, mail, created, status) ' .
+      "values(1, '$_SERVER[REMOTE_USER]', '$_SERVER[REMOTE_USER]$realm', " .
+      time() . ', 1)';
+    if (!(db_query($ins_sql))) {
+      $errmsg .= 'unable to create new admin user ';
+    }
+  }
+  /*
+   * REMOTE_USER is locally registered, but isn't the admin user, so delete
+   * the admin user and update cosign user's local account to admin
+   */
+  elseif ($local_user->uid != 1) {
+    $del_sql = 'DELETE FROM {users} WHERE uid=1';
+    if (!(db_query($del_sql))) {
+      $errmsg .= 'unable to delete old admin user ';
+    }
+
+    $upd_sql = "UPDATE {users} SET uid=1 WHERE name='$_SERVER[REMOTE_USER]'";
+    if (!(db_query($upd_sql))) {
+      $errmsg .= 'unable to update your user to admin ';
+    }
+  }
+
+  if (!empty($errmsg)) {
+    drupal_set_message(
+      t("There was an error when initializing cosign: $errmsg"));
+    cosign_disable();
+    return FALSE;
+  }
+
+  // copy all users from the user table into the authmap table
+  $result = db_query('SELECT uid, name FROM {users} WHERE ' .
+    'uid > 0 AND name NOT IN (SELECT authname FROM {authmap})');
+
+  while ($user_info = db_fetch_object($result)) {
+    if (!empty($user_info->name)) {
+      db_query(
+        "INSERT INTO {authmap} (authname, uid, module) " . "VALUES ('%s', %d, '%s')",
+        $user_info->name,
+        $user_info->uid, 'cosign');
+    }
+  }
+
+  drupal_set_message('Warning: All users mentioned in the user
+    table have been copied into the authmap table. This
+    means that any pre-existing local users have been
+    converted to <b>user' . $realm . '</b>.  This may cause a
+    mis-identification, and potential security issue if
+    you had a user registered locally, and that name is
+    mapped to someone else when using cosign.' .
+    $_SERVER['REMOTE_USER'], 'status');
+
+  return TRUE;
+}

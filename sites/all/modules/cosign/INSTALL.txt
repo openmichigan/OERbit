@@ -1,0 +1,53 @@
+; $Id: INSTALL.txt,v 1.3.2.2 2009/10/08 20:15:22 ksteinhoff Exp $
+
+http://drupal.org/project/cosign
+
+Installation instructions
+---------------------------
+* you must be running your server within a cosign infrastructure.
+	More info at: http://www.weblogin.org/
+* download the cosign module
+* download the webserver_auth module, upon which cosign depends
+* copy the modules into your drupal modules directory
+* enable the modules through the ?q=admin/build/modules page
+* add the logout block to your page with the ?q=admin/build/block page
+
+Warning 
+--------
+When enabling cosign, all users mentioned in the user table will be
+copied into the authmap table. This means that any pre-existing local
+users will be converted over to user@$_SERVER[REMOTE_REALM].  This may
+cause a mis-identification, and potential security issue if you had
+a user registered locally, and that name is mapped to someone else
+when using cosign.
+
+For example, I may have chosen the username 'willie' for my local
+drupal user. Although when using cosign, my username is 'willn'. In
+this case, by turning on cosign I've lost access to my former username,
+and another user would have access to all of my previous documents,
+comments, preferences, etc.  A more serious situation would be if your
+admin user doesn't share your username.  If you turn on cosign without
+changing your admin username, then you suddenly lose your
+administration account.
+
+Be sure to vet your authmap list before "opening the doors" to
+your userbase. It may be wise to only enable cosign authentication
+on a brand new drupal installation.
+
+You will become the admin user:
+---------------------------------
+When you turn on the cosign module, if your local drupal
+username is not the same as your cosign username (taken from
+$_SERVER['REMOTE_USER']), then a destructive change will happen,
+and your cosign user will become the new admin, and assume ownership
+of the previous admin's postings, etc. This is to prevent someone
+else from administering your drupal instance. Since you have the
+permission to enable this module, then you must be authorized to be
+the administrator.
+
+Turning off the cosign module does not revert the admin user back to
+using a local drupal account.
+
+
+---------------------------------
+Written by Willie Northway

@@ -1,0 +1,16 @@
+; $Id: cosign.info,v 1.4 2008/12/04 19:57:41 ksteinhoff Exp $
+name = Cosign
+description = Manages automatic user login and supplies cosign logout bar
+dependencies[] = webserver_auth
+core = 6.x
+
+; Information added by drupal.org packaging script on 2007-01-30
+project = "cosign"
+
+
+; Information added by drupal.org packaging script on 2009-10-08
+version = "6.x-1.6"
+core = "6.x"
+project = "cosign"
+datestamp = "1255033516"
+

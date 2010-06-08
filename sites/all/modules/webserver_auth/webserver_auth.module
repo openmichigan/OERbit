@@ -1,0 +1,133 @@
+<?php
+// $Id: webserver_auth.module,v 1.22.2.1 2008/08/07 16:38:49 weitzman Exp $
+
+/**
+ * Implementation of hook_menu().
+ */
+function webserver_auth_menu() {
+  $items = array();
+  $items['admin/settings/webserver_auth'] = array(
+    'title' => t('Webserver authentication'),
+    'description' => t('Configure a domain for generating email addresses. Optional.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webserver_auth_settings'),
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function webserver_auth_init() {
+  global $user;
+
+  $authname = '';
+
+  // Make sure we get the remote user whichever way it is available.
+  if (isset($_SERVER['REDIRECT_REMOTE_USER'])) {
+    $authname = $_SERVER['REDIRECT_REMOTE_USER'];
+  }
+  elseif (isset($_SERVER['REMOTE_USER'])) {
+    $authname = $_SERVER['REMOTE_USER'];
+  }
+
+  // Perform some cleanup so plaintext passwords aren't available under
+  // mod_auth_kerb.
+  unset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
+
+  // Retrieve user credentials
+  $result = db_query("SELECT uid FROM {authmap} WHERE authname = '%s' AND module = 'webserver_auth'", $authname);
+  $expected = db_fetch_array($result);
+
+  if (isset($user) && $user->uid === $expected['uid']) {
+    // Do nothing: user is already logged into Drupal with session data matching
+    // HTTP authentication.
+  }
+  else {
+    if (!empty($authname)) {
+      // User is logged into webserver via HTTP authentication.
+      // Try to log into Drupal. 
+      $user = user_external_load($authname);
+
+      if (!$user) {
+        // If unsuccessful, register the user. This will trigger
+        // webserver_auth_user() and any other _user() hooks.
+        user_external_login_register($authname, 'webserver_auth');
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function webserver_auth_user($op, &$edit, &$account, $category = NULL) {
+  if ($op == 'insert' && $category = 'account') {
+    $account->name = trim($account->name);
+    // Pretty up the username for NTLM authentication (i.e. Windows)
+    if (variable_get('webserver_auth_strip_prefix', TRUE)) {
+      // Get 'bar' from 'foo1\foo2\bar'
+      $account->name = array_pop(explode("\\", $account->name));
+    }
+    if (variable_get('webserver_auth_strip_domain', TRUE)) {
+      // Get 'foo' from 'foo@bar'
+      $account->name = array_shift(explode('@', $account->name));
+    }
+    db_query("UPDATE {users} SET name = '%s' WHERE uid = %d", $account->name, $account->uid);
+    // Generate an e-mail address automagically
+    if ($domain = variable_get('webserver_auth_email_domain', '')) {
+      if ($account->name) {
+        db_query("UPDATE {users} SET mail = '%s@%s' WHERE uid = %d", $account->name, $domain, $account->uid);
+      }
+    }
+    // run some custom code to modify the user object at creation time
+    if ($code = variable_get('webserver_auth_insert', '')) {
+      eval('?>'. $code);
+    }
+  }
+  elseif ($op == 'logout') {
+    global $base_url;
+    // kick user out of a secure session so they aren't automatically logged back in
+    $base_url = str_replace('https://', 'http://', $base_url);
+  }
+}
+
+/**
+ * Implementation of hook_settings().
+ */
+function webserver_auth_settings() {
+  $form['webserver_auth_email_domain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email domain'),
+    '#default_value' => variable_get('webserver_auth_email_domain', ''),
+    '#size' => 30,
+    '#maxlength' => 55,
+    '#description' => t('Append this domain name to each new user in order generate his email address.'),
+  );
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    'webserver_auth_strip_prefix' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Strip prefix'),
+      '#default_value' => variable_get('webserver_auth_strip_prefix', TRUE),
+      '#description' => t("Strip NTLM-style prefixes (e.g. 'foo1\foo2') from the login name ('foo1\foo2\bar') to generate the username ('bar')."),
+    ),
+    'webserver_auth_strip_domain' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Strip domain'),
+      '#default_value' => variable_get('webserver_auth_strip_domain', TRUE),
+      '#description' => t("Strip a domain name (e.g. '@EXAMPLE.COM') from the login name ('newuser@EXAMPLE.COM') to generate the username ('newuser')."),
+    ),
+    'webserver_auth_insert' => array(
+      '#type' => 'textarea',
+      '#title' => 'User account modification',
+      '#default_value' => variable_get('webserver_auth_insert', ''),
+      '#description' => t("Modify user accounts at the time of creation. Use PHP code (enclosed in <code>&lt;?php</code> and <code>?&gt;</code>). The variable <code>\$account</code> is available as in <a href=\"http://api.drupal.org/api/function/hook_user/6\">hook_user('insert',...)</a>. Changes to the user object must be explicitly saved to the database to be made permanent."),
+    ),
+  );
+  return system_settings_form($form);
+}
