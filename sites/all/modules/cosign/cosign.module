@@ -72,29 +72,29 @@ function cosign_menu() {
 
 
 function cosign_form_alter(&$form, $form_state, $form_id) {
-  if ($form_id == "user_register") {
-    drupal_goto('https://' . $_SERVER['SERVER_NAME'] . base_path());
-  }
-
-  if ($form_id == "user_admin_settings") {
-    $form['registration']['#title'] = t( $form['registration']['#title'] ) . " (disabled by the cosign module) ";
-    $form['registration']['#collapsible'] = TRUE;
-    $form['registration']['#collapsed'] = TRUE;
-    $form['registration']['user_register']['#default_value'] = 1;
-    $form['email']['#title'] = t( $form['email']['#title'] ) . " (disabled by the cosign module) ";
-    $form['email']['#collapsible'] = TRUE;
-    $form['email']['#collapsed'] = TRUE;
-    foreach ($form['registration'] as $k => $item) {
-      if (is_array($item)) {
-        $form['registration'][$k]['#disabled'] = TRUE;
-      }
-    }
-    foreach ($form['email'] as $k => $item) {
-      if (is_array($item)) {
-        $form['email'][$k]['#disabled'] = TRUE;
-      }
-    }
-  }
+//  if ($form_id == "user_register") {
+//    drupal_goto('https://' . $_SERVER['SERVER_NAME'] . base_path());
+//  }
+//
+//  if ($form_id == "user_admin_settings") {
+//    $form['registration']['#title'] = t( $form['registration']['#title'] ) . " (disabled by the cosign module) ";
+//    $form['registration']['#collapsible'] = TRUE;
+//    $form['registration']['#collapsed'] = TRUE;
+//    $form['registration']['user_register']['#default_value'] = 1;
+//    $form['email']['#title'] = t( $form['email']['#title'] ) . " (disabled by the cosign module) ";
+//    $form['email']['#collapsible'] = TRUE;
+//    $form['email']['#collapsed'] = TRUE;
+//    foreach ($form['registration'] as $k => $item) {
+//      if (is_array($item)) {
+//        $form['registration'][$k]['#disabled'] = TRUE;
+//      }
+//    }
+//    foreach ($form['email'] as $k => $item) {
+//      if (is_array($item)) {
+//        $form['email'][$k]['#disabled'] = TRUE;
+//      }
+//    }
+//  }
   if ($form_id == "user_login_block") {
     $form['#action'] = 'user/login';
     unset($form['name']);
