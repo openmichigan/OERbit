@@ -61,7 +61,7 @@ class getid3_jpg
 						$ThisFileInfo['jpg']['exif'] = exif_read_data($ThisFileInfo['filenamepath'], '', true, false);
 						$errors = ob_get_contents();
 						if ($errors) {
-							//$ThisFileInfo['warning'][] = strip_tags($errors);
+							$ThisFileInfo['warning'][] = strip_tags($errors);
 							unset($ThisFileInfo['jpg']['exif']);
 						}
 						ob_end_clean();
