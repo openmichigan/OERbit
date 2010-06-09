@@ -43,6 +43,7 @@ class getid3_jpg
 		        	}
 		        }
 		    }
+
 //echo '<pre>'.htmlentities(print_r($iptc_parsed, true)).'</pre>';
 		}
 
@@ -53,7 +54,8 @@ class getid3_jpg
 
 				if (version_compare(phpversion(), '4.2.0', '>=')) {
 
-					if (function_exists('exif_read_data')) {
+					if (function_exists('exif_read_data')
+						&& strpos ($imageinfo['APP1'], 'Exif') === 0) {
 
 						ob_start();
 						$ThisFileInfo['jpg']['exif'] = exif_read_data($ThisFileInfo['filenamepath'], '', true, false);
