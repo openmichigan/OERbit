@@ -427,11 +427,15 @@ class creativecommons_license {
     else {
       // CC0
       if ($this->type == 'zero') {
-        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> have been waived.', $args);
+        //$html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> have been waived.', $args);
+        // switchback case #2426 - remove link to user profile from attribution
+        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName have been waived.', $args);
       }
       // Rest
       else {
-        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> is licensed under a <a rel="license" href="@license-uri">@license-name license</a>.', $args);
+        //$html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> is licensed under a <a rel="license" href="@license-uri">@license-name license</a>.', $args);
+        // switchback case #2426 - remove link to user profile from attribution
+        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName is licensed under a <a rel="license" href="@license-uri">@license-name license</a>.', $args);
       }
     }
 
