@@ -59,7 +59,7 @@ function course_get_feed_link() {
     $link = '<a href="' . url($_GET['q']) . '/0/feed" class="feed-icon">' . $icon . '</a>';
   }
   else {
-    $link = '<a href="feed" class="feed-icon">' . $icon . '</a>';
+    $link = '<a href="'.url($_GET['q']).'/feed" class="feed-icon">' . $icon . '</a>';
   }
   return '<span class="print_rss">' . $link . '</span>';
 }
