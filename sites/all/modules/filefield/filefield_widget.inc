@@ -368,7 +368,7 @@ function filefield_widget_process($element, $edit, &$form_state, $form) {
     $element['list'] = array(
       '#type' => empty($item['fid']) ? 'hidden' : 'checkbox',
       '#title' => t('List'),
-      '#value' => isset($item['list']) ? $item['list'] : $field['list_default'],
+      '#value' => isset($item['list']) && !empty($item['fid']) ? $item['list'] : $field['list_default'],
       '#attributes' => array('class' => 'filefield-list'),
     );
   }
