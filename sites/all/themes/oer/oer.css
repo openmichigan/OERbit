@@ -1739,10 +1739,12 @@ ul.tabs li.active a:hover
 .view-materials .views-field-field-file-fid a[href$='.mp4'], 
 .view-materials .views-field-field-file-fid a[href$='.avi'], 
 .view-materials .views-field-field-file-fid a[href$='.mpg'],
+.view-materials .views-field-field-file-fid a[href$='.mov'],
  
 .view-materials-embed .views-field-field-file-fid a[href$='.mp4'], 
 .view-materials-embed .views-field-field-file-fid a[href$='.avi'], 
-.view-materials-embed .views-field-field-file-fid a[href$='.mpg'] {
+.view-materials-embed .views-field-field-file-fid a[href$='.mpg'],
+.view-materials-embed .views-field-field-file-fid a[href$='.mov'] {
 	background: transparent url(images/icon_film.gif) no-repeat !important;
 }
 
