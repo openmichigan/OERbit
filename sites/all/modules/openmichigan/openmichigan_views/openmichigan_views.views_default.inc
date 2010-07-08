@@ -5549,11 +5549,7 @@ function openmichigan_views_views_default_views() {
     'type' => array(
       'operator' => 'in',
       'value' => array(
-        'course' => 'course',
         'information' => 'information',
-        'instructor' => 'instructor',
-        'other' => 'other',
-        'session' => 'session',
       ),
       'group' => '0',
       'exposed' => FALSE,
