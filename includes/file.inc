@@ -557,8 +557,6 @@ function file_save_upload($source, $validators = array(), $dest = FALSE, $replac
       $errors = array_merge($errors, call_user_func_array($function, $args));
     }
 
-    /* Commenting this out is a very bad idea...
-       switchback case #2504: Open.Michigan requested this change and they know what they are doing.
     // Rename potentially executable files, to help prevent exploits.
     if (preg_match('/\.(php|pl|py|cgi|asp|js)$/i', $file->filename) && (substr($file->filename, -4) != '.txt')) {      
       $file->filemime = 'text/plain';
@@ -568,7 +566,7 @@ function file_save_upload($source, $validators = array(), $dest = FALSE, $replac
       // convert to example.php_.txt, then create the correct destination.
       $file->filename = file_munge_filename($file->filename, $extensions);
       $file->destination = file_destination(file_create_path($dest .'/'. $file->filename), $replace);
-    } */
+    }
 
 
     // Check for validation errors.
