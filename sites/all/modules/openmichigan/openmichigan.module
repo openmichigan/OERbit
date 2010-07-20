@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function openmichigan_form_user_login_alter(&$form, &$form_state) {
+  $form['#after_build'][] = 'openmichigan_form_user_login_add_js';
+}
+
+/**
+ * Add accessibility enhancements to the login form.
+ */
+function openmichigan_form_user_login_add_js($form) {
+  drupal_add_js(drupal_get_path('module', 'openmichigan') . '/openmichigan.js');
+  return $form;
+}
+
