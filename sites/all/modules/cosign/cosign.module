@@ -21,10 +21,72 @@ function cosign_init() {
   }
   else {
     watchdog('cosign', "login: $user->name");
-    webserver_auth_init();
-  }
+    //webserver_auth_init();
+    $authname = '';
 
-  return TRUE;
+    // Make sure we get the remote user whichever way it is available.
+    if (isset($_SERVER['REDIRECT_REMOTE_USER'])) {
+      $authname = $_SERVER['REDIRECT_REMOTE_USER'];
+    }
+    elseif (isset($_SERVER['REMOTE_USER'])) {
+      $authname = $_SERVER['REMOTE_USER'];
+    }
+
+    // Perform some cleanup so plaintext passwords aren't available under
+    // mod_auth_kerb.
+    unset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
+  
+    // Retrieve user credentials
+    $result = db_query("SELECT uid FROM {authmap} WHERE authname = '%s' AND module = 'cosign'", $authname);
+    $expected = db_fetch_array($result);
+ 
+    if (isset($user) && $user->uid === $expected['uid']) {
+      // Do nothing: user is already logged into Drupal with session data matching
+    }
+    else {
+      if (!empty($authname)) {
+      /***********************************************************
+       * bdr - at this point, we have a valid cosign user, now
+       *       see if user is "authorized" to use Druapl by
+       *       checking to see if user was found in the
+       *       "authmap" table.  If not, show the Drupal node
+       *       named "invalidlogin".
+       **********************************************************/
+        if (!$expected){
+            drupal_goto('http://' . $_SERVER['SERVER_NAME'] . base_path() . "invalidlogin");
+        }
+        $user = user_external_load($authname);
+        /*******************************************
+         * bdr - added this line so only 1 web page
+         *   "refresh" was needed to format the
+         * "admin_menu" correctly after cosign login
+         *******************************************/
+        drupal_session_regenerate();
+      }
+    }
+
+    /***********************************************************
+     * bdr - I added this because the the login does not work
+     *       correctly for cosign if there is no entry for the
+     *       uid in the "authmap" table (authorization mapping)
+     *       ... so, since the only external auth we care about
+     *       is cosign, make sure the entry being used in the
+     *       "users" table has a corresponding entry in the
+     *       "authmap" table.      
+     **********************************************************/
+     $result = db_query('SELECT uid, name FROM {users} WHERE ' .
+        'uid > 0 AND name NOT IN (SELECT authname FROM {authmap})');
+
+      while ($user_info = db_fetch_object($result)) {
+        if (!empty($user_info->name)) {
+          db_query(
+            "INSERT INTO {authmap} (authname, uid, module) " . "VALUES ('%s', %d, '%s')",
+            $user_info->name,
+            $user_info->uid, 'cosign');
+        }
+      }
+    }
+    return TRUE;
 }
 
 // Not a hook.  Defines the admin form which is referenced in the _menu hook.
@@ -70,31 +132,36 @@ function cosign_menu() {
   return $items;
 }
 
-
+/***********************************************************
+ * bdr - comment out some code here to that the Drupal    
+ *       app can "add a user".  This does not add an user 
+ *       to the Kerberos database, just to the Drupal app  
+ *       for authorization purposes.                         
+ **********************************************************/
 function cosign_form_alter(&$form, $form_state, $form_id) {
-//  if ($form_id == "user_register") {
-//    drupal_goto('https://' . $_SERVER['SERVER_NAME'] . base_path());
-//  }
-//
-//  if ($form_id == "user_admin_settings") {
-//    $form['registration']['#title'] = t( $form['registration']['#title'] ) . " (disabled by the cosign module) ";
-//    $form['registration']['#collapsible'] = TRUE;
-//    $form['registration']['#collapsed'] = TRUE;
-//    $form['registration']['user_register']['#default_value'] = 1;
-//    $form['email']['#title'] = t( $form['email']['#title'] ) . " (disabled by the cosign module) ";
-//    $form['email']['#collapsible'] = TRUE;
-//    $form['email']['#collapsed'] = TRUE;
-//    foreach ($form['registration'] as $k => $item) {
-//      if (is_array($item)) {
-//        $form['registration'][$k]['#disabled'] = TRUE;
-//      }
-//    }
-//    foreach ($form['email'] as $k => $item) {
-//      if (is_array($item)) {
-//        $form['email'][$k]['#disabled'] = TRUE;
-//      }
-//    }
-//  }
+// if ($form_id == "user_register") {
+//   drupal_goto('https://' . $_SERVER['SERVER_NAME'] . base_path());
+// }
+
+ if ($form_id == "user_admin_settings") {
+    $form['registration']['#title'] = t( $form['registration']['#title'] ) . " (disabled by the cosign module) ";
+    $form['registration']['#collapsible'] = TRUE;
+    $form['registration']['#collapsed'] = TRUE;
+    $form['registration']['user_register']['#default_value'] = 1;
+    $form['email']['#title'] = t( $form['email']['#title'] ) . " (disabled by the cosign module) ";
+    $form['email']['#collapsible'] = TRUE;
+    $form['email']['#collapsed'] = TRUE;
+    foreach ($form['registration'] as $k => $item) {
+      if (is_array($item)) {
+        $form['registration'][$k]['#disabled'] = TRUE;
+      }
+    }
+    foreach ($form['email'] as $k => $item) {
+      if (is_array($item)) {
+        $form['email'][$k]['#disabled'] = TRUE;
+      }
+    }
+  }
   if ($form_id == "user_login_block") {
     $form['#action'] = 'user/login';
     unset($form['name']);
@@ -134,8 +201,19 @@ function cosign_logout() {
     array('%name' => $user->name))
   );
 
+  /***********************************************
+   * bdr - since it is possible to have valid    *
+   *    cosign login but not be in the "users"   *
+   *    table, one might need to do a cosgin     *
+   *    logout but not possess a Drupal "session *
+   *    so check before doing a session_destroy  *
+   **********************************************/
   // Destroy the current session:
-  session_destroy();
+  if (isset($user)) {
+    session_destroy();
+    $_SESSION = array();
+  }
+
   module_invoke_all('user', 'logout', NULL, $user);
 
   // Load the anonymous user
@@ -192,6 +270,13 @@ function cosign_enable() {
     drupal_set_message(t('Cosign module has been enabled'));
     return TRUE;
   }
+
+   /***********************************************
+    * bdr - For the SwBack code, let's return at
+    *       this point because we don't want all 
+    *       this other stuff to happen          
+    **********************************************/
+  return TRUE;
 
   // look for REMOTE_USER, only enable if it's set
   $cosign_user = $_SERVER['REMOTE_USER'];
