@@ -112,7 +112,11 @@ DirectoryIndex index.php
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_URI} !=/favicon.ico
-  RewriteCond %{REQUEST_URI} !^/cosign/
+  RewriteCond %{REQUEST_URI} !^/cosign/ 
+  RewriteCond %{REQUEST_URI} !^/wiki/ 
+  RewriteCond %{REQUEST_URI} !^/blog/ 
+  RewriteCond %{REQUEST_URI} !^/oerbeta/ 
+  
   RewriteRule ^(.*)$ index.php?q=$1 [L,QSA]
 </IfModule>
 
