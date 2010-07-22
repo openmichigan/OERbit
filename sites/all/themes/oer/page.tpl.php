@@ -79,8 +79,28 @@
  * @see template_preprocess_page()
  */
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language; ?>" lang="<?php print $language->language; ?>" dir="<?php print $language->dir; ?>">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language; ?>" dir="<?php print $language->dir; ?>"
+<?php if (user_is_anonymous()): ?>
+      xmlns:comment="http://purl.org/dc/elements/1.1/comment#"
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+      xmlns:dcterms="http://purl.org/dc/terms/"
+      xmlns:drupal="http://purl.org/dc/elements/1.1/"
+      xmlns:foaf="http://xmlns.com/foaf/0.1/"
+      xmlns:node="http://purl.org/dc/elements/1.1/node#"
+      xmlns:owl="http://www.w3.org/2002/07/owl#"
+      xmlns:path="http://purl.org/dc/elements/1.1/path#"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+      xmlns:rss="http://purl.org/rss/1.0/"
+      xmlns:term="http://purl.org/dc/elements/1.1/term#"
+      xmlns:user="http://purl.org/dc/elements/1.1/user#"
+      xmlns:variable="http://purl.org/dc/elements/1.1/variable#"
+      xmlns:vocabulary="http://purl.org/dc/elements/1.1/vocabulary#"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<?php endif; ?>>
 <!-- 
 ************************************************
 ************************************************

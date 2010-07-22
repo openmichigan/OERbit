@@ -1,0 +1,6 @@
+; $Id$
+name = Open.Michigan
+description = Tweaks
+package = Open Michigan
+core = 6.x
+

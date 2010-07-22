@@ -179,5 +179,3 @@ function oer_preprocess_block(&$vars, $hook) {
  * @ingroup themeable
  */
 
-
-

@@ -1140,6 +1140,31 @@ function openmichigan_views_views_default_views() {
   ));
   $handler->override_option('displays', array());
   $handler->override_option('sitename_title', FALSE);
+  $handler = $view->new_display('feed', 'Feed', 'feed_2');
+  $handler->override_option('style_plugin', 'rss');
+  $handler->override_option('style_options', array(
+    'mission_description' => FALSE,
+    'description' => '',
+  ));
+  $handler->override_option('row_plugin', 'node_rss');
+  $handler->override_option('row_options', array());
+  $handler->override_option('path', 'education/feed');
+  $handler->override_option('menu', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('displays', array());
+  $handler->override_option('sitename_title', FALSE);
   $views[$view->name] = $view;
 
   /*
@@ -5233,12 +5258,8 @@ function openmichigan_views_views_default_views() {
     'type' => 'none',
   ));
   $handler->override_option('header', '<h3 class="shaded"><a href="https://open.umich.edu/blog/">open.blog</a></h3>
-
-		
-		<div id="blogPic"><img src="/sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>	
-
-		
-<h4><a href="http://open.umich.edu/blog/feed/"><img src="/sites/all/themes/oer/images/rss.gif" alt="RSS Feed" /></a>&nbsp;&nbsp;Recent Posts</h4>');
+<div id="blogPic"><img src="sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>  
+<h4><a href="http://open.umich.edu/blog/feed/"><img src="sites/all/themes/oer/images/rss.gif" alt="RSS Feed" /></a>&nbsp;&nbsp;Recent Posts</h4>');
   $handler->override_option('header_format', '2');
   $handler->override_option('header_empty', 1);
   $handler->override_option('items_per_page', 3);
@@ -5549,11 +5570,7 @@ function openmichigan_views_views_default_views() {
     'type' => array(
       'operator' => 'in',
       'value' => array(
-        'course' => 'course',
         'information' => 'information',
-        'instructor' => 'instructor',
-        'other' => 'other',
-        'session' => 'session',
       ),
       'group' => '0',
       'exposed' => FALSE,
@@ -5769,6 +5786,7 @@ function openmichigan_views_views_default_views() {
     '0' => 'full',
   ));
   $handler->override_option('argument_mode', 'nid');
+  $handler->override_option('default_argument', '');
   $handler->override_option('show_title', 1);
   $handler = $view->new_display('feed', 'Feed', 'feed_1');
   $handler->override_option('arguments', array(
@@ -7183,3 +7201,4 @@ drupal_set_breadcrumb($breadcrumb);
 
   return $views;
 }
+
