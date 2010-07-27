@@ -308,6 +308,9 @@ function course_form_alter(&$form, &$form_state, $form_id) {
 function course_form_course_node_form_alter(&$form, &$form_state) {
   $form['#after_build'][] = 'course_populate_fields';
 }
+function course_form_content_add_more_js_alter(&$form, &$form_state) {
+  $form['#after_build'][] = 'course_populate_fields';
+}
 
 /**
  * Dynamically populate fields.
