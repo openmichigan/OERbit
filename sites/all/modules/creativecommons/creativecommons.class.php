@@ -480,7 +480,7 @@ class creativecommons_license {
       return;
 
     // Sanitize metadata
-    $this->check_metadata();
+    //$this->check_metadata();
 
     if ($this->rdf) {
       foreach ($this->rdf['attributes'] as $attr => $val)
