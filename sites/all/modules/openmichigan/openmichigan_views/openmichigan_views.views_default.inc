@@ -1,5 +1,3 @@
-<?php
-
 /**
  * Implementation of hook_views_default_views().
  */
@@ -1105,6 +1103,7 @@ function openmichigan_views_views_default_views() {
   $handler->override_option('cache', array(
     'type' => 'none',
   ));
+  $handler->override_option('title', 'Open.Michigan - Open Educational Resources');
   $handler->override_option('row_plugin', 'node');
   $handler->override_option('row_options', array(
     'relationship' => 'none',
@@ -1143,8 +1142,8 @@ function openmichigan_views_views_default_views() {
   $handler = $view->new_display('feed', 'Feed', 'feed_2');
   $handler->override_option('style_plugin', 'rss');
   $handler->override_option('style_options', array(
-    'mission_description' => FALSE,
-    'description' => '',
+    'mission_description' => 0,
+    'description' => 'Open.Michigan - Open Educational Resources',
   ));
   $handler->override_option('row_plugin', 'node_rss');
   $handler->override_option('row_options', array());
@@ -1164,7 +1163,7 @@ function openmichigan_views_views_default_views() {
     'name' => 'navigation',
   ));
   $handler->override_option('displays', array());
-  $handler->override_option('sitename_title', FALSE);
+  $handler->override_option('sitename_title', 0);
   $views[$view->name] = $view;
 
   /*
@@ -5258,7 +5257,7 @@ function openmichigan_views_views_default_views() {
     'type' => 'none',
   ));
   $handler->override_option('header', '<h3 class="shaded"><a href="https://open.umich.edu/blog/">open.blog</a></h3>
-<div id="blogPic"><img src="sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>  
+<div id="blogPic"><img src="sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>	
 <h4><a href="http://open.umich.edu/blog/feed/"><img src="sites/all/themes/oer/images/rss.gif" alt="RSS Feed" /></a>&nbsp;&nbsp;Recent Posts</h4>');
   $handler->override_option('header_format', '2');
   $handler->override_option('header_empty', 1);
@@ -7201,4 +7200,5 @@ drupal_set_breadcrumb($breadcrumb);
 
   return $views;
 }
+
 
