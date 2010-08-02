@@ -4424,6 +4424,15 @@ function openmichigan_views_views_default_views() {
       'relationship' => 'none',
     ),
   ));
+  $handler->override_option('sorts', array(
+    'title' => array(
+      'order' => 'ASC',
+      'id' => 'title',
+      'table' => 'node',
+      'field' => 'title',
+      'relationship' => 'none',
+    ),
+  ));
   $handler->override_option('arguments', array(
     'nid' => array(
       'default_action' => 'not found',
