@@ -1,8 +1,7 @@
 <?php
 // $Id$
 
-function _zip_download_debug ($dbgmsg)
-{
+function _zip_download_debug ($dbgmsg) {
 // 	$filename = "debug.txt";
 // 	$dbg = fopen($filename, 'a') or die("can't open debug file");
 // 	$dbgmsg .= "\n";
@@ -50,7 +49,7 @@ function zip_download_access(&$node, $permission) {
  * Responds to ajax for download progress/status.
  */
 function zip_download_progress() {
-	$progress['status'] = "Working...";
+	$progress['status'] = t{'Working...');
 	$progress['percent'] = 0;
 	if (isset ($_SESSION['zip_download_status'])) {
 		$progress['status'] = $_SESSION['zip_download_status'];
@@ -58,8 +57,8 @@ function zip_download_progress() {
 	if (isset ($_SESSION['zip_download_progress'])) {
 		$progress['percent'] = $_SESSION['zip_download_progress'];
 	}
-	$js = drupal_to_js ($progress);
-	drupal_json ($progress);
+	$js = drupal_to_js($progress);
+	drupal_json($progress);
 }
 
 
@@ -80,10 +79,10 @@ function zip_download_form(&$form_state, $node) {
 	$form['filename'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Save Zip Archive to'),
-		'#default_value' => "Archive.zip",
+		'#default_value' => 'Archive.zip',
 		'#size' => 60,
 		'#maxlength' => 64,
-		'#description' => t('Save the download archive file with this name.')
+		'#description' => t('Save the download archive file with this name.'),
 	);
 
 	$form['progressbar'] = array('#type' => 'markup', '#value' => '<div id="progressbar"></div>');
@@ -116,16 +115,15 @@ function zip_download_form(&$form_state, $node) {
  * Submits the form and starts the processing.
  */
 function zip_download_form_submit($form, &$form_state) {
-	$node = node_load ($form_state['values']['nid']);
+	$node = node_load($form_state['values']['nid']);
 	if ($form_state['values']['op'] == 'Download')  {
-		if (zip_download_process($node, $form_state['values']['filename']))
-		{
-			drupal_set_message (t("Archive created and downloaded successfully."), 'status');
+		if (zip_download_process($node, $form_state['values']['filename'])) {
+			drupal_set_message(t('Archive created and downloaded successfully.'), 'status');
 			exit;
 		}
 	}
 	else if ($form_state['values']['op'] == 'Done') {
-		drupal_goto ("node/".$node->nid);
+		drupal_goto('node/' . $node->nid);
 	}
 }
 
@@ -134,7 +132,7 @@ function zip_download_form_submit($form, &$form_state) {
  *
  */
 function zip_download_file_exists($path) {
-	return (is_readable ($_SERVER['DOCUMENT_ROOT']."/".$path) === TRUE);
+	return (is_readable($_SERVER['DOCUMENT_ROOT'] . '/' . $path) === TRUE);
 }
 
 /**
@@ -147,19 +145,20 @@ function zip_download_get_material_files($nid) {
 	//
 	// uses views module to search for files associated with the course node at $nid
 	//
-	$_SESSION['zip_download_status'] = "Zipping...";
+	$_SESSION['zip_download_status'] = 'Zipping...';
 
-	$results = array ();
+	$results = array();
 	$file_list = views_get_view('materials_download_filelist', 'default');
-	if (is_numeric ($nid) && isset ($file_list)) {
-		$file_list->set_arguments(array ($nid));
-    	$file_list->execute();
-    	foreach ($file_list->result as $r) {
-			if ($r->files_node_data_field_file_filepath != null) {
+	if (is_numeric($nid) && isset($file_list)) {
+		$file_list->set_arguments(array($nid));
+    $file_list->set_items_per_page(0);
+  	$file_list->execute();
+   	foreach ($file_list->result as $r) {
+	  	if ($r->files_node_data_field_file_filepath != null) {
 				//
 				// reference to a file, save the path
 				//
-				if (zip_download_file_exists ($r->files_node_data_field_file_filepath)) {
+				if (zip_download_file_exists($r->files_node_data_field_file_filepath)) {
 					$results [$r->nid] = $r->files_node_data_field_file_filepath;
 				}
 			}
@@ -167,9 +166,9 @@ function zip_download_get_material_files($nid) {
 				//
 				// reference to an image, dig out the image path
 				//
-				$image = node_load ($r->nid);
-				if (isset ($image)) {
-					if (zip_download_file_exists ($image->field_image[0]['filepath'])) {
+				$image = node_load($r->nid);
+				if (isset($image)) {
+					if (zip_download_file_exists($image->field_image[0]['filepath'])) {
 						$results [$r->nid] = $image->field_image[0]['filepath'];
 					}
 				}
@@ -186,13 +185,13 @@ function zip_download_get_material_files($nid) {
 function zip_download_create_archive($path, &$files) {
 	$n = 0;
 	$zip = new ZipArchive ();
-	if ($zip->open ($path, ZipArchive::CREATE) === TRUE) {
+	if ($zip->open($path, ZipArchive::CREATE) === TRUE) {
 		foreach ($files as $nid => $path) {
-			if (zip_download_file_exists ($path)) {
-				$n += $zip->addFile($path, basename ($path));
+			if (zip_download_file_exists($path)) {
+				$n += $zip->addFile($path, basename($path));
 			}
 		}
-		$zip->close ();
+		$zip->close();
 	}
 	return ($n > 0);
 }
@@ -238,7 +237,7 @@ function zip_download_file_transfer($source, $download_name) {
 		return true;
 	}
 	else {
-		drupal_set_message (t("Download failed. Archived file could not be opened."), 'error');
+		drupal_set_message(t('Download failed. Archived file could not be opened.'), 'error');
 		drupal_not_found();
 	}
 	return false;
@@ -250,23 +249,22 @@ function zip_download_file_transfer($source, $download_name) {
 function zip_download_process(&$node, $filename = "Archive.zip") {
 	$downloaded = false;
 
-	$files = zip_download_get_material_files ($node->nid);
+	$files = zip_download_get_material_files($node->nid);
 
-	if (count ($files) == 0)
-	{
-		drupal_set_message (t("No files were found to add to the zip archive. Either none were attached or the attached files are missing?"), 'warning');
-		drupal_goto ("node/".$node->nid);
+	if (count($files) == 0) {
+		drupal_set_message(t('No files were found to add to the zip archive. Either none were attached or the attached files are missing?'), 'warning');
+		drupal_goto('node/' . $node->nid);
 		return FALSE;
 	}
 
-	if (count ($files) > 0) {
-		$tmp = tempnam (file_directory_temp(), "ZIPDL_");
-		if (zip_download_create_archive ($tmp, $files)) {
-			if (zip_download_file_transfer ($tmp, $filename)) {
-				$downloaded = true;
+	if (count($files) > 0) {
+		$tmp = tempnam(file_directory_temp(), "ZIPDL_");
+		if (zip_download_create_archive($tmp, $files)) {
+			if (zip_download_file_transfer($tmp, $filename)) {
+				$downloaded = TRUE;
 			}
 		}
-		unlink ($tmp);
+		unlink($tmp);
 	}
 	return $downloaded;
 }
