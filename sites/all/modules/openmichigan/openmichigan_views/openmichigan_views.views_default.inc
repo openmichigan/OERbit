@@ -1104,6 +1104,7 @@ function openmichigan_views_views_default_views() {
     'type' => 'none',
   ));
   $handler->override_option('title', 'Open.Michigan - Open Educational Resources');
+  $handler->override_option('items_per_page', 0);
   $handler->override_option('row_plugin', 'node');
   $handler->override_option('row_options', array(
     'relationship' => 'none',
@@ -6386,7 +6387,7 @@ function openmichigan_views_views_default_views() {
   $handler->override_option('header', '<h1>Open Educational Resources</h1>
 <p>Select a school, college or unit below for resources.</p>
 <?php
-$breadcrumb = array(l(\'Home\', \'<front>\'), l(\'Find\', \'education\'), \'Open Educational Resources\');
+$breadcrumb = array(l("Home", "<front>"), l("Find", "education"), "Open Educational Resources");
 drupal_set_breadcrumb($breadcrumb);
 ?>');
   $handler->override_option('header_format', '3');
