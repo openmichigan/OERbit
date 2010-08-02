@@ -49,7 +49,7 @@ function zip_download_access(&$node, $permission) {
  * Responds to ajax for download progress/status.
  */
 function zip_download_progress() {
-	$progress['status'] = t{'Working...');
+	$progress['status'] = t('Working...');
 	$progress['percent'] = 0;
 	if (isset ($_SESSION['zip_download_status'])) {
 		$progress['status'] = $_SESSION['zip_download_status'];
