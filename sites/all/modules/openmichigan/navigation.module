@@ -140,6 +140,7 @@ function navigation_get_siblings(&$node) {
       unset($siblings[$node->nid]);
     }
   }
+  uksort($siblings, 'navigation_node_sort');
   return $siblings;
 }
 
@@ -179,6 +180,7 @@ function navigation_get_children(&$node) {
       navigation_clean_children($children);
     }
   }
+  uksort($children, 'navigation_node_sort');
   return $children;
 }
 
@@ -230,5 +232,35 @@ function navigation_views_pre_render(&$view) {
         }
       }
     }
+    if ($view->current_display != 'node_content_2' && $view->current_display != 'node_content_4') {
+      usort($view->result, 'navigation_course_sort');
+    }
+  }
+}
+
+function navigation_node_sort($a, $b) {
+  $a = node_load($a);
+  $b = node_load($b);
+//  if ($a->sticky == $b->sticky) {
+    if ($a->node_weight == $b->node_weight) {
+      return strcasecmp($a->title, $b->title);
+    }   
+    else {
+      return ($a->node_weight > $b->node_weight) ? 1 : -1;
+    }   
+//  }
+//  else {
+//    return ($a->sticky < $b->sticky) ? -1 : 1;
+//  }
+}
+
+function navigation_course_sort($a, $b) {
+  $node_a = node_load($a->node_node_nid);
+  $node_b = node_load($b->node_node_nid);
+  if ($node_a->node_weight == $b->node_weight) {
+    return strcasecmp($node_a->title, $node_b->title);
+  }
+  else {
+    return ($node_a->node_weight > $node_b->node_weight) ? 1 : -1;
   }
 }
