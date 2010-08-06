@@ -87,6 +87,25 @@
   
 <div class="content-course-full" style="clear: both;">
 
+<!-- Course Metadata -->
+<?php
+  foreach ($node->field_creators as $creator) {
+    if (!empty($creator['value'])) {
+      print '<meta property="dc:creator" content="' . $creator['value'] . '" />';
+    }
+  }
+  foreach ($node->field_contributors as $contributor) {
+    if (!empty($contributor['value'])) {
+      print '<meta property="dc:contributor" content="' . $contributor['value'] . '" />';
+    }
+  }
+  foreach ($node->field_publisher as $publisher) {
+    if (!empty($publisher['value'])) {
+      print '<meta property="dc:publisher" content="' . $publisher['value'] . '" />';
+    }
+  }
+?>
+
 <!-- Course Image -->
   
   <?php if($courseImage != "") { ?>
