@@ -1167,6 +1167,115 @@ function openmichigan_views_views_default_views() {
   ));
   $handler->override_option('displays', array());
   $handler->override_option('sitename_title', 0);
+  $handler = $view->new_display('feed', 'RDF', 'feed_3');
+  $handler->override_option('arguments', array(
+    'nid' => array(
+      'default_action' => 'default',
+      'style_plugin' => 'default_summary',
+      'style_options' => array(),
+      'wildcard' => '',
+      'wildcard_substitution' => '',
+      'title' => '',
+      'breadcrumb' => '',
+      'default_argument_type' => 'node',
+      'default_argument' => '',
+      'validate_type' => 'node',
+      'validate_fail' => 'not found',
+      'break_phrase' => 0,
+      'not' => 0,
+      'id' => 'nid',
+      'table' => 'node',
+      'field' => 'nid',
+      'validate_user_argument_type' => 'uid',
+      'validate_user_roles' => array(
+        '2' => 0,
+        '4' => 0,
+        '6' => 0,
+        '3' => 0,
+        '5' => 0,
+      ),
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+      'default_options_div_prefix' => '',
+      'default_argument_fixed' => '',
+      'default_argument_user' => 0,
+      'default_argument_php' => '',
+      'validate_argument_node_type' => array(
+        'webform' => 0,
+        'accessibility_guideline' => 0,
+        'accessibility_test' => 0,
+        'course' => 0,
+        'information' => 0,
+        'instructor' => 0,
+        'material' => 0,
+        'other' => 0,
+        'page' => 0,
+        'session' => 0,
+        'story' => 0,
+        'unit' => 0,
+      ),
+      'validate_argument_node_access' => 1,
+      'validate_argument_nid_type' => 'nid',
+      'validate_argument_vocabulary' => array(
+        '4' => 0,
+      ),
+      'validate_argument_type' => 'tid',
+      'validate_argument_transform' => 0,
+      'validate_user_restrict_roles' => 0,
+      'validate_argument_php' => '',
+    ),
+  ));
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+  ));
+  $handler->override_option('items_per_page', 1);
+  $handler->override_option('style_plugin', 'rdf');
+  $handler->override_option('style_options', array(
+    'mission_description' => FALSE,
+    'description' => 'Open.Michigan - Open Educational Resources',
+    'description_from_mission' => 1,
+    'update_period' => '',
+    'update_frequency' => '',
+    'update_base' => '',
+    'format' => 'rdf+json',
+  ));
+  $handler->override_option('row_plugin', 'node_rdf');
+  $handler->override_option('row_options', array(
+    'item_length' => 'fulltext',
+    'date_timezone' => '',
+  ));
+  $handler->override_option('path', 'node/%/rdf');
+  $handler->override_option('menu', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('displays', array());
+  $handler->override_option('sitename_title', FALSE);
   $views[$view->name] = $view;
 
   /*
@@ -5269,7 +5378,7 @@ function openmichigan_views_views_default_views() {
     'type' => 'none',
   ));
   $handler->override_option('header', '<h3 class="shaded"><a href="https://open.umich.edu/blog/">open.blog</a></h3>
-<div id="blogPic"><img src="sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>	
+<div id="blogPic"><img src="sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>  
 <h4><a href="http://open.umich.edu/blog/feed/"><img src="sites/all/themes/oer/images/rss.gif" alt="RSS Feed" /></a>&nbsp;&nbsp;Recent Posts</h4>');
   $handler->override_option('header_format', '2');
   $handler->override_option('header_empty', 1);
@@ -5932,79 +6041,6 @@ function openmichigan_views_views_default_views() {
     'node_content_1' => 0,
   ));
   $handler->override_option('sitename_title', 0);
-  $handler = $view->new_display('feed', 'RDF', 'feed_2');
-  $handler->override_option('arguments', array());
-  $handler->override_option('filters', array(
-    'status' => array(
-      'operator' => '=',
-      'value' => '1',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status',
-      'table' => 'node',
-      'field' => 'status',
-      'relationship' => 'none',
-    ),
-    'type' => array(
-      'operator' => 'in',
-      'value' => array(
-        'course' => 'course',
-        'information' => 'information',
-        'material' => 'material',
-        'other' => 'other',
-        'session' => 'session',
-      ),
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'type',
-      'table' => 'node',
-      'field' => 'type',
-      'relationship' => 'none',
-      'override' => array(
-        'button' => 'Use default',
-      ),
-    ),
-  ));
-  $handler->override_option('style_plugin', 'rdf');
-  $handler->override_option('style_options', array(
-    'mission_description' => FALSE,
-    'description' => '',
-    'description_from_mission' => 1,
-    'update_period' => 'daily',
-    'update_frequency' => '0',
-    'update_base' => '2010-01-01T00:00',
-    'format' => 'rdf+xml',
-  ));
-  $handler->override_option('row_plugin', 'node_rdf');
-  $handler->override_option('row_options', array(
-    'item_length' => '',
-    'date_timezone' => '',
-  ));
-  $handler->override_option('path', 'node/%/rdf');
-  $handler->override_option('menu', array(
-    'type' => 'none',
-    'title' => '',
-    'description' => '',
-    'weight' => 0,
-    'name' => 'navigation',
-  ));
-  $handler->override_option('tab_options', array(
-    'type' => 'none',
-    'title' => '',
-    'description' => '',
-    'weight' => 0,
-    'name' => 'navigation',
-  ));
-  $handler->override_option('displays', array());
-  $handler->override_option('sitename_title', FALSE);
   $handler = $view->new_display('node_content', 'Overview (Admin)', 'node_content_2');
   $handler->override_option('fields', array(
     'state' => array(
@@ -6398,7 +6434,7 @@ function openmichigan_views_views_default_views() {
   $handler->override_option('header', '<h1>Open Educational Resources</h1>
 <p>Select a school, college or unit below for resources.</p>
 <?php
-$breadcrumb = array(l("Home", "<front>"), l("Find", "education"), "Open Educational Resources");
+$breadcrumb = array(l(\'Home\', \'<front>\'), l(\'Find\', \'education\'), \'Open Educational Resources\');
 drupal_set_breadcrumb($breadcrumb);
 ?>');
   $handler->override_option('header_format', '3');
@@ -7212,5 +7248,6 @@ drupal_set_breadcrumb($breadcrumb);
 
   return $views;
 }
+
 
 
