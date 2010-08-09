@@ -18,17 +18,20 @@ if (Drupal.jsEnabled) {
       $("#edit-field-course-code-0-value").trigger('change');
       $("#edit-title").trigger('change');
     });
-    $("#edit-field-creators-0-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-1-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-2-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-3-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-4-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-5-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-6-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-7-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-8-value").blur(function() { course_populate_author(); });
-    $("#edit-field-creators-9-value").blur(function() { course_populate_author(); });
   });
+}
+
+Drupal.behaviors.populateAuthor = function () {
+  $("#edit-field-creators-0-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-1-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-2-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-3-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-4-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-5-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-6-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-7-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-8-value").blur(function() { course_populate_author(); });
+  $("#edit-field-creators-9-value").blur(function() { course_populate_author(); });
 }
 
 function course_populate_author() {
