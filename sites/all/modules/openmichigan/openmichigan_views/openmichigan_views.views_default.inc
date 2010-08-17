@@ -6446,6 +6446,7 @@ drupal_set_breadcrumb($breadcrumb);
 ?>');
   $handler->override_option('header_format', '3');
   $handler->override_option('header_empty', 0);
+  $handler->override_option('items_per_page', 0);
   $handler = $view->new_display('page', 'Page', 'page_1');
   $handler->override_option('path', 'education/schools-colleges');
   $handler->override_option('menu', array(
@@ -6463,7 +6464,6 @@ drupal_set_breadcrumb($breadcrumb);
     'name' => 'navigation',
   ));
   $handler = $view->new_display('feed', 'Feed', 'feed_1');
-  $handler->override_option('items_per_page', 0);
   $handler->override_option('style_plugin', 'rss');
   $handler->override_option('style_options', array(
     'mission_description' => FALSE,

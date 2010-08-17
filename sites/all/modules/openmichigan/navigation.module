@@ -238,6 +238,9 @@ function navigation_views_pre_render(&$view) {
   }
 }
 
+/**
+ * Sort nodes based on stickiness.
+ */
 function navigation_node_sort($a, $b) {
   $a = node_load($a);
   $b = node_load($b);
@@ -254,10 +257,16 @@ function navigation_node_sort($a, $b) {
 //  }
 }
 
+/**
+ * Sort course nodes based on stickiness.
+ */
 function navigation_course_sort($a, $b) {
   $node_a = node_load($a->node_node_nid);
   $node_b = node_load($b->node_node_nid);
-  if ($node_a->node_weight == $b->node_weight) {
+  if ($a->node_weight_sticky != $b->node_weight_sticky) {
+    return (abs($a->node_weight_sticky) > abs($b->node_weight_sticky)) ? 1 : -1;
+  }
+  elseif ($node_a->node_weight == $b->node_weight) {
     return strcasecmp($node_a->title, $node_b->title);
   }
   else {
