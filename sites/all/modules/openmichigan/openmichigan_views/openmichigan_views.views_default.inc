@@ -6463,6 +6463,7 @@ drupal_set_breadcrumb($breadcrumb);
     'name' => 'navigation',
   ));
   $handler = $view->new_display('feed', 'Feed', 'feed_1');
+  $handler->override_option('items_per_page', 0);
   $handler->override_option('style_plugin', 'rss');
   $handler->override_option('style_options', array(
     'mission_description' => FALSE,
@@ -6490,8 +6491,7 @@ drupal_set_breadcrumb($breadcrumb);
   ));
   $handler->override_option('displays', array());
   $handler->override_option('sitename_title', FALSE);
-  $views[$view->name] = $view;
-
+  
   /*
    * View 'sessions'
    */
