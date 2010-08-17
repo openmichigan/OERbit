@@ -158,9 +158,9 @@ function zip_download_get_material_files($nid) {
 				//
 				// reference to a file, save the path
 				//
-				if (zip_download_file_exists($r->files_node_data_field_file_filepath)) {
-					$results [$r->nid] = $r->files_node_data_field_file_filepath;
-				}
+        if (zip_download_file_exists($r->files_node_data_field_file_filepath)) {
+          $results[] = $r->files_node_data_field_file_filepath;
+        }
 			}
 			else if ($r->node_data_field_image_field_image_fid != null) {
 				//
@@ -169,7 +169,7 @@ function zip_download_get_material_files($nid) {
 				$image = node_load($r->nid);
 				if (isset($image)) {
 					if (zip_download_file_exists($image->field_image[0]['filepath'])) {
-						$results [$r->nid] = $image->field_image[0]['filepath'];
+						$results[] = $image->field_image[0]['filepath'];
 					}
 				}
 			}
