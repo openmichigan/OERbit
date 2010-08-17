@@ -3979,7 +3979,7 @@ function openmichigan_views_views_default_views() {
     'field_file_fid' => array(
       'label' => 'File',
       'required' => 0,
-      'delta' => '0',
+      'delta' => '-1',
       'id' => 'field_file_fid',
       'table' => 'node_data_field_file',
       'field' => 'field_file_fid',
