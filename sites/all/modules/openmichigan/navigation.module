@@ -221,7 +221,7 @@ function navigation_views_pre_render(&$view) {
         $node = node_load($course->node_node_nid);
       }
       if ($node->type == 'course') {
-        $query = db_query("SELECT DISTINCT(course.nid) AS nid, SUBSTR(course.field_course_year_value, 1, 4) AS year FROM ({content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid) INNER JOIN {node} node ON node.nid=course.nid WHERE node.status=1 AND code.field_code_value='%s' ORDER BY year DESC, course.field_course_term_value DESC, course.vid DESC", $node->field_code[0]['value']);
+        $query = db_query("SELECT DISTINCT(course.nid) AS nid, DATE_FORMAT(course.field_course_year_value, '%Y') AS year FROM ({content_type_course} course INNER JOIN {content_field_code} code ON course.nid = code.nid) INNER JOIN {node} node ON node.nid=course.nid WHERE node.status=1 AND code.field_code_value='%s' ORDER BY DATE_FORMAT(course.field_course_year_value, '%Y') DESC, course.field_course_term_value DESC, course.vid DESC", $node->field_code[0]['value']);
         $latest = db_fetch_object($query);
         $previous = db_fetch_object($query);
         if (!empty($previous) && $latest->nid != $node->nid) {
@@ -232,44 +232,40 @@ function navigation_views_pre_render(&$view) {
         }
       }
     }
-    if ($view->current_display != 'node_content_2' && $view->current_display != 'node_content_4') {
-      usort($view->result, 'navigation_course_sort');
-    }
+    usort($view->result, 'navigation_course_sort');
   }
 }
 
 /**
- * Sort nodes based on stickiness.
+ * Sort nodes based on node weight.
  */
 function navigation_node_sort($a, $b) {
   $a = node_load($a);
   $b = node_load($b);
-//  if ($a->sticky == $b->sticky) {
-    if ($a->node_weight == $b->node_weight) {
-      return strcasecmp($a->title, $b->title);
-    }   
-    else {
-      return ($a->node_weight > $b->node_weight) ? 1 : -1;
-    }   
-//  }
-//  else {
-//    return ($a->sticky < $b->sticky) ? -1 : 1;
-//  }
+  if ($a->node_weight == $b->node_weight) {
+    return strcasecmp($a->title, $b->title);
+  }   
+  else {
+    return ($a->node_weight > $b->node_weight) ? 1 : -1;
+  }   
 }
 
 /**
- * Sort course nodes based on stickiness.
+ * Sort course nodes based on node weight.
  */
 function navigation_course_sort($a, $b) {
-  $node_a = node_load($a->node_node_nid);
-  $node_b = node_load($b->node_node_nid);
-  if ($a->node_weight_sticky != $b->node_weight_sticky) {
-    return (abs($a->node_weight_sticky) > abs($b->node_weight_sticky)) ? 1 : -1;
+  if ($a->node_type == 'course') {
+    $node_a = node_load($a->nid);
+    $node_b = node_load($b->nid);
   }
-  elseif ($node_a->node_weight == $b->node_weight) {
+  else {
+    $node_a = node_load($a->node_node_nid);
+    $node_b = node_load($b->node_node_nid);
+  }
+  if ($node_a->node_weight == $node_b->node_weight) {
     return strcasecmp($node_a->title, $node_b->title);
   }
   else {
-    return ($node_a->node_weight > $node_b->node_weight) ? 1 : -1;
+    return ($node_a->node_weight < $node_b->node_weight) ? -1 : 1;
   }
 }
