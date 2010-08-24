@@ -1472,8 +1472,8 @@ function openmichigan_views_views_default_views() {
     'type' => 'role',
     'role' => array(
       '1' => 1,
-      '4' => 4,
       '6' => 6,
+      '5' => 5,
     ),
   ));
   $handler->override_option('cache', array(
@@ -1512,8 +1512,8 @@ function openmichigan_views_views_default_views() {
   $handler->override_option('access', array(
     'type' => 'role',
     'role' => array(
+      '4' => 4,
       '3' => 3,
-      '5' => 5,
     ),
   ));
   $handler->override_option('items_per_page', 0);
@@ -6491,7 +6491,8 @@ drupal_set_breadcrumb($breadcrumb);
   ));
   $handler->override_option('displays', array());
   $handler->override_option('sitename_title', FALSE);
-  
+  $views[$view->name] = $view;
+
   /*
    * View 'sessions'
    */
@@ -7255,6 +7256,3 @@ drupal_set_breadcrumb($breadcrumb);
 
   return $views;
 }
-
-
-
