@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning.module,v 1.91 2010/04/05 23:46:22 rdeboer Exp $
+// $Id: revisioning.module,v 1.95 2010/07/05 02:31:21 rdeboer Exp $
 
 /**
  * @file
@@ -275,8 +275,9 @@ function revisioning_menu_alter(&$items) {
   $items['node/%node']['access arguments']= $items['node/%node/view']['access arguments']= array('view', 1);
   $items['node/%node']['page callback']   = $items['node/%node/view']['page callback']   = '_revisioning_view';
   $items['node/%node']['page arguments']  = $items['node/%node/view']['page arguments']  = array(1);
-  $items['node/%node']['title callback']  = $items['node/%node/view']['title callback']  = '_revisioning_title_for_tab';
-  $items['node/%node']['title arguments'] = $items['node/%node/view']['title arguments'] = array(1, FALSE);
+  // Not applying title callback to 'node/%node', see #782316
+  $items['node/%node/view']['title callback']  = '_revisioning_title_for_tab';
+  $items['node/%node/view']['title arguments'] = array(1, FALSE);
 
   // Edit tab can be either 'Edit current' or 'Edit latest'.
   // It should be suppressed when the 'Revisions' tab shows the same revision,
@@ -359,6 +360,7 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       // by users with the "administer nodes" permission
       $node->revision_moderation = node_tools_content_is_moderated($node->type);
       $node->is_pending = _revisioning_node_is_pending($node);
+
       // Could use following, but this seems old style, i.e. when $node is not a &ref
       //$node_extras['revision_moderation'] = $node->revision_moderation;
       //$node_extras['is_pending'] = $node->is_pending;
@@ -386,6 +388,8 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
           // Update the $node object just before it is saved to the db
           $node->revision = FALSE;
         }
+        // Save title of current revision to restore at $op=='update' time
+        $node->current_title = db_result(db_query('SELECT title FROM {node} WHERE nid=%d', $node->nid));
         if (user_access('publish revisions') && variable_get('revisioning_auto_publish_'. $node->type, FALSE)) {
           drupal_set_message(t('Auto-publishing this revision.'));
           $node->status = TRUE;
@@ -402,8 +406,8 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
     case 'update':  // edited node, called from node_save(), after _node_save_revision()
       if ($node->revision_moderation && $node->current_revision_id // i.e. set and not 0
           && $node->current_revision_id != $node->vid) {
-        // Resetting vid back to its originial value, thus creating pending revision
-        db_query('UPDATE {node} SET vid=%d WHERE nid=%d', $node->current_revision_id, $node->nid);
+        // Resetting title and vid back to their originial values, thus creating pending revision.
+        db_query("UPDATE {node} SET vid=%d, title='%s' WHERE nid=%d", $node->current_revision_id, $node->current_title, $node->nid);
       //$node->is_pending = TRUE;
       }
       break;
@@ -601,17 +605,21 @@ function _revisioning_operation_appropriate($revision_op, $node) {
       break;
 
     case 'publish revisions':
-      // If the node isn't meant to be moderated or the revision is not either
-      // pending or current but not published, then disallow publication.
-      if (!$node->revision_moderation || !($node->is_pending || ($node->is_current && !$node->status))) {
+      // If the node isn't meant to be moderated and the user is not an admin,
+      // or the revision is not either pending or current but not published,
+      // then disallow publication.
+      if ((!$node->revision_moderation && !user_access('administer nodes'))
+        || !($node->is_pending || ($node->is_current && !$node->status))) {
         return FALSE;
       }
       break;
 
     case 'unpublish current revision':
-      // If the node isn't meant to be moderated, or it is unpublished already
-      // or we're not looking at the current revision, then unpublication is off.
-      if (!$node->revision_moderation || !$node->status || !$node->is_current) {
+      // If the node isn't meant to be moderated and the user is not an admin,
+      // or it is unpublished already or we're not looking at the current
+      // revision, then unpublication is not an option.
+      if ((!$node->revision_moderation && !user_access('administer nodes'))
+        || !$node->status || !$node->is_current) {
         return FALSE;
       }
       break;
@@ -696,7 +704,6 @@ function _revisioning_view_edit_access_callback($op, $node) {
       // Suppress 'View latest' and 'Edit latest' primary tabs when viewing latest
       return FALSE;
     }
-    return TRUE;
   }
   if ($load_op == REVISIONING_LOAD_LATEST) {
     // _revisioning_load_op has already checked permission to view latest

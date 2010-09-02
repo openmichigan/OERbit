@@ -1,4 +1,4 @@
-$Id: CHANGELOG.txt,v 1.37 2010/04/08 01:48:02 rdeboer Exp $
+$Id: CHANGELOG.txt,v 1.40 2010/07/09 23:57:29 rdeboer Exp $
 
 Changelog for Revisioning module for drupal 6.
 
@@ -127,3 +127,11 @@ o Fix [#757696], comments #10+11
 Don't redirect to latest revision when creating new node or when content type is not subject to moderation [#761010].
 Don't change title of View/Edit tabs to 'View/Edit current' when content type is not subject to moderation.
 Fixed "Content summary" View: "Node:Revision moderation filter" broke when no content types were moderated.
+
+6.x-3.11
+========
+Enhance fix for [#761010]
+Feature: [#765950], comment #2
+Feature: Block view for Content Summary
+Feature: optionally suppress Workflow transitions via edit form
+Fix: [#771324] (thanks: pacproduct)

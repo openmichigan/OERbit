@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning.install,v 1.13 2010/04/05 23:44:06 rdeboer Exp $
+// $Id: revisioning.install,v 1.16 2010/07/05 02:31:21 rdeboer Exp $
 
 /**
  * @file
@@ -19,6 +19,21 @@ function revisioning_update_6307() {
   $ret = array();
   // Panels override fix, see http://drupal.org/node/519924#comment-2617370.
   variable_set('page_manager_override_anyway', TRUE);
+  return $ret;
+}
+
+/**
+ * Implementation of hook_update_N().
+ *
+ * Place ourselves after Workflow so that we can alter some of the forms created
+ * by Workflow.
+ * If Workflow isn't installed at the time that Revisioning is installed, set
+ * Revisioning weight to 1, which is higher than the default.
+ */
+function revisioning_update_6310() {
+  $ret = array();
+  $weight = 1 + (int)db_result(db_query("SELECT weight FROM {system} WHERE name = 'workflow'"));
+  $ret[] = update_sql("UPDATE {system} SET weight = $weight WHERE name = 'revisioning'");
   return $ret;
 }
 

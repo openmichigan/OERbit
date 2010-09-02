@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.8 2010/03/22 01:20:34 rdeboer Exp $
+$Id: README.txt,v 1.9 2010/07/09 23:53:13 rdeboer Exp $
 
 DESCRIPTION
 ===========
@@ -24,8 +24,8 @@ Triggers are provided for the publish, unpublish and revert events.
 By taking advantage of the Module Grants module this module integrates better
 with the Workflow and Taxonomy Access Control (Lite) modules. This means that
 you can easily implement fine-grained content access control based on
-categories as well as workflow states. With Revisioning installed this all
-works for both published and unpublished content.
+categories as well as workflow states. With both Module Grants and Revisioning
+installed this all works for both published and unpublished content.
 There's also a "publish-pending-revision" action that may be triggered from
 a workflow state transition (like "in review"->"publish").
 Unlike RM, Revisioning does not require any additional database tables.
@@ -79,14 +79,14 @@ USAGE
 =====
 You should now be in business. Log in as one of the authors and Create content.
 Save. Log out, then log in as a moderator to publish the content via the
-Accessile content >> Pending tab. Click on the title of the post, then open the
-desired revision by clicking on the date. Check the content, the press the 
-publish link.
+Accessile content >> Pending tab (if you installed Module Grants Monitor) or via
+the Content summary menu option (if you installed Views). Click on the title of
+the post, then open the desired revision by clicking on the date. Check the
+content, the press the "Publish this" tab.
 Note that up to this point content isn't visible to the public.
 Log in as an author again and revise the content. You will notice that upon
 saving the new revision, the one visible to the public remains unchanged.
-Log in as a moderator again to promote (publish), after optional edits, the
-revised content to live.
+Log in as a moderator again to promote (publish), the revised content to live.
 As an alternative to the Accessible content menu item, you may want to activate
 the "pending revisions" block. This block is particularly useful for moderators
 as it constantly shows the latest content requiring moderator attention in an 
