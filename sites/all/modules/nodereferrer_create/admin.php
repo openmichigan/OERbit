@@ -57,13 +57,6 @@ function nodereferrer_create_callback_admin() {
     '#default_value' => variable_get('nodereferrer_create_javascript', 1),
   );
   
-  $form['nodereferrer_redirect_after_create'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Redirect back to original node after node creation'),
-    '#description' => t('If this is checked, when the new node is created, node referrer will redirect the user back to the node it was before.'),
-    '#default_value' => variable_get('nodereferrer_redirect_after_create', 0),
-  );
-  
   /* Access settings */
   $form['nodereferrer_create_access_group'] = array(
     '#type' => 'fieldset',
