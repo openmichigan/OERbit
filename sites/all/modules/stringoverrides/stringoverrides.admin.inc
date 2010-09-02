@@ -1,5 +1,5 @@
 <?php
-// $Id: stringoverrides.admin.inc,v 1.1.2.8 2008/07/09 18:19:01 robloach Exp $
+// $Id: stringoverrides.admin.inc,v 1.1.2.14 2010/08/22 20:36:43 robloach Exp $
 
 /**
  * @file
@@ -60,8 +60,7 @@ function stringoverrides_admin($form_state = NULL, $lang = NULL) {
       'path' => 'admin/settings/stringoverrides/js',
       'wrapper' => 'stringoverrides-wrapper',
       'method' => 'replace',
-      'effect' => 'fade',
-      'progress' => 'none',
+      'effect' => 'none',
     ),
   );
   $form['save'] = array(
@@ -76,7 +75,7 @@ function stringoverrides_admin($form_state = NULL, $lang = NULL) {
     '#access' => !empty($strings),
   );
   return $form;
-} // function stringoverrides_admin
+}
 
 /**
  * Triggered when the user submits the administration page
@@ -86,7 +85,9 @@ function stringoverrides_admin_submit($form, &$form_state) {
   $words = array(FALSE => array(), TRUE => array());
   foreach ($form_state['values']['string'] as $index => $string) {
     if (!empty($string['original'])) {
-      $words[$string['enabled']][$string['original']] = $string['replacement'];
+      // Get rid of carriage returns.
+      list($orig, $replace) = str_replace("\r", '', array($string['original'], $string['replacement']));
+      $words[$string['enabled']][$orig] = $replace;
     }
   }
 
@@ -102,14 +103,14 @@ function stringoverrides_admin_submit($form, &$form_state) {
   switch ($form_state['values']['op']) {
   case t('Save configuration'):
     variable_set('locale_custom_disabled_strings_'. $lang, $words[0]);
-    drupal_set_message('Your changes have been saved.');
+    drupal_set_message(t('Your changes have been saved.'));
   break;
   case t('Remove disabled strings'):
     variable_del('locale_custom_disabled_strings_'. $lang);
-    drupal_set_message('The disabled strings have been removed.');
+    drupal_set_message(t('The disabled strings have been removed.'));
   break;
   }
-} // function stringoverrides_admin_submit
+}
 
 /**
  * Function to return a textbox combo form
@@ -137,7 +138,7 @@ function stringoverrides_textbox_combo($delta = 0, $enabled = TRUE, $original = 
     '#parents' => array('string', $delta, 'replacement'),
   );
   return $form;
-} // function stringoverrides_textbox_combo
+}
 
 /**
  * Theme the enabled box and the two text box strings
@@ -172,7 +173,7 @@ function theme_stringoverrides_strings($form) {
   $output .= '</div>';
   $output .= drupal_render($form);
   return $output;
-} // function theme_stringoverrides_strings
+}
 
 /**
  * Menu callback for the String Overrides module to display a new string override
@@ -208,7 +209,7 @@ function stringoverrides_js() {
   $output = theme('status_messages') . drupal_render($string_form);
 
   drupal_json(array('status' => TRUE, 'data' => $output));
-} // function stringoverrides_js
+}
 
 /**
  * Menu callback for the String Overrides module to display the import administration
@@ -234,7 +235,7 @@ function stringoverrides_admin_import() {
     '#weight' => 3,
   );
   return $form;
-} // function stringoverrides_admin_import
+}
 
 /**
  * Triggered when the user imports data
@@ -277,7 +278,7 @@ function stringoverrides_admin_import_submit($form, &$form_state) {
         }
         else if (substr($buffer, 0, 5) == 'msgid') { // New string
           // Save old string
-          if (!empty($currentstring) && !empty($currentoverride)) {
+          if (!empty($currentoverride)) {
             $overrides[$currentoverride] = $currentstring;
             $currentoverride = $currentstring = '';
           }
@@ -302,7 +303,7 @@ function stringoverrides_admin_import_submit($form, &$form_state) {
   else {
     form_set_error('file', t('A file to import is required.'));
   }
-} // function stringoverrides_admin_import_submit
+}
 
 /**
  * Ability to export a *.po file.
@@ -324,7 +325,7 @@ function stringoverrides_admin_export() {
   );
   $form['#submit'][] = 'stringoverrides_admin_export_submit';
   return $form;
-} // function stringoverrides_admin_export
+}
 
 /**
  * Submit-handler for stringoverrides_admin_export.
@@ -335,19 +336,20 @@ function stringoverrides_admin_export_submit($form, &$form_state) {
   $export = stringoverrides_admin_export_text($form_state['values']['lang']);
   drupal_set_header('Content-Length: '. strlen($export));
   echo $export;
-} // stringoverrides_admin_export_submit
+  exit;
+}
 
 /**
  * Returns the exported *.po text from the given language.
  */
 function stringoverrides_admin_export_text($lang = 'en') {
-  $export = '# String Overrides Export';
+  $export = "# String Overrides Export\n";
   $overrides = variable_get('locale_custom_strings_'. $lang, array());
   foreach ($overrides as $override => $string) {
     $export .= 'msgid "'. $override ."\"\nmsgstr \"$string\"\n";
   }
   return $export;
-} // function stringoverrides_admin_export_text
+}
 
 /**
  * Sorts two words based on their original text.

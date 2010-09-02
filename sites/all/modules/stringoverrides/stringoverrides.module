@@ -1,5 +1,5 @@
 <?php
-// $Id: stringoverrides.module,v 1.5.2.6 2008/05/07 01:56:55 robloach Exp $
+// $Id: stringoverrides.module,v 1.5.2.8 2009/02/18 19:59:57 robloach Exp $
 
 /**
  * @file
@@ -13,9 +13,13 @@ function stringoverrides_help($path, $arg) {
   $output = '';
   if ($path == 'admin/help#stringoverrides') {
     $output = '<p>'. t('The <strong>String Overrides</strong> module provides a quick and easy way of replacing text.') .'</p>';
-    $output .= '<p>'. t('To replace a string, enter what you find when the string is passed through the <a href="@t">t()</a> function. String Overrides cannot translate user-defined content, it can only replace strings wrapped in the t() function. To find the strings you can actually change, open up a module and look for t() function calls. Places where %, @, or ! are used means that the translation contains dynamic information (such as the node type or title in the above examples), these are not translated while the text around them are.', array('@t' => 'http://api.drupal.org/api/function/t')) .'</p>';
+    $output .= '<p>'. t('To replace a string, enter <strong>the complete string</strong> that is passed through the <a href="@t">t()</a> function. String Overrides cannot translate user-defined content, it can only replace strings wrapped in the t() function. To find the strings you can actually change, open up a module and look for t() function calls. Places where %, @, or ! are used means that the translation contains dynamic information (such as the node type or title in the above examples); these are not translated while the text around them is.', array('@t' => 'http://api.drupal.org/api/function/t')) .'</p>';
     $output .= '<p>'. t('For example:') .'</p>';
-    $output .= theme('item_list', array('The %post has been updated.', 'Are you sure you want to delete %title?', 'Screenshot for %theme theme'));
+    $output .= theme('item_list', array(
+      '"The %post has been updated." &rarr; "You just updated the %post."',
+      '"Are you sure you want to delete %title?" &rarr; "Do you want to delete %title?"',
+    ));
+    $output .= '<p>'. t('Remember, you must replace the entire string, not just a portion of it.') .'</p>';
   }
   else if ($arg[0] == 'admin' && $arg[1] == 'settings' && $arg[2] == 'stringoverrides') {
     switch ($arg[3]) {
@@ -37,14 +41,14 @@ function stringoverrides_help($path, $arg) {
     }
   }
   return $output;
-} // function stringoverrides_help
+}
 
 /**
  * Implementation of hook_perm()
  */
 function stringoverrides_perm() {
   return array('administer string overrides');
-} // function stringoverrides_perm
+}
 
 /**
  * Implementation of hook_menu()
@@ -110,7 +114,7 @@ function stringoverrides_menu() {
     'access arguments' => array('administer string overrides'),
   );
   return $items;
-} // function stringoverrides_menu
+}
 
 /**
  * Implementation of hook_theme()
@@ -121,4 +125,4 @@ function stringoverrides_theme() {
       'arguments' => array('form' => NULL),
     ),
   );
-} // function stringoverrides_theme
+}
