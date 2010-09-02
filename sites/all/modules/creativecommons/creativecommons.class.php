@@ -425,18 +425,22 @@ class creativecommons_license {
     else if ($site && (!$this->metadata['attributionName'] || !creativecommons_metadata_is_available('attributionName'))) {
       // CC0
       if ($this->type == 'zero') {
-        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, have been waived, although certain works referenced herein may be separately licensed.', $args);
+        //$html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, have been waived, although certain works referenced herein may be separately licensed.', $args);
+        // switchback case #2426 i(bdr #2733 also!) - remove link to user profile from attribution
+        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName have been waived, although certain works referenced herein may be separately licensed.', $args);
       }
       // Rest
       else {
-        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, is licensed under a <a rel="license" href="@license-uri">@license-name license</a>, although certain works referenced herein may be separately licensed.', $args);
+        //$html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, is licensed under a <a rel="license" href="@license-uri">@license-name license</a>, although certain works referenced herein may be separately licensed.', $args);
+        // switchback case #2426 (bdr #2733 also!) - remove link to user profile from attribution
+        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName is licensed under a <a rel="license" href="@license-uri">@license-name license</a>, although certain works referenced herein may be separately licensed', $args);
       }
     }
     // Otherwise
     else {
       // CC0
       if ($this->type == 'zero') {
-        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> have been waived.', $args);
+        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName have been waived.', $args);
       }
       // All Rights Reserved
       if ($this->type == 'all-rights-reserved') {
@@ -444,7 +448,7 @@ class creativecommons_license {
       }
       // Rest
       else {
-        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> is licensed under a <a rel="license" href="@license-uri">@license-name license</a>.', $args);
+        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName is licensed under a <a rel="license" href="@license-uri">@license-name license</a>.', $args);
       }
     }
 
@@ -489,7 +493,7 @@ class creativecommons_license {
       return;
 
     // Sanitize metadata
-    $this->check_metadata();
+    //$this->check_metadata();
 
     if ($this->rdf) {
       foreach ($this->rdf['attributes'] as $attr => $val)
