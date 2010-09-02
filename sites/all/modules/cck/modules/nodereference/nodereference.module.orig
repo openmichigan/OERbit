@@ -975,6 +975,11 @@ function nodereference_autocomplete($field_name, $string = '') {
   $references = _nodereference_potential_references($field, $string, $match, array(), 10);
   foreach ($references as $id => $row) {
     // Add a class wrapper for a few required CSS overrides.
+    // Add email to the output - Case #2107
+    $node = node_load($id);
+    if (!empty($node->field_email[0]['email'])) {
+      $row['rendered'] .= ' (' . $node->field_email[0]['email'] . ')';
+    }
     $matches[$row['title'] ." [nid:$id]"] = '<div class="reference-autocomplete">'. $row['rendered'] . '</div>';
   }
   drupal_json($matches);
