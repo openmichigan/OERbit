@@ -1,5 +1,5 @@
 <?php
-// $Id: print_mail.admin.inc,v 1.1.2.14 2009/07/09 12:00:52 jcnventura Exp $
+// $Id: print_mail.admin.inc,v 1.1.2.17 2010/08/12 08:43:50 jcnventura Exp $
 
 /**
  * @file
@@ -10,6 +10,9 @@
  *
  * @ingroup print
  */
+
+// Include MIME library
+@include_once('Mail/mime.php');
 
 /**
  * Menu callback for the send by e-mail module settings form.
@@ -28,6 +31,13 @@ function print_mail_settings() {
     '#default_value' => variable_get('print_mail_link_pos', array(PRINT_MAIL_LINK_POS_DEFAULT => PRINT_MAIL_LINK_POS_DEFAULT)),
     '#options' => array('link' => t('Links area'), 'corner' => t('Content corner')),
     '#description' => t('Choose the location of the link(s) to the send by e-mail page. The Links area is usually below the node content, whereas the Content corner is placed in the upper-right corner of the node content. Unselect all options to disable the link. Even if the link is disabled, you can still send a node by e-mail by going to !path/nid where nid is the numeric id of the node.', array('!path' => PRINTMAIL_PATH)),
+  );
+
+  $form['settings']['print_mail_link_teaser'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display send by e-mail link in teaser'),
+    '#default_value' => variable_get('print_mail_link_teaser', PRINT_MAIL_LINK_TEASER_DEFAULT),
+    '#description' => t('Enabling this will display the link in teaser mode.'),
   );
 
   $form['settings']['adv_link'] = array(
@@ -138,6 +148,20 @@ function print_mail_settings() {
     '#default_value' => variable_get('print_mail_teaser_choice', PRINT_MAIL_TEASER_CHOICE_DEFAULT),
     '#description' => t('If checked, the user will be able to choose between sending the full content or only the teaser at send time.'),
   );
+
+  $form['settings']['print_mail_send_option_default'] = array(
+    '#type' => 'select',
+    '#title' => t('Default e-mail sending format'),
+    '#default_value' => variable_get('print_mail_send_option_default', PRINT_MAIL_SEND_OPTION_DEFAULT),
+    '#options' => array(
+      'sendlink' => t('Link'),
+      'sendpage' => t('Inline HTML'),
+    ),
+  );
+  if (class_exists('Mail_mime')) {
+    $form['settings']['print_mail_send_option_default']['#options']['inline-attachment'] = t('Inline HTML with Attachment');
+    $form['settings']['print_mail_send_option_default']['#options']['plain-attachment'] = t('Plain Text with Attachment');
+  }
 
   if (module_exists('job_queue')) {
     $form['settings']['print_mail_job_queue'] = array(

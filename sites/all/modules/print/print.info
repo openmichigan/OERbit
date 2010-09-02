@@ -4,9 +4,9 @@ description = "Adds a printer-friendly version link to content and administrativ
 core=6.x
 package = "Printer, e-mail and PDF versions"
 
-; Information added by drupal.org packaging script on 2009-10-15
-version = "6.x-1.10"
+; Information added by drupal.org packaging script on 2010-08-22
+version = "6.x-1.12"
 core = "6.x"
 project = "print"
-datestamp = "1255650653"
+datestamp = "1282446093"
 

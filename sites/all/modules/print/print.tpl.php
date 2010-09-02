@@ -1,5 +1,5 @@
 <?php
-// $Id: print.tpl.php,v 1.8.2.15 2009/07/09 12:00:52 jcnventura Exp $
+// $Id: print.tpl.php,v 1.8.2.17 2010/08/18 00:33:34 jcnventura Exp $
 
 /**
  * @file
@@ -12,14 +12,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="<?php print $print['language']; ?>" xml:lang="<?php print $print['language']; ?>">
   <head>
     <?php print $print['head']; ?>
+    <?php print $print['base_href']; ?>
     <title><?php print $print['title']; ?></title>
     <?php print $print['scripts']; ?>
+    <?php print $print['sendtoprinter']; ?>
     <?php print $print['robots_meta']; ?>
-    <?php print $print['base_href']; ?>
     <?php print $print['favicon']; ?>
     <?php print $print['css']; ?>
   </head>
-  <body<?php print $print['sendtoprinter']; ?>>
+  <body>
     <?php if (!empty($print['message'])) {
       print '<div class="print-message">'. $print['message'] .'</div><p />';
     } ?>

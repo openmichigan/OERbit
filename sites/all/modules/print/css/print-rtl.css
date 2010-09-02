@@ -1,4 +1,4 @@
-/* $Id: print-rtl.css,v 1.1.2.2 2008/08/21 22:03:40 jcnventura Exp $ */
+/* $Id: print-rtl.css,v 1.1.2.3 2010/07/14 14:52:53 jcnventura Exp $ */
 
 body {
   direction: rtl;
@@ -6,6 +6,8 @@ body {
 th {
   text-align: right;
 }
+.print-links,
+.print-source_url,
 .print-taxonomy {
   text-align: left;
 }
