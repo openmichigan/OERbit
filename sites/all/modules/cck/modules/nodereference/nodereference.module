@@ -378,7 +378,7 @@ function theme_nodereference_formatter_full_teaser($element) {
 function _nodereference_titles($nid, $known_title = NULL) {
   static $titles = array();
   if (!isset($titles[$nid])) {
-    $title = $known_title ? $known_title : db_result(db_query(db_rewrite_sql("SELECT n.title FROM {node} n WHERE n.nid=%d"), $nid));
+    $title = $known_title ? $known_title : db_result(db_query(db_rewrite_sql("SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid=%d"), $nid));
     $titles[$nid] = $title ? $title : '';
   }
   return $titles[$nid];
@@ -566,7 +566,7 @@ function nodereference_autocomplete_value($element, $edit = FALSE) {
   $field_key  = $element['#columns'][0];
   if (!empty($element['#default_value'][$field_key])) {
     $nid = $element['#default_value'][$field_key];
-    $value = db_result(db_query(db_rewrite_sql('SELECT n.title FROM {node} n WHERE n.nid = %d'), $nid));
+    $value = db_result(db_query(db_rewrite_sql('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d'), $nid));
     $value .= ' [nid:'. $nid .']';
     return array($field_key => $value);
   }
@@ -975,6 +975,11 @@ function nodereference_autocomplete($field_name, $string = '') {
   $references = _nodereference_potential_references($field, $string, $match, array(), 10);
   foreach ($references as $id => $row) {
     // Add a class wrapper for a few required CSS overrides.
+    // Add email to the output - Case #2107
+    $node = node_load($id);
+    if (!empty($node->field_email[0]['email'])) {
+      $row['rendered'] .= ' (' . $node->field_email[0]['email'] . ')';
+    }
     $matches[$row['title'] ." [nid:$id]"] = '<div class="reference-autocomplete">'. $row['rendered'] . '</div>';
   }
   drupal_json($matches);
