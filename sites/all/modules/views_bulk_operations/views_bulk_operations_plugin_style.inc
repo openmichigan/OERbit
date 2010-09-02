@@ -1,5 +1,5 @@
 <?php
-// $Id: views_bulk_operations_plugin_style.inc,v 1.1.2.48.2.3 2010/03/24 03:13:48 kratib Exp $
+// $Id: views_bulk_operations_plugin_style.inc,v 1.1.2.48.2.4 2010/04/17 17:13:10 kratib Exp $
 
 class views_bulk_operations_plugin_style extends views_plugin_style_table {
   var $all_operations = array();
@@ -89,7 +89,7 @@ class views_bulk_operations_plugin_style extends views_plugin_style_table {
     // Per-action settings form.
     $object_info = _views_bulk_operations_object_info_for_view($this->view);
     foreach ($this->all_operations as $key => $operation) {
-      if ($operation['type'] != $object_info['type'] && $operation['type'] != 'system' && !in_array($object_info['hook'], $operation['hooks'])) continue;
+      if ($operation['type'] != $object_info['type'] && $operation['type'] != 'system' && !in_array($object_info['hook'], (array) $operation['hooks'])) continue;
       $form_function = $operation['callback'] . '_views_bulk_operations_form';
       if (function_exists($form_function)) {
         $form[$key] = array(
@@ -169,7 +169,7 @@ class views_bulk_operations_plugin_style extends views_plugin_style_table {
     $object_info = _views_bulk_operations_object_info_for_view($this->view);
     if (!$object_info) return $options;
     foreach ($this->all_operations as $key => $operation) {
-      if ($operation['type'] == $object_info['type'] || $operation['type'] == 'system' || in_array($object_info['hook'], $operation['hooks'])) {
+      if ($operation['type'] == $object_info['type'] || $operation['type'] == 'system' || in_array($object_info['hook'], (array) $operation['hooks'])) {
         $options[$key] = $operation['label'] .' ('. $key .')'; 
       }
     }
@@ -218,7 +218,7 @@ class views_bulk_operations_plugin_style extends views_plugin_style_table {
         'aggregate'             => isset($operation['aggregate']) ? (int)$operation['aggregate'] : VBO_AGGREGATE_FORBIDDEN,
         'access op'             => $this->get_access_op($operation),
         'permissions'           => isset($operation['permissions']) ? $operation['permissions'] : NULL,
-        'hooks'                 => isset($operation['hooks']) ? array_keys($operation['hooks']) : array(),
+        'hooks'                 => isset($operation['hooks']) ? array_keys((array) $operation['hooks']) : array(),
       );
     }
 
