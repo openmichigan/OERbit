@@ -4,8 +4,9 @@
  * Implementation of hook_schema().
  */
 function htmlpurifier_schema() {
+  $t = get_t();
   $schema['cache_htmlpurifier'] = drupal_get_schema_unprocessed('system', 'cache');
-  $schema['cache_htmlpurifier']['description'] = t(<<<DESCRIPTION
+  $schema['cache_htmlpurifier']['description'] = $t(<<<DESCRIPTION
 Cache table for the HTML Purifier module just like cache_filter, except that
 cached text is stored permanently until flushed or manually invalidated.
 This helps prevent recurrent cache slams on pages with lots of segments of HTML.
@@ -38,40 +39,144 @@ function htmlpurifier_requirements($phase) {
   // This version of HTML Purifier is required
   static $req_version = '4.0.0';
   $requirements = array();
-  
-  // Can't use drupal_get_path, since module may not have been installed.
-  $module_path = dirname(__FILE__);
+  $t = get_t();
+
+  // If it's still not available, use something else
+  $complain_loc = false;
+  if (function_exists('libraries_get_path')) {
+    $library_path = libraries_get_path('htmlpurifier');
+    $using_libraries = true;
+    if (!file_exists("$library_path/library/HTMLPurifier.auto.php")) {
+      $library_path = dirname(__FILE__);
+      $complain_loc = true;
+      $using_libraries = false;
+    }
+  } else {
+    $library_path = dirname(__FILE__);
+    $using_libraries = false;
+  }
+
   $s = DIRECTORY_SEPARATOR;
-  if (!file_exists("$module_path/library/HTMLPurifier.auto.php")) {
-    $requirements['htmlpurifier'] = array (
+  if (!file_exists("$library_path/library/HTMLPurifier.auto.php")) {
+    $requirements['htmlpurifier_library'] = array (
+      'title' => $t('HTML Purifier library'),
       'severity' => REQUIREMENT_ERROR,
-      'description' => t("Could not find HTML Purifier
+      'description' => $t("Could not find HTML Purifier
           installation in @path. Please copy contents
           of the library folder in the HTML Purifier tarball or zip
           to this folder or ensure HTMLPurifier.auto.php exists.
           You can download HTML Purifier at
-          <a href=\"http://htmlpurifier.org/download.html\">htmlpurifier.org</a>.", array('@path' => "$module_path{$s}library")
+          <a href=\"http://htmlpurifier.org/download.html\">htmlpurifier.org</a>.", array('@path' => "$library_path{$s}library")
       ),
     );
+    return $requirements;
   }
-  else {
-    require_once "$module_path/library/HTMLPurifier.auto.php";
-    if (!defined('HTMLPurifier::VERSION') || version_compare($old = HTMLPurifier::VERSION, $req_version, '<')) {
 
-      $requirements['htmlpurifier'] = array (
-        'severity' => REQUIREMENT_ERROR,
-        'description' => t("HTML Purifier @old is not compatible
-          with this module: HTML Purifier <strong>@required</strong> or later is required.
-          If the required version is a dev version, you will need to
-          <a href=\"http://htmlpurifier.org/download.html#Subversion\">check
-          code out of Subversion</a> or
-          <a href=\"http://htmlpurifier.org/download.html#NightlyBuilds\">download a nightly</a>
-          to use this module.", array('@old' => $old, '@required' => $req_version)
-        ),
+  if ($complain_loc) {
+    $requirements['htmlpurifier_library_loc'] = array(
+      'title' => $t('HTML Purifier library location'),
+      'severity' => REQUIREMENT_WARNING,
+      'description' => $t("The HTML Purifier library currently lives in
+        <code>@oldpath</code>, but should actually be placed in the shared
+        libraries API at <code>@newpath</code>.  You should move the folder
+        such that <code>@somefile</code> exists (you will need to create an
+        <code>htmlpurifier</code> folder to hold the <code>library</code>
+        folder).  For future updates, you can simply replace the
+        htmlpurifier folder with the htmlpurifier-x.y.z folder that a
+        new HTML Purifier tarball unzips to (you'll be reminded in an
+        update notification).",
+          array(
+            '@oldpath' => dirname(__FILE__) . '/library',
+            '@newpath' => libraries_get_path('htmlpurifier') . '/library',
+            '@somefile' => libraries_get_path('htmlpurifier') . '/library/HTMLPurifier.auto.php',
+            )),
+    );
+  }
+
+  if ($phase=='runtime') {
+    $current = variable_get('htmlpurifier_version_current', FALSE);
+    if (!$current) {
+      htmlpurifier_cron();
+      $current = variable_get('htmlpurifier_version_current', FALSE);
+    }
+    $ours = variable_get('htmlpurifier_version_ours', FALSE);
+    if (!$ours || version_compare($ours, $req_version, '<')) {
+      // Can't use _htmlpurifier_load(), since it assumes a later
+      // version
+      require_once "$library_path/library/HTMLPurifier.auto.php";
+      if (defined('HTMLPurifier::VERSION')) {
+        $version = HTMLPurifier::VERSION;
+      } else {
+        $purifier = new HTMLPurifier;
+        $version = $purifier->version;
+      }
+      variable_set('htmlpurifier_version_ours', $version);
+      if (version_compare($version, $req_version, '<')) {
+
+        $requirements['htmlpurifier_library'] = array (
+          'title' => $t('HTML Purifier library'),
+          'severity' => REQUIREMENT_ERROR,
+          'description' => $t("HTML Purifier @old is not compatible
+            with this module: HTML Purifier <strong>@required</strong> or later is required.
+            If the required version is a dev version, you will need to
+            <a href=\"http://htmlpurifier.org/download.html#Git\">check
+            code out of Git</a> or
+            <a href=\"http://htmlpurifier.org/download.html#NightlyBuilds\">download a nightly</a>
+            to use this module.", array('@old' => $version, '@required' => $req_version)
+          ),
+        );
+
+        return $requirements;
+      }
+    }
+
+    if (!$ours || version_compare($current, $ours, '>')) {
+      // Update our version number if it can't be found, or there's a
+      // mismatch.  This won't do anything if _htmlpurifier_load() has
+      // already been called.  An equivalent formulation would be
+      // to always call _htmlpurifier_load() before retrieving the
+      // variable, but this has the benefit of not always loading
+      // HTML Purifier!
+      _htmlpurifier_load();
+      $ours = variable_get('htmlpurifier_version_ours', FALSE);
+    }
+    if ($current && $ours && version_compare($current, $ours, '>')) {
+      $description = $t('Your HTML Purifier library is out of date. The
+      latest version is %version, which you can download from <a
+      href="http://htmlpurifier.org">htmlpurifier.org</a>. ',
+        array('%version' => $current));
+      if ($using_libraries) {
+        $how_to_update = $t('To update, replace
+        <code>%path</code> with the new directory the downloaded archive
+        extracts into. ',
+          array('%path' => libraries_get_path('htmlpurifier')));
+      } else {
+        $how_to_update = $t('To update, replace
+        <code>%path/library/</code> with the <code>library/</code>
+        directory from the downloaded archive. ',
+          array('%path' => dirname(__FILE__)));
+      }
+      $warning = $t('If you do not perform this operation correctly,
+      your Drupal installation will stop working.  Ensure that
+      <code>%path/library/HTMLPurifier.auto.php</code> exists after
+      the upgrade.',
+        array('%path' => $library_path));
+      $requirements['htmlpurifier_version'] = array(
+        'title' => $t('HTML Purifier Library'),
+        'value' => $ours,
+        'description' => $description . $how_to_update . $warning,
+        'severity' => REQUIREMENT_WARNING,
+      );
+    }
+    if (count($requirements) == 0) {
+      $requirements['htmlpurifier'] = array(
+        'severity' => REQUIREMENT_OK,
+        'title' => $t('HTML Purifier Library'),
+        'value' => $ours,
       );
     }
   }
-  
+ 
   return $requirements;
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: htmlpurifier.module,v 1.12 2009/12/13 01:10:18 ezyang Exp $
+// $Id: htmlpurifier.module,v 1.17 2010/06/09 17:07:14 ezyang Exp $
 
 /**
  * @file
@@ -9,6 +9,13 @@
 
 
 // -- HOOK IMPLEMENTATIONS -------------------------------------------------- //
+
+/**
+ * Implementation of hook_flush_caches().
+ */
+function htmlpurifier_flush_caches() {
+    return array('cache_htmlpurifier');
+}
 
 /**
  * Implementation of hook_help().
@@ -35,35 +42,6 @@ function htmlpurifier_cron() {
   variable_set('htmlpurifier_version_current', $version);
 }
 
-/**
- * Implementation of hook_init().
- * @note
- *    Displays any need to update the HTML Purifier library.
- */
-function htmlpurifier_init() {
-  if (user_access('access administration pages')) {
-    $current = variable_get('htmlpurifier_version_current', FALSE);
-    if (!$current) {
-      htmlpurifier_cron();
-      $current = variable_get('htmlpurifier_version_current', FALSE);
-    }
-    $ours = variable_get('htmlpurifier_version_ours', FALSE);
-    if (!$ours || version_compare($current, $ours, '>')) {
-      // Update our version number if it can't be found, or there's a mismatch.
-      _htmlpurifier_load();
-      $ours = variable_get('htmlpurifier_version_ours', FALSE);
-    }
-    if ($current && $ours && version_compare($current, $ours, '>')) {
-      drupal_set_message(
-        t('Your version of HTML Purifier is currently out of date; '.
-        'the most recent version is %version. You can download the latest '.
-        'version at <a href="http://htmlpurifier.org">htmlpurifier.org</a>. '.
-        'To update, place the contents of HTML Purifier\'s <code>library/</code> folder in '.
-        '<code>modules/htmlpurifier/library/</code>.',
-        array('%version' => $current)), 'warning', FALSE);
-    }
-  }
-}
 
 /**
  * Implementation of hook_filter().
@@ -155,21 +133,32 @@ function _htmlpurifier_process($text, $format, $cache = TRUE) {
  * Loads the HTML Purifier library, and performs global initialization.
  */
 function _htmlpurifier_load() {
-  if (class_exists('HTMLPurifier')) return;
+  static $done = false;
+  if ($done) {
+    return;
+  }
+  $done = true;
   $module_path = drupal_get_path('module', 'htmlpurifier');
-  require_once "$module_path/library/HTMLPurifier.auto.php";
+  $library_path = $module_path;
+  if (function_exists('libraries_get_path')) {
+    $library_path = libraries_get_path('htmlpurifier');
+    // This may happen if the user has HTML Purifier installed under the
+    // old configuration, but also installed libraries and forgot to
+    // move it over.  There is code for emitting errors in
+    // htmlpurifier.install when this is the case.
+    if (!file_exists("$library_path/library/HTMLPurifier.auto.php")) {
+      $library_path = $module_path;
+    }
+  }
+
+  require_once "$library_path/library/HTMLPurifier.auto.php";
   require_once "$module_path/HTMLPurifier_DefinitionCache_Drupal.php";
+
   $factory = HTMLPurifier_DefinitionCacheFactory::instance();
   $factory->register('Drupal', 'HTMLPurifier_DefinitionCache_Drupal');
-  
+
   // Register the version as a variable:
-  if (!defined('HTMLPurifier::VERSION')) {
-    $purifier = new HTMLPurifier;
-    $version = $purifier->version;
-  } else {
-    $version = HTMLPurifier::VERSION;
-  }
-  variable_set('htmlpurifier_version_ours', $version);
+  variable_set('htmlpurifier_version_ours', HTMLPurifier::VERSION);
 }
 
 /**
@@ -354,4 +343,5 @@ function _htmlpurifier_config_hack($form_element, &$form_state) {
 function _htmlpurifier_clear_cache($form, &$form_state) {
     drupal_set_message("Cache cleared");
     db_query("DELETE FROM {cache_htmlpurifier}");
+    db_query("DELETE FROM {cache} WHERE cid LIKE '%s%%'", 'htmlpurifier:');
 }
