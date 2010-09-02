@@ -232,9 +232,6 @@ function navigation_views_pre_render(&$view) {
         }
       }
     }
-    if ($view->current_display == 'node_content_1') {
-      dpm($view->result);
-    }
     usort($view->result, 'navigation_course_sort');
   }
 }
