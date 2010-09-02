@@ -232,6 +232,9 @@ function navigation_views_pre_render(&$view) {
         }
       }
     }
+    if ($view->current_display == 'node_content_1') {
+      dpm($view->result);
+    }
     usort($view->result, 'navigation_course_sort');
   }
 }
@@ -255,6 +258,10 @@ function navigation_node_sort($a, $b) {
  */
 function navigation_course_sort($a, $b) {
   if ($a->node_type == 'course') {
+    $node_a = node_load($a->nid);
+    $node_b = node_load($b->nid);
+  }
+  elseif ($a->node_weight_sticky != $b->node_weight_sticky) {
     $node_a = node_load($a->nid);
     $node_b = node_load($b->nid);
   }
