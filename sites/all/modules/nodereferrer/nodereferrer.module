@@ -1,5 +1,5 @@
 <?php
-// $Id: nodereferrer.module,v 1.17.2.3 2009/12/28 09:07:59 andypost Exp $
+// $Id: nodereferrer.module,v 1.17.2.7 2010/08/20 20:25:16 andypost Exp $
 
 
 
@@ -132,8 +132,8 @@ function nodereferrer_field_settings($op, $field) {
 function nodereferrer_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
     case 'load':
-      $types = array_values(array_filter($field['referrer_types']));
-      $fields = array_values(array_filter($field['referrer_fields']));
+      $types = isset($field['referrer_types']) ? array_values(array_filter($field['referrer_types'])) : array();
+      $fields = isset($field['referrer_fields']) ? array_values(array_filter($field['referrer_fields'])) : array();
       $order = $field['referrer_order'];
       $translations = isset($field['referrer_translations']) ? $field['referrer_translations'] : 0;
       $values = nodereferrer_referrers($node->nid, $fields, $types, $translations, $order);
@@ -409,7 +409,7 @@ function nodereferrer_referrers($nid,  $fieldnames = array(), $nodetypes = array
         $query = "SELECT       n.nid, n.vid, n.title
                   FROM         {" . $db_info['table'] . "} nr
                   INNER JOIN   {node} current_node ON current_node.nid = %d
-                  INNER JOIN   {node} n ON n.vid = nr.vid " . $filter_nodetypes . "
+                  INNER JOIN   {node} n ON n.vid = nr.vid AND n.status = 1 " . $filter_nodetypes . "
                   LEFT JOIN    {node} translations ON current_node.tnid > 0 AND translations.tnid = current_node.tnid
                   WHERE        (current_node.tnid = 0 AND nr." . $db_info['columns']['nid']['column'] . " = current_node.nid)
                                OR
@@ -419,7 +419,7 @@ function nodereferrer_referrers($nid,  $fieldnames = array(), $nodetypes = array
       else {
         $query = "SELECT       n.nid, n.vid, n.title
                   FROM         {" . $db_info['table'] . "} nr
-                  INNER JOIN   {node} n ON n.vid = nr.vid " . $filter_nodetypes . "
+                  INNER JOIN   {node} n ON n.vid = nr.vid AND n.status = 1 " . $filter_nodetypes . "
                   WHERE        nr." . $db_info['columns']['nid']['column'] . " = %d
                   ORDER BY     " . $order;
       }
@@ -429,7 +429,12 @@ function nodereferrer_referrers($nid,  $fieldnames = array(), $nodetypes = array
 
       while ($value = db_fetch_array($result)) {
         // avoid duplicate referrers by using nid as key
-        $values[$value['nid']] = $value;
+        $values[$value['nid']]['nid'] = $value['nid'];
+        $values[$value['nid']]['vid'] = $value['vid'];
+        $values[$value['nid']]['title'] = $value['title'];
+        //Store the nodereference fieldnames in the nodereferrer data in the node,
+        //so that it can be looked up without needing to load the referring node.
+        $values[$value['nid']]['referrers'][$fieldname] = $fieldname;
       }
     }
   }
@@ -463,13 +468,15 @@ function nodereferrer_nodeapi($node, $op) {
       // Clear content cache to help maintain proper display of nodes.
       $nids = array();
       $type = content_types($node->type);
-      foreach ($type['fields'] as $field) {
-        // Add referenced nodes to nids. This will clean up nodereferrer fields
-        // when the referencing node is updated.
-        if ($field['type'] == 'nodereference') {
-          $node_field = isset($node->$field['field_name']) ? $node->$field['field_name'] : array();
-          foreach ($node_field as $delta => $item) {
-            $nids[$item['nid']] = $item['nid'];
+      if (!empty($type['fields'])) {
+        foreach ($type['fields'] as $field) {
+          // Add referenced nodes to nids. This will clean up nodereferrer fields
+          // when the referencing node is updated.
+          if ($field['type'] == 'nodereference') {
+            $node_field = isset($node->$field['field_name']) ? $node->$field['field_name'] : array();
+            foreach ($node_field as $delta => $item) {
+              $nids[$item['nid']] = $item['nid'];
+            }
           }
         }
       }
