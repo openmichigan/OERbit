@@ -119,6 +119,17 @@ function _nodereferrer_create_nodeapi_view(&$node, $teaser, $page) {
  */
 function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
   $menu_items = array();
+  $destination = array();
+  // bdr Aug2010:  changes to reflect module provided by Switchback
+  //     without these changes, the redirect on "Add Materials" does
+  //     not work correctly, sending user back to "Overview" instead 
+  //     of "Add Materials"  
+  if (variable_get('nodereferrer_redirect_after_create', 0)) {
+    $destination = array('query' => array('destination' => 'node/' . $node->nid . '/' . arg(2)));
+   }
+   if (!is_array($node->referrers)) {
+    return $menu_items;
+   }
   foreach($node->referrers as $i => $ref) {
     $items = array();
     
@@ -128,12 +139,12 @@ function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
         $text = t(variable_get('nodereferrer_create_label', 'Create new @type'),
           array('@type' => $type_info['name']));
         $url = 'node/'.$node->nid.'/create_referrer/'.$i.'/'.$type.'/0';
-        $items[] = l($text, $url);
+        $items[] = l($text, $url, $destination);
         if ($nf[0]['multiple'] == 1) {
           $text = t(variable_get('nodereferrer_create_add_label', 'Add to existing @type'),
             array('@type' => $type_info['name']));
           $url = 'node/'.$node->nid.'/add_referrer/'.$i.'/'.$type.'/0';
-          $items[] = l($text, $url);
+          $items[] = l($text, $url, $destination);
         }
       } else {
         foreach($nf as $nfr_index => $nfr) {
@@ -141,12 +152,12 @@ function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
           $text = t(variable_get('nodereferrer_create_label', 'Create new @type'),
             array('@type' => $nfr_name));
           $url = 'node/'.$node->nid.'/create_referrer/'.$i.'/'.$type.'/'.$nfr_index;
-          $items[] = l($text, $url);
+          $items[] = l($text, $url, $destination);
           if ($nf[0]['multiple'] == 1) {
             $text = t(variable_get('nodereferrer_create_add_label', 'Add to existing @type'),
               array('@type' => $nfr_name));
             $url = 'node/'.$node->nid.'/add_referrer/'.$i.'/'.$type.'/'.$nfr_index;
-            $items[] = l($text, $url);
+            $items[] = l($text, $url, $destination);
           }
         }
       }
@@ -193,7 +204,19 @@ function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
  */
 function _nodereferrer_create_nodeapi_view_reference(&$node, $teaser, $page) {
   $menu_items = array();
-  
+  $destination = array();
+  // bdr Aug2010:  changes to reflect module provided by Switchback
+  //     without these changes, the redirect on "Add Materials" does  
+  //     not work correctly, sending user back to "Overview" instead 
+  //     of "Add Materials"
+
+  if (variable_get('nodereferrer_redirect_after_create', 0)) {
+    $destination = array('query' => array('destination' => 'node/' . $node->nid . '/' . arg(2)));
+  }
+  if (!is_array($node->referrers)) {
+    return $menu_items;
+  }
+
   foreach($node->reference_fields as $i => $ref) {
     $multiple = $ref['multiple'] == 1;
     $items = array();
@@ -205,25 +228,25 @@ function _nodereferrer_create_nodeapi_view_reference(&$node, $teaser, $page) {
           $text = t(variable_get('nodereferrer_create_reference_label', 'Create new @type'),
             array('@type' => $type_info['name']));
           $url = 'node/'.$node->nid.'/create_reference/'.$i.'/'.$referenceable_type;
-          $items[] = l($text, $url);
+          $items[] = l($text, $url, $destination);
         }
         
         $text = t(variable_get('nodereferrer_create_reference_label_add', 'Add existing @type'),
           array('@type' => $type_info['name']));
         $url = 'node/'.$node->nid.'/add_reference/'.$i.'/'.$referenceable_type;
-        $items[] = l($text, $url);
+        $items[] = l($text, $url, $destination);
       } else {
         if (node_access('create', $referenceable_type)) {
           $text = t(variable_get('nodereferrer_create_reference_label_single', 'Replace with new @type'),
             array('@type' => $type_info['name']));
           $url = 'node/'.$node->nid.'/create_reference/'.$i.'/'.$referenceable_type;
-          $items[] = l($text, $url);
+          $items[] = l($text, $url, $destination);
         }
         
         $text = t(variable_get('nodereferrer_create_reference_label_add_single', 'Replace with existing @type'),
           array('@type' => $type_info['name']));
         $url = 'node/'.$node->nid.'/add_reference/'.$i.'/'.$referenceable_type;
-        $items[] = l($text, $url);
+        $items[] = l($text, $url, $destination);
       }
     }
     
