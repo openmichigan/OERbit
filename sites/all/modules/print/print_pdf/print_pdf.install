@@ -1,5 +1,5 @@
 <?php
-// $Id: print_pdf.install,v 1.1.2.13 2009/09/09 23:08:58 jcnventura Exp $
+// $Id: print_pdf.install,v 1.1.2.20 2010/08/17 23:10:43 jcnventura Exp $
 
 /**
  * @file
@@ -13,6 +13,9 @@
  */
 function print_pdf_install() {
   drupal_install_schema('print_pdf');
+
+  // Module weight
+  update_sql("UPDATE {system} SET weight = 2 WHERE name = 'print_pdf'");
 }
 
 /**
@@ -24,6 +27,7 @@ function print_pdf_uninstall() {
   variable_del('print_pdf_settings');
   variable_del('print_pdf_show_link');
   variable_del('print_pdf_link_pos');
+  variable_del('print_pdf_link_teaser');
   variable_del('print_pdf_node_link_visibility');
   variable_del('print_pdf_node_link_pages');
   variable_del('print_pdf_link_class');
@@ -39,9 +43,9 @@ function print_pdf_uninstall() {
   variable_del('print_pdf_link_text');
   variable_del('print_pdf_link_use_alias');
   variable_del('print_pdf_filename');
-  variable_del('print_pdf_wkhtmltopdf_xdisplay');
+  variable_del('print_pdf_autoconfig');
+  variable_del('print_pdf_dompdf_unicode');
   variable_del('print_pdf_wkhtmltopdf_options');
-  variable_del('print_pdf_xvfb_options');
   $settings = db_query("SELECT name FROM {variable} WHERE name LIKE 'print\_pdf\_display\_%'");
   while ($variable = db_fetch_object($settings)) {
     variable_del($variable->name);
@@ -236,6 +240,59 @@ function print_pdf_update_6004() {
     if ((strpos($role->perm, 'access print') !== FALSE)) {
       $role->perm = db_escape_string('access PDF version, '. $role->perm);
       $ret[] = update_sql("UPDATE {permission} SET perm = '$role->perm' WHERE rid = $role->rid");
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.11
+ */
+function print_pdf_update_6005() {
+  $ret = array();
+
+  variable_del('print_pdf_wkhtmltopdf_xdisplay');
+  variable_del('print_pdf_xvfb_options');
+
+  // BLOCK_CACHE_GLOBAL -> 8
+  $ret[] = update_sql("UPDATE {blocks} SET cache = 8 WHERE module = 'print_pdf' AND delta = '0'");
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.11
+ */
+function print_pdf_update_6006() {
+  $ret = array();
+  // Module weight
+  $ret[] = update_sql("UPDATE {system} SET weight = 2 WHERE name = 'print_pdf'");
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.11
+ */
+function print_pdf_update_6007() {
+  $ret = array();
+
+  foreach (node_get_types() as $key => $value) {
+    $print_pdf_display = variable_get('print_pdf_display_'. $value->type, 1);
+    $print_pdf_display_comment = variable_get('print_pdf_display_comment_'. $value->type, 0);
+    $print_pdf_display_urllist = variable_get('print_pdf_display_urllist_'. $value->type, 1);
+
+    if (!$print_pdf_display || $print_pdf_display_comment || !$print_pdf_display_urllist) {
+      $result = db_query("SELECT n.nid, link, comments, url_list from {node} AS n LEFT JOIN {print_pdf_node_conf} AS pnc ON n.nid = pnc.nid WHERE type = '%s'", $value->type);
+      while ($conf = db_fetch_object($result)) {
+        if (($conf->link != NULL) && ($conf->comments != NULL) && ($conf->url_list != NULL)) {
+          $conf->link = !$print_pdf_display ? 0 : $conf->link;
+          $conf->comments = $print_pdf_display_comment ? 1 : $conf->comments;
+          $conf->url_list = !$print_pdf_display_urllist ? 0 : $conf->url_list;
+          $ret[] = update_sql("UPDATE {print_pdf_node_conf} SET link = $conf->link, comments = $conf->comments, url_list = $conf->url_list WHERE nid = $conf->nid");
+        }
+        else {
+          $ret[] = update_sql("INSERT INTO {print_pdf_node_conf} (nid, link, comments, url_list) VALUES ($conf->nid, $print_pdf_display, $print_pdf_display_comment, $print_pdf_display_urllist)");
+        }
+      }
     }
   }
   return $ret;

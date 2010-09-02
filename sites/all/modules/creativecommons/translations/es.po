@@ -1,7 +1,10 @@
-# $Id: es.po,v 1.1.2.2 2009/12/08 03:54:47 balleyne Exp $
+# $Id: es.po,v 1.1.2.3 2010/07/14 15:00:32 marvil07 Exp $
 #
-# LANGUAGE translation of Drupal (general)
-# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Spanish translation of creativecommons (6.x-1.x)
+# Copyright 2009 Carlos Cámara <>
+# Copyright 2010 Carlos Cámara <>
+# Copyright 2010 Marco Villegas <marvil07@gmail.com>
+#
 # Generated from files:
 #  creativecommons.class.php,v 1.3.4.46 2009/11/04 11:43:16 balleyne
 #  creativecommons.module,v 1.9.2.65 2009/11/04 08:51:15 balleyne
@@ -10,19 +13,18 @@
 #  creativecommons.actions.inc,v 1.1.2.2 2009/08/25 15:14:09 balleyne
 #  creativecommons_views_handler_field_license_uri.inc,v 1.1.2.1 2009/08/17 18:52:56 balleyne
 #
-# Carlos Cámara, 2009.
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
+"Project-Id-Version: creativecommons 6.x-1.x\n"
 "POT-Creation-Date: 2009-11-10 06:26-0500\n"
-"PO-Revision-Date: 2009-11-25 21:41+0100\n"
-"Last-Translator: Carlos Cámara\n"
-"Language-Team: Català <kde-i18n-ca@kde.org>\n"
+"PO-Revision-Date: 2010-07-14 09:39-0500\n"
+"Last-Translator: Marco Villegas <marvil07@gmail.com>\n"
+"Language-Team: Spanish team\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Lokalize 1.0\n"
+
 
 #: creativecommons.class.php:53
 msgid "None (All Rights Reserved)"
@@ -30,21 +32,24 @@ msgstr "Ninguno (Todos los derechos reservados)"
 
 #: creativecommons.class.php:100
 msgid "CC0 1.0 Universal"
-msgstr ""
+msgstr "CC0 1.0 Universal"
 
 #: creativecommons.class.php:137
 msgid "CC API Error (@error-id): %error-message"
-msgstr ""
+msgstr "Error CC API (@error-id): %error-message"
 
-#: creativecommons.class.php:190 creativecommons.module:746;771;777;1279;1376;54 creativecommons.info:0 includes/creativecommons.views.inc:19;23
+#: creativecommons.class.php:190
+#: creativecommons.module:746;771;777;1279;1376;54 creativecommons.info:0
+#: includes/creativecommons.views.inc:19;23
 msgid "Creative Commons"
-msgstr ""
+msgstr "Creative Commons"
 
 #: creativecommons.class.php:203
 msgid "CC0"
-msgstr ""
+msgstr "CC0"
 
-#: creativecommons.class.php:250 creativecommons.module:1959 includes/creativecommons.views.inc:62
+#: creativecommons.class.php:250 creativecommons.module:1959
+#: includes/creativecommons.views.inc:62
 msgid "Attribution"
 msgstr "Reconocimiento"
 
@@ -89,54 +94,118 @@ msgid "Work"
 msgstr "Obra"
 
 #: creativecommons.class.php:419
-msgid "To the extent possible under law, all copyright and related or neighboring rights to this <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <a rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property=\"dc:title\">@dc:title</a>, have been waived, although certain works referenced herein may be separately licensed."
+msgid ""
+"To the extent possible under law, all copyright and related or neighboring "
+"rights to this <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</"
+"span>, <a rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property="
+"\"dc:title\">@dc:title</a>, have been waived, although certain works "
+"referenced herein may be separately licensed."
 msgstr ""
+"En la medida que la ley lo permita, todo el copyright y derechos "
+"relacionados a <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</"
+"span>, <a rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property="
+"\"dc:title\">@dc:title</a>, han sido cedidos, sin embargo algunos trabajos "
+"referenciados aquí pueden tener otra licencia."
 
 #: creativecommons.class.php:423
-msgid "This <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <a rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property=\"dc:title\">@dc:title</a>, is licensed under a <a rel=\"license\" href=\"@license-uri\">@license-name license</a>, although certain works referenced herein may be separately licensed."
-msgstr "Este/a <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <a rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property=\"dc:title\">@dc:title</a>, está bajo licencia <a rel=\"license\" href=\"@license-uri\">@license-name license</a>, aunque otras obras referenciadas aquí pueden estar sujetas a otro tipo de licencias."
+msgid ""
+"This <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <a "
+"rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property=\"dc:title"
+"\">@dc:title</a>, is licensed under a <a rel=\"license\" href=\"@license-uri"
+"\">@license-name license</a>, although certain works referenced herein may "
+"be separately licensed."
+msgstr ""
+"Este/a <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <a "
+"rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property=\"dc:title"
+"\">@dc:title</a>, está bajo licencia <a rel=\"license\" href=\"@license-uri"
+"\">@license-name license</a>, aunque otras obras referenciadas aquí pueden "
+"estar sujetas a otro tipo de licencias."
 
 #: creativecommons.class.php:430
-msgid "To the extent possible under law, all copyright and related or neighboring rights to this <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <span property=\"dc:title\">@dc:title</span>, by <a rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property=\"cc:attributionName\">@cc:attributionName</a> have been waived."
+msgid ""
+"To the extent possible under law, all copyright and related or neighboring "
+"rights to this <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</"
+"span>, <span property=\"dc:title\">@dc:title</span>, by <a rel=\"cc:"
+"attributionURL\" href=\"@cc:attributionURL\" property=\"cc:attributionName"
+"\">@cc:attributionName</a> have been waived."
 msgstr ""
+"En la medida que la ley lo permita, todo el copyright y derechos "
+"relacionados a <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</"
+"span>, <span property=\"dc:title\">@dc:title</span>, por <a rel=\"cc:"
+"attributionURL\" href=\"@cc:attributionURL\" property=\"cc:attributionName"
+"\">@cc:attributionName</a>, han sido cedidos."
 
 #: creativecommons.class.php:434
-msgid "This <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <span property=\"dc:title\">@dc:title</span>, by <a rel=\"cc:attributionURL\" href=\"@cc:attributionURL\" property=\"cc:attributionName\">@cc:attributionName</a> is licensed under a <a rel=\"license\" href=\"@license-uri\">@license-name license</a>."
+msgid ""
+"This <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <span "
+"property=\"dc:title\">@dc:title</span>, by <a rel=\"cc:attributionURL\" href="
+"\"@cc:attributionURL\" property=\"cc:attributionName\">@cc:attributionName</"
+"a> is licensed under a <a rel=\"license\" href=\"@license-uri\">@license-"
+"name license</a>."
 msgstr ""
+"Este <span rel=\"dc:type\" href=\"@dc:type-uri\">@dc:type-name</span>, <span "
+"property=\"dc:title\">@dc:title</span>, por <a rel=\"cc:attributionURL\" "
+"href=\"@cc:attributionURL\" property=\"cc:attributionName\">@cc:"
+"attributionName</a> está bajo la licencia <a rel=\"license\" href=\"@license-"
+"uri\">@license-name license</a>."
 
 #: creativecommons.class.php:445
-msgid "There are <a rel=\"cc:morePermissions\" href=\"@cc:morePermissions\">alternative licensing options</a> available."
+msgid ""
+"There are <a rel=\"cc:morePermissions\" href=\"@cc:morePermissions"
+"\">alternative licensing options</a> available."
 msgstr ""
+"Hay <a rel=\"cc:morePermissions\" href=\"@cc:morePermissions\">opciones de "
+"licenciamiento alternativas</a> disponibles."
 
 #: creativecommons.class.php:450
 msgid "<span property=\"dc:description\">@dc:description</span>"
-msgstr ""
+msgstr "<span property=\"dc:description\">@dc:description</span>"
 
 #: creativecommons.class.php:459
-msgid "Copyright &copy; <span property=\"dc:date\">@dc:date</span> <span property=\"dc:rights\">@dc:rights</span>"
+msgid ""
+"Copyright &copy; <span property=\"dc:date\">@dc:date</span> <span property="
+"\"dc:rights\">@dc:rights</span>"
 msgstr ""
+"Copyright &copy; <span property=\"dc:date\">@dc:date</span> <span property="
+"\"dc:rights\">@dc:rights</span>"
 
 #: creativecommons.class.php:544
 msgid "CC license could not be saved due to missing node argument."
 msgstr ""
+"La licencia CC no se pudo guardar debido a la falta de un argumento de nodo."
 
 #: creativecommons.actions.inc:32
 msgid "Set Creative Commons license"
 msgstr "Elige la licencia Creative Commons"
 
 #: creativecommons.module:93
-msgid "A Creative Commons license helps you publish your work while letting others know exactly what they can and can't do with it. Creative Commons offers a flexible range of protections and freedoms for authors and artists, built upon the \"all rights reserved\" concept of traditional copyright to create a voluntary \"some rights reserved\" copyright."
+msgid ""
+"A Creative Commons license helps you publish your work while letting others "
+"know exactly what they can and can't do with it. Creative Commons offers a "
+"flexible range of protections and freedoms for authors and artists, built "
+"upon the \"all rights reserved\" concept of traditional copyright to create "
+"a voluntary \"some rights reserved\" copyright."
 msgstr ""
-"Una licencia Creative Commons ayuda a publicar tu obra a la vez que establece lo que terceras partes pueden o no pueden hacer con ella. Creative Commons ofrece distintas posibilidades de protecciones y libertadas para autores y artistas basadas en el concepto de \"todos los derechos reservados\" del copyright tradicional para crear un concepto voluntario de copyright  bajo el lema de \"alunos derechos "
-"reservados\"."
+"Una licencia Creative Commons ayuda a publicar tu obra a la vez que "
+"establece lo que terceras partes pueden o no pueden hacer con ella. Creative "
+"Commons ofrece distintas posibilidades de protecciones y libertadas para "
+"autores y artistas basadas en el concepto de \"todos los derechos reservados"
+"\" del copyright tradicional para crear un concepto voluntario de copyright  "
+"bajo el lema de \"alunos derechos reservados\"."
 
 #: creativecommons.module:94
 msgid "Assign a Creative Commons license to site content."
 msgstr "Asigne una licencia Creative Commons para el contenido del sitio."
 
 #: creativecommons.module:95
-msgid "Attaching a Creative Commons license to a node within Drupal will designate the content of that node, as well as any attached files, as available under that license."
-msgstr "Adjuntar una licencia Creative Commons a un nodo de Drupal indicará, a su vez , que el contenido del nodo además de cualquier archivo adjunto esté disponible bajo la misma licencia."
+msgid ""
+"Attaching a Creative Commons license to a node within Drupal will designate "
+"the content of that node, as well as any attached files, as available under "
+"that license."
+msgstr ""
+"Adjuntar una licencia Creative Commons a un nodo de Drupal indicará, a su "
+"vez , que el contenido del nodo además de cualquier archivo adjunto esté "
+"disponible bajo la misma licencia."
 
 #: creativecommons.module:96
 msgid "For more information, visit <a href=\"@learn-more\">@learn-more</a>."
@@ -151,7 +220,9 @@ msgid "Available license types"
 msgstr "Tipos de licencias disponibles"
 
 #: creativecommons.module:137
-msgid "Select the license types to make available to users. To make a Creative Commons license mandatory, unselect \"None.\""
+msgid ""
+"Select the license types to make available to users. To make a Creative "
+"Commons license mandatory, unselect \"None.\""
 msgstr "Seleccione el tipo de licencia aplicable a usuarios"
 
 #: creativecommons.module:129;144
@@ -171,8 +242,14 @@ msgid "Required metadata fields"
 msgstr "Campos de metadatos requeridos"
 
 #: creativecommons.module:153
-msgid "This option allows you to require specific metadata to be included when a license is applied. Metadata must be enabled for requirement to be enforced."
+#, fuzzy
+msgid ""
+"This option allows you to require specific metadata to be included when a "
+"license is applied. Metadata must be enabled for requirement to be enforced."
 msgstr ""
+"Esta opción permite requerir metadatos específicos para ser incluídos cuando "
+"la licencia sea aplicada. Los metadatos debes ser habilitados para forzar "
+"requerirlos."
 
 #: creativecommons.module:159
 msgid "Display"
@@ -199,8 +276,12 @@ msgid "All Rights Reserved Text"
 msgstr "Texto para la licencia de Todos los Derechos Reservados"
 
 #: creativecommons.module:207
-msgid "This text will be displayed for content which has no license specified (i.e. all rights reserved)."
-msgstr "Este texto se mostrará para el contenido para el que no se haya especificado licencia (p. ej. Todos los Derechos Reservados)"
+msgid ""
+"This text will be displayed for content which has no license specified (i.e. "
+"all rights reserved)."
+msgstr ""
+"Este texto se mostrará para el contenido para el que no se haya especificado "
+"licencia (p. ej. Todos los Derechos Reservados)"
 
 #: creativecommons.module:216
 msgid "Advanced"
@@ -219,20 +300,32 @@ msgid "Insert RDF/XML"
 msgstr "Insertar RDF/XML"
 
 #: creativecommons.module:232
-msgid "Attach machine-readable license information as RDF/XML within the HTML of a node to let visitors know what license applies to your works."
+msgid ""
+"Attach machine-readable license information as RDF/XML within the HTML of a "
+"node to let visitors know what license applies to your works."
 msgstr ""
+"Adjuntar información de licencia legible por máquinas como RDF/XML dentro "
+"del HTML de un nodo para permitir a los visitantes saber qué licencia es "
+"aplicada a su trabajo."
 
 #: creativecommons.module:237
 msgid "Display node license when same as site license"
-msgstr "Mostrar licencia del nodo cuando coincide con la licencia general del sitio"
+msgstr ""
+"Mostrar licencia del nodo cuando coincide con la licencia general del sitio"
 
 #: creativecommons.module:240
-msgid "Note: if not displayed, node specific metadata won't be displayed either."
-msgstr "Nota: si no se muestra tampoco se mostrarán los metadatos específicos del nodo"
+msgid ""
+"Note: if not displayed, node specific metadata won't be displayed either."
+msgstr ""
+"Nota: si no se muestra tampoco se mostrarán los metadatos específicos del "
+"nodo"
 
 #: creativecommons.module:256
-msgid "License information will not be displayed for nodes with disabled licenses."
-msgstr "La información de Licencia no se mostrará para los nodos con licencias no habilitadas"
+msgid ""
+"License information will not be displayed for nodes with disabled licenses."
+msgstr ""
+"La información de Licencia no se mostrará para los nodos con licencias no "
+"habilitadas"
 
 #: creativecommons.module:272
 msgid "No Creative Commons license types are enabled!"
@@ -259,16 +352,24 @@ msgid "Site license"
 msgstr "Licencia del sitio"
 
 #: creativecommons.module:328
-msgid "Use the default license as a site wide license, to be displayed on every page."
-msgstr "Utilizar la licencia por defecto como licencia aplicable al sitio completo y mostrarla en cada página."
+msgid ""
+"Use the default license as a site wide license, to be displayed on every "
+"page."
+msgstr ""
+"Utilizar la licencia por defecto como licencia aplicable al sitio completo y "
+"mostrarla en cada página."
 
 #: creativecommons.module:346;1790
 msgid "Additional Information"
 msgstr "Información adicional"
 
 #: creativecommons.module:347
-msgid "If default license is used as site wide license, the following metadata will apply."
-msgstr "Si la licencia por defecto se aplica al sitio completo se aplicarán los siguientes metadatos"
+msgid ""
+"If default license is used as site wide license, the following metadata will "
+"apply."
+msgstr ""
+"Si la licencia por defecto se aplica al sitio completo se aplicarán los "
+"siguientes metadatos"
 
 #: creativecommons.module:411
 msgid "Additional text"
@@ -284,7 +385,8 @@ msgstr "Tipos de contenido"
 
 #: creativecommons.module:448
 msgid "Enable Creative Commons licensing for the following content types."
-msgstr "Habilitar licencias Creative Commons para los siguientes tipos de contenido."
+msgstr ""
+"Habilitar licencias Creative Commons para los siguientes tipos de contenido."
 
 #: creativecommons.module:524
 msgid "The @license-name license is not enabled."
@@ -295,16 +397,24 @@ msgid "Please review license selection."
 msgstr "Por favor, revise la selección de licencias"
 
 #: creativecommons.module:531
-msgid "License jurisdiction will be changed from @old-jurisdiction to @new-jurisdiction."
-msgstr "La jurisdicción de la licencia anterior (<em>@old-jurisdiction</em>) pasará a ser <em>@new-jurisdiction</em>."
+msgid ""
+"License jurisdiction will be changed from @old-jurisdiction to @new-"
+"jurisdiction."
+msgstr ""
+"La jurisdicción de la licencia anterior (<em>@old-jurisdiction</em>) pasará "
+"a ser <em>@new-jurisdiction</em>."
 
 #: creativecommons.module:538
-msgid "The version of your license will be changed from @old-version to @new-version."
-msgstr "La versión de la licencia anterior (<em>@old-version</em>) pasará a ser <em>@new-version</em>."
+msgid ""
+"The version of your license will be changed from @old-version to @new-"
+"version."
+msgstr ""
+"La versión de la licencia anterior (<em>@old-version</em>) pasará a ser "
+"<em>@new-version</em>."
 
 #: creativecommons.module:542
 msgid "Your license selection is set to be altered."
-msgstr ""
+msgstr "Su elección de licencia está configurada para ser modificada."
 
 #: creativecommons.module:570;1749 includes/creativecommons.views.inc:38;44
 msgid "Creative Commons License"
@@ -316,7 +426,7 @@ msgstr "Genérica"
 
 #: creativecommons.module:957
 msgid "Error accessing CC API: %error"
-msgstr ""
+msgstr "Error accediendo a CC API: %error"
 
 #: creativecommons.module:1015
 msgid "Attribution Name"
@@ -328,7 +438,7 @@ msgstr "Reconocimiento (URL)"
 
 #: creativecommons.module:1017
 msgid "<a href=\"@cc-plus-about\">CC+</a> URL"
-msgstr ""
+msgstr "URL <a href=\"@cc-plus-about\">CC+</a>"
 
 #: creativecommons.module:1020
 msgid "Title"
@@ -360,15 +470,23 @@ msgstr "Año de Copyright"
 
 #: creativecommons.module:1075
 msgid "The name the creator of a Work would like used when attributing re-use."
-msgstr "El nombre que el creador de la Obra quiere utilizar cuando se permita reutilización bajo reconocimiento"
+msgstr ""
+"El nombre que el creador de la Obra quiere utilizar cuando se permita "
+"reutilización bajo reconocimiento"
 
 #: creativecommons.module:1076
 msgid "The URL the creator of a Work would like used when attributing re-use."
-msgstr "El nombre y/o la URL que el creador de una obra desea utilizar el reconocimiento de la misma."
+msgstr ""
+"El nombre y/o la URL que el creador de una obra desea utilizar el "
+"reconocimiento de la misma."
 
 #: creativecommons.module:1077
-msgid "The URL where additional permissions or alternative licenses for a Work are available."
-msgstr "URL con permisos adicionales o licencias alternativas disponibles para la Obra"
+msgid ""
+"The URL where additional permissions or alternative licenses for a Work are "
+"available."
+msgstr ""
+"URL con permisos adicionales o licencias alternativas disponibles para la "
+"Obra"
 
 #: creativecommons.module:1080
 msgid "A name by which the Work is formally known."
@@ -380,7 +498,7 @@ msgstr "Naturaleza o género de la Obra"
 
 #: creativecommons.module:1082
 msgid "An account of the Work."
-msgstr ""
+msgstr "Una cuenta del trabajo."
 
 #: creativecommons.module:1083
 msgid "An entity primarily responsible for making the Work."
@@ -388,7 +506,7 @@ msgstr "Entidad responsable de la creación de la Obra"
 
 #: creativecommons.module:1084
 msgid "Information about rights held in and over the Work."
-msgstr ""
+msgstr "Información sobre los derechos en y sobre la Obra."
 
 #: creativecommons.module:1085
 msgid "Year of copyright."
@@ -397,6 +515,7 @@ msgstr "Año de Copyright."
 #: creativecommons.module:1086
 msgid "A related resource from which the described Work is derived."
 msgstr ""
+"Un recurso relacionado desde el cual el Trabajo descrito está derivado."
 
 #: creativecommons.module:1103
 msgid " (see !link)"
@@ -451,8 +570,12 @@ msgid "Allow user to attach a Creative Commons license"
 msgstr "Permitir al usuario adjuntar una licencia Creative Commons"
 
 #: creativecommons.module:1258
-msgid "Users with the <em>attach creative commons</em> permission will be able to select a license for a node of this type."
-msgstr "Usuarios con el permiso <em>adjuntar creative commons</em> podrán seleccionar una licencia para unnodo de este tipo."
+msgid ""
+"Users with the <em>attach creative commons</em> permission will be able to "
+"select a license for a node of this type."
+msgstr ""
+"Usuarios con el permiso <em>adjuntar creative commons</em> podrán "
+"seleccionar una licencia para unnodo de este tipo."
 
 #: creativecommons.module:1280
 msgid "Find content that can be..."
@@ -463,8 +586,12 @@ msgid "used for <strong>commercial purposes</strong>"
 msgstr "usado para <strong>fines comerciales</strong>"
 
 #: creativecommons.module:1291
-msgid "<strong>modified</strong>, <strong>adapted</strong> or <strong>built upon</strong>"
-msgstr "<strong>modificado</strong>, <strong>adaptado</strong> o <strong>usado como base</strong>"
+msgid ""
+"<strong>modified</strong>, <strong>adapted</strong> or <strong>built upon</"
+"strong>"
+msgstr ""
+"<strong>modificado</strong>, <strong>adaptado</strong> o <strong>usado como "
+"base</strong>"
 
 #: creativecommons.module:1306;1358
 msgid "Advanced search"
@@ -503,14 +630,31 @@ msgid "Creative Commons Site License"
 msgstr "Licencia Creative Commons del sitio"
 
 #: creativecommons.module:1734
-msgid "With a Creative Commons license, <em>you keep your\tcopyright</em> but allow people to <a href=\"@about-licenses-url\">copy and distribute your work</a> provided they <a href=\"@attribution-wiki-url\">give you credit</a> -- and only on the conditions you specify here. For those new to Creative Commons licensing, visit the website for <a href=\"@think-about-url\">a list of things to think about</a>."
+msgid ""
+"With a Creative Commons license, <em>you keep your\tcopyright</em> but allow "
+"people to <a href=\"@about-licenses-url\">copy and distribute your work</a> "
+"provided they <a href=\"@attribution-wiki-url\">give you credit</a> -- and "
+"only on the conditions you specify here. For those new to Creative Commons "
+"licensing, visit the website for <a href=\"@think-about-url\">a list of "
+"things to think about</a>."
 msgstr ""
-"Con una licencia Creative Commons <em>mantiene su copyright</em> pero permite a otras personas <a href=\"@about-licenses-url\">copiar y  distribuir su obra</a>  siempre que ellas <a href=\"@attribution-wiki-url\">le citen</a> y únicamente en las condiciones que usted especifique aquí. Para aquéllos que quieran saber más sobre las licencias Creative Commons pueden visitar el sitio web para <a "
-"href=\"@think-about-url\">conocer una serie de cosas a tener en cuenta</a>."
+"Con una licencia Creative Commons <em>mantiene su copyright</em> pero "
+"permite a otras personas <a href=\"@about-licenses-url\">copiar y  "
+"distribuir su obra</a>  siempre que ellas <a href=\"@attribution-wiki-url"
+"\">le citen</a> y únicamente en las condiciones que usted especifique aquí. "
+"Para aquéllos que quieran saber más sobre las licencias Creative Commons "
+"pueden visitar el sitio web para <a href=\"@think-about-url\">conocer una "
+"serie de cosas a tener en cuenta</a>."
 
 #: creativecommons.module:1737
-msgid "If you want to offer your work with no conditions or you want to certify a work as public domain, choose one of the <a href=\"@public-domain-url\">public domain tools</a>."
-msgstr "Si desea ofrecer su obra sin ninguna condición o si desea certificar la obra como Dominio público, elija una de <a href=\"@public-domain-url\">las herramientas de dominio público</a>."
+msgid ""
+"If you want to offer your work with no conditions or you want to certify a "
+"work as public domain, choose one of the <a href=\"@public-domain-url"
+"\">public domain tools</a>."
+msgstr ""
+"Si desea ofrecer su obra sin ninguna condición o si desea certificar la obra "
+"como Dominio público, elija una de <a href=\"@public-domain-url\">las "
+"herramientas de dominio público</a>."
 
 #: creativecommons.module:1800
 msgid "!metadata-name of licensed work"
@@ -518,7 +662,7 @@ msgstr "!metadata-name de la obra sujeta a la licencia"
 
 #: creativecommons.module:1927;1984
 msgid "Creative Commons User Defaults"
-msgstr ""
+msgstr "Preferencias de usuario de Creative Commons"
 
 #: creativecommons.module:1932;1994
 msgid "Jurisdiction"
@@ -540,7 +684,7 @@ msgstr "Seleccione el tipo de licencia por defecto para nuevo contenido"
 msgid "There is 1 node currently using the %name license. "
 msgid_plural "There are @count nodes currently using the %name license. "
 msgstr[0] "Hay 1 nodo utilizando la %name license. "
-msgstr[1] ""
+msgstr[1] "Hay @count nodos utilizando la %name license. "
 
 #: creativecommons.module:43
 msgid "administer creative commons"
@@ -568,15 +712,20 @@ msgstr "Tipos de contenido"
 
 #: creativecommons.info:0
 msgid "Allows users to add Creative Commons license to selected content."
-msgstr "Permitir a los usuarios añadir licencia Creative Commons al contenido seleccionado"
+msgstr ""
+"Permitir a los usuarios añadir licencia Creative Commons al contenido "
+"seleccionado"
 
 #: creativecommons.info:0
 msgid "Licenses"
 msgstr "Licencias"
 
 #: includes/creativecommons.views.inc:24
+#, fuzzy
 msgid "Creative Commons table contains licensing information related to nodes."
 msgstr ""
+"La tabla Creative Commons contiene información de licenciamiento relacionada "
+"a nodos."
 
 #: includes/creativecommons.views.inc:39
 msgid "License information that references a node."
@@ -591,8 +740,12 @@ msgid "The Creative Commons license applied to this node."
 msgstr "La licencia Creative Commons aplicada a este nodo"
 
 #: includes/creativecommons.views.inc:63
-msgid "The name and/or URL the creator of a work would like used when attributing re-use."
-msgstr "El nombre y/o la URL que el creador de una obra desea utilizar el reconocimiento de la misma."
+msgid ""
+"The name and/or URL the creator of a work would like used when attributing "
+"re-use."
+msgstr ""
+"El nombre y/o la URL que el creador de una obra desea utilizar el "
+"reconocimiento de la misma."
 
 #: includes/creativecommons_views_handler_field_license_uri.inc:37
 msgid "Display Style"
@@ -601,5 +754,3 @@ msgstr "Estilo de visualización"
 #: includes/creativecommons_views_handler_field_license_uri.inc:38
 msgid "How would you like the license to be displayed?"
 msgstr "¿Cómo desea mostrar la licencia?"
-
-

@@ -2,6 +2,8 @@
 TODO List
 
 Non-code
+- Add better documentation about what's different about configuring
+  the PHP and what's configuring the web interface
 - Make distinction between module and library clearer
 - Link to WYSIWYG editors, research integration prospects, and how
   they're handling security

@@ -1,12 +1,12 @@
 <?php
-// $Id: imce.module,v 1.23.2.5 2008/07/19 13:21:02 ufku Exp $
+// $Id: imce.module,v 1.23.2.10 2010/05/29 02:06:32 ufku Exp $
 
 /**
  * Implementation of hook_menu().
  */
 function imce_menu() {
   $items = array();
-  $access = array('administer site configuration');
+  $access = array('administer imce(execute PHP)');
   $items['imce'] = array(
     'title' => 'File browser',
     'page callback' => 'imce_page',
@@ -55,6 +55,13 @@ function imce_menu() {
 }
 
 /**
+ * Implementation of hook_perm().
+ */
+function imce_perm() {
+  return array('administer imce(execute PHP)');
+}
+
+/**
  * Implementation of hook_theme().
  */
 function imce_theme() {
@@ -84,19 +91,13 @@ function imce_theme() {
  * Implementation of hook_file_download().
  */
 function imce_file_download($file) {
-  if ($path = file_create_path($file)) {
-    if ($info = @getimagesize($path)) {
-      $type = $info['mime'];
-    }
-    else if (function_exists('finfo_file') && $finfo = @finfo_open(FILEINFO_MIME)) {
-      $type = finfo_file($finfo, $path);
-      finfo_close($finfo);
-    }
-    else if ($result = db_result(db_query("SELECT filemime FROM {files} WHERE filepath = '%s'", $path))) {
+  $serve = variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE && !variable_get('imce_settings_disable_private', 0) && ($path = file_create_path($file)) && file_exists($path);
+  if ($serve) {
+    if ($result = db_result(db_query("SELECT filemime FROM {files} WHERE filepath = '%s'", $path))) {
       $type = $result;
     }
-    else if (function_exists('mime_content_type')) {
-      $type = mime_content_type($path);
+    elseif (function_exists('file_get_mimetype')) {
+      $type = file_get_mimetype($path);
     }
     else {
       $type = 'application/x-download';
@@ -181,7 +182,7 @@ function imce_user_page_access($account, $user = FALSE) {
     global $user;
   }
 
-  return $user->uid == 1 || ($account->uid == $user->uid && imce_access($user));
+  return $user->uid == 1 || ($account->uid == $user->uid && ($profile = imce_user_profile($user)) && $profile['usertab']);
 }
 
 /**

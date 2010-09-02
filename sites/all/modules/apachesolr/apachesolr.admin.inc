@@ -1,5 +1,5 @@
 <?php
-// $Id: apachesolr.admin.inc,v 1.1.2.47 2010/02/27 01:54:50 pwolanin Exp $
+// $Id: apachesolr.admin.inc,v 1.1.2.53 2010/06/28 01:59:56 pwolanin Exp $
 
 /**
  * @file
@@ -74,7 +74,7 @@ function apachesolr_settings() {
   $form['mlt_link'] = array(
     '#type' => 'item',
     '#value' => l(t('Add a new content recommendation block'), 'admin/settings/apachesolr/mlt/add_block'),
-    '#description' => format_plural(count(apachesolr_mlt_list_blocks()),  'You currently have 1 block.', 'You currenly have @count blocks.'),
+    '#description' => format_plural(count(apachesolr_mlt_list_blocks()), 'You currently have 1 block.', 'You currenly have @count blocks.'),
   );
   $form['advanced'] = array(
     '#type' => 'fieldset',
@@ -102,10 +102,12 @@ function apachesolr_settings() {
  * Validation function for the apachesolr_settings form.
  */
 function apachesolr_settings_validate($form, &$form_state) {
-  $port = $form_state['values']['apachesolr_port'];
-  // TODO: Port range should be 0-65535, but 0 crashes apachesolr
-  if (!ctype_digit($port) || $port < 1 || $port > 65535) {
-    form_set_error('apachesolr_port', t('The port has to be an integer between 1 and 65535.'));
+  if (isset($form['apachesolr_port'])) {
+    $port = $form_state['values']['apachesolr_port'];
+    // TODO: Port range should be 0-65535, but 0 crashes apachesolr
+    if (!ctype_digit($port) || $port < 1 || $port > 65535) {
+      form_set_error('apachesolr_port', t('The port has to be an integer between 1 and 65535.'));
+    }
   }
 }
 
@@ -113,6 +115,7 @@ function apachesolr_settings_validate($form, &$form_state) {
  * Gets information about the fields already in solr index.
  */
 function apachesolr_index_page() {
+  $data = (object) array();
   try {
     $solr = apachesolr_get_solr();
     // TODO: possibly clear this every page view if we are running multi-site.
@@ -127,7 +130,7 @@ function apachesolr_index_page() {
     $data->fields = array();
   }
 
-  $output  = '';
+  $output = '';
   if (isset($data->index->numDocs)) {
     $pending_docs = $delay_msg = $delete_msg = '';
     try {
@@ -153,9 +156,8 @@ function apachesolr_index_page() {
   $output .= drupal_get_form('apachesolr_delete_index_form');
   }
   else {
-    drupal_set_message(t('The index is in read-only mode. Options for deleting and re-indexing are therefore not available. The index mode can be changed on the !settings_page', array('!settings_page' => l(t('settings page'), 'admin/settings/apachesolr'))), 'warning'); 
+    drupal_set_message(t('The index is in read-only mode. Options for deleting and re-indexing are therefore not available. The index mode can be changed on the !settings_page', array('!settings_page' => l(t('settings page'), 'admin/settings/apachesolr'))), 'warning');
   }
-  
 
   return $output;
 }
@@ -242,6 +244,8 @@ function apachesolr_enabled_facets_form_submit($form, &$form_state) {
     $enabled[$module] = array_filter($facets);
   }
   apachesolr_save_enabled_facets($enabled);
+  // This cache being stale can prevent new facet filters from working.
+  apachesolr_clear_cache();
   drupal_set_message($form_state['values']['submit_message'], 'warning');
 }
 
@@ -264,7 +268,7 @@ function apachesolr_enabled_facets_form() {
 
   $enabled_facets = apachesolr_get_enabled_facets();
   $form = array();
-  $form['apachesolr_enabled_facets']['help'] = array (
+  $form['apachesolr_enabled_facets']['help'] = array(
     '#type' => 'item',
     '#value' => t('You can use this screen to select which search filter blocks should be created by enabling the corresponding filters on this page. For performance reasons, you should only enable filters that you intend to have available to users on the search page.  After selecting which filter blocks to create, you will be sent to the blocks page where you can choose which of those blocks should be enabled when your users search by placing each block in a region.'),
   );
@@ -275,7 +279,7 @@ function apachesolr_enabled_facets_form() {
       $module_list[$item['name']] = unserialize($item['info']);
     }
   }
-  foreach($module_facets as $module => $facets) {
+  foreach ($module_facets as $module => $facets) {
     $form['apachesolr_enabled_facets'][$module] = array(
       '#type' => 'fieldset',
       '#title' => check_plain($module_list[$module]['name']),
@@ -286,7 +290,7 @@ function apachesolr_enabled_facets_form() {
     // guaranteed to be unique.  A single module could, for example, have
     // two different blocks that expose different faceting on the same
     // field in the index.
-    foreach($facets as $delta => $data) {
+    foreach ($facets as $delta => $data) {
       $form['apachesolr_enabled_facets'][$module][$delta] = array(
         '#type' => 'checkbox',
         '#title' => $data['info'],
@@ -422,7 +426,7 @@ function apachesolr_delete_index_confirm_submit($form, &$form_state) {
   catch (Exception $e) {
     watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
   }
-}           
+}
 
 /**
  * Utility function to delete the index and reset all index counters.
@@ -475,7 +479,7 @@ function _apachesolr_field_name_map($field_name) {
       'tid' => t('Taxonomy term IDs'),
     );
     if (module_exists('taxonomy')) {
-      foreach(taxonomy_get_vocabularies() as $vocab) {
+      foreach (taxonomy_get_vocabularies() as $vocab) {
         $map['ts_vid_'. $vocab->vid .'_names'] = t('Taxonomy term names only from the %name vocabulary', array('%name' => $vocab->name));
         $map['im_vid_'. $vocab->vid] = t('Taxonomy term IDs from the %name vocabulary', array('%name' => $vocab->name));
       }
@@ -527,7 +531,7 @@ function apachesolr_mlt_block_form($delta = NULL) {
       return array();
     }
   }
-  else{
+  else {
     $block = apachesolr_mlt_block_defaults();
   }
 
@@ -552,7 +556,7 @@ function apachesolr_mlt_block_form($delta = NULL) {
     '#description' => t('Choose the fields to be used in calculating similarity. The default combination of %taxonomy_names and %title will provide relevant results for typical sites.', array("%taxonomy_names" => _apachesolr_field_name_map("taxonomy_names"), "%title" => _apachesolr_field_name_map("title"))),
     '#options' => apachesolr_mlt_get_fields(),
     '#required' => TRUE,
-    '#default_value' =>  $block['mlt_fl'],
+    '#default_value' => $block['mlt_fl'],
   );
   $form['advanced'] = array(
     '#type' => 'fieldset',
@@ -608,7 +612,7 @@ function apachesolr_mlt_block_defaults($block = array()) {
   return $block + array(
     'name' => '',
     'num_results' => '5',
-    'mlt_fl' =>  array(
+    'mlt_fl' => array(
       'title' => 'title',
       'taxonomy_names' => 'taxonomy_names',
     ),
@@ -630,8 +634,9 @@ function apachesolr_mlt_get_fields() {
   $fields = $solr->getFields();
   $rows = array();
   foreach ($fields as $field_name => $field) {
-    if ($field->schema{4} == 'V')
-    $rows[$field_name] = _apachesolr_field_name_map($field_name);
+    if ($field->schema{4} == 'V') {
+      $rows[$field_name] = _apachesolr_field_name_map($field_name);
+    }
   }
   ksort($rows);
   return $rows;
@@ -688,5 +693,57 @@ function apachesolr_mlt_delete_block_form_submit($form, &$form_state) {
   variable_set('apachesolr_mlt_blocks', $blocks);
   drupal_set_message(t('The block has been deleted.'));
   $form_state['redirect'] = 'admin/build/block';
+}
+
+/**
+ * Page callback to show available conf files.
+ */
+function apachesolr_config_files_overview() {
+  $output = '';
+  $xml = NULL;
+  try {
+    $solr = apachesolr_get_solr();
+    $response = $solr->makeServletRequest('admin/file');
+    $xml = simplexml_load_string($response->getRawResponse());
+  }
+  catch (Exception $e) {
+    watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+    drupal_set_message(nl2br(check_plain($e->getMessage())), "warning");
+  }
+  if ($xml) {
+    $files = $xml->xpath('//lst[@name="files"]/lst');
+    $items = array();
+    foreach ($files as $file) {
+      $atr = $file->attributes();
+      $name = (string) $atr[0];
+      $str = l($name, 'admin/reports/apachesolr/conf/'. $name);
+      $str .= '<br />' . format_date(strtotime((string) $file->date));
+      $str .= '<br />' . t('Size (bytes): @bytes', array('@bytes' => (string) $file->long));
+      $items[$name] = $str;
+    }
+    ksort($items);
+    $output .= theme('item_list', array_values($items));
+  }
+  return $output;
+}
+
+/**
+ * Page callback to show one conf file.
+ */
+function apachesolr_config_file($name) {
+  $output = '';
+  try {
+    $solr = apachesolr_get_solr();
+    $response = $solr->makeServletRequest('admin/file', array('file' => $name));
+    $raw_file = $response->getRawResponse();
+    
+    $output = '<pre>' . check_plain($raw_file) . '</pre>';
+    drupal_set_title(check_plain($name));
+  }
+  catch (Exception $e) {
+    watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+    drupal_set_message(nl2br(check_plain($e->getMessage())), "warning");
+  }
+  return $output;
 }
 

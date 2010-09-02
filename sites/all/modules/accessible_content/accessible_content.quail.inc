@@ -1,4 +1,4 @@
-<?php   // $Id: accessible_content.quail.inc,v 1.1.2.14 2010/04/07 02:20:10 kevee Exp $
+<?php   // $Id: accessible_content.quail.inc,v 1.1.2.20 2010/08/06 23:59:36 kevee Exp $
 
 /**
 *   @file
@@ -13,7 +13,7 @@ class Accessible_contentGuideline extends quailGuideline{
   /**
   *  An override of the default 'run' method which loads node information about the guidelin's tests
   */
-  function run($arg) {
+  function run($arg = NULL) {
     $this->loadModuleTests();
     if ($arg['ac_module_guideline']) {
       $guideline = $arg['ac_module_guideline'];
@@ -39,8 +39,8 @@ class Accessible_contentGuideline extends quailGuideline{
                         'translation' => $arg['ac_module_test']->title,
                       );
     }
-   
-    parent::run();
+    unset($arg['ac_module_guideline']);
+    parent::run($arg);
   }
   
   /**
@@ -130,7 +130,7 @@ class reportAccessibleContent extends quailReporter {
 *
 *
 */
-require_once('quail/reporters/reporter.demo.php');
+require_once('sites/all/libraries/quail/quail/reporters/reporter.demo.php');
 class reportAccessibleContentHighlight extends reportDemo {
 
   /**
@@ -155,7 +155,9 @@ class reportAccessibleContentHighlight extends reportDemo {
       foreach ($problems as $testname => $test) {
         if ((!isset($this->options->display_level) || $this->options->display_level >= $test['severity']) && is_array($test)) {
           foreach ($test as $k => $problem) {
-            if ($problem->element) {
+            if (is_object($problem) && property_exists($problem, 'element') && is_object($problem->element)) {
+              
+              $problem->element->removeAttribute('quail_style_index');
               $existing = $problem->element->getAttribute('class');
               $problem->element->setAttribute('class',
                 $existing .' '. $this->options->highlight_classes[$test['severity']]);

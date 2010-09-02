@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.8 2010/02/18 00:46:53 rdeboer Exp $
+$Id: README.txt,v 1.9 2010/05/06 03:30:20 rdeboer Exp $
 
 DESCRIPTION
 ===========
@@ -116,7 +116,7 @@ Module Grants features one hook, hook_user_node_access($revision_op, $node),
 which module developers may implement to alter or add to the behaviour of
 Module Grants as it determines whether access to a supplied node or revision
 should be granted using the requested operation.
-See the comments at the top of the module_grants.module file.
+See the module_grants.api.php file.
 
 AUTHOR
 ======

@@ -1,5 +1,5 @@
 <?php
-// $Id: date.inc,v 1.15.2.20 2009/11/06 00:52:19 quicksketch Exp $
+// $Id: date.inc,v 1.15.2.24 2010/07/27 06:16:50 quicksketch Exp $
 
 /**
  * @file
@@ -174,9 +174,6 @@ function webform_expand_date($element) {
   // Let Drupal do it's normal expansion.
   $element = expand_date($element);
 
-  // Don't use Drupal's validation though.
-  $element['#element_validate'] = array('webform_validate_date');
-
   // Set default values.
   foreach ($default_values as $type => $value) {
     switch ($type) {
@@ -297,7 +294,7 @@ function theme_webform_mail_date($data, $component) {
   if ($data[0] && $data[1]) {
     $timestamp = strtotime($data[0] .'/'. $data[1] .'/'. $data[2]);
     $format = webform_date_format('medium');
-    $output .= ' '. format_date($timestamp, 'custom', $format);
+    $output .= ' '. format_date($timestamp, 'custom', $format, 0);
   }
 
   return $output;
@@ -353,7 +350,7 @@ function _webform_analysis_rows_date($component, $sids = array()) {
   $result = db_query($query, array_merge(array($component['nid'], $component['cid']), $sids));
   // build an array of timestamps from entered values.
   $timestamps = array();
-  $submissions = 1;
+  $submissions = 0;
   while ($row = db_fetch_array($result)) {
     if ($row['no'] == '0') {
       $submissions++;
@@ -401,7 +398,9 @@ function _webform_analysis_rows_date($component, $sids = array()) {
  */
 function _webform_table_data_date($data) {
   if (drupal_strlen($data['value']['0']) > 0 && drupal_strlen($data['value']['1']) > 0 && drupal_strlen($data['value']['2']) > 0) {
-    return check_plain($data['value']['0'] .'/'. $data['value']['1'] .'/'. $data['value']['2']);
+    $timestamp = strtotime($data['value']['0'] .'/'. $data['value']['1'] .'/'. $data['value']['2']);
+    $format = webform_date_format('short');
+    return date($format, $timestamp);
   }
   else {
     return '';

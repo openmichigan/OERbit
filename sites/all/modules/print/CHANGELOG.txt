@@ -1,4 +1,107 @@
+August 22, 2010
+        Update CHANGELOG
+        Updated Polish translation by dargod
+        Update translations
+        Coder fixes
+August 20, 2010
+        Use theme_token_help to generate token list
+August 18, 2010
+        Fix #884936: Check if the select PDF tool is accessible and executable (wkhtmltopdf)
+        Fix #886766: Make unreadable custom CSS file a warning and not an error when submitting the settings form
+        Fix #885420: restore the call to init_theme()
+        Remove some PHP warnings in non-content pages
+        Fix #883952: Put base href at the top of the print template
+        Don't create configuration records if the content type settings are still the default value
+August 15, 2010
+        Fix #883086: blank CSS file field caused form validation failure in settings
+August 14, 2010
+        Fix #881650: hide insert warnings during node updates
+        Fix #881074 by ceme: use SCRIPT_FILENAME instead of DOCUMENT_ROOT when replacing image paths for local access
+        Fix #881870 by Shiny: recent update routines were not PostgreSQL compatible
+August 13, 2010
+        Updated Hungarian translation.
+August 12, 2010
+        Fix #880954: Enable translation of 'send page as' options
+        Fix #880400: document alternative sites/all/libraries path in INSTALL.txt
+August 11, 2010
+        SA-CONTRIB-2010-TBD: disable local file access with wkhtmltopdf
+        Update CHANGELOG
+August 9, 2010
+        Convert to local file access only for TCPDF and dompdf
+August 4, 2010
+        Templates are also searched in the core directories
+August 1, 2010
+        Coder fixes
+July 31, 2010
+        Update functions to modify the node_conf tables and the custom CSS path
+July 30, 2010
+        rename vars to variables in MODULE_preprocess_HOOK functions
+July 25, 2010
+        Fix #726082: Remove dependency on allow_url_fopen by converting all image URLs to local files
+July 24, 2010
+        Add option to set default mail sending format
+        Fix #850844: Use drupal_add_css for the custom CSS
+July 22, 2010
+        Another fix for #358838: print.tpl.php in theme path wasn't working properly
+        Fix #763810: Configure module weights to ensure that the core module is always called before the others
+July 20, 2010
+        Provide missing info on the arguments of print_pdf theme functions
+        Use type-default settings if a node is being created/updated leaving them unspecified
+        Use type-default settings if a node is being created/updated leaving them unspecified
+July 16, 2010
+        Fix #803580: Add alt text to printer-friendly page logo
+        Fix #771300: warn the site admin if dompdf's lib/fonts is not writable
+        Fix #715800: type-specific settings act as default settings only, not as a type-wide configuration switch
+July 15, 2010
+        Fix #358838: use template_preprocess_node() to initialize node.tpl.php variables
+July 14, 2010
+        LANGUAGE_RTL is always defined in Drupal
+        Final part of the fix for #646544: update block cache values in the database
+        Fix #764204: align source url and links on the left side for RTL languages
+        Fix #801974: only call spl_autoload_register when it exists
+        Fix #358838 by EugenMayer: Use theme preprocess functions for the template suggestions
+July 13, 2010
+        Fix #608518 by ISPTraderChris: Option to send e-mail as link only or as attachments
+        Fix #321128 by AndyF: add option to display PF links in teaser mode
+        Fix #726146 by marrch_caat: node-specific settings ain't saved on node creation
+        Fix #835814 and #451408 by kingandy: use #prefix and #suffix for the content corner span
+        Fix #806616 by v.sidorov: use strict comparison when checking the current build mode
+        Fix #785364: solve incompatibility with PHP 5.3 when using TCPDF
+        Fix #696318 by JamesK: move body onload javascript into Drupal.behaviors
+        Fix #735260: Disable named anchors in URL list by default
+July 12, 2010
+        Fix #719486 by moonray: Print link not showing up in content corner if using panels to display nodes
+        Fix #835470 by adrien.gibrat: Transliterate generated PDF filenames if transliteration module is enabled
+        Fix #631150 by smk-ka: wkhtmltopdf on windows can use the output pipe again
+        Fix #257896: Add support for dompdf 0.6+ Unicode mode
+        Fix #684678: Support dompdf 0.6 adding some required defines
+July 10, 2010
+        Fix #639420, #697616 and #700566: remove use of Xvfb server with wkhtmltopdf
+        Remove use of Xvfb by wkhtmltopdf
+        Fix #842462 by sbatman: Use proper hook_theme() arguments format
+July 9, 2010
+        Fix #707534 by truecms.net.au: use Form API for required fields in send e-mail form
+June 1, 2010
+        Fix #704480 by marrch_caat: TCDPF outputs empty PDF
+January 11, 2010
+        Fix #623712: Remove unnecessary urldecode() calls and check URLs using html_entity_decode()
+        Proper fix for #480916: only use cached node type when processing comments also for mail and pdf links
+        Fix #665820: handle wkhtmltopdf executable filename finishing in -i386 or -amd64
+        Fix #631760: add query string to user-specified print.css to force browser reload after cache is cleared
+        Fix #658208 by Dave Reid: Vertical tabify the print fieldsets
+        Fix #646544: use correct block cache settings
+November 21, 2009
+        Updated Hungarian translation
+November 19, 2009
+        #244351 by seals: Minor update of Swedish translation.
+        #244351 by seals: Updated Swedish translation
+November 1, 2009
+        Correct typo/bug in the fix for #521776
+        Fix #552646: don't add the page to be sent title field in the send-by-email form when the title is empty
+        Fix #610878: enlarge the wkhtmltopdf and Xvfb options fields
+        Fix #617888: fix anchor links in pages located in sub-directories
 October 16, 2009
+        by Zoltan Balogh: Updated Hungarian translation
         Fix #605264: check node alias also when accessing the print_mail form
 October 14, 2009
         SA-CONTRIB-2009-073: remove XSS vulnerability in PF URLs list and unathorized access to node titles

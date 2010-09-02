@@ -1,4 +1,4 @@
-/* $Id: README.txt,v 1.1.2.1.2.34 2009/12/21 19:54:32 pwolanin Exp $ */
+/* $Id: README.txt,v 1.1.2.1.2.36 2010/07/25 16:16:46 pwolanin Exp $ */
 
 This module integrates Drupal with the Apache Solr search platform. Solr search
 can be used as a replacement for core content search and boasts both extra
@@ -106,7 +106,7 @@ The 'Zend' directory should normally be under the apachesolr
 directory, but may be elsewhere if you set that location to be
 in your PHP include path.
 
-Now, you should  enable the "Apache Solr framework" and "Apache Solr search" 
+Now, you should enable the "Apache Solr framework" and "Apache Solr search" 
 modules. Check that you can connect to Solr at ?q=admin/setting/apachesolr
 Now run cron on your Drupal site until your content is indexed. You
 can monitor the index at ?q=admin/settings/apachesolr/index
@@ -184,6 +184,13 @@ hook_apachesolr_modify_query(&$query, &$params, $caller);
           // I only want to see articles by the admin!
           $query->add_filter("uid", 1);         
         }        
+
+CALLER_finalize_query(&$query, &$params);
+
+  The module calling apachesolr_do_query() may implement a function that is run after
+  hook_apachesolr_modify_query() and allows the caller to make final changes to the
+  query and params before the query is sent to Solr.  The function name is built
+  from the $caller parameter to apachesolr_do_query().
 
 hook_apachesolr_prepare_query(&$query, &$params, $caller);
 

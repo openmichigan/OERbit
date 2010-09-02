@@ -1,5 +1,5 @@
 <?php
-// $Id: module_grants.admin.inc,v 1.2 2010/02/02 05:54:33 rdeboer Exp $
+// $Id: module_grants.admin.inc,v 1.3 2010/04/30 01:20:30 rdeboer Exp $
 
 /**
  * @file
@@ -10,9 +10,16 @@
  * Menu callback for admin settings.
  */
 function module_grants_admin_configure() {
+  $access_modules = array();
+  foreach (module_implements('node_grants') as $module) {
+    $access_modules[] = $module;
+  }
+
   $form['module_grants_multiple_modules'] = array(
     '#type' => 'fieldset',
     '#title' => t('Configure behaviour when multiple content access modules are enabled'),
+    '#description' => t('The following content access modules are currently enabled: %modules.',
+      array('%modules' => empty($access_modules) ? 'none' : implode(',', $access_modules)))
   );
   $form['module_grants_multiple_modules']['module_grants_lenient'] = array(
     '#type' => 'checkbox',

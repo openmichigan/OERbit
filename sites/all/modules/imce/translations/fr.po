@@ -1,4 +1,4 @@
-# $Id: fr.po,v 1.1.2.1 2009/03/04 11:54:59 sbordage Exp $
+# $Id: fr.po,v 1.1.2.2 2009/11/13 10:07:46 slybud Exp $
 #
 # French translation of Drupal (general)
 # Copyright 2009 Stéphane Bordage, Breek <sbordage@breek.fr>
@@ -65,7 +65,7 @@ msgstr "Outil de création de répertoire"
 #: imce.module:38
 #: inc/admin.inc:24
 msgid "Add new profile"
-msgstr "Ajouter un nouveau profile"
+msgstr "Ajouter un nouveau profil"
 
 #: imce.module:0
 #: inc/page.inc:250
@@ -78,7 +78,7 @@ msgstr "Un téléverseur et un explorateur d'images/fichiers, qui supporte les r
 
 #: inc/admin.inc:14;176
 msgid "Profile name"
-msgstr "Nom du profile"
+msgstr "Nom du profil"
 
 #: inc/admin.inc:14
 msgid "Operations"
@@ -96,7 +96,7 @@ msgstr "Supprimer"
 
 #: inc/admin.inc:26
 msgid "Configuration profiles"
-msgstr "Configuration des profiles"
+msgstr "Configuration des profils"
 
 #: inc/admin.inc:50
 msgid "Common settings"
@@ -144,7 +144,7 @@ msgstr "Rôle de l'utilisateur"
 
 #: inc/admin.inc:89
 msgid "Assigned profile"
-msgstr "Profile assigné"
+msgstr "Profil assigné"
 
 #: inc/admin.inc:91
 msgid "user #1"
@@ -160,15 +160,15 @@ msgstr "nd"
 
 #: inc/admin.inc:98
 msgid "For users who have <strong>multiple roles</strong>, <strong>weight</strong> property will determine the assigned profile. Lighter roles that are placed upper will take the precedence. So, an administrator role should be placed over other roles by having a smaller weight, ie. -10."
-msgstr "Pour les utilisateurs qui ont <strong>plusieurs rôles</strong>, le <strong>poids</strong> détermine le profile attribué. Les rôles les plus légers donc placés au-dessus auront la préséance. Un rôle administrateur devrait donc être placé au-dessus de tous les autres rôles grâce au poids le-10.plus léger-10."
+msgstr "Pour les utilisateurs qui ont <strong>plusieurs rôles</strong>, le <strong>poids</strong> détermine le profil attribué. Les rôles les plus légers donc placés au-dessus auront la préséance. Un rôle administrateur devrait donc être placé au-dessus de tous les autres rôles grâce au poids le-10.plus léger-10."
 
 #: inc/admin.inc:109
 msgid "Role-profile assignments"
-msgstr "Attributions des Role-profile"
+msgstr "Attribution des profils aux rôles utilisateurs"
 
 #: inc/admin.inc:111
 msgid "Assign profiles to user roles."
-msgstr "Attribuer des profiles aux rôles utilisateurs."
+msgstr "Attribuer des profils aux rôles utilisateurs."
 
 #: inc/admin.inc:129
 msgid "Changes have been saved."
@@ -176,11 +176,11 @@ msgstr "Les modifications ont été enregistrées."
 
 #: inc/admin.inc:165
 msgid "Settings were imported from the profile %name"
-msgstr "Les paramètres ont été importés à partir du profile %name"
+msgstr "Les paramètres ont été importés à partir du profil %name"
 
 #: inc/admin.inc:178
 msgid "Give a name to this profile."
-msgstr "Donner un nom à ce profile."
+msgstr "Donner un nom à ce profil."
 
 #: inc/admin.inc:187
 #: tpl/imce-content.tpl.php:44
@@ -231,7 +231,7 @@ msgstr "Régler sur * pour supprimer les restrictions."
 #: inc/admin.inc:215
 #: tpl/imce-content.tpl.php:46
 msgid "Maximum image resolution"
-msgstr "Résolution maximu de l'image"
+msgstr "Résolution maximum de l'image"
 
 #: inc/admin.inc:217
 msgid "The maximum allowed image size (e.g. 640x480). Set to 0 for no restriction. If an <a href=\"!image-toolkit-link\">image toolkit</a> is installed, files exceeding this value will be scaled down to fit."
@@ -282,7 +282,7 @@ msgstr "Vignettes"
 #: inc/js.inc:52
 #: inc/page.inc:159;215
 msgid "Resize"
-msgstr "Redimensionne"
+msgstr "Redimensionner"
 
 #: inc/admin.inc:340
 #: inc/subdir.inc:13
@@ -363,7 +363,7 @@ msgstr ""
 
 #: inc/admin.inc:456
 msgid "Are you sure you want to delete the profile %name?"
-msgstr "Êtes vous sûr de vouloir supprimer le profile %name ?"
+msgstr "Êtes vous sûr de vouloir supprimer le profil %name ?"
 
 #: inc/admin.inc:461
 msgid "Cancel"
@@ -515,7 +515,7 @@ msgstr "Il n'y a pas de répertoire valide spécifié pour l'explorateur de fich
 
 #: inc/page.inc:684
 msgid "You don't have access to any configuration profile to use the file browser!"
-msgstr "Vous n'avez pas accès a une configuration de profile permettant l'utilisation de l'explorateur de fichiers !"
+msgstr "Vous n'avez pas accès à une configuration de profil permettant l'utilisation de l'explorateur de fichiers !"
 
 #: inc/page.inc:958
 msgid "Directory root"

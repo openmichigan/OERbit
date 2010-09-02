@@ -1,5 +1,5 @@
 <?php
-// $Id: nodereferrer_view_handler_relationship.inc,v 1.1.2.3 2009/09/22 11:15:35 andypost Exp $
+// $Id: nodereferrer_view_handler_relationship.inc,v 1.1.2.4 2010/03/29 21:08:23 andypost Exp $
 /**
  * @file
  * nodereferrer.module Views integration
@@ -20,7 +20,7 @@ class nodereferrer_view_handler_relationship extends views_handler_relationship 
     $options = parent::option_definition();
 
     $options['referrer_delta'] = array('default' => -1);
-    $options['referrer_field'] = '';
+    $options['referrer_field'] = array('default' => '');
 
     return $options;
   }

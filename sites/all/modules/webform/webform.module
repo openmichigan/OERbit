@@ -1,5 +1,5 @@
 <?php
-// $Id: webform.module,v 1.124.2.102 2009/11/06 02:01:01 quicksketch Exp $
+// $Id: webform.module,v 1.124.2.115 2010/04/01 02:14:23 quicksketch Exp $
 
 /**
  * This module provides a simple way to create forms and questionnaires.
@@ -492,7 +492,7 @@ function webform_insert($node) {
   }
 
   // Set the per-role submission access control.
-  foreach (array_filter($node->webform['roles']) as $rid) {
+  foreach ($node->webform['roles'] as $rid) {
     db_query('INSERT INTO {webform_roles} (nid, rid) VALUES (%d, %d)', $node->nid, $rid);
   }
 }
@@ -786,7 +786,7 @@ function webform_form(&$node, &$param) {
     $form['webform']['mail_settings']['email_'. $field .'_component'] = array(
       '#type' => 'select',
       '#default_value' =>  is_numeric($node->webform['email_'. $field]) ? $node->webform['email_'. $field] : NULL,
-      '#options' => empty($options) ? array('' => 'No available components') : $options,
+      '#options' => empty($options) ? array('' => t('No available components')) : $options,
       '#disabled' => empty($options) ? TRUE : FALSE,
       '#weight' => 6,
     );
@@ -830,7 +830,7 @@ function webform_form(&$node, &$param) {
     '#type' => 'select',
     '#options' => array(
       '-1' => t('ever'),
-      '1600' => t('every hour'),
+      '3600' => t('every hour'),
       '86400' => t('every day'),
       '604800' => t('every week'),
     ),
@@ -994,7 +994,7 @@ function webform_validate(&$node) {
  */
 function webform_submit(&$node) {
   // Add the conditional e-mail recipients to components.
-  if ($node->nid) {
+  if (empty($node->is_new)) {
     $original_node = node_load($node->nid);
 
     foreach ($original_node->webform['components'] as $cid => $component) {
@@ -1028,6 +1028,9 @@ function webform_submit(&$node) {
     $node->webform['submit_interval'] = -1;
   }
   unset($node->webform['enforce_limit']);
+
+  // Save roles.
+  $node->webform['roles'] = array_keys(array_filter($node->webform['roles']));
 }
 
 /**
@@ -1118,7 +1121,8 @@ function webform_view(&$node, $teaser = 0, $page = 0) {
   if ($node->webform['submit_limit'] != -1) { // -1: Submissions are never throttled.
     module_load_include('inc', 'webform', 'webform_submissions');
 
-    if ($limit_exceeded = _webform_submission_limit_check($node)) {
+    // Disable the form if the limit is exceeded and page cache is not active.
+    if (($limit_exceeded = _webform_submission_limit_check($node)) && ($user->uid != 0 || variable_get('cache', CACHE_DISABLED) == CACHE_DISABLED)) {
       $enabled = FALSE;
     }
   }
@@ -1138,7 +1142,7 @@ function webform_view(&$node, $teaser = 0, $page = 0) {
   }
 
   // Print out messages for the webform.
-  if (!$preview && !$logging_in) {
+  if ($node->build_mode != NODE_BUILD_PREVIEW && !$logging_in && ($user->uid != 0 || !variable_get('cache', CACHE_DISABLED))) {
     theme('webform_view_messages', $node, $teaser, $page, $submission_count, $limit_exceeded, $allowed_roles);
   }
 
@@ -1202,7 +1206,14 @@ function theme_webform_view_messages($node, $teaser, $page, $submission_count, $
     }
     elseif (isset($allowed_roles[2])) {
       // The "authenticated user" role is allowed to submit and the user is currently logged-out.
-      $message = t('You must <a href="!login">login</a> or <a href="!register">register</a> to view this form.', array('!login' => url(('user/login'), array('query' => drupal_get_destination())), '!register' => url(('user/register'), array('query' => drupal_get_destination()))));
+      $login = url('user/login', array('query' => drupal_get_destination()));
+      $register = url('user/register', array('query' => drupal_get_destination()));
+      if (variable_get('user_register', 1) == 0) {
+        $message = t('You must <a href="!login">login</a> to view this form.', array('!login' => $login));
+      }
+      else {
+        $message = t('You must <a href="!login">login</a> or <a href="!register">register</a> to view this form.', array('!login' => $login, '!register' => $register));
+      }
     }
     else {
       // The user must be some other role to submit.
@@ -1475,7 +1486,7 @@ function webform_client_form(&$form_state, $node, $submission, $enabled = FALSE,
 
   // Set the form action to the node ID in case this is being displayed on the
   // teaser, subsequent pages should be on the node page directly.
-  if (arg(2) != 'submission') {
+  if (empty($submission)) {
     $form['#action'] = url('node/'. $node->nid);
   }
 
@@ -1522,11 +1533,6 @@ function webform_client_form(&$form_state, $node, $submission, $enabled = FALSE,
         $form['details']['page_num'] = array(
           '#type'      => 'hidden',
           '#value'     => $page_num,
-        );
-
-        $form['details']['page_count'] = array(
-          '#type'      => 'hidden',
-          '#value'     => $page_count,
         );
 
         $form['details']['page_count'] = array(
@@ -1662,6 +1668,20 @@ function _webform_client_form_add_component($cid, $component, $component_value, 
 
 function webform_client_form_validate($form, $form_state) {
   $node = node_load($form_state['values']['details']['nid']);
+  $sid = $form_state['values']['details']['sid'];
+
+  // Check that the user has not exceeded the submission limit.
+  // This usually will only apply to anonymous users when the page cache is
+  // enabled, because they may submit the form even if they do not have access.
+  if ($node->webform['submit_limit'] != -1) { // -1: Submissions are never throttled.
+    module_load_include('inc', 'webform', 'webform_submissions');
+
+    if (empty($sid) && $limit_exceeded = _webform_submission_limit_check($node)) {
+      $error = theme('webform_view_messages', $node, 0, 1, 0, $limit_exceeded, array_keys(user_roles()));
+      form_set_error('', $error);
+      return;
+    }
+  }
 
   // Flatten trees within the submission.
   $form_state['values']['submitted_tree'] = $form_state['values']['submitted'];
@@ -1892,7 +1912,7 @@ function webform_client_form_submit($form, &$form_state) {
 
   // Log to watchdog if normal debug is on.
   if (variable_get('webform_debug', 0) >= 1) {
-    watchdog('webform', t('Submission posted to %title. <a href="!url">Results</a>. !details', array('%title' => $node->title, '!url' => url('node/'. $node->nid .'/submission/'. $sid), '!results' => "<br />\n<pre>". htmlentities(print_r($form_state['values'], TRUE)) .'</pre>')));
+    watchdog('webform', 'Submission posted to %title. <a href="!url">Results</a>. !details', array('%title' => $node->title, '!url' => url('node/'. $node->nid .'/submission/'. $sid), '!results' => "<br />\n<pre>". htmlentities(print_r($form_state['values'], TRUE)) .'</pre>'));
   }
 
   // Check confirmation field to see if redirect should be to another node or a message.
@@ -1992,7 +2012,7 @@ function template_preprocess_webform_form(&$vars) {
   if (isset($vars['form']['details']['nid']['#value'])) {
     $vars['nid'] = $vars['form']['details']['nid']['#value'];
   }
-  else {
+  elseif (isset($vars['form']['submission']['#value'])) {
     $vars['nid'] = $vars['form']['submission']['#value']->nid;
   }
 }
@@ -2153,7 +2173,7 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $stri
   // Submission replacements.
   if (isset($submission) && !array_key_exists('%email_values', $replacements)) {
     foreach ($submission as $cid => $value) {
-      $replacements['unsafe']['%cid[' . $cid . ']'] = $value;
+      $replacements['unsafe']['%cid[' . $cid . ']'] = (string) $value;
     }
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: mimedetect.install,v 1.7 2009/04/15 19:19:18 drewish Exp $
+// $Id: mimedetect.install,v 1.7.2.2 2010/05/26 20:43:11 drewish Exp $
 
 /**
  * Implementation of hook_install().
@@ -28,7 +28,7 @@ function mimedetect_requirements($phase) {
 
   if (extension_loaded('fileinfo')) {
     $requirement['value'] = $t('PHP Fileinfo Extension');
-    if (!$finfo = @finfo_open(FILEINFO_MIME, drupal_get_path('module', 'mimedetect') .'/magic')) {
+    if (!$finfo = @finfo_open(FILEINFO_MIME, variable_get('mimedetect_magic', drupal_get_path('module', 'mimedetect') .'/magic'))) {
       $requirement['description'] = $t('Fileinfo could not load the magic file. It could be corrupted. Try reinstalling the magic file distributed with the MimeDetect module.');
       $requirement['severity'] = REQUIREMENT_ERROR;
     }
@@ -48,7 +48,7 @@ function mimedetect_requirements($phase) {
   }
   else {
     $requirement['value'] = $t('File Extension');
-    $requirement['description'] = $t("MimeDetect is using the browser supplied filename for file extension lookups. It is strongly recommended that you install and configure the PHP Fileinfo Extension or the UNIX 'file' command to provide more accurate severside mime type detection.");
+    $requirement['description'] = $t("MimeDetect is using the browser supplied filename for file extension lookups. It is strongly recommended that you install and configure the PHP Fileinfo Extension or the UNIX 'file' command to provide more accurate sever-side mime type detection.");
     $requirement['severity'] = REQUIREMENT_WARNING;
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: print.admin.inc,v 1.1.2.29 2009/10/03 15:18:23 jcnventura Exp $
+// $Id: print.admin.inc,v 1.1.2.35 2010/08/18 17:30:07 jcnventura Exp $
 
 /**
  * @file
@@ -17,6 +17,15 @@
  * @ingroup forms
  */
 function print_main_settings() {
+  $print_css = variable_get('print_css', PRINT_CSS_DEFAULT);
+  // Check that the stylesheet path is indeed valid and relative to base_path()
+  if (!empty($print_css)) {
+    $css_path = dirname($_SERVER['SCRIPT_FILENAME']) .'/'. strtr($print_css, array('%t' => drupal_get_path('theme', variable_get('theme_default', 'garland'))));
+    if (!is_file($css_path) || !is_readable($css_path)) {
+      drupal_set_message(t("File %file is not readable by the web server.", array('%file' => $css_path)), 'warning', FALSE);
+    }
+  }
+
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Common Settings'),
@@ -24,12 +33,12 @@ function print_main_settings() {
 
   $form['settings']['print_css'] = array(
     '#type' => 'textfield',
-    '#title' => t('Stylesheet URL'),
+    '#title' => t('Custom Stylesheet'),
     '#default_value' => variable_get('print_css', PRINT_CSS_DEFAULT),
     '#size' => 60,
     '#maxlength' => 250,
-    '#description' => t('The URL to your custom print cascading stylesheet, if any. When none is specified, the default module CSS file is used.') .'<br />'.
-                      t('Macros: %b (base path: "%base"), %t (path to theme: "%theme")', array('%base' => base_path(), '%theme' => path_to_theme())) .'<br />'.
+    '#description' => t('The path to your custom print cascading stylesheet, if any. The path provided must be relative to the base path. When none is specified, the default module CSS file is used.') .'<br />'.
+                      t('Macros: %t (path to theme: "%theme")', array('%theme' => drupal_get_path('theme', variable_get('theme_default', 'garland')))) .'<br />'.
                       t('Requires the <em>administer site configuration</em> permission.'),
     '#disabled' => !user_access('administer site configuration'),
   );
@@ -40,6 +49,13 @@ function print_main_settings() {
     '#default_value' => variable_get('print_urls', PRINT_URLS_DEFAULT),
     '#description' => t('If set, a list of the destination URLs for the page links will be displayed at the bottom of the page.') .'<br />'.
                       t('Note that you can enable/disable the URL list for each content type individually from the !url.', array('!url' => l(t('Content Types page'), 'admin/content/types'))),
+  );
+
+  $form['settings']['print_urls_anchors'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include named anchors in printer-friendly URLs list'),
+    '#default_value' => variable_get('print_urls_anchors', PRINT_URLS_ANCHORS_DEFAULT),
+    '#description' => t('If set, the list of the URLs at the bottom of the page will include anchors links on the same page.'),
   );
 
   $form['settings']['print_comments'] = array(
@@ -164,13 +180,6 @@ function _print_main_settings_validate($form, &$form_state) {
       $form_state['values']['print_logo_url'] = base_path() . $file->filepath;
     }
   }
-
-  // Check that the stylesheet URL is a local URL, if it is an absolute URL, then it must start with the site's base URL
-  if (preg_match('!^http://.*!', $form_state['values']['print_css'], $matches)) {
-    if (!preg_match("!^$base_url/!", $matches[0])) {
-      form_set_error('print_css', t("Stylesheet URL must be a relative path or start with the site's base URL"));
-    }
-  }
 }
 
 /**
@@ -190,6 +199,13 @@ function print_html_settings() {
     '#default_value' => variable_get('print_html_link_pos', array(PRINT_HTML_LINK_POS_DEFAULT => PRINT_HTML_LINK_POS_DEFAULT)),
     '#options' => array('link' => t('Links area'), 'corner' => t('Content corner')),
     '#description' => t('Choose the location of the link(s) to the printer-friendly page. The Links area is usually below the node content, whereas the Content corner is placed in the upper-right corner of the node content. Unselect all options to disable the link. Even if the link is disabled, you can still view the print version of a node by going to !path/nid where nid is the numeric id of the node.', array('!path' => PRINT_PATH)),
+  );
+
+  $form['settings']['print_html_link_teaser'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display printer-friendly link in teaser'),
+    '#default_value' => variable_get('print_html_link_teaser', PRINT_HTML_LINK_TEASER_DEFAULT),
+    '#description' => t('Enabling this will display the link in teaser mode.'),
   );
 
   $form['settings']['adv_link'] = array(

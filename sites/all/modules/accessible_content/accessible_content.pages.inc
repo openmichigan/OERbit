@@ -1,5 +1,5 @@
 <?php
-// $Id: accessible_content.pages.inc,v 1.1.2.10 2010/04/07 02:20:10 kevee Exp $
+// $Id: accessible_content.pages.inc,v 1.1.2.14 2010/07/13 04:52:50 kevee Exp $
 
 /**
 *   @file
@@ -14,8 +14,10 @@ function accessible_content_accessibility_tab_form() {
   drupal_add_css(drupal_get_path('module', 'accessible_content') .'/accessible_content.css');
   $node = menu_get_object();
   $form = array();
-
-  $results = accessible_content_check_string($node->body,
+  $body = (variable_get($node->type .'_ac_after_filter', 0))
+            ? check_markup($node->body)
+            : $node->body;
+  $results = accessible_content_check_string($body,
                   variable_get($node->type .'_accessibility_guideline_nid', 0),
                   'AccessibleContent',
                   variable_get($node->type .'_ac_ignore_cms_off', 1),
@@ -61,6 +63,9 @@ function accessible_content_accessibility_tab_form() {
   return $form;
 }
 
+/**
+*  Form submit action for the overriding of tests.
+*/
 function accessible_content_accessibility_tab_form_submit($form, $form_state) {
   $node = menu_get_object();
   $results['body'] = accessible_content_check_string($node->body,
@@ -112,8 +117,9 @@ function accessible_content_accessibility_demo_tab($nid) {
   drupal_set_title('Highlighted errors');
   drupal_add_css(drupal_get_path('module', 'accessible_content') .'/accessible_content.css');
   if (module_exists('beautytips')) {
+    $area_label = _accessible_content_get_beautytips_area_label();
     $options['ac_demo_view'] = array(
-      'area' => '.highlight-link',
+      $area_label => '.highlight-link',
       'ajaxPath' => array(0 => "$(this).attr('href') + '/accessibility/tip'", 1 => '#node-tip'),
       'trigger' => array(0 => 'mouseover', 1 => 'click'),
       'width' => 350,
@@ -125,6 +131,10 @@ function accessible_content_accessibility_demo_tab($nid) {
   accessible_content_include_library();
   $test_nid = arg(4);
   $node = menu_get_object();
+  $reporter = ($_GET['reporter'] == 'html')
+  			  ? 'codeHighlight'
+  			  : 'AccessibleContentHighlight';
+  
   if (arg(5)) {
     //A field name was passed as argument 5, check that CCK field
     $field = arg(5);
@@ -140,7 +150,7 @@ function accessible_content_accessibility_demo_tab($nid) {
   else {
     $text = node_view($node, FALSE, TRUE, FALSE);
   }
-  $quail = new quail($text, 'accessible_content', 'string', 'AccessibleContentHighlight');
+  $quail = new quail($text, 'accessible_content', 'string', $reporter);
   $quail->setOption('cms_mode', variable_get($node->type .'_ac_ignore_cms_off', 1));
   if ($test_nid) {
     $test = node_load(arg(4));
@@ -157,7 +167,7 @@ function accessible_content_accessibility_demo_tab($nid) {
                 )
               );
   }
-  return $quail->getReport(array('image_url' => array(
+  return '<div id="highlight-html">'. $quail->getReport(array('image_url' => array(
           QUAIL_TEST_SEVERE => $base_url .'/'.
             variable_get('ac_ui_icon_severe',
               drupal_get_path('module', 'accessible_content') .'/images/test-demo-severe.png'),
@@ -173,7 +183,8 @@ function accessible_content_accessibility_demo_tab($nid) {
                 QUAIL_TEST_MODERATE => variable_get('ac_ui_class_moderate', 'accessibility-error-moderate'),
                 QUAIL_TEST_SUGGESTION => variable_get('ac_ui_class_severe', 'accessibility-error-suggestion'),
               ),
-          ));
+          )) .
+          '</div>';
 }
 
 /**

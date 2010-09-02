@@ -9,8 +9,8 @@ dependencies[] = rdf
 dependencies[] = search
 
 ; Information added by drupal.org packaging script on 2009-11-02
-version = "6.x-1.x-dev"
+version = "6.x-1.0-unstable5"
 core = "6.x"
 project = "apachesolr_rdf"
-datestamp = "1257163310"
+datestamp = "1257120902"
 

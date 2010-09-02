@@ -1,29 +1,34 @@
-// $Id: custom_search.js,v 1.1.2.2 2010/03/17 16:13:42 jdanthinne Exp $
+// $Id: custom_search.js,v 1.1.2.7 2010/05/25 13:42:12 jdanthinne Exp $
 
 Drupal.behaviors.custom_search = function (context) {
 
   // Check if the search box is not empty on submit
-  $('#search-block-form,#search-theme-form')
+  $('form.search-form')
     .submit(function(){
-      var box = $(this).find('input:text');
-      if (box.val() == '' || box.val() == Drupal.settings.custom_search[$(this).attr('id') + "_default_value"]) {
-        $(this).find('input:text').addClass('error');
+      var box = $(this).find('input.custom-search-box');
+      if (box.val() != undefined && (box.val() == '' || box.val() == $(this).find('input.default-text').val())) {
+        $(this).find('input.custom-search-box').addClass('error');
         return false;
+      }
+      // If basic search is hidden, copy or value to the keys
+      if ($(this).find('#edit-keys').parents('div.element-invisible').attr('class') == 'element-invisible') {
+        $(this).find('#edit-keys').val($(this).find('#edit-or').val());
+        $(this).find('#edit-or').val('');
       }
       return true;
     }
   );
 
   // Clear default text on focus, and put it back on blur.
-  $('#edit-search-block-form-1,#edit-search-theme-form-1')
+  $('input.custom-search-box')
     .blur(function(){
       if ($(this).val() == '') {
         $(this).addClass('custom-search-default-value');
-        $(this).val(Drupal.settings.custom_search[$(this).parents('form').attr('id') + "_default_value"]);
+        $(this).val($(this).parents('form').find('input.default-text').val());
       }
     })
     .focus(function(){
-      if ($(this).val() == Drupal.settings.custom_search[$(this).parents('form').attr('id') + "_default_value"]) $(this).val('');
+      if ($(this).val() == $(this).parents('form').find('input.default-text').val()) $(this).val('');
       $(this).removeClass('custom-search-default-value');
     }
   );

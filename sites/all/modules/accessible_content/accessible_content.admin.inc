@@ -1,4 +1,4 @@
-<?php // $Id: accessible_content.admin.inc,v 1.1.2.4 2010/04/07 02:20:10 kevee Exp $
+<?php // $Id: accessible_content.admin.inc,v 1.1.2.12 2010/08/06 23:59:36 kevee Exp $
 
 /**
 *  @file The administration forms
@@ -24,6 +24,14 @@ function accessible_content_admin_form() {
     '#description' => t('If checked, this will display even tests in reports which had no errors.'),
     '#default_value' => variable_get('ac_error_display', 0),
   );
+  
+  $form['ac_default_background'] = array(
+    '#type' => 'textfield',
+    '#title' => t('The default background for nodes'),
+    '#description' => t('When comparing contrast, the color of items in a node need to be compared to the default background.'),
+    '#default_value' => variable_get('ac_default_background', 'FFFFFF'),
+  );
+  
   $adv_help = (module_exists('advanced_help')) 
               ? l('Learn more', 'help/accessible_content/tests')
               : '';
@@ -112,6 +120,7 @@ function accessible_content_admin_update_tests_form_submit() {
     'title' => t('Installing new tests or updating existing ones.'),
     'operations' => array(
       array('accessible_content_admin_update_tests_form_operation', array()),
+      array('accessible_cotnent_admin_install_guidelines_form_operation', array()),
     ),
     'finished' => 'accessible_content_admin_update_tests_form_finished',
     'file' => drupal_get_path('module', 'accessible_content') .'/accessible_content.admin.inc',
@@ -120,14 +129,30 @@ function accessible_content_admin_update_tests_form_submit() {
 }
 
 /**
+*  Batch callback for creating new guidelines
+*/
+function accessible_cotnent_admin_install_guidelines_form_operation(&$context) {
+  if (variable_get('accessible_content_guidelines_created', FALSE)) {
+     $context['finished'] = 1;
+     $context['message'] = t('Guidelines already exist');
+  }
+  else {
+    _accessible_content_create_guidelines();
+    $context['finished'] = 1;
+    $context['message'] = t('Guidelines updated');
+  }
+}
+
+/**
 *  Main operation batch callback for creating or installing tests
 */
 function accessible_content_admin_update_tests_form_operation(&$context) {
   if (!$context['sandbox']['tests']) {
-    $file = fopen(dirname(__FILE__) .'/quail/guidelines/translations/en.txt', 'r');
+    $file = fopen('sites/all/libraries/quail/quail/guidelines/translations/en.txt', 'r');
     while (($test = fgetcsv($file)) !== FALSE ) {
       $context['sandbox']['tests'][] = $test;
     }
+    $context['sandbox']['max'] = count($context['sandbox']['tests']);
     $context['sandbox']['current_id'] = 0;
     $context['message'] = 'Parsing test list';
     $context['finished'] = 0;
@@ -136,23 +161,20 @@ function accessible_content_admin_update_tests_form_operation(&$context) {
     $test = $context['sandbox']['tests'][$context['sandbox']['current_id']];
     $existing = db_result(db_query('SELECT nid FROM {accessible_content_node_test} WHERE test_name = "%s"', $test[0]));
     if (count($test) == 4 && !$existing) {
-    $node = new stdClass();
-    $node->type = 'accessibility_test';
-    $node->uid = $user->uid;
-    $node->title = $test[1];
-    $node->body = $test[2];
-    node_save($node);
-    db_query('INSERT INTO {accessible_content_node_test} (nid, test_name, severity) VALUES(%d, "%s", %d)',
-      $node->nid,
-       $test[0],
-       $test[3]);
+      $node = new stdClass();
+      $node->type = 'accessibility_test';
+      $node->uid = $user->uid;
+      $node->title = $test[1];
+      $node->body = $test[2];
+      $node->ac_function_name = $test[0];
+      $node->ac_severity = $test[3];
+      node_save($node);
       $context['results'][] = $test[1];
     }
     
-    $context['message'] = t('Installing test %test', array('%test' => $test[1]));
+    $context['message'] = t('Installing or updating test %test', array('%test' => $test[1]));
     $context['sandbox']['current_id']++;
-    $context['finished'] = $context['sandbox']['current_id'] / count($context['sandbox']['tests']);
-
+    $context['finished'] = $context['sandbox']['current_id'] / $context['sandbox']['max'];
   }
 }
 
@@ -282,4 +304,49 @@ function accessible_content_admin_check_node($nid, &$context) {
   }
   $node->accessibility_results = $results;
   node_save($node);
+}
+
+/**
+*  Loads the default guidelines defined by QUAIL and creates accessibility_guideline nodes for them.
+*/
+function  _accessible_content_create_guidelines() {
+  if (variable_get('accessible_content_guidelines_created', FALSE)) {
+    return NULL;
+  }
+  global $user;
+  accessible_content_include_library();
+  $csv = fopen(dirname(__FILE__) .'/install/guidelines.csv', 'r');
+  $test_query = db_query('SELECT nid, test_name FROM {accessible_content_node_test}');
+  $tests = array();
+  while ($row = db_fetch_object($test_query)) {
+    $tests[$row->test_name] = $row->nid;
+  }
+  if ($csv) {
+    while ($guideline = fgetcsv($csv)) {
+        $node = new stdClass();
+        $node->type = 'accessibility_guideline';
+        $node->uid = $user->uid;
+        $node->title = $guideline[1];
+        node_save($node);
+        require_once('sites/all/libraries/quail/quail/guidelines/'. strtolower($guideline[0]) .'.php');
+        $FALSE = FALSE;
+        $guideline_object = new $guideline[2]($FALSE, $FALSE, $FALSE);
+        $guideline_tests = $guideline_object->getTests();
+        foreach ($guideline_tests as $test) {
+          $check = db_query('SELECT COUNT(*) as total FROM {accessible_content_guideline_test} WHERE guideline_nid = %d AND guideline_vid = %d AND test_nid = %d',
+                     $node->nid,
+                     $node->vid,
+                     $tests[$test]);
+          $check_total = db_result($check);
+          if ($check_total == 0) {
+            db_query('INSERT INTO {accessible_content_guideline_test} (guideline_nid, guideline_vid, test_nid) VALUES (%d, %d, %d)',
+                 $node->nid,
+                 $node->vid,
+                 $tests[$test]);
+      }
+    }
+    }
+  }
+  variable_set('accessible_content_guidelines_created', TRUE);
+  fclose($csv);
 }

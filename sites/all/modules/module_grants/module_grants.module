@@ -1,5 +1,5 @@
 <?php
-// $Id: module_grants.module,v 1.58 2010/02/20 00:51:44 rdeboer Exp $
+// $Id: module_grants.module,v 1.63 2010/04/30 05:47:20 rdeboer Exp $
 
 /**
  * @file
@@ -111,6 +111,7 @@ function module_grants_menu_alter(&$items) {
   $items['node/%node/view']['access callback'] = 'module_grants_node_access';
   $items['node/%node/view']['access arguments'] = array('view', 1); // don't remove!
 
+  // @todo see http://drupal.org/node/756100
   $items['node/%node/edit']['access callback'] = 'module_grants_node_access';
 
   // Need to override delete because node.module's node_delete() calls
@@ -135,6 +136,22 @@ function module_grants_menu_alter(&$items) {
 
   $items['node/%node/revisions/%/revert']['access callback'] = 'module_grants_node_revision_access';
   $items['node/%node/revisions/%/revert']['access arguments'] = array('revert revisions', 1);
+
+  if (is_array($items['node/%node/translate'])) { // #766504
+    $items['node/%node/translate']['access callback'] = '_module_grants_translation_tab_access';
+  }
+}
+
+/**
+ * Similar to _translation_tab_access(), but uses module_grants_node_access()
+ * instead of node_access().
+ *
+ * @param $node
+ *  The node for which translation tab access is checked
+ */
+function _module_grants_translation_tab_access($node) {
+  return !empty($node->language) && translation_supported_type($node->type)
+    && user_access('translate content') && module_grants_node_access('view', $node);
 }
 
 /**
@@ -159,25 +176,27 @@ function module_grants_node_access($node_op, $node, $account = NULL) {
   if (!$node) {
     return FALSE;
   }
-
   $nid = $node->nid;
-  if (isset($access["$nid:$node_op"])) {
-    return $access["$nid:$node_op"];
-  }
 
-  // If the node is in a restricted format, disallow editing.
-  if ($node_op == 'update' && !filter_access($node->format)) {
-    return ($access["$nid:$node_op"] = FALSE);
-  }
   // If no account object is supplied, the access check is for the current user.
   if (empty($account)) {
     $account = $user;
   }
+  $uid = $account->uid;
+
+  if (isset($access["$uid:$nid:$node_op"])) {
+    return $access["$uid:$nid:$node_op"];
+  }
+
+  // If the node is in a restricted format, disallow editing.
+  if ($node_op == 'update' && !filter_access($node->format)) {
+    return ($access["$uid:$nid:$node_op"] = FALSE);
+  }
   if (user_access('administer nodes', $account)) {
-    return $access["$nid:$node_op"] = TRUE;
+    return $access["$uid:$nid:$node_op"] = TRUE;
   }
   if (!user_access('access content', $account)) {
-    return $access["$nid:$node_op"] = FALSE;
+    return $access["$uid:$nid:$node_op"] = FALSE;
   }
   $module = node_get_types('module', $node);
   if ($module == 'node') {
@@ -186,7 +205,7 @@ function module_grants_node_access($node_op, $node, $account = NULL) {
   $result = module_invoke($module, 'access', $node_op, $node, $account);
   if (!is_null($result)) {
   //drupal_set_message("'$node_op' access=$result by module $module: '$node->title'", 'warning', FALSE);
-    return $access["$nid:$node_op"] = $result;
+    return $access["$uid:$nid:$node_op"] = $result;
   }
   // Having arrived here, node access has still neither been granted nor denied.
   // We're about to hand over to enabled content access modules, that is those
@@ -210,7 +229,7 @@ function module_grants_node_access($node_op, $node, $account = NULL) {
     if (!$may_view) {
       if ($account->uid != $node->uid) {
         // Not the author: no permission to view this unpublished content.
-        return $access["$nid:$node_op"] = FALSE;
+        return $access["$uid:$nid:$node_op"] = FALSE;
       }
     }
   }
@@ -230,7 +249,7 @@ function module_grants_node_access($node_op, $node, $account = NULL) {
     // 'view' access to all nodes via nid=0.
     $sql = "$base_sql) AND grant_$node_op >=1";
     $result = db_result(db_query($sql, $nid));
-    //drupal_set_message("'$node_op' access=$result by node_access table: '$node->title'", 'warning', FALSE);
+    //drupal_set_message("'$node_op' access=$result by core (via node_access table): '$node->title'", 'warning', FALSE);
     return $access["$nid:$node_op"] = $result;
   }
 
@@ -251,7 +270,7 @@ function module_grants_node_access($node_op, $node, $account = NULL) {
       break;
     }
   }
-  return $access["$nid:$node_op"] = $result;
+  return $access["$uid:$nid:$node_op"] = $result;
 }
 
 /**
@@ -314,7 +333,7 @@ function module_grants_node_revision_access($revision_op, $node) {
   $node_op = is_null($result) ? _module_grants_user_node_access($revision_op, $node) : $result;
 
   if ($node_op && $node_op != 'view' && $node_op != 'update' && $node_op != 'delete') {
-    drupal_set_message("$module_$hook returns illegal node operation 'node_op'", 'warning', FALSE);
+    drupal_set_message($module .'_'. $hook ." returns illegal node operation 'node_op'", 'warning', FALSE);
   }
 
   $access["$vid:$revision_op"] = $node_op && module_grants_node_access($node_op, $node);
@@ -507,4 +526,27 @@ function _module_grants_by_module($node_op, $account, $nid = NULL) {
     }
   }
   return $all_grants;
+}
+
+/**
+ * Implementation of hook_node_access_explain().
+ * 
+ * Adds an 'explained' text to the last column of the table that appears inside
+ * the Devel Node Access block.
+ * See devel_node_access submodule in the Devel project.
+ * 
+ * @todo: I18n
+ */
+function module_grants_node_access_explain($row) {
+  global $user;
+
+  $ops_allowed = array();
+  foreach (array('view', 'update', 'delete') as $node_op) {
+    $node = node_load($row->nid);
+    if (module_grants_node_access($node_op, $node, $user)) {
+      $ops_allowed[] = $node_op;
+    }
+  }
+  $access = empty($ops_allowed) ? 'not view' : implode(', ', $ops_allowed);
+  return theme('username', $user) . " may $access this node.";
 }

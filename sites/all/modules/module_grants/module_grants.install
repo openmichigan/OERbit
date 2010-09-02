@@ -1,5 +1,5 @@
 <?php
-// $Id: module_grants.install,v 1.8 2009/12/16 03:40:11 rdeboer Exp $
+// $Id: module_grants.install,v 1.9 2010/04/06 01:33:15 rdeboer Exp $
 
 /**
  * @file
@@ -51,6 +51,7 @@ function _set_default_permissions($role_name, $permissions) {
 /**
  * Rename permissions. Core doesn't support apostrophes so strip these out and
  * capitalise the permission name for readibility.
+ * Example: "access 'I can edit' tab" is transformed to "access I Can Edit tab".
  * See [#566290], [#572804].
  */
 function module_grants_update_6207() {
@@ -58,8 +59,11 @@ function module_grants_update_6207() {
   // permission.perm column contains a comma-separated string of permissions
   $result = db_query("SELECT rid,perm FROM {permission} WHERE perm LIKE '%access \'%\' tab%'");
   while ($permissions = db_fetch_object($result)) {
-    $sanitized_permissions = preg_replace("/access \'([A-Z a-z]+)\' tab/e",
-      "'access '. ucwords('$1') .' tab'", $permissions->perm);
+    // See http://www.php.net/manual/en/function.preg-replace-callback.php
+    // Note: using create_function() as PHP 5.2 does not support closures (anonymous functions)
+    $sanitized_permissions = preg_replace_callback("/access \'([A-Z a-z]+)\' tab/",
+      create_function('$matches', 'return "access ". ucwords($matches[1]) ." tab";'),
+      $permissions->perm);
     $ret[] = update_sql("UPDATE {permission} SET perm='". db_escape_string($sanitized_permissions) ."' WHERE rid=$permissions->rid");
   }
   return $ret;

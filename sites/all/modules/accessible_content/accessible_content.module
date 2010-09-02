@@ -1,5 +1,5 @@
 <?php
-// $Id: accessible_content.module,v 1.1.2.21 2010/04/07 02:20:10 kevee Exp $
+// $Id: accessible_content.module,v 1.1.2.33 2010/08/06 23:59:36 kevee Exp $
 
 /**
 *  @file
@@ -11,7 +11,7 @@
 *
 */
 function accessible_content_include_library() {
-  $result = @include_once('quail/quail.php');
+  $result = @include_once('sites/all/libraries/quail/quail/quail.php');
   if ($result) {
     module_load_include('inc', 'accessible_content', 'accessible_content.quail');
     module_load_include('inc', 'accessible_content', 'accessible_content.theme');
@@ -43,9 +43,10 @@ function accessible_content_menu() {
 
   $items['admin/settings/accessible_content'] = array(
     'title' => 'Accessible Content',
+    'description' => 'Change the appearance of accessibility test results.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('accessible_content_admin_form'),
-    'access arguments' => array('administer site settings'),
+    'access arguments' => array('administer site configuration'),
     'file' => 'accessible_content.admin.inc',
   );
   
@@ -56,20 +57,22 @@ function accessible_content_menu() {
 
   $items['admin/settings/accessible_content/check'] = array(
     'title' => 'Check Existing Content',
+    'description' => 'Bulk-check existing content against accessibility standards.',
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('accessible_content_admin_check_form'),
-    'access arguments' => array('administer site settings'),
+    'access arguments' => array('administer site configuration'),
     'file' => 'accessible_content.admin.inc',
     'weight' => 4,
   );
 
   $items['admin/settings/accessible_content/create_tests'] = array(
     'title' => 'Update Tests',
+    'description' => 'After updating the QUAIL library, this will add any new tests to your site.',
     'type' => MENU_LOCAL_TASK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('accessible_content_admin_update_tests_form'),
-    'access arguments' => array('administer site settings'),
+    'access arguments' => array('administer site configuration'),
     'file' => 'accessible_content.admin.inc',
     'weight' => 4,
   );
@@ -598,19 +601,20 @@ function _accessible_content_node_form_validate($form, &$form_state) {
   if (variable_get($form['#node']->type .'_ac_enable', 0)) {
     $fields = variable_get('ac_field', array());
     $body = (variable_get($form['#node']->type .'_ac_after_filter', 0))
-            ? check_markup($form_state['values']['format'])
+            ? check_markup($form_state['values']['body'], $form_state['values']['format'])
             : $form_state['values']['body'];
+    
     $results['body'] = accessible_content_check_string($body,
           variable_get($form['#node']->type .'_accessibility_guideline_nid', 0),
           'AccessibleContent',
-          variable_get($node->type .'_ac_ignore_cms_off', 1),
-        variable_get($node->type .'_ac_display_level', 
+          variable_get($form['#node']->type .'_ac_ignore_cms_off', 1),
+        variable_get($form['#node']->type .'_ac_display_level', 
                   array(QUAIL_TEST_SEVERE => 1, 
                       QUAIL_TEST_MODERATE => 1, 
                       QUAIL_TEST_SUGGESTION => 1)
                   )
           );
-    _accessible_content_node_form_submit_error($results, 'Body', $form['#node']->type);
+    _accessible_content_node_form_submit_error($results, 'body', $form['#node']->type);
     foreach ($fields as $field => $check) {
       if ($check && $form_state['values'][$field]) {
         foreach ($form_state['values'][$field] as $k => $submitted_field) {
@@ -621,8 +625,8 @@ function _accessible_content_node_form_validate($form, &$form_state) {
             $results[$field . $k] = accessible_content_check_string($field_value,
                     variable_get($form['#node']->type .'_accessibility_guideline_nid', 0),
                     'AccessibleContent',
-                    variable_get($node->type .'_ac_ignore_cms_off', 1),
-                  variable_get($node->type .'_ac_display_level', 
+                    variable_get($form['#node']->type .'_ac_ignore_cms_off', 1),
+                  variable_get($form['#node']->type .'_ac_display_level', 
                             array(QUAIL_TEST_SEVERE => 1, 
                                 QUAIL_TEST_MODERATE => 1, 
                                 QUAIL_TEST_SUGGESTION => 1)
@@ -651,11 +655,11 @@ function _accessible_content_node_form_submit_error($result, $field, $node_type)
   if (!is_array($result)) {
     return NULL;
   }
-  if ($result[QUAIL_TEST_SEVERE]['total'] == 0 || !variable_get($node_type .'_ac_fail', 0)) {
+  if ($result[$field][QUAIL_TEST_SEVERE]['total'] == 0 || !variable_get($node_type .'_ac_fail', 0)) {
     return NULL;
   }
   $severe_errors = array();
-  foreach ($result[QUAIL_TEST_SEVERE] as $name => $test ) {
+  foreach ($result[$field][QUAIL_TEST_SEVERE] as $name => $test ) {
     $problems = array();
     if (is_array($test['problems'])) {
       foreach ($test['problems'] as $problem) {
@@ -663,16 +667,16 @@ function _accessible_content_node_form_submit_error($result, $field, $node_type)
           $problems[] = $problem['element'];
         }
       }
-      $severe_errors[] = '<h4>'. $test['body'] .'</h4>'. theme('item_list', $problems);
+      $severe_errors[] = '<h4>'. l($test['node']->title, 'node/'. $test['node']->nid) .'</h4>'. theme('item_list', $problems);
     }
 
 
   }
-  if ($field != 'Body') {
+  if ($field != 'body') {
     $content_field = content_fields($field);
     $field = $content_field['widget']['label'];
   }
-
+  
   form_set_error($field, '<h3>The following critical errors in '. $field .' must be resolved:</h3>'.
           theme('item_list', $severe_errors));
 }
@@ -737,8 +741,13 @@ function accessible_content_check_string($string, $guideline_nid, $reporter = 'A
   $guideline = node_load($guideline_nid);
   $quail = new quail($string, 'accessible_content', 'string', $reporter);
   $quail->setOption('cms_mode', $cms_mode);
+  $quail->css->type = 'file';
   $quail->addCSS(accessible_content_get_css_files());
-  $quail->runCheck(array('ac_module_guideline' => $guideline, 'display_level' => $display_level));
+  $quail->runCheck(array('ac_module_guideline' => $guideline, 
+               'display_level' => $display_level,
+               'css_background' => variable_get('ac_default_background', '#FFFFFF'),
+               'css_only_use_default' => TRUE,
+               ));
   $result = $quail->getReport();
   $quail->cleanup();
   cache_set($cache_id, $result, 'cache', time() + (60 * 60 * 24));
@@ -824,27 +833,32 @@ function _accessible_content_override_generate_hash($errors) {
 *  @return array An array of CSS files
 */
 function accessible_content_get_css_files() {
+  global $base_url;
+  $current_theme = variable_get('theme_default', 'none');
+  $themes = list_themes();
   $css = array();
   $css_files = drupal_add_css();
+  foreach ($themes[$current_theme]->stylesheets as $media => $theme_stylesheet) {
+    if ($media == 'screen' || $media == 'all') {
+      foreach ($theme_stylesheet as $sheet) {
+        $css[] = $base_url .'/'. $sheet;
+      }
+    }
+  }
   if (is_array($css_files['all']['module'])) {
     foreach ($css_files['all']['module'] as $path => $enabled) {
       if ($enabled) {
-        $css[] = $path;
+        $css[] = $base_url .'/'. $path;
       }
     }
   }
   if (is_array($css_files['all']['theme'])) {
     foreach ($css_files['all']['theme'] as $path => $enabled) {
       if ($enabled) {
-        $css[] = $path;
+        $css[] = $base_url .'/'. $path;
       }
     }
   }
-  $base = str_replace(drupal_get_path('module', 'accessible_content'), '', dirname(__FILE__));
-  foreach ($css as $k => $c) {
-    $css[$k] = $base . $c;
-  }
-
   return $css;
 }
 
@@ -885,7 +899,7 @@ function accessible_content_accessibility_report($results, $prefix = NULL, $head
     );
     return $form;
   }
-  if($results[QUAIL_TEST_SEVERE]['total']) {
+  if ($results[QUAIL_TEST_SEVERE]['total']) {
     $form[$prefix .'errors_'. QUAIL_TEST_SEVERE] = array(
       '#type' => 'fieldset',
       '#title' => t('Severe Errors') .' ('. $results[QUAIL_TEST_SEVERE]['total'] .')',
@@ -893,7 +907,7 @@ function accessible_content_accessibility_report($results, $prefix = NULL, $head
       '#collapsed' => TRUE,
     );
   }
-  if($results[QUAIL_TEST_MODERATE]['total']) {
+  if ($results[QUAIL_TEST_MODERATE]['total']) {
     $form[$prefix .'errors_'. QUAIL_TEST_MODERATE] = array(
       '#type' => 'fieldset',
       '#title' => t('Moderate Errors') .' ('. $results[QUAIL_TEST_MODERATE]['total'] .')',
@@ -901,7 +915,7 @@ function accessible_content_accessibility_report($results, $prefix = NULL, $head
       '#collapsed' => TRUE,
     );
   }
-  if($results[QUAIL_TEST_SUGGESTION]['total']) {
+  if ($results[QUAIL_TEST_SUGGESTION]['total']) {
     $form[$prefix .'errors_'. QUAIL_TEST_SUGGESTION] = array(
       '#type' => 'fieldset',
       '#title' => t('Suggestions') .' ('. $results[QUAIL_TEST_SUGGESTION]['total'] .')',
@@ -915,11 +929,11 @@ function accessible_content_accessibility_report($results, $prefix = NULL, $head
         foreach ($errors as $testname => $error) {
           if ($testname != 'total') {
             if (count($error['problems']) > 0 && user_access('manually override tests')) {
-            $form[$prefix .'errors_'. $severity]['override['. $prefix .']['. $testname .']'] = array(
-              '#type' => 'checkbox',
-              '#title' => t('Override test'),
-              '#default_value' => accessible_content_test_is_overriden($node->nid, $testname, $error, $field['field']),
-            );
+              $form[$prefix .'errors_'. $severity]['override['. $prefix .']['. $testname .']'] = array(
+                '#type' => 'checkbox',
+                '#title' => t('Override test'),
+                '#default_value' => accessible_content_test_is_overriden($node->nid, $testname, $error, $field['field']),
+              );
             }
             $form[$prefix .'errors_'. $severity][$testname] = array(
               '#value' => theme('accessible_content_report_error', $error, $field, $highlight),
@@ -968,13 +982,13 @@ function accessible_content_views_api() {
 *  Implementation of hook_menu_alter()
 *  This is to support modules which implment the hook_accessible_content_install_tests()
 *  We're calling this hook because it is called after modules are installed.
-*
+*/
 function accessible_content_menu_alter($menu) {
   accessible_content_include_library();
   $tests = module_invoke_all('accessible_content_install_tests');
   $files = array();
   foreach ($tests as $test_name => $test) {
-    $existing = db_result(db_query("SELECT nid FROM {accessible_content_node_test} WHERE test_name = '%s'",
+    $existing = db_result(db_query('SELECT nid FROM {accessible_content_node_test} WHERE test_name = "%s"',
                 $test_name));
     if (!$existing) {
       $node = new stdClass();
@@ -994,8 +1008,21 @@ function accessible_content_menu_alter($menu) {
 }
 
 /**
- *  Implementation of hook_perm
- */
+*	Helper function to return the key for beautytips module
+*	that should be used for the link CSS Selector. In BT 1.0 this is "area," 
+*	but that changes to "cssSelector" in 2.0.
+*	See: http://drupal.org/node/847782
+*/
+function _accessible_content_get_beautytips_area_label() {
+  if(function_exists('beautytips_form_id_off')) {
+    return 'area';
+  }
+  return 'cssSelect';
+}
+
+/**
+*  Implementation of hook_perm
+*/
 function accessible_content_perm() {
 
   return array('access accessibility guidelines',

@@ -1,5 +1,5 @@
 <?php
-// $Id: markup.inc,v 1.5.2.7 2009/01/09 08:31:06 quicksketch Exp $
+// $Id: markup.inc,v 1.5.2.8 2010/02/10 03:19:41 quicksketch Exp $
 
 /**
  * @file
@@ -34,15 +34,16 @@ function _webform_defaults_markup() {
 function _webform_edit_markup($currfield) {
   $edit_fields = array();
   $edit_fields['advanced']['mandatory'] = array(); // Do not render the mandatory checkbox.
-  $edit_fields['value'] = array(
+  $edit_fields['markup']['value'] = array(
     '#type' => 'textarea',
     '#title' => t('Value'),
     '#default_value' => $currfield['value'],
     '#description' => t('Markup allows you to enter custom HTML or PHP logic into your form.') . theme('webform_token_help'),
     '#weight' => -1,
+    '#parents' => array('value'),
   );
   // Add the filter form.
-  $edit_fields['extra']['format'] = filter_form($currfield['extra']['format'], 0, array('extra', 'format'));
+  $edit_fields['markup']['format'] = filter_form($currfield['extra']['format'], 0, array('extra', 'format'));
 
   // No description for markup.
   $edit_fields['extra']['description'] = array();

@@ -1,5 +1,5 @@
 <?php
-// $Id: imce.install,v 1.2.2.2 2008/04/17 23:38:24 ufku Exp $
+// $Id: imce.install,v 1.2.2.4 2010/05/29 02:06:32 ufku Exp $
 
 /**
  * Implementation of hook_install().
@@ -18,6 +18,7 @@ function imce_uninstall() {
   variable_del('imce_settings_textarea');
   variable_del('imce_settings_absurl');
   variable_del('imce_settings_replace');
+  variable_del('imce_settings_disable_private');
   variable_del('imce_custom_content');
   variable_del('imce_custom_process');
   variable_del('imce_custom_scan');
@@ -41,4 +42,16 @@ function imce_update_6001() {
   }
   variable_set('imce_profiles', $profiles);
   return array();
+}
+
+/**
+ * Make file browser tab optional in user profiles.
+ */
+function imce_update_6002() {
+  $profiles = variable_get('imce_profiles', array());
+  foreach ($profiles as $id => $profile) {
+    $profiles[$id]['usertab'] = isset($profiles[$id]['usertab']) ? $profiles[$id]['usertab'] : 1;
+  }
+  variable_set('imce_profiles', $profiles);
+  return array(array('success' => TRUE, 'query' => 'File browser tab in user profiles was made optional.'));
 }

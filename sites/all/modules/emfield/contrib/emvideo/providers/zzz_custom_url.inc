@@ -1,5 +1,5 @@
 <?php
-// $Id: zzz_custom_url.inc,v 1.1.2.18 2009/10/29 13:29:51 aaron Exp $
+// $Id: zzz_custom_url.inc,v 1.1.2.21 2010/07/19 17:08:04 aaron Exp $
 
 /**
  * @file
@@ -116,7 +116,10 @@ function emvideo_zzz_custom_url_embedded_link($video_code) {
 }
 
 function theme_emvideo_zzz_custom_url_embedded_video($type, $url, $width, $height, $autoplay = FALSE, $field = NULL, $item = NULL, $options = array()) {
-  if ($url = url($url, array('absolute' => TRUE))) {
+  if ($url = url($url, array('external' => TRUE, 'absolute' => TRUE))) {
+    global $base_path;
+    $url = $base_path.$url;
+
     if (module_exists('flowplayer')) {
       $config = array(
         'clip' => array(
@@ -127,7 +130,14 @@ function theme_emvideo_zzz_custom_url_embedded_video($type, $url, $width, $heigh
       $attributes = array(
         'style' => "width:{$width}px;height:{$height}px;",
       );
-      return theme('flowplayer', $config, 'emvideo-zzz-custom-url-embedded-video', $attributes);
+      // Build the Thumbnail image for the player.
+      $tn_options = array(
+        'width' => $width,
+        'height' => $height,
+      );
+      $thumbnail = '<span></span>'. theme('emvideo_video_thumbnail', NULL, $item, 'emvideo_thumbnail', $options['node'], TRUE, $tn_options);
+      drupal_add_css(drupal_get_path('module', 'emvideo') .'/emvideo.custom-url.css');
+      return theme('flowplayer', $config, 'emvideo-zzz-custom-url-embedded-video', $attributes, $thumbnail);
     }
 
     // Find the path to the JW FLV Media Player.
@@ -216,19 +226,24 @@ FLV;
         case 'wma':
           $autostart = $autoplay ? '1' : '0';
           $output = '<embed src="'. $url .'" width="'. $width .'" height="'. $height .'" autostart="'. $autostart .'" showcontrols="1" type="application/x-mplayer2" pluginspage="http://www.microsoft.com/windows/windowsmedia/download/"> </embed>';
+          break;
         case 'mov':
         case 'mp4':
         case 'm4v':
           $autostart = $autoplay ? 'true' : 'false';
           $output = '<embed src="'. $url .'" width="'. $width .'" height="'. $height .'" autoplay="'. $autostart .'" controller="true" type="video/quicktime" scale="tofit" pluginspage="http://www.apple.com/quicktime/download/"> </embed>';
+          break;
         case 'rm':
           $autostart = $autoplay ? 'true' : 'false';
           $output = '<embed type="audio/x-pn-realaudio-plugin" src="'. $url .'" width="'. $width .'" height="'. $height .'" autostart="'. $autostart .'" controls="imagewindow" nojava="true" console="c1183760810807" pluginspage="http://www.real.com/"></embed><br /><embed type="audio/x-pn-realaudio-plugin" src="'. $url .'" width="'. $width .'" height="26" autostart="'. $autostart .'" nojava="true" controls="ControlPanel" console="c1183760810807"> </embed>';
+          break;
         case 'swf':
           $output = '<embed src="'. $url .'" width="'. $width .'" height="'. $height .'" quality="high" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer"></embed>';
+          break;
         case 'flv':
           $autostart = $autoplay ? 'true' : 'false';
           $output = '<embed src="http://freevideocoding.com/flvplayer.swf?file='. $url .'&amp;autoStart='. $autostart .'" width="'. $width .'" height="'. $height .'" quality="high" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer"></embed>';
+          break;
       }
     }
     return $output;

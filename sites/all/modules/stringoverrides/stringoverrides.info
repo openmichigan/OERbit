@@ -3,9 +3,9 @@ name = String Overrides
 description = Provides a quick and easy way of replacing text.
 core = 6.x
 
-; Information added by drupal.org packaging script on 2008-09-10
-version = "6.x-1.7"
+; Information added by drupal.org packaging script on 2010-08-22
+version = "6.x-1.8"
 core = "6.x"
 project = "stringoverrides"
-datestamp = "1221073524"
+datestamp = "1282510007"
 

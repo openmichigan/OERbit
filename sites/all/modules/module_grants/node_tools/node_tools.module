@@ -1,5 +1,5 @@
 <?php
-// $Id: node_tools.module,v 1.4 2010/02/02 05:53:03 rdeboer Exp $
+// $Id: node_tools.module,v 1.5 2010/03/23 04:51:26 rdeboer Exp $
 /**
  * @file
  * Generic reusable functions involving node objects.
@@ -165,6 +165,8 @@ function node_tools_get_nodes($op, $is_published = -1, $creator_uid = -1, $modif
   $node_query_result = db_query_range($sql, 0, $max);
   $nodes = array();
   while ($node = db_fetch_object($node_query_result)) {
+    //@todo: expres node_tools_content_is_moderated() as WHERE clause, ie. let SQL do the filtering a priori
+    //See revisioning_handler_filter_node_revision_moderation for WHERE clause example.
     $filter = ($is_moderated < 0) || $is_moderated == node_tools_content_is_moderated($node->type);
     $access = module_exists('module_grants') ? module_grants_node_access($op, $node) : node_access($op, $node);
     if ($filter && $access) {
@@ -199,7 +201,7 @@ function _node_tools_extract_order_clause_from_URI() {
   // We shouldn't have to do this, as tablesort.inc/tablesort_header(), called
   // from theme_table() is meant to look after it, but it's got a bug [#480382].
   // Note: this function is secure, as we're only allowing recognised values,
-  //       all unknown values, result in the a descending sort by 'timestamp'.
+  //       all unknown values, result in a descending sort by 'timestamp'.
   switch ($order_by = drupal_strtolower($_REQUEST['order'])) {
     case 'creator':
       $order_by = 'n.uid';
@@ -213,7 +215,7 @@ function _node_tools_extract_order_clause_from_URI() {
     case 'workflow state':
       $order_by = 'state';
       break;
-    // Listing names that are fine the way they are here:
+    // List names that are fine the way they are here:
     case 'title':
     case 'type':
     case 'term':

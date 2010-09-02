@@ -1,4 +1,4 @@
-$Id: CHANGELOG.txt,v 1.25 2010/03/05 23:25:19 rdeboer Exp $
+$Id: CHANGELOG.txt,v 1.28 2010/04/30 05:45:36 rdeboer Exp $
 
 Changelog for Module Grants module for drupal 6.
 
@@ -76,10 +76,19 @@ o Fix [#601064], comment #9.
 
 6.x-3.4
 =======
-Fix [#675596]
-Fix [#678348]
-Refactored for better efficiency and integratability, see [#642962]
+o Fix [#675596]
+o Fix [#678348]
+o Refactored for better efficiency and integratability, see [#642962]
 
 6.x-3.5
 =======
-Decoupled from Revisioning.
+o Decoupled from Revisioning.
+
+6.x-3.6
+=======
+o Coding standard issue [#754306], fixed as per [#750148]
+o [#750092] [thanks: James Cartledge]
+o Integration with Content Translation [#766504]. [thanks: David Stosik]
+o Added hook example in module_grants.api.php
+o Show detected content access modules on configuration page
+o Implement hook_node_access_explain (for Devel module)

@@ -1,5 +1,5 @@
 <?php
-// $Id: print_pdf.admin.inc,v 1.1.2.21 2009/10/13 21:52:30 jcnventura Exp $
+// $Id: print_pdf.admin.inc,v 1.1.2.29 2010/08/19 23:28:32 jcnventura Exp $
 
 /**
  * @file
@@ -40,6 +40,13 @@ function print_pdf_settings() {
       '#default_value' => variable_get('print_pdf_link_pos', array(PRINT_PDF_LINK_POS_DEFAULT => PRINT_PDF_LINK_POS_DEFAULT)),
       '#options' => array('link' => t('Links area'), 'corner' => t('Content corner')),
       '#description' => t('Choose the location of the link(s) to the PDF version. The Links area is usually below the node content, whereas the Content corner is placed in the upper-right corner of the node content. Unselect all options to disable the link. Even if the link is disabled, you can still view the PDF version of a node by going to !path/nid where nid is the numeric id of the node.', array('!path' => PRINTPDF_PATH)),
+    );
+
+    $form['settings']['print_pdf_link_teaser'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Display link to the PDF version in teaser'),
+      '#default_value' => variable_get('print_pdf_link_teaser', PRINT_PDF_LINK_TEASER_DEFAULT),
+      '#description' => t('Enabling this will display the link in teaser mode.'),
     );
 
     $form['settings']['adv_link'] = array(
@@ -168,9 +175,9 @@ function print_pdf_settings() {
     );
     $form['settings']['print_pdf_autoconfig'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Auto-configure the TCPDF settings'),
+      '#title' => t('Auto-configure the PDF tool settings'),
       '#default_value' => variable_get('print_pdf_autoconfig', PRINT_PDF_AUTOCONFIG_DEFAULT),
-      '#description' => t('(TCPDF only) If you disable this option, the TCDPF settings in tcpdf/config/tcpdf_config.php file must be configured manually.'),
+      '#description' => t('If you disable this option, the pdf tool settings must be configured manually. For TCDPF, edit the tcpdf/config/tcpdf_config.php file. For dompdf, edit the dompdf/dompdf_config.inc.php file.'),
     );
     $form['settings']['print_pdf_font_family'] = array(
       '#type' => 'textfield',
@@ -189,17 +196,19 @@ function print_pdf_settings() {
       '#maxlength' => 3,
       '#description' => t('(TCPDF only) Set the font size to be used for normal text. This is the base value for the scaling applied to other text styles.'),
     );
+    $form['settings']['print_pdf_dompdf_unicode'] = array(
+      '#type' => 'checkbox',
+      '#title' => t("Use dompdf's Unicode Mode"),
+      '#default_value' => variable_get('print_pdf_dompdf_unicode', PRINT_PDF_DOMPDF_UNICODE_DEFAULT),
+      '#description' => t("If enabled, dompdf's Unicode mode is used. If not, the module will attempt to convert some non-ASCII chars to ISO-8859-1."),
+    );
     $form['settings']['print_pdf_wkhtmltopdf_options'] = array(
       '#type' => 'textfield',
       '#title' => t('wkhtmltopdf options'),
+      '#size' => 60,
+      '#maxlength' => 250,
       '#default_value' => variable_get('print_pdf_wkhtmltopdf_options', PRINT_PDF_WKHTMLTOPDF_OPTIONS),
       '#description' => t('(wkhtmltopdf only) Set any additional options to be passed to the wkhtmltopdf executable. Tokens may be used in these options (see list below).'),
-    );
-    $form['settings']['print_pdf_xvfb_options'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Xvfb options'),
-      '#default_value' => variable_get('print_pdf_xvfb_options', PRINT_PDF_XVFB_OPTIONS),
-      '#description' => t('(wkhtmltopdf only) Set any additional options to be passed to the Xvfb executable.'),
     );
 
     if (module_exists('token')) {
@@ -215,16 +224,9 @@ function print_pdf_settings() {
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
-      $descriptions = '';
-      $tokens = token_get_list('node');
-      foreach ($tokens as $token) {
-        foreach ($token as $key => $val) {
-          $descriptions .= '<dt>['. $key .']</dt><dd>'. $val ."</dd>\n";
-        }
-      }
       $form['settings']['print_pdf_filename_patterns']['descriptions'] = array(
         '#type' => 'markup',
-        '#value' => "<dl>\n". $descriptions ."</dl>\n",
+        '#value' => theme('token_help', array('node', 'global')),
       );
     }
     $form['#validate'][] = '_print_pdf_settings_validate';
@@ -260,10 +262,10 @@ function _print_pdf_settings_validate($form, &$form_state) {
 function _print_pdf_tools() {
   $tools = array_keys(file_scan_directory(drupal_get_path('module', 'print'), '^dompdf_config.inc.php$'));
   $tools = array_merge($tools, array_keys(file_scan_directory(drupal_get_path('module', 'print'), '^tcpdf.php$')));
-  $tools = array_merge($tools, array_keys(file_scan_directory(drupal_get_path('module', 'print'), '^wkhtmltopdf(.exe)?$')));
+  $tools = array_merge($tools, array_keys(file_scan_directory(drupal_get_path('module', 'print'), '^wkhtmltopdf')));
   $tools = array_merge($tools, array_keys(file_scan_directory(PRINT_PDF_LIB_PATH, '^dompdf_config.inc.php$')));
   $tools = array_merge($tools, array_keys(file_scan_directory(PRINT_PDF_LIB_PATH, '^tcpdf.php$')));
-  $tools = array_merge($tools, array_keys(file_scan_directory(PRINT_PDF_LIB_PATH, '^wkhtmltopdf$')));
+  $tools = array_merge($tools, array_keys(file_scan_directory(PRINT_PDF_LIB_PATH, '^wkhtmltopdf')));
 
   $num_tools = count($tools);
 

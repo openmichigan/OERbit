@@ -1,0 +1,467 @@
+# $Id: it.po,v 1.1.2.11 2010/05/08 09:59:12 jdanthinne Exp $
+#
+# Italian translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  custom_search.admin.inc,v 1.1.2.14 2010/05/02 14:55:31 jdanthinne
+#  custom_search_blocks.module,v 1.1.2.4 2010/05/02 14:55:31 jdanthinne
+#  custom_search.module,v 1.1.2.35 2010/05/02 14:55:31 jdanthinne
+#  custom_search_taxonomy.admin.inc,v 1.1.2.1 2010/04/29 21:12:09 jdanthinne
+#  custom_search_taxonomy.module,v 1.1.2.3 2010/05/02 14:55:31 jdanthinne
+#  custom_search.info,v 1.1.2.7 2010/05/02 14:55:31 jdanthinne
+#  custom_search_blocks.info,v 1.1.2.4 2010/05/02 14:55:31 jdanthinne
+#  custom_search_taxonomy.info,v 1.1.2.3 2010/05/02 14:55:31 jdanthinne
+#  custom_search.install,v 1.1.2.5 2010/04/29 21:12:09 jdanthinne
+#  custom_search_blocks.admin.inc,v 1.1.2.3 2010/05/02 14:55:31 jdanthinne
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-05-08 11:53+0200\n"
+"PO-Revision-Date: 2010-05-08 11:53+0200\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Italian <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: custom_search.admin.inc:15 modules/custom_search_blocks/custom_search_blocks.module:56
+msgid "Select the search types to present as search options in the search block. If none is selected, no selector will be displayed. <strong>Note</strong>: if there's only one type checked, the selector won't be displayed BUT only this type will be searched."
+msgstr ""
+"Seleziona i tipi di contenuto da presentare come opzioni di ricerca "
+"nel blocco di ricerca. Se non selezionerai alcun tipo di contenuto, "
+"nessun selettore verrà visualizzato. <strong>Nota</strong>: se "
+"selezionerai un solo tipo di contenuto, il selettore non verrà "
+"visualizzato MA la ricerca verrà effettuata unicamente per il tipo di "
+"contenuto selezionato."
+
+#: custom_search.admin.inc:34
+msgid "Search box"
+msgstr "Box ricerca"
+
+#: custom_search.admin.inc:38 custom_search.module:392 modules/custom_search_blocks/custom_search_blocks.module:43 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:47 modules/custom_search_taxonomy/custom_search_taxonomy.module:131
+msgid "Display label"
+msgstr "Visualizza etichetta"
+
+#: custom_search.admin.inc:43
+msgid "Search box label"
+msgstr "Etichetta per il box ricerca"
+
+#: custom_search.admin.inc:45 modules/custom_search_blocks/custom_search_blocks.module:50
+msgid "Enter the label text for the search box. The default value is \"!default\"."
+msgstr ""
+"Inserisci l'etichetta di testo per il box di ricerca. Il valore di "
+"default è \"!default\". "
+
+#: custom_search.admin.inc:49
+msgid "Search box default text"
+msgstr "Testo di default per il box ricerca"
+
+#: custom_search.admin.inc:51
+msgid "This will change the default text inside the search form. Leave blank for no text. This field is blank by default."
+msgstr ""
+"Questo cambierà il testo di default dentro il form ricerca. Lasciare "
+"bianco per non avere testo. Questo campo è bianco per deafault."
+
+#: custom_search.admin.inc:57;171 modules/custom_search_blocks/custom_search_blocks.module:82
+msgid "Submit button"
+msgstr "Tasto di invio"
+
+#: custom_search.admin.inc:61
+msgid "Submit button text"
+msgstr "Testo per il tasto di invio"
+
+#: custom_search.admin.inc:63
+msgid "Enter the text for the submit button (and the \"alt\" attribute if an image is used). Leave blank to hide it. The default value is \"!default\"."
+msgstr ""
+
+#: custom_search.admin.inc:67
+msgid "Submit image path"
+msgstr "Percorso dell'immagine da usare per il tasto di invio"
+
+#: custom_search.admin.inc:68
+msgid "The path to the file you would like to use as submit button instead of the default text button."
+msgstr ""
+"Il percorso del file da utilizzare come tasto di invio al posto del "
+"bottone di default."
+
+#: custom_search.admin.inc:73
+msgid "Submit image"
+msgstr "Carica immagine"
+
+#: custom_search.admin.inc:74
+msgid "If you don't have direct file access to the server, use this field to upload your image."
+msgstr ""
+"Se non hai accesso diretto al server, usa questo campo per caricare "
+"l'immagine."
+
+#: custom_search.admin.inc:80
+msgid "Advanced search criteria"
+msgstr "Criteri per la ricerca avanzata"
+
+#: custom_search.admin.inc:84
+msgid "Or"
+msgstr "Oppure"
+
+#: custom_search.admin.inc:90;107;124
+msgid "Display"
+msgstr "Visualizzazione"
+
+#: custom_search.admin.inc:95;112;129
+msgid "Label"
+msgstr "Etichetta"
+
+#: custom_search.admin.inc:97;114;131
+msgid "Enter the label text for this field. The default value is \"!default\"."
+msgstr ""
+"Inserisci l'etichetta di testo per questo campo. Il valore di default "
+"è \"!default\"."
+
+#: custom_search.admin.inc:101
+msgid "Phrase"
+msgstr "Frase"
+
+#: custom_search.admin.inc:118
+msgid "Negative"
+msgstr "Negativo"
+
+#: custom_search.admin.inc:137 modules/custom_search_blocks/custom_search_blocks.module:64
+msgid "Elements ordering"
+msgstr "Ordinamento degli elementi"
+
+#: custom_search.admin.inc:144 modules/custom_search_blocks/custom_search_blocks.module:72
+msgid "Search Box"
+msgstr "Box ricerca"
+
+#: custom_search.admin.inc:150 modules/custom_search_blocks/custom_search_blocks.module:77
+msgid "Content Types"
+msgstr "Tipo di contenuto"
+
+#: custom_search.admin.inc:156
+msgid "Advanced search criterion: Or"
+msgstr "Criterio per la ricerca avanzata: Oppure"
+
+#: custom_search.admin.inc:161
+msgid "Advanced search criterion: Phrase"
+msgstr "Criterio per la ricerca avanzata: Frase"
+
+#: custom_search.admin.inc:166
+msgid "Advanced search criterion: Negative"
+msgstr "Criterio per la ricerca avanzata: Negativo"
+
+#: custom_search.admin.inc:179
+msgid "Force search path"
+msgstr ""
+
+#: custom_search.admin.inc:181
+msgid "If you want to use a different search path, enter it here. The [key] token will be replaced by what is entered in the search box. Ie: mysearch/[key]."
+msgstr ""
+
+#: custom_search.admin.inc:203 modules/custom_search_blocks/custom_search_blocks.module:124
+msgid "Elements"
+msgstr "Elementi"
+
+#: custom_search.admin.inc:225
+msgid "Search forms"
+msgstr ""
+
+#: custom_search.admin.inc:229
+msgid "Display basic search"
+msgstr "Visualizza il campo di ricerca di base"
+
+#: custom_search.admin.inc:234
+msgid "Display advanced search"
+msgstr "Visualizza il form di ricerca avanzata"
+
+#: custom_search.admin.inc:239
+msgid "Apply Custom Search settings to the advanced search form"
+msgstr ""
+
+#: custom_search.admin.inc:240
+msgid "Only the selected content types, taxonomy vocabularies and criteria will be displayed."
+msgstr ""
+
+#: custom_search.admin.inc:246
+msgid "Results"
+msgstr ""
+
+#: custom_search.admin.inc:247
+msgid "Select data to display below each result."
+msgstr ""
+
+#: custom_search.admin.inc:251
+msgid "Content type"
+msgstr "Tipo di contenuto"
+
+#: custom_search.admin.inc:256
+msgid "User"
+msgstr ""
+
+#: custom_search.admin.inc:261
+msgid "Date"
+msgstr ""
+
+#: custom_search.admin.inc:267
+msgid "Comments"
+msgstr ""
+
+#: custom_search.admin.inc:274
+msgid "Uploads"
+msgstr ""
+
+#: custom_search.admin.inc:281
+msgid "Filter"
+msgstr "Filtra"
+
+#: custom_search.admin.inc:282
+msgid "Add links to filter the results by content type."
+msgstr "Aggiungi links per filtrare i risultati per tipo di contenuto."
+
+#: custom_search.admin.inc:286
+msgid "Position"
+msgstr "Posizione"
+
+#: custom_search.admin.inc:288 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:36 modules/custom_search_taxonomy/custom_search_taxonomy.module:120
+msgid "Disabled"
+msgstr "Disabilitato"
+
+#: custom_search.admin.inc:289
+msgid "Above results"
+msgstr "Risultati sopra"
+
+#: custom_search.admin.inc:290
+msgid "Below results"
+msgstr "Risultati sotto"
+
+#: custom_search.admin.inc:296 custom_search.module:397 modules/custom_search_blocks/custom_search_blocks.module:48 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:52 modules/custom_search_taxonomy/custom_search_taxonomy.module:136
+msgid "Label text"
+msgstr "Etichetta per il testo"
+
+#: custom_search.admin.inc:298
+msgid "Enter the label text for the list. The default value is \"!default\"."
+msgstr ""
+"Inserisci l'etichetta di testo per l'elenco. Il valore di default è "
+"\"!default\"."
+
+#: custom_search.module:11
+msgid "Search this site"
+msgstr "Cerca in questo sito"
+
+#: custom_search.module:12 modules/custom_search_blocks/custom_search_blocks.module:152
+msgid "Search"
+msgstr "Cerca"
+
+#: custom_search.module:13
+msgid "Search for"
+msgstr "Cerca per"
+
+#: custom_search.module:14
+msgid "-Any-"
+msgstr "-Qualsiasi-"
+
+#: custom_search.module:15
+msgid "Containing any of the words"
+msgstr "Contenente qualsiasi tra queste parole"
+
+#: custom_search.module:16
+msgid "Containing the phrase"
+msgstr "Contenente la frase"
+
+#: custom_search.module:17
+msgid "Containing none of the words"
+msgstr "Contenente nessuna di queste parole"
+
+#: custom_search.module:18
+msgid "Filter the results"
+msgstr "Filtra i risultati"
+
+#: custom_search.module:359
+msgid "Content types"
+msgstr "Tipi di contenuto"
+
+#: custom_search.module:373
+msgid "Other searches"
+msgstr "Altre ricerche"
+
+#: custom_search.module:380 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:34 modules/custom_search_taxonomy/custom_search_taxonomy.module:118
+msgid "Selector type"
+msgstr "Tipo di selettore"
+
+#: custom_search.module:382 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:37 modules/custom_search_taxonomy/custom_search_taxonomy.module:121
+msgid "Drop-down list"
+msgstr "Elenco a tendina"
+
+#: custom_search.module:383 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:38 modules/custom_search_taxonomy/custom_search_taxonomy.module:122
+msgid "Drop-down list with multiple choices"
+msgstr "Elenco a tendina con possibilità di scelte multiple"
+
+#: custom_search.module:384 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:39 modules/custom_search_taxonomy/custom_search_taxonomy.module:123
+msgid "Radio buttons"
+msgstr "Radio buttons"
+
+#: custom_search.module:385 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:40 modules/custom_search_taxonomy/custom_search_taxonomy.module:124
+msgid "Checkboxes"
+msgstr "Checkboxes"
+
+#: custom_search.module:387
+msgid "Choose which selector type to use. Note: content types and other searches cannot be combined in a single search."
+msgstr ""
+"Scegli quale tipo di selettore usare. Nota: tipi di contenuto e altre "
+"ricerche non possono essere combinate in una singola ricerca."
+
+#: custom_search.module:399 modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:54 modules/custom_search_taxonomy/custom_search_taxonomy.module:138
+msgid "Enter the label text for the selector. The default value is \"!default\"."
+msgstr ""
+"Inserisci l'etichetta di testo per il selettore. Il valore di default "
+"è \"!default\"."
+
+#: custom_search.module:403
+msgid "-Any content type- text"
+msgstr "Testo per -Qualsiasi tipo di contenuto-"
+
+#: custom_search.module:406
+msgid "Enter the text for \"any content type\" choice. The default value is \"!default\"."
+msgstr ""
+"Inserisci il testo per l'opzione \"qualsiasi tipo di contenuto\". Il "
+"valore di default è \"!default\"."
+
+#: custom_search.module:64
+msgid "administer custom search"
+msgstr "Amministra la ricerca personalizzata"
+
+#: custom_search.module:64
+msgid "use custom search"
+msgstr "usa la ricerca personalizzata"
+
+#: custom_search.module:25 custom_search.info:0;0 modules/custom_search_blocks/custom_search_blocks.info:0 modules/custom_search_i18n/custom_search_i18n.module:131 modules/custom_search_i18n/custom_search_i18n.info:0 modules/custom_search_taxonomy/custom_search_taxonomy.info:0
+msgid "Custom Search"
+msgstr "Ricerca personalizzata"
+
+#: custom_search.module:26 custom_search.info:0
+msgid "Customize the default search, change labels, default texts, ordering, and display content types and taxonomy selectors."
+msgstr ""
+"Personalizza il sistema di ricerca di default, cambia le etichette, "
+"l'ordinamento, e visualizza selettori per il tipo di contenuto o "
+"termini della tassonomia"
+
+#: custom_search.module:33
+msgid "Settings"
+msgstr "Settaggi"
+
+#: custom_search.module:34
+msgid "Change the labels, the default texts and the ordering of elements."
+msgstr ""
+"Cambia le etichette, il testo di default e l'ordinamento degli "
+"elementi."
+
+#: custom_search.module:40 modules/custom_search_blocks/custom_search_blocks.module:55
+msgid "Content"
+msgstr "Contenuto"
+
+#: custom_search.module:41
+msgid "Select the content types to present as search options in the search block."
+msgstr ""
+"Seleziona i tipi di contenuto da presentare come opzioni nel blocco di "
+"ricerca."
+
+#: custom_search.module:49
+msgid "Results page"
+msgstr "Pagina dei risultati"
+
+#: custom_search.module:50
+msgid "Customize the search results page."
+msgstr "Personalizza la pagina dei risultati."
+
+#: custom_search.install:21
+msgid "Custom Search enabled. Don't forget to <a href=\"@link\">set permissions</a>."
+msgstr ""
+
+#: custom_search.install:35
+msgid "Custom Search has been divided in multiple modules. Please re-enable the sub-modules you need."
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.admin.inc:15
+msgid "If you want additional blocks by content type, enable them here. Then go to the <a href=\"@link\">block page</a> to place them in a region."
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.admin.inc:24
+msgid "Number of blocks"
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.module:147
+msgid "Enter the terms you wish to search for."
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.module:31
+msgid "administer custom search blocks"
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.module:31
+msgid "use custom search blocks"
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.module:16
+msgid "Search Blocks"
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.module:17
+msgid "Provide additional search blocks by content type."
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.info:0
+msgid "Custom Search Blocks"
+msgstr ""
+
+#: modules/custom_search_blocks/custom_search_blocks.info:0
+msgid "Provides additional search blocks."
+msgstr ""
+
+#: modules/custom_search_i18n/custom_search_i18n.info:0
+msgid "Custom Search Internationalization"
+msgstr ""
+
+#: modules/custom_search_i18n/custom_search_i18n.info:0
+msgid "Provides Internationalization to Custom Search."
+msgstr ""
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:15 modules/custom_search_taxonomy/custom_search_taxonomy.module:98
+msgid "Select the vocabularies to present as search options in the search block. If none is selected, no selector will be displayed."
+msgstr ""
+"Seleziona i vocabolari da presentare come opzioni di ricerca nel "
+"blocco di ricerca. Se non selezionerai alcun vocabolario, nessun "
+"selettore verrà visualizzato."
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:42 modules/custom_search_taxonomy/custom_search_taxonomy.module:126
+msgid "Choose which selector type to use."
+msgstr "Scegli quale tipo di selettore usare."
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:58 modules/custom_search_taxonomy/custom_search_taxonomy.module:142
+msgid "-Any- text"
+msgstr "Testo per -Qualsiasi-"
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.admin.inc:61 modules/custom_search_taxonomy/custom_search_taxonomy.module:145
+msgid "Enter the text for \"any term\" choice. The default value is \"!default\"."
+msgstr ""
+"Inserisci il testo per l'opzione \"qualsiasi termine\". Il valore di "
+"default è \"!default\"."
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.module:97;149;166;16
+msgid "Taxonomy"
+msgstr "Tassonomia"
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.module:17
+msgid "Select the vocabularies to present as search options in the search block."
+msgstr ""
+"seleziona i vocabolari da presentare come opzioni nel blocco di "
+"ricerca."
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.info:0
+msgid "Custom Search Taxonomy"
+msgstr ""
+
+#: modules/custom_search_taxonomy/custom_search_taxonomy.info:0
+msgid "Adds taxonomy selectors to Custom Search."
+msgstr ""
+

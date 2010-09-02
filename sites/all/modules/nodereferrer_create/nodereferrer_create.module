@@ -120,12 +120,16 @@ function _nodereferrer_create_nodeapi_view(&$node, $teaser, $page) {
 function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
   $menu_items = array();
   $destination = array();
+  // bdr Aug2010:  changes to reflect module provided by Switchback
+  //     without these changes, the redirect on "Add Materials" does
+  //     not work correctly, sending user back to "Overview" instead 
+  //     of "Add Materials"  
   if (variable_get('nodereferrer_redirect_after_create', 0)) {
     $destination = array('query' => array('destination' => 'node/' . $node->nid . '/' . arg(2)));
-  }
-  if (!is_array($node->referrers)) {
+   }
+   if (!is_array($node->referrers)) {
     return $menu_items;
-  }
+   }
   foreach($node->referrers as $i => $ref) {
     $items = array();
     
@@ -201,12 +205,18 @@ function _nodereferrer_create_nodeapi_view_referrer(&$node, $teaser, $page) {
 function _nodereferrer_create_nodeapi_view_reference(&$node, $teaser, $page) {
   $menu_items = array();
   $destination = array();
+  // bdr Aug2010:  changes to reflect module provided by Switchback
+  //     without these changes, the redirect on "Add Materials" does  
+  //     not work correctly, sending user back to "Overview" instead 
+  //     of "Add Materials"
+
   if (variable_get('nodereferrer_redirect_after_create', 0)) {
     $destination = array('query' => array('destination' => 'node/' . $node->nid . '/' . arg(2)));
   }
   if (!is_array($node->referrers)) {
     return $menu_items;
   }
+
   foreach($node->reference_fields as $i => $ref) {
     $multiple = $ref['multiple'] == 1;
     $items = array();

@@ -35,8 +35,9 @@ function hierarchical_permissions_access($op, $node, $account = NULL) {
     if ($account->uid == 1 || in_array('site admin', $account->roles) || in_array('content manager', $account->roles)) {
       return TRUE;
     }
-    if (in_array('unit manager', $account->roles) && in_array('resource manager', $account->roles)) {
-      if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d', $uid, $node->nid))) {
+    //if (in_array('unit manager', $account->roles) && in_array('resource manager', $account->roles)) {
+    if (in_array('unit manager', $account->roles)) {
+      if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d', $account->uid, $node->nid))) {
         return TRUE;
       }
       $nodes = hierarchical_permissions_get_all_by_user($account);
@@ -44,7 +45,7 @@ function hierarchical_permissions_access($op, $node, $account = NULL) {
         return TRUE;
       }
     }
-    if ($node->type == 'unit' && in_array('unit manager', $account->roles)) {
+    /*if ($node->type == 'unit' && in_array('unit manager', $account->roles)) {
       if (db_result(db_query("SELECT * FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='unit' AND p.uid=%d AND p.nid=%d", $account->uid, $node->nid))) {
         return TRUE;
       }
@@ -52,7 +53,7 @@ function hierarchical_permissions_access($op, $node, $account = NULL) {
       if (in_array($node->nid, array_keys($units))) {
         return TRUE;
       }
-    }
+    }*/
     if (in_array('resource manager', $account->roles)) {
       if (db_result(db_query("SELECT * FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='course' AND p.uid=%d AND p.nid=%d", $account->uid, $node->nid))) {
         return TRUE;
@@ -278,6 +279,9 @@ function hierarchical_permissions_get_all_by_user($account) {
   foreach ($nodes as $nid => $values) {
     hierarchical_permissions_get_courses_by_unit($nodes, node_load($nid));
   }
+  foreach ($nodes as $nid => $values) {
+    hierarchical_permissions_get_course_children($nodes, node_load($nid));
+  }
   return $nodes;
 }
 
@@ -286,10 +290,10 @@ function hierarchical_permissions_get_all_by_user($account) {
  */
 function hierarchical_permissions_get_unit_children(&$units, $node) {
   if (empty($node)) {
-    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field_parent_unit_nid IS NULL AND node.type = 'unit'");
+    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field_parent_unit_nid IS NULL");
   }
   else {
-    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d AND node.type = 'unit'", $node->nid);
+    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d", $node->nid);
   }
   while ($unit = db_fetch_object($query)) {
     if (!empty($node)) {

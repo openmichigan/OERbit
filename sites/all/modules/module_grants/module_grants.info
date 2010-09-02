@@ -6,9 +6,9 @@ core = "6.x"
 ; Depends on Node Tools for node_tools_nodeapi()
 dependencies[] = node_tools
 
-; Information added by drupal.org packaging script on 2010-03-05
-version = "6.x-3.5"
+; Information added by drupal.org packaging script on 2010-07-10
+version = "6.x-3.6"
 core = "6.x"
 project = "module_grants"
-datestamp = "1267832705"
+datestamp = "1278724209"
 

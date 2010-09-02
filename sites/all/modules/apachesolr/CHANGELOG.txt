@@ -1,10 +1,48 @@
-// $Id: CHANGELOG.txt,v 1.1.2.158 2010/03/04 04:17:20 pwolanin Exp $
+// $Id: CHANGELOG.txt,v 1.1.2.187 2010/08/11 21:49:19 pwolanin Exp $
 
 Apache Solr Search Integration x.x-x.x, xxxx-xx-xx
 ------------------------------
 
-Apache Solr Search Integration 6.x-1.x, xxxx-xx-xx
+Apache Solr Search Integration 6.x-1.3, xxxx-xx-xx
 ------------------------------
+
+Apache Solr Search Integration 6.x-1.2, 2010-08-11
+------------------------------
+#878996 by pwolanin, weri: don't break out of indexing loop if an exception is caught.
+#880488 by pwolanin: security hardening: don't use unserialize on untrusted data.
+#867448 by B-Prod | jpmckinney: Fixed Apache taxonomy search does not include the search.pages.inc file.
+
+Apache Solr Search Integration 6.x-1.1, 2010-07-25
+------------------------------
+#864160 by pwolanin: Allow the caller a last chance to modify the query and params.
+#847040 by Agileware: Allow other modules to use facet only searching.
+#536990 by pwolanin | jpmckinney, janusman: always index content as an anonymous user.
+#751004 by jpmckinney, camidoo, rjbrown99, pwolanin: fix use of CCK API, handle NODE_BUILD_SEARCH_INDEX exclusion setting in the UI.
+#373824 by pwolanin: show count of attached files to mimic upload module with node search.
+#853564 by pwolanin: fix regression from #614644 - still need to see if there is POST data.
+#592522 by pwolanin, quaoar: use multi-table sytax for MySQL to avoid killer sub-selects.
+#614644 by pwolanin: Improved compatibility with other forms (based on Drupal 7 core issue patch).
+#348832 by pwolanin: Increase maxFieldLength to 20000, rationalize version strings.
+#704190 by pwolanin: Add page callbacks to display conf files in the index in reports.
+#835850 by pwolanin: add more replicated files to solrconfig.xml master section.
+#830976 by eosrei, pwolanin: make sure we return a non-zero ping time on success.
+#824534 backport from 6.x-2.x of method to replace keywords in query object.
+#824154 by pwolanin: update schema.xml to add preserveOriginal="1" to WordDelimiterFilterFactory.
+#818608 by nofun: fix 5.3 warning on get_object_vars().
+#721258 by davidwhthomas, jpmckinney: fix warning, allow the default sort to be changed more easily.
+#592722 by jpmckinney: Reorder code in Solr_Base_Query and Drupal_Solr_Query_Interface.
+           Fix some comments. Remove E_STRICT warnings. Respect coding standards.
+#       by jpmckinney: Fix whitespace. Respect coding standards. Fix watchdog argument. Redo apachesolr_facet_block refactorings from 6.x-2.x
+#759638 by pwolanin: refactor code to make it possible for multiple modules to run a search.
+#763072 by robertDouglass, justinrandell: Fixed warnings when indexing old, crappy html.
+#614644 by netsensei | robertDouglass: Fixed Forms attached to Apachesolr search results won't work.
+#747346 by robertDouglass, pwolanin | lazysoundsystem: Fixed Typo in apachesolr_search.module.
+#750426 by mkalkbrenner: remove ununsed textTight type from schema.xml.
+#751420 by Damien Tournoud, pwolanin, skwashd: shorter site hash with different algorithm.
+#742998 by pwolanin: stop catching exceptions in the solr factory function.
+#744038 by siliconmeadow: Changed Change of Drush extension command naming conventions.
+#733116 by pwolanin | drewish: Changed Implement hook_flush_caches().
+#708424 by janusman: Changed Change gmdate() to Drupal format_date() in date facets to support localization.
 
 Apache Solr Search Integration 6.x-1.0, 2010-03-03
 ------------------------------

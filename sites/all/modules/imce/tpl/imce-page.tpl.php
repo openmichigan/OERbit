@@ -1,5 +1,5 @@
 <?php
-// $Id: imce-page.tpl.php,v 1.8.2.2 2008/04/21 18:36:22 ufku Exp $
+// $Id: imce-page.tpl.php,v 1.8.2.3 2010/02/01 17:54:14 ufku Exp $
 ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="<?php print $GLOBALS['language']->language; ?>" xml:lang="<?php print $GLOBALS['language']->language; ?>">
 
@@ -8,7 +8,9 @@
   <?php if (isset($_GET['app'])): drupal_add_js(drupal_get_path('module', 'imce') .'/js/imce_set_app.js'); endif;?>
   <?php print drupal_get_html_head(); ?>
   <?php print drupal_get_css(); ?>
-  <?php print drupal_get_js('header'); ?>
+  <?php $vars['scripts'] = drupal_get_js('header'); ?>
+  <?php function_exists('jquery_update_preprocess_page') && jquery_update_preprocess_page($vars); ?>
+  <?php print $vars['scripts']; ?>
   <style media="all" type="text/css">/*Quick-override*/</style>
 </head>
 

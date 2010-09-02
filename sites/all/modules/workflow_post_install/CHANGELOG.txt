@@ -1,4 +1,4 @@
-$Id: CHANGELOG.txt,v 1.2 2009/04/20 04:45:16 rdeboer Exp $
+$Id: CHANGELOG.txt,v 1.3 2010/07/10 00:17:34 rdeboer Exp $
 
 Changelog for Worflow-post-install module for drupal 6.
 
@@ -9,4 +9,8 @@ Initial drupal 6 release.
 6.x-1.1
 =======
 Make sure that only content that is of a type that participates in workflows is
-affected (thanks: sportsmaniac, drupal issue #425174).
+affected [#425174] (thanks: sportsmaniac)
+
+6.x-1.2
+=======
+Make more programmer-friendly [#849734] (thanks: Ye)

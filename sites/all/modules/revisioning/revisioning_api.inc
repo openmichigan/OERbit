@@ -1,5 +1,5 @@
 <?php
-// $Id: revisioning_api.inc,v 1.11 2010/03/22 01:19:24 rdeboer Exp $
+// $Id: revisioning_api.inc,v 1.12 2010/07/05 05:58:05 rdeboer Exp $
 
 /**
  * @file
@@ -300,10 +300,9 @@ function _revisioning_publish_revision(&$node, $vid = NULL) {
 function _revisioning_publish_latest_revision(&$node) {
   // Get latest pending revision or take the current provided it's UNpublished
   $latest_pending = array_shift(_revisioning_get_pending_revisions($node->nid));
-  if (!$latest_pending) {
-    if (!$node->status && $node->is_current) {
-      $latest_pending = $node;
-    }
+  if (!$latest_pending && !$node->status && $node->is_current) {
+    _revisioning_publish_revision($node);
+    return TRUE;
   }
   if ($latest_pending) {
     _revisioning_publish_revision($node->nid, $latest_pending->vid);

@@ -12,7 +12,7 @@ class WebformPermissionsTestCase extends WebformTestCase {
   /**
    * Implementation of getInfo().
    */
-  function getInfo() {
+  public static function getInfo() {
     return array(
       'name' => t('Webform permissions'),
       'description' => t('Create webforms and check editing and access permissions.'),
@@ -39,7 +39,7 @@ class WebformPermissionsTestCase extends WebformTestCase {
   */
   function testWebformSubmitAccess() {
     $this->webformReset();
-    $node = $this->webformTestForm();
+    $node = $this->testWebformForm();
     $node->webform['roles'] = array(2);
     node_save($node);
 

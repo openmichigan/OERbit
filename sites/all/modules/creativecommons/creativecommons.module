@@ -1,5 +1,5 @@
 <?php
-// $Id: creativecommons.module,v 1.9.2.75 2010/02/23 20:15:08 turadg Exp $
+// $Id: creativecommons.module,v 1.9.2.78 2010/08/03 15:43:43 kreynen Exp $
 
 /**
  * @file
@@ -207,7 +207,7 @@ function creativecommons_settings() {
 
   $nc_img_options = array();
   foreach (array('' => 'nc', 'eu' => 'nc-eu', 'jp' => 'nc-jp') as $key => $value) {
-    $nc_img_options[$key] = '<img src="'. base_path() . drupal_get_path('module', 'creativecommons') .'/images/icons/'. $value .'.png" alt="'. $value .'" title="'. $value .'"/>';
+    $nc_img_options[$key] = theme('image', drupal_get_path('module', 'creativecommons') .'/images/icons/'. $value .'.png', $value, $value);
   }
   $form['creativecommons_display']['creativecommons_nc_img'] = array(
     '#type' => 'radios',
@@ -290,7 +290,9 @@ function creativecommons_licenses_enabled() {
   // Need to use count, because special case where only None is available (e.g. 'Array( [] => )')
   if (count($available_license_types) == 0) {
     drupal_set_message(t('No Creative Commons license types are enabled!'), 'warning', FALSE);
+    return FALSE;
   }
+  return TRUE;
 }
 
 /**
@@ -1753,7 +1755,7 @@ function creativecommons_block($op='list', $delta=0, $edit = array()) {
               }
               
               // license html
-              $block['content'] = $node->cc->get_html();
+              $block['content'] = theme('creativecommons_node_license', $node);
               return $block;
             }
           }
@@ -1766,24 +1768,7 @@ function creativecommons_block($op='list', $delta=0, $edit = array()) {
           if (variable_get('creativecommons_site_license_display', FALSE)) {
             $cc = creativecommons_get_site_license();
             if ($cc->is_available()) {
-              $output = "\n<!--Creative Commons Site License-->\n";
-
-              // HTML output
-              $output .= $cc->get_html(TRUE);
-
-              // Additional text
-              if ($additional_text = variable_get('creativecommons_site_license_additional_text', '')) {
-                $output .= '<br/>'. $additional_text;
-              }
-
-              // RDF output
-              if ($cc->has_license() && variable_get('creativecommons_rdf', TRUE)) {
-                $output .= "\n<!-- ". $cc->get_rdf() ." -->\n";
-              }
-
-              $output .= "<!--/Creative Commons Site License-->\n";
-
-              $block['content'] = $output;
+              $block['content'] = theme('creativecommons_site_license', $cc);
               $block['subject'] = 'Site License';
             }
             return $block;
@@ -1973,8 +1958,12 @@ function creativecommons_save($node, $op) {
     $metadata = $node->cc->metadata;
   }
   
-  $cc = new creativecommons_license($cc_license_uri, $metadata);
-  $cc->save($node->nid, $op);
+  // check that licensing is enabled for the content type and at least on license is enabled to
+  // avoid errors on new installs
+  if(creativecommons_node_type_is_enabled($node->type) && creativecommons_licenses_enabled()) {
+    $cc = new creativecommons_license($cc_license_uri, $metadata);
+    $cc->save($node->nid, $op);
+  }
 }
 
 /**
@@ -2181,3 +2170,40 @@ function creativecommons_views_api() {
   );
 }
 
+/**
+ * Implementation of hook_theme
+ */ 
+function creativecommons_theme() {
+  $path = drupal_get_path('module', 'creativecommons') .'/theme';
+  require_once "./$path/theme.inc";
+
+  return array(
+    'creativecommons_node_license' => array(
+      'arguments' => array('node' => NULL),
+      'file' => 'theme.inc',
+      'path' => $path,
+    ),
+    'creativecommons_site_license' => array(
+      'arguments' => array('cc' => NULL),
+      'file' => 'theme.inc',
+      'path' => $path,
+    ),
+  );
+}
+
+/**
+* Implementation of hook_content_extra_fields.
+*/
+function creativecommons_content_extra_fields() {
+  $extras['creativecommons'] = array(
+    'label' => t('Creative Commons Licensing'),
+    'description' => t('Allows user to select Creative Commons license and add additional attributes.'),
+    //  bdr aug2010:  change "weight" to "0" to prevent
+    //                workflow from being placed at the
+    //                top of the "Add Material" page
+    //                ... and probably other pages ...
+    //  'weight' => 100,
+    'weight' => 0,
+  );
+  return $extras;
+}

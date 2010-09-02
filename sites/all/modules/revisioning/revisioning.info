@@ -1,12 +1,12 @@
-; $Id: revisioning.info,v 1.14 2010/01/28 01:09:32 rdeboer Exp $
+; $Id: revisioning.info,v 1.15 2010/05/06 03:27:42 rdeboer Exp $
 name = Revisioning
 description = Allows the creation and modification of content while the current revision remains unchanged and publicly visible until the changes have been reviewed by a moderator.
-core = "6.x"
+core = 6.x
 dependencies[] = node_tools
 
-; Information added by drupal.org packaging script on 2010-04-08
-version = "6.x-3.9"
+; Information added by drupal.org packaging script on 2010-07-10
+version = "6.x-3.11"
 core = "6.x"
 project = "revisioning"
-datestamp = "1270691707"
+datestamp = "1278720309"
 

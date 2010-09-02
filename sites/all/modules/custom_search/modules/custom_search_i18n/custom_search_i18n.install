@@ -1,0 +1,14 @@
+<?php
+// $Id: custom_search_i18n.install,v 1.1.2.2 2010/05/04 17:04:48 jdanthinne Exp $
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the custom search module.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function custom_search_i18n_install() {
+  db_query("UPDATE {system} SET weight = 110 WHERE name = 'custom_search_i18n'");
+}

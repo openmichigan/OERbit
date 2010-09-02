@@ -1,5 +1,5 @@
 <?php
-// $Id: imce-content.tpl.php,v 1.8.2.5 2009/09/21 12:10:12 ufku Exp $
+// $Id: imce-content.tpl.php,v 1.8.2.6 2009/09/28 18:21:54 ufku Exp $
 $imce =& $imce_ref['imce'];//keep this line.
 $directory = drupal_get_path('module', 'imce');
 
@@ -21,7 +21,7 @@ drupal_add_js('
 ?>
 <!--[if IE]><style type="text/css">#file-list-wrapper{padding-right: 2em}#file-list{margin-right: -2em}</style><![endif]-->
 <!--[if IE 6]><style type="text/css">.y-resizer{font-size: 0.2em;}#sub-browse-wrapper{float: left; clear: right;}#preview-wrapper{overflow: visible;}#file-preview{width: 99%; height: 99%; overflow: auto;}</style><![endif]-->
-<noscript><?php print t('You should use a javascript-enabled browser in order to experince a much more user-friendly interface.'); ?></noscript>
+<noscript><?php print t('You should use a javascript-enabled browser in order to experience a much more user-friendly interface.'); ?></noscript>
 
 <div id="imce-content">
 

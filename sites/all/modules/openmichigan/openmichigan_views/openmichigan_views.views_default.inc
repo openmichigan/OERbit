@@ -1472,8 +1472,8 @@ function openmichigan_views_views_default_views() {
     'type' => 'role',
     'role' => array(
       '1' => 1,
-      '4' => 4,
       '6' => 6,
+      '5' => 5,
     ),
   ));
   $handler->override_option('cache', array(
@@ -1512,8 +1512,8 @@ function openmichigan_views_views_default_views() {
   $handler->override_option('access', array(
     'type' => 'role',
     'role' => array(
+      '4' => 4,
       '3' => 3,
-      '5' => 5,
     ),
   ));
   $handler->override_option('items_per_page', 0);
@@ -3979,7 +3979,7 @@ function openmichigan_views_views_default_views() {
     'field_file_fid' => array(
       'label' => 'File',
       'required' => 0,
-      'delta' => '0',
+      'delta' => '-1',
       'id' => 'field_file_fid',
       'table' => 'node_data_field_file',
       'field' => 'field_file_fid',
@@ -6446,6 +6446,7 @@ drupal_set_breadcrumb($breadcrumb);
 ?>');
   $handler->override_option('header_format', '3');
   $handler->override_option('header_empty', 0);
+  $handler->override_option('items_per_page', 0);
   $handler = $view->new_display('page', 'Page', 'page_1');
   $handler->override_option('path', 'education/schools-colleges');
   $handler->override_option('menu', array(
@@ -7255,6 +7256,3 @@ drupal_set_breadcrumb($breadcrumb);
 
   return $views;
 }
-
-
-

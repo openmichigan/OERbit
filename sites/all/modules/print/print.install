@@ -1,5 +1,5 @@
 <?php
-// $Id: print.install,v 1.1.4.19 2009/10/03 15:18:24 jcnventura Exp $
+// $Id: print.install,v 1.1.4.26 2010/08/17 23:10:43 jcnventura Exp $
 
 /**
  * @file
@@ -13,6 +13,9 @@
  */
 function print_install() {
   drupal_install_schema('print');
+
+  // Module weight
+  update_sql("UPDATE {system} SET weight = 0 WHERE name = 'print'");
 
   $t = get_t();
   drupal_set_message($t('Printer-friendly Page settings are available under !link',
@@ -34,6 +37,7 @@ function print_uninstall() {
   variable_del('print_logo_options');
   variable_del('print_css');
   variable_del('print_urls');
+  variable_del('print_urls_anchors');
   variable_del('print_comments');
   variable_del('print_newwindow');
   variable_del('print_sourceurl_enabled');
@@ -41,6 +45,7 @@ function print_uninstall() {
   variable_del('print_sourceurl_forcenode');
   variable_del('print_html_show_link');
   variable_del('print_html_link_pos');
+  variable_del('print_html_link_teaser');
   variable_del('print_html_node_link_visibility');
   variable_del('print_html_node_link_pages');
   variable_del('print_html_link_class');
@@ -302,5 +307,77 @@ function print_update_6003() {
   }
 
   menu_rebuild();
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.11
+ */
+function print_update_6004() {
+  $ret = array();
+  // BLOCK_CACHE_PER_PAGE -> 4
+  $ret[] = update_sql("UPDATE {blocks} SET cache = 4 WHERE module = 'print' AND delta = '0'");
+  // BLOCK_CACHE_GLOBAL -> 8
+  $ret[] = update_sql("UPDATE {blocks} SET cache = 8 WHERE module = 'print' AND delta = '1'");
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.11
+ */
+function print_update_6005() {
+  $ret = array();
+  // Module weight
+  $ret[] = update_sql("UPDATE {system} SET weight = 0 WHERE name = 'print'");
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.11
+ */
+function print_update_6006() {
+  global $base_root, $base_path;
+
+  $ret = array();
+  $t = get_t();
+
+  $print_css = variable_get('print_css', '');
+  $pattern = "!(?:${base_root})?${base_path}(.*)!is";
+  if (preg_match($pattern, strtr($print_css, array('%b' => base_path())), $matches)) {
+    variable_set('print_css', $matches[1]);
+  }
+  elseif (!empty($print_css)) {
+    drupal_set_message($t('Please review your custom stylesheet path in the <a href="!url">print module settings</a>, as the path must now be relative to the base path of the site.', array('!url' => url('admin/settings/print/common'))));
+  }
+
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.11
+ */
+function print_update_6007() {
+  $ret = array();
+
+  foreach (node_get_types() as $key => $value) {
+    $print_display = variable_get('print_display_'. $value->type, 1);
+    $print_display_comment = variable_get('print_display_comment_'. $value->type, 0);
+    $print_display_urllist = variable_get('print_display_urllist_'. $value->type, 1);
+
+    if (!$print_display || $print_display_comment || !$print_display_urllist) {
+      $result = db_query("SELECT n.nid, link, comments, url_list from {node} AS n LEFT JOIN {print_node_conf} AS pnc ON n.nid = pnc.nid WHERE type = '%s'", $value->type);
+      while ($conf = db_fetch_object($result)) {
+        if (($conf->link != NULL) && ($conf->comments != NULL) && ($conf->url_list != NULL)) {
+          $conf->link = !$print_display ? 0 : $conf->link;
+          $conf->comments = $print_display_comment ? 1 : $conf->comments;
+          $conf->url_list = !$print_display_urllist ? 0 : $conf->url_list;
+          $ret[] = update_sql("UPDATE {print_node_conf} SET link = $conf->link, comments = $conf->comments, url_list = $conf->url_list WHERE nid = $conf->nid");
+        }
+        else {
+          $ret[] = update_sql("INSERT INTO {print_node_conf} (nid, link, comments, url_list) VALUES ($conf->nid, $print_display, $print_display_comment, $print_display_urllist)");
+        }
+      }
+    }
+  }
   return $ret;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: print.pages.inc,v 1.1.2.56 2009/10/14 22:54:52 jcnventura Exp $
+// $Id: print.pages.inc,v 1.1.2.68 2010/08/21 23:11:03 jcnventura Exp $
 
 /**
  * @file
@@ -18,7 +18,6 @@ $_print_urls = PRINT_URLS_DEFAULT;
  * Generate an HTML version of the printer-friendly page
  *
  * @see print_controller()
- * @see _print_get_template()
  */
 function print_controller_html() {
   $args = func_get_args();
@@ -29,10 +28,7 @@ function print_controller_html() {
   if ($print !== FALSE) {
     $node = $print['node'];
 
-    ob_start();
-    include_once(_print_get_template(PRINT_HTML_FORMAT, $print['type']));
-    $html = ob_get_contents();
-    ob_end_clean();
+    $html = theme('print_page', $print, PRINT_HTML_FORMAT, $node);
     $html = drupal_final_markup($html);
     print $html;
 
@@ -158,6 +154,9 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
 
   $path = empty($node->nid) ? $node->path : "node/$node->nid";
 
+  // Needed because of the theme_get_setting() calls below
+  init_theme();
+
   // print module settings
   $print_css = variable_get('print_css', PRINT_CSS_DEFAULT);
   $print_logo_options = variable_get('print_logo_options', PRINT_LOGO_OPTIONS_DEFAULT);
@@ -174,6 +173,9 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
   $print['language'] = $language->language;
   $print['title'] = check_plain($node->title);
   $print['head'] = drupal_get_html_head();
+  if ($print_html_sendtoprinter) {
+    drupal_add_js('misc/drupal.js', 'core');
+  }
   $print['scripts'] = drupal_get_js();
   $print['robots_meta'] = _print_robots_meta_generator();
   $print['url'] = url($path, array('absolute' => TRUE));
@@ -181,8 +183,7 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
   $print['favicon'] = theme_get_setting('toggle_favicon') ? "<link rel='shortcut icon' href='". theme_get_setting('favicon') ."' type='image/x-icon' />\n" : '';
 
   if (!empty($print_css)) {
-    $replace_pairs = array('%b' => base_path(), '%t' => path_to_theme());
-    $user_css = check_url(strtr($print_css, $replace_pairs));
+    drupal_add_css(strtr($print_css, array('%t' => path_to_theme())));
   }
   else {
     drupal_add_css(drupal_get_path('module', 'print') .'/css/print.css');
@@ -202,11 +203,6 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
         $css_files = array_merge($css_files, array_keys($values));
       }
     }
-    if (!empty($print_css)) {
-      // Convert to a local path, by removing the base_path
-      $pattern = '!^'. base_path() .'!';
-      $css_files[] = preg_replace($pattern, '', $user_css);
-    }
     foreach ($css_files as $filename) {
       $res = file_exists($filename) ? file_get_contents($filename, TRUE) : FALSE;
       if ($res != FALSE) {
@@ -217,13 +213,10 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
   }
   else {
     $print['css'] = drupal_get_css($drupal_css);
-    if (!empty($print_css)) {
-      $print['css'] .= "<link type='text/css' rel='stylesheet' media='all' href='$user_css' />\n";
-    }
   }
 
   $window_close = ($print_html_new_window && $print_html_windowclose) ? 'window.close();' : '';
-  $print['sendtoprinter'] = $print_html_sendtoprinter ? " onload='window.print();$window_close'" : '';
+  $print['sendtoprinter'] = $print_html_sendtoprinter ? "<script type='text/javascript'>Drupal.behaviors.print = function(context) {window.print();$window_close}</script>" : '';
 
   switch ($print_logo_options) {
     case 0: // none
@@ -236,7 +229,8 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
       $logo_url = strip_tags($print_logo_url);
       break;
   }
-  $print['logo'] = $logo_url ? "<img class='print-logo' src='". check_url($logo_url) ."' alt='' />\n" : '';
+  $site_name = variable_get('site_name', 'Drupal');
+  $print['logo'] = $logo_url ? "<img class='print-logo' src='". check_url($logo_url) ."' alt='$site_name' id='logo' />\n" : '';
 
   switch ($print_footer_options) {
     case 0: // none
@@ -339,7 +333,6 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
     $print['taxonomy'] = theme('links', $terms);
   }
 
-  $print['content'] = $node->body;
   $print['node'] = $node;
   $print['message'] = $message;
 
@@ -361,6 +354,8 @@ function _print_var_generator($node, $message = NULL, $cid = NULL) {
 function _print_rewrite_urls($matches) {
   global $base_url, $base_root, $_print_urls;
 
+  $include_anchors = variable_get('print_urls_anchors', PRINT_URLS_ANCHORS_DEFAULT);
+
   // first, split the html into the different tag attributes
   $pattern = '!\s*(\w+\s*=\s*"(?:\\\"|[^"])*")\s*|\s*(\w+\s*=\s*\'(?:\\\\\'|[^\'])*\')\s*|\s*(\w+\s*=\s*\w+)\s*|\s+!';
   $attribs = preg_split($pattern, $matches[1], -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
@@ -374,14 +369,14 @@ function _print_rewrite_urls($matches) {
     if (preg_match('!^(?:href|src)\s*?=(.*)!i', $attribs[$i], $urls) > 0) {
       $url = trim($urls[1], " \t\n\r\0\x0B\"'");
 
-      if (strpos($url, '://') || preg_match('!^mailto:.*?@.*?\..*?$!iu', $url)) {
+      if (strpos(html_entity_decode($url), '://') || preg_match('!^mailto:.*?@.*?\..*?$!iu', html_entity_decode($url))) {
         // URL is absolute, do nothing
-        $newurl = urldecode($url);
+        $newurl = $url;
       }
       else {
         if ($url[0] == '#') {
           // URL is an anchor tag
-          if (!empty($_print_urls)) {
+          if ($include_anchors && (!empty($_print_urls))) {
             $path = explode('/', $_GET['q']);
             unset($path[0]);
             $path = implode('/', $path);
@@ -389,24 +384,24 @@ function _print_rewrite_urls($matches) {
               $path = "node/$path";
             }
             // Printer-friendly URLs is on, so we need to make it absolute
-            $newurl = url($path, array('fragment' => substr(urldecode($url), 1), 'absolute' => TRUE));
+            $newurl = url($path, array('fragment' => substr($url, 1), 'absolute' => TRUE));
           }
           // Because base href is the original page, change the link to
           // still be usable inside the print page
-          $matches[1] = str_replace($url, $_GET['q'] . $url, $matches[1]);
+          $matches[1] = str_replace($url, base_path() . $_GET['q'] . $url, $matches[1]);
         }
         else {
           // URL is relative, convert it into absolute URL
           if ($url[0] == '/') {
             // If it starts with '/' just append it to the server name
-            $newurl = $base_root .'/'. trim(urldecode($url), '/');
+            $newurl = $base_root .'/'. trim($url, '/');
           }
           elseif (preg_match('!^(?:index.php)?\?q=!i', $url)) {
             // If it starts with ?q=, just prepend with the base URL
-            $newurl = $base_url .'/'. trim(urldecode($url), '/');
+            $newurl = $base_url .'/'. trim($url, '/');
           }
           else {
-            $newurl = url(trim(urldecode($url), '/'), array('absolute' => TRUE));
+            $newurl = rawurldecode(url(trim($url, '/'), array('absolute' => TRUE)));
           }
           $matches[1] = str_replace($url, $newurl, $matches[1]);
         }
@@ -418,7 +413,7 @@ function _print_rewrite_urls($matches) {
   if (count($matches) == 4) {
     $ret .= $matches[2] . $matches[3];
     if ((!empty($_print_urls)) && (isset($newurl))) {
-      $ret .= ' <span class="print-footnote">['. _print_friendly_urls(trim(stripslashes($newurl))) .']</span>';
+      $ret .= ' <span class="print-footnote">['. _print_friendly_urls(trim($newurl)) .']</span>';
     }
   }
 
@@ -452,51 +447,6 @@ function _print_friendly_urls($url = 0) {
 }
 
 /**
- * Choose most appropriate template
- *
- * Auxiliary function to resolve the most appropriate template trying to find
- * a content specific template in the theme or module dir before falling back
- * on a generic template also in those dirs.
- *
- * @param format
- *   format of the PF page being rendered (html, pdf, etc.)
- * @param $type
- *   name of the node type being rendered in a PF page
- * @return
- *   filename of the most suitable template
- */
-function _print_get_template($format = NULL, $type = NULL) {
-  $filenames = array();
-  // First try to find a template defined both for the format and then the type
-  if (!empty($format) && !empty($type)) {
-    $filenames[] = "print_$format.node-$type.tpl.php";
-  }
-  // Then only for the format
-  if (!empty($format)) {
-    $filenames[] = "print_$format.tpl.php";
-  }
-  // If the node type is known, then try to find that type's template file
-  if (!empty($type)) {
-    $filenames[] = "print.node-$type.tpl.php";
-  }
-  // Finally search for a generic template file
-  $filenames[] = 'print.tpl.php';
-
-  foreach ($filenames as $value) {
-    // First in the theme directory
-    $file = drupal_get_path('theme', $GLOBALS['theme_key']) .'/'. $value;
-    if (file_exists($file)) {
-      return $file;
-    }
-    // Then in the module directory
-    $file = drupal_get_path('module', 'print') .'/'. $value;
-    if (file_exists($file)) {
-      return $file;
-    }
-  }
-}
-
-/**
  * Check URL list settings for this node
  *
  * @param node
@@ -507,25 +457,28 @@ function _print_get_template($format = NULL, $type = NULL) {
  *   TRUE if URL list should be displayed, FALSE otherwise
  */
 function _print_url_list_enabled($node, $format = PRINT_HTML_FORMAT) {
+  if (!isset($node->type)) {
+    return TRUE;
+  }
+
   switch ($format) {
     case PRINT_HTML_FORMAT:
-      $node_urllist = isset($node->print_display_urllist) ? $node->print_display_urllist : TRUE;
+      $node_urllist = isset($node->print_display_urllist) ? $node->print_display_urllist : variable_get('print_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
       $fmt = '';
       break;
     case PRINT_MAIL_FORMAT:
-      $node_urllist = isset($node->print_mail_display_urllist) ? $node->print_mail_display_urllist : TRUE;
+      $node_urllist = isset($node->print_mail_display_urllist) ? $node->print_mail_display_urllist : variable_get('print_mail_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
       $fmt = $format .'_';
       break;
     case PRINT_PDF_FORMAT:
-      $node_urllist = isset($node->print_pdf_display_urllist) ? $node->print_pdf_display_urllist : TRUE;
+      $node_urllist = isset($node->print_pdf_display_urllist) ? $node->print_pdf_display_urllist : variable_get('print_pdf_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
       $fmt = $format .'_';
       break;
   }
-  if (!isset($node_urllist)) $node_urllist = TRUE;
+  if (!isset($node_urllist)) $node_urllist = PRINT_TYPE_URLLIST_DEFAULT;
 
   // Get value of Printer-friendly URLs setting
-  return (variable_get('print_urls', PRINT_URLS_DEFAULT) && ($node_urllist) &&
-          (isset($node->type) ? variable_get('print_'. $fmt .'display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT) : PRINT_TYPE_URLLIST_DEFAULT));
+  return (variable_get('print_urls', PRINT_URLS_DEFAULT) && ($node_urllist));
 }
 
 /**
@@ -628,9 +581,10 @@ function _print_generate_node($nid, $cid = NULL, $format = PRINT_HTML_FORMAT, $t
 
   node_invoke_nodeapi($node, 'alter', $teaser, TRUE);
 
+  $content = theme('print_node', $node, $teaser, TRUE, $format);
+
   if ($teaser) {
-    $node->body = $node->teaser;
-    unset($node->teaser);
+    $content = $node->teaser;
   }
 
   //Check URL list settings
@@ -638,11 +592,10 @@ function _print_generate_node($nid, $cid = NULL, $format = PRINT_HTML_FORMAT, $t
 
   // Convert the a href elements
   $pattern = '!<(a\s[^>]*?)>(.*?)(</a>)!is';
-  $node->body = preg_replace_callback($pattern, '_print_rewrite_urls', $node->body);
-
-  init_theme();
+  $content = preg_replace_callback($pattern, '_print_rewrite_urls', $content);
 
   $print = _print_var_generator($node, $message, $cid);
+  $print['content'] = $content;
 
   return $print;
 }
@@ -708,9 +661,8 @@ function _print_generate_path($path, $format = PRINT_HTML_FORMAT, $teaser = FALS
   $pattern = '!<(a\s[^>]*?)>(.*?)(</a>)!is';
   $node->body = preg_replace_callback($pattern, '_print_rewrite_urls', $node->body);
 
-  init_theme();
-
   $print = _print_var_generator($node, $message);
+  $print['content'] = $node->body;
 
   return $print;
 }
@@ -755,9 +707,9 @@ function _print_generate_book($nid, $format = PRINT_HTML_FORMAT, $teaser = FALSE
   $pattern = '!<(a\s[^>]*?)>(.*?)(</a>)!is';
   $node->body = preg_replace_callback($pattern, '_print_rewrite_urls', $node->body);
 
-  init_theme();
-
   $print = _print_var_generator($node, $message);
+  $print['content'] = $node->body;
+
   // The title is already displayed by the book_recurse, so avoid duplication
   $print['title'] = '';
 

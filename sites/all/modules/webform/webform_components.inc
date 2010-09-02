@@ -1,5 +1,5 @@
 <?php
-// $Id: webform_components.inc,v 1.9.2.30 2009/11/06 00:25:43 quicksketch Exp $
+// $Id: webform_components.inc,v 1.9.2.32 2010/02/09 06:31:36 quicksketch Exp $
 
 /**
  * @file
@@ -264,6 +264,11 @@ function webform_components_form_submit($form, &$form_state) {
   }
   else {
     drupal_set_message(t('The component positions and mandatory values have been updated.'));
+
+    // Since Webform components have been updated but the node itself has not
+    // been saved, it is necessary to explicitly clear the cache to make sure
+    // the updated webform is visible to anonymous users.
+    cache_clear_all();
   }
 }
 
@@ -459,6 +464,11 @@ function webform_component_edit_form_submit($form, &$form_state) {
     $cid = webform_component_insert($form_state['values']);
   }
 
+  // Since Webform components have been updated but the node itself has not
+  // been saved, it is necessary to explicitly clear the cache to make sure
+  // the updated webform is visible to anonymous users.
+  cache_clear_all();
+
   $form_state['redirect'] = array('node/'. $form_state['values']['nid'] .'/edit/components', isset($cid) ? 'cid='. $cid : '');
 }
 
@@ -499,13 +509,13 @@ function webform_component_delete_form_submit($form, &$form_state) {
  * @param $component
  *   A full component containing fields from the component form.
  */
-function webform_component_insert($component) {
+function webform_component_insert(&$component) {
   db_lock_table('webform_component');
   $component['cid'] = isset($component['cid']) ? $component['cid'] : db_result(db_query('SELECT MAX(cid) FROM {webform_component} WHERE nid = %d', $component['nid'])) + 1;
   $component['value'] = isset($component['value']) ? $component['value'] : NULL;
   $component['mandatory'] = isset($component['mandatory']) ? $component['mandatory'] : 0;
   db_query("INSERT INTO {webform_component} (nid, cid, pid, form_key, name, type, value, extra, mandatory, weight, email) VALUES (%d, %d, %d, '%s', '%s', '%s', '%s', '%s', %d, %d, %d)", $component['nid'], $component['cid'], $component['pid'], $component['form_key'], $component['name'], $component['type'], $component['value'], serialize($component['extra']), $component['mandatory'], $component['weight'], $component['email']);
-  db_unlock_tables('webform_component');
+  db_unlock_tables();
   return $component['cid'];
 }
 
@@ -555,7 +565,7 @@ function webform_component_delete($node, $component) {
  * @param $component
  *   A full component containing fields from the component form.
  */
-function webform_component_clone(&$node, $component) {
+function webform_component_clone(&$node, &$component) {
   $original_cid = $component['cid'];
   unset($component['cid']);
   $new_cid = webform_component_insert($component);

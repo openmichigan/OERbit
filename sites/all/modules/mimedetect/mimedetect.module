@@ -1,5 +1,5 @@
 <?php
-// $Id: mimedetect.module,v 1.10.2.1 2009/05/09 17:37:14 drewish Exp $
+// $Id: mimedetect.module,v 1.10.2.3 2010/05/26 20:41:15 drewish Exp $
 
 /**
  * @file
@@ -53,7 +53,7 @@ function mimedetect_mime($file) {
   );
 
   $mime = FALSE;
-  $magic_file = drupal_get_path('module', 'mimedetect') .'/magic';
+  $magic_file = variable_get('mimedetect_magic', drupal_get_path('module', 'mimedetect') .'/magic');
 
   // Try to use the fileinfo extension first.
   if (extension_loaded('fileinfo')) {
@@ -73,10 +73,11 @@ function mimedetect_mime($file) {
     // names but if you run into problems you can use " -bi ".
     $command = $filebin .' --brief --mime --magic-file='. escapeshellarg($magic_file) .' '. escapeshellarg($file->filepath);
     $mime = trim(exec($command));
-    // with text we often get charset like 'text/plain; charset=us-ascii'
-    $mime = split(';', $mime);
-    $mime = trim($mime[0]);
   }
+
+  // with text we often get charset like 'text/plain; charset=us-ascii'
+  $mime = split(';', $mime);
+  $mime = trim($mime[0]);
 
   // ASF derived media formats are hard to detect with magic. They're typically
   // all reported as video/x-ms-asf or application/octet-stream. These aren't

@@ -1,5 +1,5 @@
 <?php
-// $Id: accessible_content.install,v 1.1.2.7 2010/04/07 02:20:10 kevee Exp $
+// $Id: accessible_content.install,v 1.1.2.13 2010/08/06 02:14:38 kevee Exp $
 /**
 *   @file
 *   Install file for Accessible Content
@@ -20,15 +20,37 @@ function accessible_content_requirements($phase) {
     else {
       //Library does not exist and we throw an error with a link to download
       $requirements['accessible_content']['severity'] = REQUIREMENT_ERROR;
-      $requirements['accessible_content']['description'] = 'Accessible content module requires the Quail library. Please download and from '.
-      l('http://code.google.com/p/quail-lib', 'http://code.google.com/p/quail-lib') .
-      ' and place the "quail" directory in the accessible_content directory';
+      $requirements['accessible_content']['description'] = t('Accessible content module requires the Quail library. Please download and from !link and place the "quail" directory in the directory "sites/all/libraries"', array(
+      '!link' => 
+      l('http://code.google.com/p/quail-lib', 'http://code.google.com/p/quail-lib')));
 
     }
     if (!class_exists('DOMDocument')) {
       //There is no support for DOMDocument
-      $requirements['accessible_content_dom']['severity'] = REQUIREMENT_ERROR;
-      $requirements['accessible_content_dom']['description'] = 'Accessible content module requires DOMDocument to be available.';
+      $requirements['accessible_content_dom']['severity'] = REQUIREMENT_WARNING;
+      $requirements['accessible_content_dom']['description'] = t('Accessible content module requires DOMDocument to be available.');
+    }
+    if (!function_exists('mb_strlen')) {
+      //There is no support for DOMDocument
+      $requirements['accessible_content_dom']['severity'] = REQUIREMENT_WARNING;
+      $requirements['accessible_content_dom']['description'] = t('Accessible content module requires the !link.', array(l('PHP mbstring extension', 'http://www.php.net/mbstring')));
+    }
+
+    return $requirements;
+  }
+  if ($phase == 'runtime') {
+     $requirements = array(
+        'accessible_content_status' => array(
+          'title' => t('Accessibility Tests Installed'),
+        ),
+     );
+    if (!variable_get('accessible_content_guidelines_created', FALSE)) {
+     $requirements['accessible_content_status']['description'] = t('Accessibility tests have not yet been installed. To install them, visit the !link page.', array('!link' => l('Install and Update Tests', 'admin/settings/accessible_content/create_tests')));
+      $requirements['accessible_content_status']['severity'] = REQUIREMENT_WARNING;
+    }
+    else {
+     $requirements['accessible_content_status']['description'] = t('Accesibility tests are installed');
+      $requirements['accessible_content_status']['severity'] = REQUIREMENT_OK;    
     }
     return $requirements;
   }
@@ -174,6 +196,7 @@ function accessible_content_schema() {
 
   return $schema;
 }
+
 /**
  * Implementation of hook_install
  */
@@ -181,8 +204,6 @@ function accessible_content_schema() {
 function accessible_content_install() {
   drupal_install_schema('accessible_content');
   module_invoke('accessible_content', 'node_info');
-  _accessible_content_define_default_types();
-  _accessible_content_create_guidelines();
   if (!module_exists('beautytips')) {
     drupal_set_message('For more helpful accessibility views, install the '.
                      l('BeautyTips module', 'http://drupal.org/project/beautytips') .'.');
@@ -193,77 +214,12 @@ function accessible_content_install() {
      strpos($allowed_html, '<code>') === FALSE ) {
     drupal_set_message('Accessibility tests are marked up with the following tags. Please consider enabling these HTML codes in your default input filter: &lt;h4&gt; &lt;h5&gt; &lt;code&gt;');
   }
+  if (!variable_get('accessible_content_guidelines_created', FALSE)) {
+    drupal_set_message(t('You must install accessibility tests and guidelines at the !link page.', 
+              array('!link' => l('Install and Update Tests', 'admin/settings/accessible_content/create_tests'))));
+  }
 }
 
-/*
-
-/*
-*  Walks through Quail's default set of tests and creates a node for each one.
-*  As each node is created we also insert a record of its nid relationship to a test class
-*  name in quail so we can use it later.
-*/
-function _accessible_content_define_default_types() {
-  $csv = fopen(dirname(__FILE__) .'/quail/guidelines/translations/en.txt', 'r');
-  global $user;
-  if ($csv) {
-    while (($test = fgetcsv($csv)) !== FALSE ) {
-        if (count($test) == 4) {
-          $node = new stdClass();
-          $node->type = 'accessibility_test';
-          $node->uid = $user->uid;
-          $node->title = $test[1];
-          $node->body = $test[2];
-          node_save($node);
-          db_query('INSERT INTO {accessible_content_node_test} (nid, test_name, severity) VALUES(%d, "%s", %d)',
-            $node->nid,
-             $test[0],
-             $test[3]);
-    }
-    }
-  }
-  fclose($csv);
-}
-
-/**
-*  Loads the default guidelines defined by QUAIL and creates accessibility_guideline nodes for them.
-*/
-function  _accessible_content_create_guidelines() {
-  global $user;
-  accessible_content_include_library();
-  $csv = fopen(dirname(__FILE__) .'/install/guidelines.csv', 'r');
-  $test_query = db_query('SELECT nid, test_name FROM {accessible_content_node_test}');
-  $tests = array();
-  while ($row = db_fetch_object($test_query)) {
-    $tests[$row->test_name] = $row->nid;
-  }
-  if ($csv) {
-    while ($guideline = fgetcsv($csv)) {
-        $node = new stdClass();
-        $node->type = 'accessibility_guideline';
-        $node->uid = $user->uid;
-        $node->title = $guideline[1];
-        node_save($node);
-        require_once(dirname(__FILE__) .'/quail/guidelines/'. strtolower($guideline[0]) .'.php');
-        $FALSE = FALSE;
-        $guideline_object = new $guideline[2]($FALSE, $FALSE, $FALSE);
-        $guideline_tests = $guideline_object->getTests();
-        foreach ($guideline_tests as $test) {
-          $check = db_query('SELECT COUNT(*) as total FROM {accessible_content_guideline_test} WHERE guideline_nid = %d AND guideline_vid = %d AND test_nid = %d',
-                     $node->nid,
-                     $node->vid,
-                     $tests[$test]);
-          $check_total = db_result($check);
-          if ($check_total == 0) {
-            db_query('INSERT INTO {accessible_content_guideline_test} (guideline_nid, guideline_vid, test_nid) VALUES (%d, %d, %d)',
-                 $node->nid,
-                 $node->vid,
-                 $tests[$test]);
-      }
-    }
-    }
-  }
-  fclose($csv);
-}
 
 /**
  * Implementation of hook_uninstall

@@ -12,7 +12,7 @@ class WebformComponentsTestCase extends WebformTestCase {
   /**
    * Implementation of getInfo().
    */
-  function getInfo() {
+  public static function getInfo() {
     return array(
       'name' => t('Webform components'),
       'description' => t('Add and remove components from a webform.'),
@@ -25,5 +25,14 @@ class WebformComponentsTestCase extends WebformTestCase {
    */
   function setUp() {
     parent::setUp();
+  }
+
+  /**
+   * Implementation of testWebformDummy(). if it is not present,
+   * then the test runs fine, but when combined with other tests
+   * the whole block fails, since there would be no output.
+   */
+  function testWebformDummy() {
+    $this->pass = t('WebformComponentsTest pass.');
   }
 }

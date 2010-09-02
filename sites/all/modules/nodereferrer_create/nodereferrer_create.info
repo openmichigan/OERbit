@@ -9,9 +9,9 @@ version = "6.x-1.x-dev"
 project = "nodereferrer_create"
 datestamp = "1188432365"
 
-; Information added by drupal.org packaging script on 2008-10-20
+; Information added by drupal.org packaging script on 2010-07-11
 version = "6.x-1.x-dev"
 core = "6.x"
 project = "nodereferrer_create"
-datestamp = "1224504526"
+datestamp = "1278835036"
 
