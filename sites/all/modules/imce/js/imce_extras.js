@@ -1,4 +1,4 @@
-// $Id: imce_extras.js,v 1.2.2.4 2009/06/24 12:18:48 ufku Exp $
+// $Id: imce_extras.js,v 1.2.2.5 2010/02/01 15:47:01 ufku Exp $
 //This pack implemets: keyboard shortcuts, file sorting, resize bars, and inline thumbnail preview.
 
 //add onload hook. unshift to make sure it runs first after imce loads.
@@ -171,24 +171,25 @@ imce.initiateResizeBars = function () {
 };
 
 //set a resize bar
-imce.setResizer = function (resizer, axis, area1, area2, Min, endF) {
-  var O = axis == 'X' ? {pos: 'pageX', func: 'width'} : {pos: 'pageY', func: 'height'};
+imce.setResizer = function (resizer, axis, area1, area2, Min, callback) {
+  var opt = axis == 'X' ? {pos: 'pageX', func: 'width'} : {pos: 'pageY', func: 'height'};
   var Min = Min || 0;
+  var $area1 = $(imce.el(area1)), $area2 = area2 ? $(imce.el(area2)) : null, $doc = $(document);
   $(imce.el(resizer)).mousedown(function(e) {
-    var pos = e[O.pos];
-    var end = start = $(imce.el(area1))[O.func]();
-    var Max = area2 ? (start + $(imce.el(area2))[O.func]()) : 1200;
-    $(document).mousemove(doDrag).mouseup(endDrag);
-    function doDrag(e) {
-      end = Math.min(Max - Min, Math.max(start + e[O.pos] - pos, Min));
-      $(imce.el(area1))[O.func](end);
-      if (area2) $(imce.el(area2))[O.func](Max - end);
+    var pos = e[opt.pos];
+    var end = start = $area1[opt.func]();
+    var Max = $area2 ? start + $area2[opt.func]() : 1200;
+    var drag = function(e) {
+      end = Math.min(Max - Min, Math.max(start + e[opt.pos] - pos, Min));
+      $area1[opt.func](end);
+      $area2 && $area2[opt.func](Max - end);
       return false;
-    }
-    function endDrag(e) {
-      $(document).unbind("mousemove", doDrag).unbind("mouseup", endDrag);
-      if (endF) endF(start, end, Max);
-    }
+    };
+    var undrag = function(e) {
+      $doc.unbind('mousemove', drag).unbind('mouseup', undrag);
+      callback && callback(start, end, Max);
+    };
+    $doc.mousemove(drag).mouseup(undrag);
   });
 };
 

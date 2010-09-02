@@ -1,4 +1,4 @@
-// $Id: README.txt,v 1.11.2.8 2009/09/25 13:30:57 ufku Exp $
+// $Id: README.txt,v 1.11.2.9 2010/02/01 15:42:58 ufku Exp $
 
 IMCE is an image/file uploader and browser that supports personal directories and quota.
 IMCE can easily be integrated into any WYSIWYG editor or any web application that needs a file browser.
@@ -146,7 +146,7 @@ Then you should consider applying advanced integration.
 
 The initial step of advanced integration is the same as imceload-integration above.
 
-We open IMCE and set its imceOnLoad function:
+We open IMCE and set its onload function:
 
 window.open('/?q=imce&app=myApp|imceload@initiateMyApp', '', 'width=760,height=560,resizable=1'); //initiateMyApp(win) will run when imce loads
 
@@ -193,5 +193,5 @@ imce.setMessage(msg, type): logs a message of the type(status, warning, error)
 NOTE:
 - All URL strings in the examples start with "/" considering the base path is "/".
 In case your drupal is running on a sub directory e.g, http://localhost/drupal, these URLs should start with "/drupal/".
-There is a safer solution that does not require manual URL fixing: If the Drupal javascript object is avaliable in your page you can use Drupal.settings.basePath at the beginning of URLs (Drupal.settings.basePath+'?q=imce....'). This won't work multilingual paths with language prefixes.
+There is a safer solution that does not require manual URL fixing: If the Drupal javascript object is avaliable in your page you can use Drupal.settings.basePath at the beginning of URLs (Drupal.settings.basePath+'?q=imce....'). Note that, this won't work with multilingual paths with language prefixes.
 - file and directory ids(names) used in imce.js are url encoded forms of original names. They are decoded using imce.decode and displayed in the lists.

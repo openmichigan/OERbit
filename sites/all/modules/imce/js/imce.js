@@ -1,4 +1,4 @@
-// $Id: imce.js,v 1.15.2.10 2009/07/09 19:29:09 ufku Exp $
+// $Id: imce.js,v 1.15.2.11 2010/02/01 15:46:10 ufku Exp $
 
 //Global container.
 var imce = {tree: {}, findex: [], fids: {}, selected: {}, selcount: 0, ops: {}, cache: {}, urlId: {},
@@ -246,6 +246,7 @@ setUploadOp: function () {
   if (!imce.el('imce-upload-form')) return;
   var form = $(imce.el('imce-upload-form'));
   form.find('fieldset').each(function() {//clean up fieldsets
+    imce.convertButtons(this);
     this.removeChild(this.firstChild);
     $(this).after(this.childNodes);
   }).remove();
@@ -257,6 +258,7 @@ setUploadOp: function () {
 setFileOps: function () {
   $(imce.el('edit-filenames-wrapper')).remove();
   $('#imce-fileop-form fieldset').each(function() {//remove fieldsets
+    imce.convertButtons(this);
     var sbmt = $('input:submit', this);
     if (!sbmt.size()) return;
     var Op = {name: sbmt.attr('id').substr(5)};
@@ -461,7 +463,7 @@ commonSubmit: function(fop) {
 
 //settings for default file operations
 fopSettings: function (fop) {
-  return {url: imce.ajaxURL(fop), type: 'POST', dataType: 'json', success: imce.processResponse, complete: function (response) {imce.fopLoading(fop, false);}, data: imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop + (imce.ops[fop].div ? '&'+ $('input', imce.ops[fop].div).serialize() : '')};
+  return {url: imce.ajaxURL(fop), type: 'POST', dataType: 'json', success: imce.processResponse, complete: function (response) {imce.fopLoading(fop, false);}, data: imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop + (imce.ops[fop].div ? '&'+ $('input, select, textarea', imce.ops[fop].div).serialize() : '')};
 },
 
 //toggle loading state
@@ -667,6 +669,12 @@ decode: function (str) {
 //global ajax error function
 ajaxError: function (e, response, settings, thrown) {
   imce.setMessage(Drupal.ahahError(response, settings.url).replace('\n', '<br />'), 'error');
+},
+//convert buttons to standard input buttons
+convertButtons: function(form) {
+  $('button:submit', form).each(function(){
+    $(this).replaceWith('<input type="submit" value="'+ this.value +'" name="'+ this.name +'" class="form-submit" id="'+ this.id +'" />');
+  });
 }
 };
 
