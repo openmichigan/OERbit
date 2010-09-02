@@ -1,5 +1,13 @@
 <?php
-// $Id: apachesolr_og.install,v 1.1.2.3 2009/10/22 13:32:44 pwolanin Exp $
+// $Id: apachesolr_og.install,v 1.1.2.4 2010/04/28 21:44:27 jpmckinney Exp $
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function apachesolr_og_uninstall() {
+  // Remove blocks.
+  db_query('DELETE FROM {blocks} WHERE module = "apachesolr_og"');
+}
 
 /**
  * Implementation of hook_enable().

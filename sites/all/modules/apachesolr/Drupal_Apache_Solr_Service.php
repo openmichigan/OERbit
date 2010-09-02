@@ -1,21 +1,6 @@
 <?php
+// $Id: Drupal_Apache_Solr_Service.php,v 1.1.2.31 2010/08/11 21:43:16 pwolanin Exp $
 require_once 'SolrPhpClient/Apache/Solr/Service.php';
-
-/**
- * PHP 5.1 compatability code.
- */
-if (!function_exists('json_decode')) {
-  // Zend files include other files.
-  set_include_path(dirname(__FILE__) . PATH_SEPARATOR . get_include_path());
-  require_once 'Zend/Json/Decoder.php';
-
-  /**
-   * Substitute for missing PHP built-in function.
-   */
-  function json_decode($string) {
-    return Zend_Json_Decoder::decode($string, 0);
-  }
-}
 
 class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
 
@@ -40,14 +25,15 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
       $timeout = -1;
     }
     // Attempt a HEAD request to the solr ping url.
-    list($data, $headers) = $this->_makeHttpRequest($this->_pingUrl, 'HEAD', array(), null, $timeout);
+    list($data, $headers) = $this->_makeHttpRequest($this->_pingUrl, 'HEAD', array(), NULL, $timeout);
     $response = new Apache_Solr_Response($data, $headers);
 
     if ($response->getHttpStatus() == 200) {
-      return microtime(TRUE) - $start;
+      // Add 0.1 ms to the ping time so we never return 0.0.
+      return microtime(TRUE) - $start + 0.0001;
     }
     else {
-      return FALSE; 
+      return FALSE;
     }
   }
 
@@ -78,7 +64,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
     }
     return $this->luke[$num_terms];
   }
-  
+
   /**
    * Sets $this->stats with the information about the Solr Core form /admin/stats.jsp
    */
@@ -99,7 +85,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
       }
     }
   }
-  
+
   /**
    * Get information about the Solr Core.
    *
@@ -212,7 +198,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
    * @param float $timeout
    *   Read timeout in seconds or FALSE.
    *
-   * @return 
+   * @return
    *  Apache_Solr_Response object
    */
   public function makeServletRequest($servlet, $params = array(), $method = 'GET', $request_headers = array(), $rawPost = '', $timeout = FALSE) {
@@ -226,7 +212,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
     );
 
     $url = $this->_constructUrl($servlet, $params);
-    list ($data, $headers) = $this->_makeHttpRequest($url, $method, $request_headers, $rawPost, $timeout);
+    list($data, $headers) = $this->_makeHttpRequest($url, $method, $request_headers, $rawPost, $timeout);
     $response = new Apache_Solr_Response($data, $headers, $this->_createDocuments, $this->_collapseSingleValueArrays);
     $code = (int) $response->getHttpStatus();
     if ($code != 200) {
@@ -260,7 +246,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
    * @see Apache_Solr_Service::_sendRawGet()
    */
   protected function _sendRawGet($url, $timeout = FALSE) {
-    list ($data, $headers) = $this->_makeHttpRequest($url, 'GET', array(), '', $timeout);
+    list($data, $headers) = $this->_makeHttpRequest($url, 'GET', array(), '', $timeout);
     $response = new Apache_Solr_Response($data, $headers, $this->_createDocuments, $this->_collapseSingleValueArrays);
     $code = (int) $response->getHttpStatus();
     if ($code != 200) {
@@ -277,14 +263,11 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
   /**
    * Central method for making a post operation against this Solr Server
    *
-   * @see Apache_Solr_Service::_sendRawGet()
+   * @see Apache_Solr_Service::_sendRawPost()
    */
   protected function _sendRawPost($url, $rawPost, $timeout = FALSE, $contentType = 'text/xml; charset=UTF-8') {
-    if (variable_get('apachesolr_read_only', 0)) {
-      throw new Exception('Operating in read-only mode; updates are disabled.');
-    }
     $request_headers = array('Content-Type' => $contentType);
-    list ($data, $headers) = $this->_makeHttpRequest($url, 'POST', $request_headers, $rawPost, $timeout);
+    list($data, $headers) = $this->_makeHttpRequest($url, 'POST', $request_headers, $rawPost, $timeout);
     $response = new Apache_Solr_Response($data, $headers, $this->_createDocuments, $this->_collapseSingleValueArrays);
     $code = (int) $response->getHttpStatus();
     if ($code != 200) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: Solr_Base_Query.php,v 1.1.4.44 2009/12/10 17:43:28 pwolanin Exp $
+// $Id: Solr_Base_Query.php,v 1.1.4.48 2010/06/14 02:51:30 pwolanin Exp $
 
 class Solr_Base_Query implements Drupal_Solr_Query_Interface {
 
@@ -8,6 +8,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
    */
   public function filter_extract(&$filterstring, $name) {
     $extracted = array();
+    $name = preg_quote($name, '/');
     // Range queries.  The "TO" is case-sensitive.
     $patterns[] = '/(^| |-)'. $name .':([\[\{](\S+) TO (\S+)[\]\}])/';
     // Match quoted values.
@@ -16,7 +17,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     $patterns[] = '/(^| |-)'. $name .':([^ ]*)/';
     foreach ($patterns as $p) {
       if (preg_match_all($p, $filterstring, $matches, PREG_SET_ORDER)) {
-        foreach($matches as $match) {
+        foreach ($matches as $match) {
           $filter = array();
           $filter['#query'] = $match[0];
           $filter['#exclude'] = ($match[1] == '-');
@@ -43,7 +44,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     // If the field value has spaces, or : in it, wrap it in double quotes.
     // unless it is a range query.
     if (preg_match('/[ :]/', $filter['#value']) && !isset($filter['#start']) && !preg_match('/[\[\{]\S+ TO \S+[\]\}]/', $filter['#value'])) {
-      $filter['#value'] = '"'. $filter['#value']. '"';
+      $filter['#value'] = '"' . $filter['#value'] . '"';
     }
     $prefix = empty($filter['#exclude']) ? '' : '-';
     return $prefix . $filter['#name'] . ':' . $filter['#value'];
@@ -120,7 +121,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
    *   Visible string telling solr how to sort - added to GET query params.
    *
    * @param $base_path
-   *   The search base path (without the keywords) for this query.
+   *   The search base path (without the keywords) for this query, without trailing slash.
    */
   function __construct($solr, $keys, $filterstring, $sortstring, $base_path) {
     $this->solr = $solr;
@@ -138,16 +139,6 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     $this->id = ++self::$idCount;
   }
 
-  public function add_filter($field, $value, $exclude = FALSE, $callbacks = array()) {
-    $this->fields[] = array('#exclude' => $exclude, '#name' => $field, '#value' => trim($value), '#callbacks' => $callbacks);
-  }
-
-  /**
-   * Get all filters, or the subset of filters for one field.
-   *
-   * @param $name
-   *   Optional name of a Solr field.
-   */
   public function get_filters($name = NULL) {
     if (empty($name)) {
       return $this->fields;
@@ -160,6 +151,19 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
       }
     }
     return $matches;
+  }
+
+  public function has_filter($name, $value) {
+    foreach ($this->fields as $pos => $values) {
+      if (isset($values['#name']) && isset($values['#value']) && $values['#name'] == $name && $values['#value'] == $value) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  public function add_filter($field, $value, $exclude = FALSE, $callbacks = array()) {
+    $this->fields[] = array('#exclude' => $exclude, '#name' => $field, '#value' => trim($value), '#callbacks' => $callbacks);
   }
 
   public function remove_filter($name, $value = NULL) {
@@ -181,15 +185,6 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
         }
       }
     }
-  }
-
-  public function has_filter($name, $value) {
-    foreach ($this->fields as $pos => $values) {
-      if (isset($values['#name']) && isset($values['#value']) && $values['#name'] == $name && $values['#value'] == $value) {
-        return TRUE;
-      }
-    }
-    return FALSE;
   }
 
   /**
@@ -214,17 +209,18 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     $this->parse_filters();
   }
 
-  /**
-   * A subquery is another instance of a Solr_Base_Query that should be joined
-   * to the query. The operator determines whether it will be joined with AND or
-   * OR.
-   *
-   * @param $query
-   *   An instance of Drupal_Solr_Query_Interface.
-   *
-   * @param $operator
-   *   'AND' or 'OR'
-   */
+  function get_keys() {
+    return $this->keys;
+  }
+
+  function set_keys($keys) {
+    $this->keys = $keys;
+  }
+
+  public function remove_keys() {
+    $this->keys = '';
+  }
+
   public function add_subquery(Drupal_Solr_Query_Interface $query, $fq_operator = 'OR', $q_operator = 'AND') {
     $this->subqueries[$query->id] = array('#query' => $query, '#fq_operator' => $fq_operator, '#q_operator' => $q_operator);
   }
@@ -254,14 +250,18 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     }
   }
 
-  public function set_solrsort($name, $direction) {
-    if (isset($this->available_sorts[$name])) {
-      $this->solrsort = array('#name' => $name, '#direction' => $direction);
-    }
-  }
-
-  public function get_solrsort() {
-    return $this->solrsort;
+  /**
+   * Returns a default list of sorts.
+   */
+  protected function default_sorts() {
+    // The array keys must always be real Solr index fields.
+    return array(
+      'score' => array('title' => t('Relevancy'), 'default' => 'asc'),
+      'sort_title' => array('title' => t('Title'), 'default' => 'asc'),
+      'type' => array('title' => t('Type'), 'default' => 'asc'),
+      'sort_name' => array('title' => t('Author'), 'default' => 'asc'),
+      'created' => array('title' => t('Date'), 'default' => 'desc'),
+    );
   }
 
   public function get_available_sorts() {
@@ -281,24 +281,30 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     $this->parse_sortstring();
   }
 
-  /**
-   * Returns a default list of sorts.
-   */
-  protected function default_sorts() {
-    // The array keys must always be real Solr index fields.
-    return array(
-      'score' => array('title' => t('Relevancy'), 'default' => 'asc'),
-      'sort_title' => array('title' => t('Title'), 'default' => 'asc'),
-      'type' => array('title' => t('Type'), 'default' => 'asc'),
-      'sort_name' => array('title' => t('Author'), 'default' => 'asc'),
-      'created' => array('title' => t('Date'), 'default' => 'desc'),
-    );
+  public function get_solrsort() {
+    return $this->solrsort;
+  }
+
+  public function set_solrsort($name, $direction) {
+    if (isset($this->available_sorts[$name])) {
+      $this->solrsort = array('#name' => $name, '#direction' => $direction);
+    }
   }
 
   /**
-   * Return filters and sort in a form suitable for a query param to url().
+   * Return the search path (including the search keywords).
+   *
+   * @param string $new_keywords
+   *   Optional. When set, this string overrides the query's current keywords.
    */
-   public function get_url_queryvalues() {
+  public function get_path($new_keywords = NULL) {
+    if (isset($new_keywords)) {
+      return $this->base_path . '/' . $new_keywords;
+    }
+    return $this->base_path . '/' . $this->get_query_basic();
+  }
+
+  public function get_url_queryvalues() {
     $queryvalues = array();
     if ($fq = $this->rebuild_fq(TRUE)) {
       $queryvalues['filters'] = implode(' ', $fq);
@@ -313,35 +319,20 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     return $queryvalues;
   }
 
-  public function get_fq() {
-    return $this->rebuild_fq();
-  }
-
-  /**
-   * A function to get just the keyword components of the query,
-   * omitting any field:value portions.
-   */
   public function get_query_basic() {
     return $this->rebuild_query();
   }
 
-  /**
-   * Return the search path.
-   *
-   * @param string $new_keywords
-   *   Optional. When set, this string overrides the query's current keywords.
-   */
-  public function get_path($new_keywords = NULL) {
-    if (isset($new_keywords)) {
-      return $this->base_path . '/' . $new_keywords;
-    }
-    return $this->base_path . '/' . $this->get_query_basic();
+  public function get_fq() {
+    return $this->rebuild_fq();
   }
 
   /**
    * Build additional breadcrumb elements relative to $base.
    */
   public function get_breadcrumb($base = NULL) {
+    $breadcrumb = array();
+
     $progressive_crumb = array();
     if (!isset($base)) {
       $base = $this->get_path();
@@ -367,9 +358,12 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
         $breadcrumb[] = l($field['#value'], $base, $options);
       }
     }
-    // The last breadcrumb is the current page, so it shouldn't be a link.
-    $last = count($breadcrumb) - 1;
-    $breadcrumb[$last] = strip_tags($breadcrumb[$last]);
+
+    if (!empty($breadcrumb)) {
+      // The last breadcrumb is the current page, so it shouldn't be a link.
+      $last = count($breadcrumb) - 1;
+      $breadcrumb[$last] = strip_tags($breadcrumb[$last]);
+    }
 
     return $breadcrumb;
   }
@@ -385,7 +379,6 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
 
     // Gets information about the fields already in solr index.
     $index_fields = $this->solr->getFields();
-
     foreach ((array) $index_fields as $name => $data) {
       // Look for a field alias.
       $alias = isset($this->field_map[$name]) ? $this->field_map[$name] : $name;

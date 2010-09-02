@@ -1471,5 +1471,5 @@ function apachesolr_rdf_dynamic_field_defaults($server) {
         "'text', 0, 1)", $id, t('Comment'), APACHESOLR_RDF_COMMENT);
 
   drupal_goto("admin/settings/apachesolr_rdf/server/$id/edit", NULL,
-      'edit-schema-args-property-object');
+      'edit-schema-args-property-object'');
 }
