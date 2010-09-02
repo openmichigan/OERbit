@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.2 2009/04/20 04:45:16 rdeboer Exp $
+$Id: README.txt,v 1.3 2010/07/10 00:17:34 rdeboer Exp $
 
 DESCRIPTION
 =========== 
@@ -36,4 +36,4 @@ an administrator) to be authorised to use the above link.
 
 AUTHOR
 ======
-Rik de Boer
+Rik de Boer, Melbourne, Australia
