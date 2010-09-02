@@ -1,5 +1,5 @@
 <?php
-// $Id: time.inc,v 1.16.2.11 2009/11/06 00:46:15 quicksketch Exp $
+// $Id: time.inc,v 1.16.2.12 2010/07/27 06:16:50 quicksketch Exp $
 
 /**
  * @file
@@ -291,7 +291,7 @@ function _webform_analysis_rows_time($component, $sids = array()) {
   $result = db_query($query, array_merge(array($component['nid'], $component['cid']), $sids));
   // build an array of timestamps from entered values.
   $timestamps = array();
-  $submissions = 1;
+  $submissions = 0;
   while ($row = db_fetch_array($result)) {
     if ($row['no'] == '0') {
       $submissions++;

@@ -1,5 +1,5 @@
 <?php
-// $Id: file.inc,v 1.4.2.33 2009/03/04 05:05:12 quicksketch Exp $
+// $Id: file.inc,v 1.4.2.35 2010/03/21 19:45:01 quicksketch Exp $
 
 /**
  * @file
@@ -366,6 +366,7 @@ function _webform_submit_file(&$data, $component) {
         drupal_set_message(t('The uploaded file %filename was unable to be saved. The destination directory may not be writable.', array('%filename' => $file_saved['filename'])), 'error');
       }
       else {
+        @chmod($file_saved->filepath, 0664);
         file_set_status($file_saved, FILE_STATUS_PERMANENT);
         if (isset($data['existing']['filepath'])) {
           file_delete($data['existing']['filepath']);
@@ -423,7 +424,7 @@ function _webform_submission_display_file($data, $component, $enabled = FALSE) {
     $form_item['#default_value'] = empty($filedata['filepath']) ? $filedata['error'] : $filedata['filepath'];
   }
   if (!empty($filedata['filename'])) {
-    $form_item['#suffix'] = ' <a href="'. webform_file_url($filedata['filepath']) .'">Download '. $filedata['filename'] .'</a>'. $form_item['#suffix'];
+    $form_item['#suffix'] = ' <a href="'. webform_file_url($filedata['filepath']) .'">Download '. webform_file_name($filedata['filepath']) .'</a>'. $form_item['#suffix'];
     if ($enabled) {
       $form_item['#description'] = t('Uploading a new file will replace the current file.');
       $form_item['existing'] = array(
@@ -532,7 +533,7 @@ function _webform_table_data_file($data) {
   $output = '';
   $filedata = unserialize($data['value']['0']);
   if (!empty($filedata['filename'])) {
-    $output = '<a href="'. base_path() . $filedata['filepath'] .'">'. $filedata['filename'] .'</a>';
+    $output = '<a href="'. webform_file_url($filedata['filepath']) .'">'. webform_file_name($filedata['filepath']) .'</a>';
     $output .= ' ('. (int)($filedata['filesize']/1024) .' KB)';
   }
   elseif (!empty($filedata['error'])) {
@@ -540,7 +541,6 @@ function _webform_table_data_file($data) {
   }
   return $output;
 }
-
 
 /**
  * Return the header information for this component to be displayed in a comma
@@ -574,8 +574,9 @@ function _webform_csv_headers_file($component) {
  */
 function _webform_csv_data_file($data) {
   $filedata = unserialize($data['value']['0']);
-  return empty($filedata['filename']) ? array('', '') : array($filedata['filename'], (int)($filedata['filesize']/1024));
+  return empty($filedata['filename']) ? array('', '') : array(webform_file_url($filedata['filepath']), (int)($filedata['filesize']/1024));
 }
+
 /**
  * Helper function to create proper URLs for uploaded file.
  */
@@ -585,4 +586,15 @@ function webform_file_url($filepath) {
     $file_url = file_create_url($info['dirname'] .'/'. rawurlencode($info['basename']));
   }
   return isset($file_url) ? $file_url : '';
+}
+
+/**
+ * Helper function to create proper file names for uploaded file.
+ */
+function webform_file_name($filepath) {
+  if (!empty($filepath)) {
+    $info = pathinfo($filepath);
+    $file_name = $info['basename'];
+  }
+  return isset($file_name) ? $file_name : '';
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: grid.inc,v 1.3.2.19 2009/11/06 00:41:24 quicksketch Exp $
+// $Id: grid.inc,v 1.3.2.20 2010/01/21 02:53:36 quicksketch Exp $
 
 /**
  * @file
@@ -374,7 +374,7 @@ function _webform_csv_data_grid($data, $component) {
   return $return;
 }
 
-function theme_webform_grid(&$grid_element) {
+function theme_webform_grid($grid_element) {
   $rows = array();
   $header = array('');
   $first = TRUE;

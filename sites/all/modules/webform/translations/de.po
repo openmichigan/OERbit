@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: German translation of Webforms\n"
 "POT-Creation-Date: 2009-02-27 23:13+0100\n"
-"PO-Revision-Date: 2009-03-01 17:48+0100\n"
-"Last-Translator: Alexander Haß\n"
+"PO-Revision-Date: 2010-01-11 00:31+0100\n"
+"Last-Translator: Frank Spade <frank@spade.de>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -34,9 +34,8 @@ msgid "Submitted by anonymous user: [@ip_address]"
 msgstr "Verfasst vom Gast: [@ip_address]"
 
 #: webform-mail.tpl.php:35
-#, fuzzy
 msgid "Submitted values are"
-msgstr "Diese Werte wurden eingegeben"
+msgstr "Diese Werte wurden eingegeben:"
 
 #: webform-mail.tpl.php:44
 msgid "The results of this submission may be viewed at:"
@@ -263,11 +262,11 @@ msgstr "!count Ergebnisse pro Seite anzeigen."
 
 #: webform_report.inc:74
 msgid "Showing all results."
-msgstr ""
+msgstr "Alle Ergebnisse werden angezeigt."
 
 #: webform_report.inc:77
 msgid "@total results total."
-msgstr ""
+msgstr "Insgesamt @total Ergebnisse."
 
 #: webform_report.inc:92;187
 msgid "#"
@@ -292,7 +291,7 @@ msgstr "Ansicht"
 
 #: webform_report.inc:147;248;491
 msgid "There are no submissions for this form. <a href=\"!url\">View this form</a>."
-msgstr ""
+msgstr "Es gibt keine Eingaben für dieses Formular. <a href=\"!url\">Formular ansehen</a>."
 
 #: webform_report.inc:279
 msgid "Clear Form Submissions"
@@ -322,12 +321,12 @@ msgstr "Export Format"
 
 #: webform_report.inc:321
 msgid "Delimited text format"
-msgstr ""
+msgstr "Begrenztes Textformat."
 
 #: webform_report.inc:322
 #: webform.module:1313
 msgid "This is the delimiter used in the CSV/TSV file when downloading Webform results. Using tabs in the export is the most reliable method for preserving non-latin characters. You may want to change this to another character depending on the program with which you anticipate importing results."
-msgstr ""
+msgstr "Dies ist der Separator für die CSV/TSV-Datei, wenn Webform-Ergebnisse herunter geladen werden. Die Verwendung von Tabulatoren in der Ausgabedatei ist die zuverlässigste Methode um Schriftzeichen, die nicht zum lateinischen Alphabet gehören, zu erhalten. Seperator evtl. an die Vorgabe des Programms anpassen, in das die Daten importiert werden sollen."
 
 #: webform_report.inc:325
 #: webform.module:1316
@@ -371,7 +370,7 @@ msgstr "Herunterladen"
 
 #: webform_report.inc:397
 msgid "Submission Details"
-msgstr ""
+msgstr "Einzellheiten der Übermittlung"
 
 # ?
 #: webform_report.inc:398
@@ -438,7 +437,7 @@ msgstr ""
 "<p>Mit diesem Modul können Formulare oder Fragebögen erstellt werden. Formulareingaben werden in der Datenbank gespeichert und können optional an eine vordefinierte E-Mailadresse gesendet werden.</p>\n"
 "<p>So erstellen Sie ein neues Formuar:</p>\n"
 "<ul>\n"
-" <li>Gehen Sie zu \"Inhalt erstellen -&gt; Webform\" und erstellen Sie ein neues Formular.<li>\n"
+" <li>Gehen Sie zu „Inhalt erstellen -&gt; Webform“ und erstellen Sie ein neues Formular.<li>\n"
 " <li>Fügen Sie eine Beschreibung ein. Diese wird als Teaser und oberhalb des des Formulars angezeigt.</li>\n"
 " <li>Fügen Sie eine Bestätigungsnachricht ein, die nach erfolgreicher Eingabe angezeigt wird oder geben Sie einen Seite an, zu der weitergeleitet werden soll.</li>\n"
 " <li>Fügen Sie eine oder mehr Komponenten zum Formular.</li>\n"
@@ -455,7 +454,7 @@ msgstr "Ein Webformular kann als Fragebogen, Kontakt- oder Anfrageformular gesta
 
 #: webform.module:44
 msgid "This page displays all the components currently configured for this webform node. You may add any number of components to the form, even multiple of the same type. To add a new component, fill in a name and select a type from the fields at the bottom of the table. Submit the form to create the new component or update any changed form values."
-msgstr ""
+msgstr "Diese Seite zeigt alle Komponenten die zurzeit für dieses Formular konfiguriert sind. Es können beliebig viele Komponenten hinzugefügt werden, auch vom gleichen Typ. Um eine neue Komponente hinzuzufügen, einen Namen dafür angeben und den Typ aus dem Feld am Ende der Tabelle auswählen. Das Formular abschicken, um die neue Komponente zu erzeugen oder geänderte Werte zu speichern."
 
 #: webform.module:45
 msgid "Click on any existing component's name to edit its settings."
@@ -496,7 +495,7 @@ msgstr "Bestätigungsnachricht oder Weiterleitungs-URL"
 
 #: webform.module:674
 msgid "Message to be shown upon successful submission or a path to a redirect page. Preface message with <em>message:</em> for a simple message that does not require a page refresh. Redirect pages must start with <em>http://</em> for external sites or <em>internal:</em> for an internal path. i.e. <em>http://www.example.com</em> or <em>internal:node/10</em>"
-msgstr "Die nach einer erfolgreichen Eingabe anzuzeigende Nachricht oder ein Pfad zu einer Weiterleitungsseite. Eine einfache Nachricht, die keine Seitenaktualisierung erfordert muss mit <em>message:</em> beginnen. Weiterleitungsseiten müssen mit <em>http://</em> für externe Websites oder <em>internal:</em> für einen internen Pfad beginnen (z.B. <em>http://www.example.com</em> bzw. <em>internal:node/10</em>)."
+msgstr "Die nach einer erfolgreichen Eingabe anzuzeigende Nachricht oder ein Pfad zu einer Weiterleitungsseite. Eine einfache Nachricht, die keine Seitenaktualisierung erfordert muss mit <em>message:</em> beginnen. Weiterleitungsseiten müssen mit <em>http://</em> für externe Websites oder <em>internal:</em> für einen internen Pfad beginnen (z. B. <em>http://www.example.com</em> bzw. <em>internal:node/10</em>)."
 
 #: webform.module:686
 msgid "Webform access control"
@@ -504,7 +503,7 @@ msgstr "Webformular-Zugriffskontrolle"
 
 #: webform.module:691
 msgid "These permissions affect which roles can submit this webform. It does not prevent access to the webform page. If needing to prevent access to the webform page entirely, use a content access module such as <a href=\"http://drupal.org/project/taxonomy_access\">Taxonomy Access</a> or <a href=\"http://drupal.org/project/node_privacy_byrole\">Node Privacy by Role</a>."
-msgstr ""
+msgstr "Diese Berechtigungen bestimmen, welche Rollen dises Formular übermittlen dürfen. Sie verhindern nicht den Zugriff auf das Formular. Wenn der Zugriff insgesamt verhindert werden soll, sollte ein Zugriffskontrollmodul wie <a href=\"http://drupal.org/project/taxonomy_access\">Taxonomy Access</a> oder <a href=\"http://drupal.org/project/node_privacy_byrole\">Node Privacy by Role</a> eingesetzt werden."
 
 #: webform.module:699
 msgid "Roles that can submit this webform"
@@ -512,7 +511,7 @@ msgstr "Rollen, die dieses Webformular speichern können"
 
 #: webform.module:700
 msgid "Uncheck all roles to prevent new submissions. The %authenticated role applies to any user signed into the site, regardless of other assigned roles."
-msgstr ""
+msgstr "Um weitere Übermittlungen zu verhindern, das Häckchen für alle Rollen entfernen. Die Rolle %authenticated gilt für jeden angemeldeten Besucher, unabhängig von ihrer sonstigen Rolle."
 
 #: webform.module:707
 msgid "Webform mail settings"
@@ -532,7 +531,7 @@ msgstr "Bedingte E-Mail-Empfänger"
 
 #: webform.module:729
 msgid "The settings below allow you to send e-mails to multiple recipients based off the value of a component."
-msgstr ""
+msgstr "Die unten stehenden Einstellungen erlauben es E-Mails an mehrere Empfänger zu senden, basierend auf den Werten einer Komponente."
 
 #: webform.module:753
 msgid "E-mail from name"
@@ -607,18 +606,16 @@ msgid "Additional Validation"
 msgstr "Erweiterte Überprüfung"
 
 #: webform.module:850
-#, fuzzy
 msgid "Enter PHP code to perform additional validation for this form. Include the &lt;?php ?&gt; tags. $form and $form_state are available variables. If validation fails, use the form_set_error function to prevent the form from being submitted. Use the same syntax as a _validate function used in the <a href=\"http://api.drupal.org/api/file/developer/topics/forms_api.html\">Forms API</a>."
-msgstr "Geben Sie hier den PHP-Code ein, um eine zusätzliche Überprüfung für dieses Formular zu ermöglichen. Füge das &lt;?php ?&gt; Tag ein. $form_id und $form_values sind gültige Variablen für PHP. Wenn die Überprüfung fehlschlagen soll, muss die Funktion form_set_error benutzen werden, um das Speichern des Formulars zu verhindern. Der Aufbau der Syntax sollte so sein, wie es in dem <a href=\"http://api.drupal.org/api/file/developer/topics/forms_api.html\">Formular API</a> benutzt wurde."
+msgstr "Hier den PHP-Code eingeben, um eine zusätzliche Überprüfung für dieses Formular durchzuführen. &lt;?php ?&gt; Tags mit eingeben. $form_id und $form_values sind verfügbare Variablen. Für den Fall, dass die Überprüfung fehlschlägt, kann die Funktion form_set_error benutzen werden, um das Speichern der Formulardaten zu verhindern. Die gleiche Syntax benutzen wie bei einer _submit-Funktion in der <a href=\"http://api.drupal.org/api/file/developer/topics/forms_api.html\">Formular API</a>."
 
 #: webform.module:858
 msgid "Additional Processing"
 msgstr "Erweiterungen Verarbeitung"
 
 #: webform.module:859
-#, fuzzy
 msgid "Enter PHP code to perform additional processing for this form (after the validation). Include the &lt;?php ?&gt; tags. $form and $form_state are available variables, use the same syntax as a _submit function used in the <a href=\"http://api.drupal.org/api/file/developer/topics/forms_api.html\">Forms API</a>."
-msgstr "Geben Sie hier den PHP-Code ein, um eine zusätzliche Verarbeitung des Formulars vorzunehmen (nach der Überprüfung). Füge das &lt;?php ?&gt; Tag ein. $form_id und $form_values sind gültige Variablen und der Aufbau der Syntax sollte so sein, wie es in dem <a href=\"http://api.drupal.org/api/file/developer/topics/forms_api.html\">Formular API</a> benutzt wurde."
+msgstr "Hier den PHP-Code eingeben, um eine zusätzliche Verarbeitung des Formulars zu bewirken (nach der Überprüfung). Die &lt;?php ?&gt;-Tags mit einfügen. $form_id und $form_values sind verfügbare Variablen. Die gleiche Syntax benutzen wie bei einer _submit-Funktion in der <a href=\"http://api.drupal.org/api/file/developer/topics/forms_api.html\">Formular API</a>."
 
 #: webform.module:888
 msgid "To"
@@ -654,7 +651,7 @@ msgstr "Das neue Webformular %title wurde erstellt. Neue Felder können mit dem 
 
 #: webform.module:1047
 msgid "This webform is currently unpublished. After finishing your changes to the webform, use the <em>Publish</em> button below."
-msgstr ""
+msgstr "Diese Formular ist zurzeit unveröffentlicht. Wenn alle Änderungen an diesem Formular durchgeführt sind, unten auf die Schaltfläche <em>Veröffentlichen</em> klicken."
 
 #: webform.module:1184
 msgid "Submissions for this form are closed."
@@ -662,15 +659,15 @@ msgstr "Dieses Formular ist für Eingaben gesperrt."
 
 #: webform.module:1188
 msgid "You must <a href=\"!login\">login</a> or <a href=\"!register\">register</a> to view this form."
-msgstr ""
+msgstr "<a href=\"!login\">Einloggen</a> oder <a href=\"!register\">registrieren</a>, um dieses Formular anzusehen."
 
 #: webform.module:1192
 msgid "You do not have permission to view this form."
-msgstr ""
+msgstr "Fehlende Berechtigung dieses Formular anzusehen."
 
 #: webform.module:1199
 msgid "You have submitted this form the maximum number of times (@count)."
-msgstr ""
+msgstr "Dieses Formular darf nur @count mal übermittelt werden."
 
 #: webform.module:1202;1213
 msgid "You have already submitted this form."
@@ -682,7 +679,7 @@ msgstr "Derzeit kann kein weiter Eintrag gespeichert werden."
 
 #: webform.module:1213;1216
 msgid "<a href=\"!url\">View your previous submissions</a>."
-msgstr ""
+msgstr "<a href=\"!url\">Vorhergehende Übermittlungen ansehen</a>."
 
 #: webform.module:1242
 msgid "Available components"
@@ -759,7 +756,7 @@ msgstr "Zugriffsschutz für das Speichern von Webformularen deaktivieren"
 
 #: webform.module:1334
 msgid "By default, the configuration form for each webform allows the administrator to choose which roles may submit the form. You may want to allow users to always submit the form if you are using a separate node access module to control access to webform nodes themselves."
-msgstr ""
+msgstr "Standardmäßig erlaubt die Konfiguration jedes Formulars dem Administrator zu bestimmen, welche Rollen ein Formular übermitteln dürfen. Wenn ein separates Node-Zugriffsmodul eingesetzt wird, um den Zugriff zu beschränken, kann hier allen Benutzern der Zugriff erlaubt werden."
 
 #: webform.module:1339
 msgid "Webforms debug"
@@ -799,7 +796,7 @@ msgstr "Nächste Eingabe"
 
 #: webform.module:1428
 msgid "Submission Information"
-msgstr ""
+msgstr "Übermittlungsinformation"
 
 #: webform.module:1437
 msgid "Form: !form"
@@ -827,7 +824,7 @@ msgstr "Ungültige Informationen. Die Daten wurden nicht gespeichert."
 
 #: webform.module:1878
 msgid "Submission posted to %title. <a href=\"!url\">Results</a>. !details"
-msgstr ""
+msgstr "Übermittlung gespeichert unter %title. <a href=\"!url\">Ergebnisse</a>. !details"
 
 #: webform.module:1883
 msgid "Submission updated."
@@ -835,7 +832,7 @@ msgstr "Eingabe wurde aktualisiert."
 
 #: webform.module:1986
 msgid "Thank you, your submission has been received."
-msgstr ""
+msgstr "Danke, die Übermittlung wurde empfangen."
 
 #: webform.module:2202;153;205
 msgid "Submissions"
@@ -855,12 +852,11 @@ msgstr "Schlüssel"
 
 #: webform.module:2267
 msgid "You may use special tokens in this field that will be replaced with dynamic values."
-msgstr ""
+msgstr "In diesem Feld können spezielle Token eingesetzt werden, die später durch aktuelle Werte ersetzt werden."
 
 #: webform.module:2269
-#, fuzzy
 msgid "You can use %server[key] to add any of the special PHP <a href=\"http://www.php.net/reserved.variables#reserved.variables.server\">$_SERVER</a> variables, %session[key] to add any of the special PHP <a href=\"http://www.php.net/reserved.variables#reserved.variables.session\">$_SESSION</a> variables and %get[key] to create prefilled forms from the <a href=\"http://www.php.net/reserved.variables#reserved.variables.get\">URL</a>. %cookie, %request and %post also work with their respective PHP variables. For example %server[HTTP_USER_AGENT], %session[id], or %get[q]."
-msgstr "Sie können auch %server[key] verwenden, um jede der speziellen <a href=\"http://www.php.net/reserved.variables#reserved.variables.server\">$_SERVER</a>-Variablen von PHP zu benutzen oder mit %get[key] mittels <a href=\"http://www.php.net/reserved.variables#reserved.variables.get\">URL</a> vorausgefüllte Formulare zu erstellen (z.B. %server[HTTP_USER_AGENT] or %get[id])."
+msgstr "%server[key] einsetzen, um spezielle PHP-<a href=\"http://www.php.net/reserved.variables#reserved.variables.server\">$_SERVER</a>-Variablenzu verwenden, %session[key] für einige der speziellen PHP-<a href=\"http://www.php.net/reserved.variables#reserved.variables.session\">$_SESSION</a>-Variablenund %get[key] um Formulare mit Voreinstellungen aus dem <a href=\"http://www.php.net/reserved.variables#reserved.variables.get\">URL</a> zufüllen. %cookie, %request und %post funktionieren mit denentsprechenden PHP-Variablen (z. B. %server[HTTP_USER_AGENT], %session[id], oder %get[q])."
 
 #: webform.module:2271
 msgid "If you are using the profiles module, you can also access all profile data using the syntax %profile[form_name]. If you for example have a profile value named profile_city, add the variable %profile[profile_city]."
@@ -911,9 +907,8 @@ msgid "Webforms"
 msgstr "Webformulare"
 
 #: webform.module:74
-#, fuzzy
 msgid "View and edit all the available webforms on your site."
-msgstr "Zeige und Bearbeite alle verfügbaren Webformulare dieser Website."
+msgstr "Anzeigen und bearbeiten aller verfügbaren Webformulare dieser Website."
 
 #: webform.module:85
 msgid "Global configuration of webform functionality."
@@ -976,9 +971,8 @@ msgid "Timezone"
 msgstr "Zeitzone"
 
 #: components/date.inc:55
-#, fuzzy
 msgid "Adjust the date according to a specific timezone. Website timezone is defined in the <a href=\"!settings\">Site Settings</a> and is the default."
-msgstr "Das Datum bezogen auf eine bestimmte Zeitzone einstellen. Die Website-Zeitzone wird in den <a href=\"%settings\">Website-Einstellungen</a> festgelegt und entspricht dem Standardwert."
+msgstr "Das Datum auf eine bestimmte Zeitzone bezogen einstellen. Die Website-Zeitzone wird in den <a href=\"%settings\">Website-Einstellungen</a> festgelegt und ist die Voreinstellung."
 
 #: components/date.inc:56
 msgid "Website timezone"
@@ -1024,7 +1018,7 @@ msgstr "Ein Textfeld für das Jahr verwenden"
 
 #: components/date.inc:90
 msgid "If checked, the generated date field will use a textfield for the year. Otherwise it will use a select list."
-msgstr ""
+msgstr "Wenn ausgewählt, wird das erzeugte Datumsfeld ein Textfeld für das Jahr benutzen. Andernfalls benutzt es eine Selektionsliste."
 
 #: components/date.inc:184
 msgid "Month"
@@ -1044,7 +1038,6 @@ msgstr "Das Feld !name ist erforderlich."
 
 # BUG: English is not context sensitive
 #: components/date.inc:230
-#, fuzzy
 msgid "Entered !name is not a valid date."
 msgstr "Der eingegebene Wert !name ist kein gültiges Datum."
 
@@ -1112,7 +1105,7 @@ msgstr "Kopie der Eingabe per E-Mail verschicken"
 #: components/hidden.inc:54
 #: components/select.inc:81
 msgid "Check this option if this component contains an e-mail address that should get a copy of the submission. Emails are sent individually so other emails will not be shown to the recipient."
-msgstr ""
+msgstr "Diese Option auswählen, wenn diese Komponente eine E-Mail-Adresse einthält, die eine Kopie der Übermittlung erhalten soll. E-Mails werden einzeln versndt, sodass andere E-Mail-Adressen für andere Empfänger nicht sichtbar sind."
 
 #: components/email.inc:78
 #: components/textarea.inc:77
@@ -1163,12 +1156,11 @@ msgstr "Feldgruppen ermöglichen die Gliederung mehrere Felder in Gruppen."
 
 #: components/file.inc:49
 msgid "Upload Filtering"
-msgstr ""
+msgstr "Filtern des Hochladens"
 
 #: components/file.inc:50
-#, fuzzy
 msgid "Select the types of uploads you would like to allow."
-msgstr "Auswahl der zulässigen Dateitypen, welche hochgeladen werden können."
+msgstr "Auswahl der zugelassenen Dateitypen, welche hochgeladen werden können sollen."
 
 #: components/file.inc:60
 msgid "Web Images"
@@ -1199,18 +1191,16 @@ msgid "Enter a list of additional file extensions for this upload field, seperat
 msgstr "Eine Liste von zusätzlichen Dateiendungen für dieses Hochladefeld eingeben, jeweils durch ein Kommata getrennt.<br /> Eingegebene Dateiendungen, werden an die oben aktivierten Einträge angehängt."
 
 #: components/file.inc:109
-#, fuzzy
 msgid "Max Upload Size"
-msgstr "Maximale Hochladegröße"
+msgstr "Maximale Dateigröße zum Hochladen"
 
 #: components/file.inc:111
 msgid "Enter the max file size a user may upload (in KB)."
-msgstr "Eingabe der maximalen Dateigröße (in KB), welche vom Benutzer hochgeladen werden können.  "
+msgstr "Eingabe der maximalen Dateigröße (in KB), welche vom Benutzer hochgeladen werden können."
 
 #: components/file.inc:118
-#, fuzzy
 msgid "Upload Directory"
-msgstr "Hochladeverzeichnis"
+msgstr "Verzeichnis zum Hochladen"
 
 #: components/file.inc:120
 msgid "Webform uploads are always saved in the site files directory. You may optionally specify a subfolder to store your files."
@@ -1280,9 +1270,8 @@ msgid "Options"
 msgstr "Optionen"
 
 #: components/grid.inc:44
-#, fuzzy
 msgid "Options to select across the top. One option per line. Key-value pairs may be entered seperated by pipes. i.e. safe_key|Some readable option"
-msgstr "Eine Liste von auswählbaren Optionen. Eine Option pro Zeile. Schlüssel-Wert-Paare können mittels dem Pipe-Zeichen eingegeben werden. z.B. sicherer_schluessel|Eine lesbare Option"
+msgstr "Oben ist eine Liste auswählbarer Optionen. Eine Option pro Zeile. Schlüssel-Wert-Paare können getrennt durch das Pipe-Zeichen eingegeben werden. z. B. safe_key|Eine lesbare Option"
 
 #: components/grid.inc:52
 msgid "Questions"
@@ -1290,7 +1279,7 @@ msgstr "Fragen"
 
 #: components/grid.inc:54
 msgid "Questions list down the left side. One question per line."
-msgstr ""
+msgstr "Fragen an der linken Seite auflisten. Eine Frage pro Zeile."
 
 #: components/grid.inc:62
 msgid "Randomize Options"
@@ -1298,7 +1287,7 @@ msgstr "Zufällige Optionen"
 
 #: components/grid.inc:64
 msgid "Randomizes the order of options on the top when they are displayed in the form."
-msgstr ""
+msgstr "Erstellt ein zufällige Anordnung der Optionen, wenn sie im Formular angezeigt werden."
 
 #: components/grid.inc:68
 msgid "Randomize Questions"
@@ -1306,11 +1295,11 @@ msgstr "Zufällige Fragen"
 
 #: components/grid.inc:70
 msgid "Randomize the order of the questions on the side when they are displayed in the form."
-msgstr ""
+msgstr "Erstellt eine zufällige Abfolge der Fragen, wenn sie im Formular angezeigt werden."
 
 #: components/grid.inc:227
 msgid "Allows creation of grid questions, denoted by radio buttons."
-msgstr ""
+msgstr "Erlaubt das erstellen von Rasterfragen mit Auswahlknöpfen."
 
 #: components/hidden.inc:99
 msgid "@name (hidden)"
@@ -1342,7 +1331,7 @@ msgstr "Zeigt Text im Formular als HTML an, rendert aber kein Feld."
 
 #: components/pagebreak.inc:32
 msgid "Use caution when combining the pagebreak and file components. File components will not be submitted unless they are after the last pagebreak in the form."
-msgstr ""
+msgstr "Vorsicht beim Kombinieren von Seitenumbruch und Dateikomponenten. Dateikomponenten werden nur übermittelt, wenn sie nach dem letzten Seitenumbruch im Formular stehen."
 
 # not literally
 #: components/pagebreak.inc:59
@@ -1351,7 +1340,7 @@ msgstr "Aufspalten in ein mehrseitiges Formular."
 
 #: components/select.inc:46
 msgid "A list of selectable options. One option per line. Key-value pairs may be entered seperated by pipes, such as \"safe_key|Some readable option\". Option groups for lists and menus may be specified with &lt;Group Name&gt;. &lt;&gt; can be used to insert items at the root of the menu after specifying a group."
-msgstr ""
+msgstr "Eine Liste mit wählbaren Optionen. Eine Option pro Zeile. Schlüssel-Wert-Paare können getrennt durch das Pipe-Zeichen eingegeben werden, wie „safe_key|Eine lesbare Option“. Optionengruppen für Listen und Menüs können mit &lt;Gruppenname&gt; angegeben werden. &lt;&gt; kann verwendet werden, um einen Eintrag in der Hauptebene des Menüs einzufügen, nachdem eine Gruppe angegeben wurde."
 
 #: components/select.inc:57
 msgid "The default value of the field. For multiple selects use commas to separate multiple defaults."
@@ -1375,15 +1364,15 @@ msgstr "Diese Option aktivieren, wenn die Auswahlkomponente eine Auswahlliste se
 
 #: components/select.inc:82
 msgid "To use the option with a select component, you must use key-value pairs seperated by pipes. i.e. user@example.com|Sample user."
-msgstr ""
+msgstr "Um die Option mit einer ausgewählten Komponente zu benutzen, Schlüssel-Wert-Paare getrennt von einem Pipe-Zeichen verwenden, z. B. user@example.com|Beispielbenutzer."
 
 #: components/select.inc:124
 msgid "Options within the select list must be unique. The following keys have been used multiple times:"
-msgstr ""
+msgstr "Optionen innerhalb der Auswahlliste müssen einzigartig sein. Die folgenden Schlüssel wurden mehrfach verwendet:"
 
 #: components/select.inc:155
 msgid "select..."
-msgstr "Auswahl..."
+msgstr "Auswahl …"
 
 #: components/select.inc:325
 msgid "Allows creation of checkboxes, radio buttons, or select menus."
@@ -1441,7 +1430,7 @@ msgstr "Basis Textfeldtyp."
 
 #: components/time.inc:43
 msgid "Accepts a time in any <a href=\"http://www.gnu.org/software/tar/manual/html_chapter/Date-input-formats.html\">GNU Date Input Format</a>. Strings such as now, +2 hours, and 10:30pm are all valid."
-msgstr "Es wird jedes Datum im <a href=\"http://www.gnu.org/software/tar/manual/html_chapter/Date-input-formats.html\">GNU Datums-Eingabeformat</a> akzeptiert. Folgende Zeichenketten sind z.B. gültig: '+2 hours' und 10:30pm'."
+msgstr "Es wird jedes Datum im <a href=\"http://www.gnu.org/software/tar/manual/html_chapter/Date-input-formats.html\">GNU Datums-Eingabeformat</a> akzeptiert. Folgende Zeichenketten sind z. B. gültig: '+2 hours' und 10:30pm'."
 
 #: components/time.inc:53
 msgid "Adjust the time according to a specific timezone. Website timezone is defined in the <a href=\"!settings\">Site Settings</a> and is the default."
@@ -1473,9 +1462,8 @@ msgstr "pm"
 
 # BUG: English is not context sensitive
 #: components/time.inc:179
-#, fuzzy
 msgid "Entered %name is not a valid time."
-msgstr "Der eingegebene Wert %name ist keine gültige Zeit."
+msgstr "Der eingegebene Wert %name ist keine gültige Zeitangabe."
 
 #: components/time.inc:250
 msgid "Presents the user with hour and minute fields. Optional am/pm fields."

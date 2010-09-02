@@ -1,5 +1,5 @@
 <?php
-// $Id: webform_report.inc,v 1.17.2.15 2009/03/04 05:05:12 quicksketch Exp $
+// $Id: webform_report.inc,v 1.17.2.16 2010/02/28 23:14:58 quicksketch Exp $
 
 /**
  * @file
@@ -473,11 +473,11 @@ function webform_results_analysis($node, $sids = array()) {
 
   webform_load_components(); // Load all component types.
   foreach ($node->webform['components'] as $component) {
-    $question_number++;
 
     // Do component specific call.
     $analysis_function = '_webform_analysis_rows_'. $component['type'];
     if (function_exists($analysis_function)) {
+      $question_number++;
       $crows = $analysis_function($component, $sids);
       if (is_array($crows)) {
         $row[0] = array('data' => '<strong>'. $question_number .'</strong>', 'rowspan' => count($crows) + 1, 'valign' => 'top');
