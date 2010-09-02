@@ -1,5 +1,5 @@
 <?php
-// $Id: accessible_content.theme.inc,v 1.1.2.4 2010/04/07 02:20:10 kevee Exp $
+// $Id: accessible_content.theme.inc,v 1.1.2.6 2010/04/12 02:01:57 kevee Exp $
 
 /**
 *   @file

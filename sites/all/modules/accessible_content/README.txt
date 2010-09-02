@@ -3,7 +3,7 @@ Accessible Content is a early-phase development module. Don't use this on a prod
 INSTALLATION
 ------------
 
-You MUST download and install the QUAIL accessiblity library before you can install this module. Go to http://code.google.com/p/quail-lib/ and download the latest release and place the directory 'quail' into this module's directory (i.e. sites/all/modules/accssible_content).
+You MUST download and install the QUAIL accessiblity library before you can install this module. Go to http://code.google.com/p/quail-lib/ and download the latest release. Rename the folder (i.e. "quail-lib-xxx") to "quail" and then move it into the directory "sites/all/libraries" so that the library is available at "sites/all/libraries/quail/quail/quail.php.
 
 Installation is the same as any Drupal module. 
 

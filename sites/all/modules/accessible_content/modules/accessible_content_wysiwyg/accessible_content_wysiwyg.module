@@ -1,4 +1,4 @@
-<?php // $Id: accessible_content_wysiwyg.module,v 1.1.2.1 2010/01/02 08:08:02 kevee Exp $
+<?php // $Id: accessible_content_wysiwyg.module,v 1.1.2.2 2010/04/12 02:03:41 kevee Exp $
 
 /**
 *  @file
@@ -83,12 +83,12 @@ function accessible_content_wysiwyg_textarea($element) {
 }
 
 /**
-*	Implementation of hook_nodeapi
+*  Implementation of hook_nodeapi
 */
 function accessible_content_wysiwyg_form_alter(&$form, $form_state, $form_id) {
-	if($form_id == $form['#node']->type .'_node_form') {
-	  drupal_add_js('var nodeGuideline = '. variable_get($form['#node']->type .'_accessibility_guideline_nid', 0) .';', 'inline');
-	}
+  if ($form_id == $form['#node']->type .'_node_form') {
+    drupal_add_js('var nodeGuideline = '. variable_get($form['#node']->type .'_accessibility_guideline_nid', 0) .';', 'inline');
+  }
 }
 /**
 *  Implementation of hook_perm()
@@ -105,7 +105,7 @@ function accessible_content_wysiwyg_wysiwyg_include_directory($type) {
 }
 
 /**
-*	Implementation of hook_wysiwyg_plugin()
+*  Implementation of hook_wysiwyg_plugin()
 *
 function accessible_content_wysiwyg_wysiwyg_plugin($editor) {
   return array(

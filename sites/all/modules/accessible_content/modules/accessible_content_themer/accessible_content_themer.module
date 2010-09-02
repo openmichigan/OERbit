@@ -1,4 +1,4 @@
-<?php // $Id: accessible_content_themer.module,v 1.1.2.1 2009/12/22 21:31:19 kevee Exp $
+<?php // $Id: accessible_content_themer.module,v 1.1.2.3 2010/07/13 04:52:50 kevee Exp $
 
 /**
 *  @file
@@ -33,18 +33,13 @@ function accessible_content_themer_menu() {
 */
 function accessible_content_themer_admin_form() {
   $form = array();
-    $guidelines = array();
-    $results = db_query('SELECT nid, title FROM {node} WHERE type = "accessibility_guideline"');
-    while ($row = db_fetch_object($results)) {
-      $guidelines[$row->nid] = $row->title;
-    }
 
-    $form['ac_themer_sitewide_guideline'] = array(
-      '#title' => t('Site-wide Guideline'),
-      '#type' => 'select',
-      '#options' => $guidelines,
-        '#default_value' => variable_get('ac_themer_sitewide_guideline', 0),
-    );
+  $form['ac_themer_sitewide_guideline'] = array(
+    '#title' => t('Site-wide Guideline'),
+    '#type' => 'select',
+    '#options' => accessible_content_get_guidelines(),
+    '#default_value' => variable_get('ac_themer_sitewide_guideline', 0),
+  );
 
   return system_settings_form($form);
 }
@@ -57,6 +52,7 @@ function accessible_content_themer_toggle() {
   $_SESSION['accessible_content_theme_enable'] = !$_SESSION['accessible_content_theme_enable'];
   drupal_goto($_REQUEST['destination']);
 }
+
 /**
 *  Implementation of hook_perm()
 */
@@ -73,8 +69,9 @@ function accessible_content_init() {
     if ($_SESSION['accessible_content_theme_enable'] && $_REQUEST['q'] != 'accessible_content_themer/toggle') {
       if (variable_get('ac_themer_sitewide_guideline', 0)) {
         if (module_exists('beautytips')) {
+          $area_label = _accessible_content_get_beautytips_area_label();
           $options['ac_themer_view'] = array(
-            'area' => '.highlight-link',
+            $area_label => '.highlight-link',
             'ajaxPath' => array(0 => "$(this).attr('href')", 1 => '.node .content'),
             'trigger' => array(0 => 'mouseover', 1 => 'click'),
             'width' => 350,

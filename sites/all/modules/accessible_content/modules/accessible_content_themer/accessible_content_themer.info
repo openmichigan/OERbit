@@ -4,9 +4,9 @@ description = A helper for theme developers or administrators to check the acces
 package = Accessible Content
 dependencies[] = accessible_content
 core = 6.x
-; Information added by drupal.org packaging script on 2010-04-07
-version = "6.x-1.x-dev"
+; Information added by drupal.org packaging script on 2010-08-07
+version = "6.x-1.1"
 core = "6.x"
 project = "accessible_content"
-datestamp = "1270641618"
+datestamp = "1281208570"
 
