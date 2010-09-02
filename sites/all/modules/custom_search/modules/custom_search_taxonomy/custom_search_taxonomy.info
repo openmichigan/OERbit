@@ -1,9 +1,10 @@
-; $Id: custom_search.info,v 1.1.2.9 2010/05/04 17:04:48 jdanthinne Exp $
-name = Custom Search
-description = Customize the default search, change labels, default texts, ordering, and display content types and taxonomy selectors.
+; $Id: custom_search_taxonomy.info,v 1.1.2.5 2010/05/04 17:04:48 jdanthinne Exp $
+name = Custom Search Taxonomy
+description = Adds taxonomy selectors to Custom Search.
 core = 6.x
 package = Custom Search
-dependencies[] = search
+dependencies[] = custom_search
+dependencies[] = taxonomy
 
 ; Information added by drupal.org packaging script on 2010-04-30
 version = "6.x-1.x-dev"

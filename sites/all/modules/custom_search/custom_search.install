@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_search.install,v 1.1.2.3 2010/03/28 14:51:45 jdanthinne Exp $
+// $Id: custom_search.install,v 1.1.2.8 2010/06/01 10:33:04 jdanthinne Exp $
 
 /**
  * @file
@@ -11,14 +11,61 @@
  */
 function custom_search_install() {
   db_query("UPDATE {system} SET weight = 100 WHERE name = 'custom_search'");
-  drupal_set_message(st('Custom Search enabled. Don\'t forget to <a href="!basepath/admin/user/permissions#module-custom_search">set permissions</a>.', array('!basepath', base_path())));
+  drupal_set_message(st('Custom Search enabled. Don\'t forget to <a href="@link">set permissions</a>.', array('@link' => url('admin/user/permissions#module-custom_search'))));
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function custom_search_uninstall() {
+  variable_del('custom_search_label_visibility');
+  variable_del('custom_search_label');
+  variable_del('custom_search_text');
+  variable_del('custom_search_submit_text');
+  variable_del('custom_search_image_path');
+  variable_del('custom_search_criteria_or_display');
+  variable_del('custom_search_criteria_or_label');
+  variable_del('custom_search_criteria_phrase_display');
+  variable_del('custom_search_criteria_phrase_label');
+  variable_del('custom_search_criteria_negative_display');
+  variable_del('custom_search_criteria_negative_label');
+  variable_del('custom_search_paths');
+  variable_del('custom_search_search_box_weight');
+  variable_del('custom_search_content_types_weight');
+  variable_del('custom_search_criteria_or_weight');
+  variable_del('custom_search_criteria_phrase_weight');
+  variable_del('custom_search_criteria_negative_weight');
+  variable_del('custom_search_custom_paths_weight');
+  variable_del('custom_search_submit_button_weight');
+  variable_del('custom_search_target');
+  variable_del('custom_search_node_types');
+  variable_del('custom_search_other');
+  variable_del('custom_search_type_selector');
+  variable_del('custom_search_type_selector_label');
+  variable_del('custom_search_type_selector_label_visibility');
+  variable_del('custom_search_type_selector_all');
+  variable_del('custom_search_any_restricts');
+  variable_del('custom_search_results_search');
+  variable_del('custom_search_results_advanced_search');
+  variable_del('custom_search_advanced_or_display');
+  variable_del('custom_search_advanced_phrase_display');
+  variable_del('custom_search_advanced_negative_display');
+  $options = node_get_types('names');
+  foreach ($options as $type => $name) variable_del('custom_search_advanced_type_' . $type . '_display');
+  variable_del('custom_search_results_info_type');
+  variable_del('custom_search_results_info_user');
+  variable_del('custom_search_results_info_date');
+  if (module_exists('comment')) variable_del('custom_search_results_info_comment');
+  if (module_exists('upload')) variable_del('custom_search_results_info_upload');
+  variable_del('custom_search_filter');
+  variable_del('custom_search_filter_label');
 }
 
 /**
  * Implementation of hook_enable().
  */
 function custom_search_enable() {
-  drupal_set_message(t('Custom Search enabled. Don\'t forget to <a href="!basepath/admin/user/permissions#module-custom_search">set permissions</a>.', array('!basepath', base_path())));
+  drupal_set_message(t('Custom Search enabled. Don\'t forget to <a href="@link">set permissions</a>.', array('@link' => url('admin/user/permissions#module-custom_search'))));
 }
 
 /**
@@ -30,3 +77,39 @@ function custom_search_update_6100() {
   return $ret;
 }
 
+function custom_search_update_6101() {
+  $ret = array();
+  drupal_set_message(t('Custom Search has been divided in multiple modules. Please re-enable the sub-modules you need.'));
+  return $ret;
+}
+
+function custom_search_update_6102() {
+  $ret = array();
+  if (variable_get('custom_search_path', '') != '') {
+    variable_set('custom_search_paths', variable_get('custom_search_path', '') . '|Custom path');
+  }
+  variable_del('custom_search_path');
+  return $ret;
+}
+
+function custom_search_update_6103() {
+  $ret = array();
+  if (variable_get('custom_search_results_advanced_override', FALSE)) {
+    variable_set('custom_search_advanced_or_display', variable_get('custom_search_criteria_or_display', FALSE));
+    variable_set('custom_search_advanced_phrase_display', variable_get('custom_search_criteria_phrase_display', FALSE));
+    variable_set('custom_search_advanced_negative_display', variable_get('custom_search_criteria_negative_display', FALSE));
+    $types = array_keys(array_filter(variable_get('custom_search_node_types', array())));
+    if (count($types)) {
+      $names = array_keys(node_get_types('names'));
+      foreach ($names as $name) {
+        if (!in_array($name, $types)) variable_set('custom_search_advanced_type_' . $name . '_display', FALSE);
+      }
+    }
+    $vocabularies = taxonomy_get_vocabularies();
+    foreach ($vocabularies as $voc) {
+      if (variable_get('custom_search_voc' . $voc->vid . '_selector', 'disabled') == 'disabled') variable_set('custom_search_advanced_voc' . $voc->vid . '_display', FALSE);
+    }
+  }
+  variable_del('custom_search_results_advanced_override');
+  return $ret;
+}
