@@ -45,9 +45,7 @@ function rdf_init() {
   if (variable_get('rdf_rdfa_doctype', FALSE)) {
     // Implement hook_exit() to mark us as incompatible with aggressive caching:
     function rdf_exit($destination = NULL) {}
-    if (arg(0) != 'filefield' && arg(1) != 'js_add_more') {
-      ob_start('_rdf_ob_handler');
-    }
+    ob_start('_rdf_ob_handler');
   }
 }
 
@@ -606,7 +604,7 @@ function rdf_rdf_namespaces() {
     '_'        => 'http://bnode.net/',
     'rdf'      => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
     'rdfs'     => 'http://www.w3.org/2000/01/rdf-schema#',
-    'xsi'      => 'http://www.w3.org/2001/XMLSchema-instance',
+    'xsi'      => 'http://www.w3.org/2001/XMLSchema-instance#',
     'xsd'      => 'http://www.w3.org/2001/XMLSchema#',
     'owl'      => 'http://www.w3.org/2002/07/owl#',
     'dc'       => 'http://purl.org/dc/elements/1.1/',
