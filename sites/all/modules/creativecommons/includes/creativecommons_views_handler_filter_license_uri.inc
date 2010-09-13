@@ -1,8 +1,12 @@
 <?php
-// $Id: creativecommons_views_handler_filter_license_uri.inc,v 1.1.2.3 2010/01/07 06:34:22 balleyne Exp $
+// $Id: creativecommons_views_handler_filter_license_uri.inc,v 1.1.2.4 2010/08/28 23:33:36 kreynen Exp $
+
 /**
- * Filter by license type
+ * @file
+ * Filter by license type.
+ *
  */
+
 class creativecommons_views_handler_filter_license_uri extends views_handler_filter_in_operator {
   function get_value_options() {
     if (!isset($this->value_options)) {
@@ -11,14 +15,15 @@ class creativecommons_views_handler_filter_license_uri extends views_handler_fil
       $license_array_keys = creativecommons_get_licenses(array('jurisdiction' => variable_get('creativecommons_default_jurisdiction', '')), TRUE);
         
       foreach ($license_array_keys as $key => $info) {
-        if(is_array($info)){
-          foreach($info as $key => $value){
-            if(in_array($key,$available_license_types)){
+        if (is_array($info)) {
+          foreach ($info as $key => $value) {
+            if (in_array($key, $available_license_types)) {
               $options[$key] = $value;
             }
           }
-        } else {
-          if(in_array($key,$available_license_types)){
+        } 
+        else {
+          if (in_array($key, $available_license_types)) {
             $options[$key] = $info;
           }
         }
@@ -33,25 +38,25 @@ class creativecommons_views_handler_filter_license_uri extends views_handler_fil
     }
     $this->ensure_my_table();
 
-    if($this->operator == 'not in'){
+    if ($this->operator == 'not in') {
       $not = ' NOT ';
     } 
-    foreach($this->value as $value){
-      if(strlen($where)){
-        if($this->operator == 'not in'){
+    foreach ($this->value as $value) {
+      if (strlen($where)) {
+        if ($this->operator == 'not in') {
           $or = ' AND ';
-        } else {
+        } 
+        else {
           $or = ' OR ';
         }
       }
-      if(strlen($value)){
-        $like = '\'http://creativecommons.org/%/'.$value.'/%\' ';
+      if (strlen($value)) {
+        $like = '\'http://creativecommons.org/%/' . $value . '/%\' ';
       }
       else {
         $like = '\'\'';
       }
-      $where = " $this->table_alias.$this->real_field $not" ." LIKE ".  $like . $or  . $where;
-      
+      $where = " $this->table_alias.$this->real_field $not" ." LIKE ".  $like . $or  . $where;     
     }
     $this->query->add_where($this->options['group'], $where);
   }

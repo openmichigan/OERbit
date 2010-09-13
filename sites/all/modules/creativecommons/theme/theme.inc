@@ -1,7 +1,12 @@
 <?php
+// $Id: theme.inc,v 1.1.2.3 2010/08/28 23:33:36 kreynen Exp $
+
 /**
- * Creative Commons module theme functions
- */ 
+ * @file
+ * Creative Commons module theme functions.
+ *
+ */
+
 
 /**
  * Site license theming

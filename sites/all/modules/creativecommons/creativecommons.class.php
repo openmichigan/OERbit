@@ -1,5 +1,5 @@
 <?php
-// $Id: creativecommons.class.php,v 1.3.4.48 2010/08/09 17:04:41 kreynen Exp $
+// $Id: creativecommons.class.php,v 1.3.4.49 2010/08/11 16:33:47 kreynen Exp $
 
 /**
  * @file
@@ -243,7 +243,7 @@ class creativecommons_license {
         // The directory which the icons reside
         $dir = $img_dir .'/'. str_replace('_', 's/', $style) .'/';
 
-        $img[] = '<img src="'. $dir . ($filename ? $filename : $this->type) .'.png" style="border-width: 0pt;" title="'. $this->get_name('full') .'" alt="'. $this->get_name('full') .'"/>';
+        $img[] = '<img src="'. $dir . (isset($filename) ? $filename : $this->type) .'.png" style="border-width: 0pt;" title="'. $this->get_name('full') .'" alt="'. $this->get_name('full') .'"/>';
         break;
       case 'tiny_icons':
         $px = '15';
@@ -259,7 +259,7 @@ class creativecommons_license {
           'pd' => t('Public Domain'),
           'zero' => t('Zero'),
         );
-        if (!$px) {
+        if (!isset($px)) {
           $px = '32';
         }
         
@@ -320,7 +320,7 @@ class creativecommons_license {
    */
   function is_valid() {
     // note: license xml was already extracted in constructor
-    return !($this->error['id'] == 'invalid');
+    return !(isset($this->error) && $this->error['id'] == 'invalid');
   }
 
   /**
@@ -496,8 +496,10 @@ class creativecommons_license {
     //$this->check_metadata();
 
     if ($this->rdf) {
-      foreach ($this->rdf['attributes'] as $attr => $val)
+      $a = '';
+      foreach ($this->rdf['attributes'] as $attr => $val) {
         $a .= " $attr=\"$val\"";
+      }
     }
     $rdf = "<rdf:RDF$a>\n";
 

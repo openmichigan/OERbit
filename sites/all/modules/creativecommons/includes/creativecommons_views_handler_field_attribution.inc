@@ -1,5 +1,5 @@
 <?php
-// $Id: creativecommons_views_handler_field_attribution.inc,v 1.1.2.1 2009/08/25 15:14:09 balleyne Exp $
+// $Id: creativecommons_views_handler_field_attribution.inc,v 1.1.2.2 2010/08/28 23:33:36 kreynen Exp $
 
 /**
  * @file
@@ -48,7 +48,7 @@ class creativecommons_views_handler_field_attribution extends views_handler_fiel
       }
       $attribution = l($text, $attribution_url, array('attributes' => $attributes));
     }
-    else if (creativecommons_metadata_is_available('attributionName')) {
+    elseif (creativecommons_metadata_is_available('attributionName')) {
       $attribution = '<span property="cc:attributionName">'. $attribution_name .'</span>';
     }
 
