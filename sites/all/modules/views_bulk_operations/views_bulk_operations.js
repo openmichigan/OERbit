@@ -1,4 +1,4 @@
-// $Id: views_bulk_operations.js,v 1.1.4.16.2.1 2010/02/26 23:06:54 kratib Exp $
+// $Id: views_bulk_operations.js,v 1.1.4.16 2009/04/07 19:42:22 kratib Exp $
 (function ($) {
 // START jQuery
 
@@ -18,9 +18,6 @@ Drupal.vbo.selectAll = function() {
     setSelectAll(false);
   });
   var checkboxes = $('td input:checkbox', table).click(function() {
-    if (checkboxes.length > $(checkboxes).filter(':checked').length) {
-      $('input#edit-objects-select-all', form).val(0);
-    }
     setSelectAll($('input#edit-objects-select-all', form).val() == 1);
   }).each(function() {
     $(this).parents('tr:first')[ this.checked ? 'addClass' : 'removeClass' ]('selected');

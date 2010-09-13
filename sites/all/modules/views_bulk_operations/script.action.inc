@@ -1,5 +1,5 @@
 <?php
-// $Id: script.action.inc,v 1.1.2.4.2.1 2010/03/24 03:13:48 kratib Exp $
+// $Id: script.action.inc,v 1.1.2.4 2009/12/02 20:02:26 kratib Exp $
 
 function views_bulk_operations_script_action_info() {
   if (!module_exists('actions_permissions') && !user_access('administer site configuration')) return array();
@@ -7,7 +7,6 @@ function views_bulk_operations_script_action_info() {
     'type' => 'system',
     'description' => t('Execute arbitrary PHP script'),
     'configurable' => TRUE,
-    'hooks' => array('any' => TRUE),
   ));
 }
 

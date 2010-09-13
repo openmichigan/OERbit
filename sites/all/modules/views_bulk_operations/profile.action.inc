@@ -1,5 +1,5 @@
 <?php
-// $Id: profile.action.inc,v 1.1.2.3.2.1 2010/02/26 23:06:54 kratib Exp $
+// $Id: profile.action.inc,v 1.1.2.3 2009/10/08 21:37:55 kratib Exp $
 
 function views_bulk_operations_profile_action_info() {
   if (!module_exists('profile')) return array();
@@ -8,14 +8,6 @@ function views_bulk_operations_profile_action_info() {
     'description' => t('Modify profile fields'),
     'configurable' => TRUE,
   ));
-}
-
-function views_bulk_operations_profile_action_theme() {
-  return array(
-    'views_bulk_operations_profile_action_form' => array(
-      'arguments' => array('form' => NULL),
-    ),
-  );
 }
 
 function views_bulk_operations_profile_action_form($context) {
@@ -36,7 +28,6 @@ function views_bulk_operations_profile_action_form($context) {
       );
     }
   }
-  $form['#theme'] = 'views_bulk_operations_profile_action_form';
   return $form;
 }
 
@@ -56,7 +47,6 @@ function theme_views_bulk_operations_profile_action_form(&$form) {
   }
 
   $output = theme('table', $header, $rows);
-  $output .= drupal_render($form);
   return $output;
 }
 
