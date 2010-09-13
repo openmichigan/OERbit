@@ -258,6 +258,10 @@ function navigation_course_sort($a, $b) {
     $node_a = node_load($a->nid);
     $node_b = node_load($b->nid);
   }
+  elseif ($a->node_weight_sticky != $b->node_weight_sticky) {
+    $node_a = node_load($a->nid);
+    $node_b = node_load($b->nid);
+  }
   else {
     $node_a = node_load($a->node_node_nid);
     $node_b = node_load($b->node_node_nid);
