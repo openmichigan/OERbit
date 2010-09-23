@@ -32,7 +32,7 @@ function hierarchical_permissions_access($op, $node, $account = NULL) {
       global $user;
       $account = $user;
     }
-    if ($account->uid == 1 || in_array('site admin', $account->roles) || in_array('content manager', $account->roles)) {
+    if ($account->uid == 1 || in_array('site administrator', $account->roles) || in_array('content manager', $account->roles)) {
       return TRUE;
     }
     //if (in_array('unit manager', $account->roles) && in_array('resource manager', $account->roles)) {
