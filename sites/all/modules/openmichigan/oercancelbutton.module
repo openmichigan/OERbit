@@ -1,0 +1,18 @@
+<?php
+// stupid module to place "cancel" button
+// in the right place next to "submit" button
+// after installing "captcha" for the 
+// "contact-mail-form" ... bdr
+function oercancelbutton_form_alter(&$form, $form_state, $form_id){
+  if($form_id == 'webform_client_form_258'){
+    $form['cancel'] = array(
+      '#type' => 'button',
+      '#value' => t('Cancel'),
+      '#id' => 'oercancelbutton_form',
+      '#weight' => 1005,
+      '#attributes' => array('class' => 'form-cancel', 'onClick' => 'location.replace("'. referer_uri() .'"); return false;'),
+      // some more params....
+    );
+  }
+}
+?>

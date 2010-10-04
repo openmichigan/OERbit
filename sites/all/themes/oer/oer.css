@@ -30,34 +30,29 @@ img.left {
 	clear: left;
 }
 
+ #contact-mail-page .form-submit, #webform-client-form-258 .form-submit {
+   background: transparent url(images/button-send.png) no-repeat center top;
+   text-indent: -1000em;
+   border: 0;
+   padding: 0;
+   width: 79px;
+   height: 20px;
+ }
+ /********************************************************************
+  * this definition MUST follow the previous one, since the user "alter_hook"
+  * generates the cancel form with both the "class" of "form-submit" and
+  * "form-cancel".  If this precedes the "form-submit" definiton, you'll
+  * see 2 "send email" buttons.  The last "format" instructions win!  bdr
+  ********************************************************************/
+ #contact-mail-page .form-cancel, #webform-client-form-258 .form-cancel {
+   background: transparent url(images/button-cancel.png) no-repeat center top;
+   text-indent: -1000em;
+   border:  0;
+   padding: 0;
+   width: 53px;
+   height: 20px;
+ }
 
-#contact-mail-page .form-submit, #webform-client-form-258 .form-submit { 
-	width: 79px;
-	height: 20px;
-	margin: 0;
-	padding: 0;
-	border: 0;
-	background: transparent url(images/button-send.png) no-repeat center top;
-	text-indent: -1000em;
-	cursor: pointer; /* hand-shaped cursor */
-	font-size: 0px;
-	display:block;
-	line-height: 0px;
- }
- #webform-component-cancel a.cancel-button {
- 	position: relative;
- 	display: block;
- 	top: 20px;
- 	left: 100px;
-	width: 53px;
-	height: 20px;
-	margin: 0;
-	padding: 0;
-	border: 0;
-	background: transparent url(images/button-cancel.png) no-repeat center top;
-	text-indent: -1000em;
-	cursor: pointer; /* hand-shaped cursor */
- }
  #content-header .tabs {
  	margin-bottom: 30px;
  }

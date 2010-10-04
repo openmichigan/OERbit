@@ -1,0 +1,176 @@
+<?php // $Id: textcaptcha.module,v 1.1.2.2 2010/05/17 14:42:19 kevee Exp $
+
+/**
+*  @file
+*  Provides integration between the CAPTCHA module [http://drupal.org/project/captcha]
+*  and the text-only CAPTCHA service textcaptcha.com
+*/
+
+define('TEXTCAPTCHA_URL_PREFIX', 'http://textcaptcha.com/api/');
+
+/**
+*  Implementation of hook_menu()
+*/
+function textcaptcha_menu() {
+  $items = array();
+    $items['admin/user/captcha/textcaptcha'] = array(
+      'title' => 'Text CAPTCHA',
+      'description' => 'Builds CAPTCHAs that use text rather than images.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('textcaptcha_settings_form'),
+      'access arguments' => array('administer CAPTCHA settings'),
+      'type' => MENU_LOCAL_TASK
+    );
+  return $items;
+}
+
+/**
+*  Admin settings form callback
+*/
+function textcaptcha_settings_form() {
+  $form = array();
+  
+  $form['instructions']['#value'] = t('To use TextCAPTCHA, you need to get an API key by !link', 
+                      array('!link' => l('registering at textcaptcha.com', 
+                                 'http://textcaptcha.com/register')));
+                      
+  $form['textcaptcha_api_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Textcaptcha.com API key'),
+    '#description' => t('Your API key from textcaptcha.com'),
+    '#default_value' => variable_get('textcaptcha_api_key', ''),
+    '#required' => TRUE,
+  );
+  
+  $form['textcaptcha_cache_limit'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of challenges to keep as backup'),
+    '#description' => t('If you cannot contact textcaptcha.com or the service is unavailable, some challenges are kept in the site cache as backup. Select zero to turn this feature off.'),
+    '#options' => array(
+      			  0,
+      			  10,
+      			  20,
+      			  30,
+      			  40
+    			  ),
+    '#default_value' => variable_get('textcaptcha_cache_limit', 10),
+  );
+  
+  return system_settings_form($form);
+}
+
+/**
+*  Form validation for admin settings. Here we check that the API key works.
+*/
+function textcaptcha_settings_form_validate($form, $form_state) {
+  $result = drupal_http_request(TEXTCAPTCHA_URL_PREFIX . trim($form_state['values']['textcaptcha_api_key']));
+  if($result->code !== '200') {
+    form_set_error('textcaptcha_api_key', t('The API Key did not work or the server cannot contact textcaptcha.com'));
+  }
+}
+
+/**
+ * Implementation of hook_captcha().
+ */
+function textcaptcha_captcha($op, $captcha_type='') {
+  switch ($op) {
+    case 'list' :
+      return array('Text Captcha');
+      break;
+    case 'generate' :
+      $result = array();
+      if ($captcha_type == 'Text Captcha') {
+        $textcaptcha = textcaptcha_get_captcha();
+        $result['form']['captcha_response'] = array(
+          '#type' => 'textfield',
+          '#title' => $textcaptcha['question'],
+          '#description' => t('Question text provided by !link',
+                              array('!link' => l('textcaptcha.com', 'http://textcaptcha.com'))
+                             ),
+          '#size' => 50,
+          '#maxlength' => 50,
+          '#required' => TRUE,
+        );
+        $result['solution'] = serialize($textcaptcha['answers']);
+        $result['captcha_validate'] = 'textcaptcha_captcha_validate';
+        
+        return $result;
+      }
+    break;
+  }
+}
+
+/**
+*  Retrieves CAPTCHA and possible answer list from the textcaptcha.com service
+*/
+function textcaptcha_get_captcha($use_cache = TRUE) {
+  if(variable_get('textcaptcha_cache_limit', 10) == 0) {
+    $use_cache = FALSE;
+  }
+  if (variable_get('textcaptcha_api_key', FALSE)) {
+    $cached_challenges = cache_get('textcaptcha_cached_challenges');
+    $captcha = drupal_http_request(TEXTCAPTCHA_URL_PREFIX . trim(variable_get('textcaptcha_api_key', '')));
+    if ($captcha->code == '200' && $captcha->data) {
+      $parser = drupal_xml_parser_create($captcha->data);
+      $captcha_xml = array();
+      xml_parse_into_struct($parser, $captcha->data, $captcha_xml);
+      $answers = array();
+      foreach ($captcha_xml as $element) {
+        if ($element['tag'] == 'QUESTION' && $element['type'] == 'complete') {
+          $question = $element['value'];
+        }
+        if ($element['tag'] == 'ANSWER' && $element['type'] == 'complete') {
+          $answers[] = $element['value'];
+        }
+      }
+      $cached_challenges->data[] = array('question' => $question,
+      									 'answers' => $answers);
+      if(count($cached_challenges->data) > variable_get('textcaptcha_cache_limit', 10)) {
+      	array_shift($cached_challenges->data);
+      }
+      if($use_cache) {
+      	cache_set('textcaptcha_cached_challenges', $cached_challenges->data);
+      }
+      return array('question' => $question, 'answers' => $answers);
+    }
+    elseif($cached_challenges && $use_cache) {
+      return array_rand($cached_challenges->data);
+    }
+  }
+  return FALSE;
+}
+
+/**
+*  Custom CAPTCHA validation callback.
+*/
+function textcaptcha_captcha_validate($solution, $response) {
+  return (in_array(md5(drupal_strtolower(trim($response))), unserialize($solution)));
+}
+
+/**
+*  Implementation of hook_requirements()
+*/
+function textcaptcha_requirements($phase) {
+  $requirements = array();
+  if($phase == 'runtime') {
+    if(variable_get('textcaptcha_api_key', FALSE)) {
+      $requirements['textcaptcha_api_key'] = array(
+        'title' => t('Text CAPTCHA'),
+        'value' => t('API Key updated and server contacted'),
+        'severity' => REQUIREMENT_OK,
+      );
+    }
+    else {
+       $requirements['textcaptcha_api_key'] = array(
+        'title' => t('Text CAPTCHA'),
+        'value' => t('API Key missing. Plese !link for an API key and then update the !settings.', 
+                      array('!link' => l('registering at textcaptcha.com', 
+                                 'http://textcaptcha.com/register'),
+                            '!settings' => l('Text CAPTCHA settings',
+                            	 'admin/user/captcha/textcaptcha'))),
+        'severity' => REQUIREMENT_WARNING,
+      );   
+    }
+  }
+  return $requirements;
+}
