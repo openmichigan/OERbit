@@ -37,6 +37,7 @@ img.left {
    padding: 0;
    width: 79px;
    height: 20px;
+   cursor: pointer; /* hand-shaped cursor */
  }
  /********************************************************************
   * this definition MUST follow the previous one, since the user "alter_hook"
@@ -51,6 +52,7 @@ img.left {
    padding: 0;
    width: 53px;
    height: 20px;
+   cursor: pointer; /* hand-shaped cursor */
  }
 
  #content-header .tabs {
