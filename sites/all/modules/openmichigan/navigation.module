@@ -221,7 +221,7 @@ function navigation_views_pre_render(&$view) {
         $node = node_load($course->node_node_nid);
         $parent = node_load($course->nid);
         foreach ($parent->field_unit_courses[0]['items'] as $child) {
-          if ($child['vid'] != $node->vid) {
+          if ($child['nid'] == $node->nid && $child['vid'] != $node->vid) {
             unset($node);
             unset($view->result[$key]);
           }
