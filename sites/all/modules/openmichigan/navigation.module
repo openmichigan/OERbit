@@ -220,6 +220,10 @@ function navigation_views_pre_render(&$view) {
       elseif (!empty($course->node_node_nid)) {
         $node = node_load($course->node_node_nid);
         $parent = node_load($course->nid);
+        if ($parent->nid != $node->field_parent_unit[0]['nid']) {
+          unset($node);
+          unset($view->result[$key]);
+        }
         foreach ($parent->field_unit_courses[0]['items'] as $child) {
           if ($child['nid'] == $node->nid && $child['vid'] != $node->vid) {
             unset($node);
