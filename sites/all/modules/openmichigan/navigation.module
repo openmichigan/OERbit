@@ -224,11 +224,13 @@ function navigation_views_pre_render(&$view) {
           unset($node);
           unset($view->result[$key]);
         }
+        if (is_array($parent->field_unit_courses[0]['items'])) {
         foreach ($parent->field_unit_courses[0]['items'] as $child) {
           if ($child['nid'] == $node->nid && $child['vid'] != $node->vid) {
             unset($node);
             unset($view->result[$key]);
           }
+        }
         }
       }
       if ($node->type == 'course') {
