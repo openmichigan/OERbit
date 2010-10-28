@@ -409,7 +409,7 @@ function nodereferrer_referrers($nid,  $fieldnames = array(), $nodetypes = array
         $query = "SELECT       n.nid, n.vid, n.title
                   FROM         {" . $db_info['table'] . "} nr
                   INNER JOIN   {node} current_node ON current_node.nid = %d
-                  INNER JOIN   {node} n ON n.vid = nr.vid AND n.status = 1 " . $filter_nodetypes . "
+                  INNER JOIN   {node} n ON n.vid = nr.vid " . $filter_nodetypes . "
                   LEFT JOIN    {node} translations ON current_node.tnid > 0 AND translations.tnid = current_node.tnid
                   WHERE        (current_node.tnid = 0 AND nr." . $db_info['columns']['nid']['column'] . " = current_node.nid)
                                OR
@@ -419,7 +419,7 @@ function nodereferrer_referrers($nid,  $fieldnames = array(), $nodetypes = array
       else {
         $query = "SELECT       n.nid, n.vid, n.title
                   FROM         {" . $db_info['table'] . "} nr
-                  INNER JOIN   {node} n ON n.vid = nr.vid AND n.status = 1 " . $filter_nodetypes . "
+                  INNER JOIN   {node} n ON n.vid = nr.vid " . $filter_nodetypes . "
                   WHERE        nr." . $db_info['columns']['nid']['column'] . " = %d
                   ORDER BY     " . $order;
       }
