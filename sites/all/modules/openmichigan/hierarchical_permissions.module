@@ -35,30 +35,20 @@ function hierarchical_permissions_access($op, $node, $account = NULL) {
     if ($account->uid == 1 || in_array('site administrator', $account->roles) || in_array('content manager', $account->roles)) {
       return TRUE;
     }
-    //if (in_array('unit manager', $account->roles) && in_array('resource manager', $account->roles)) {
     if (in_array('unit manager', $account->roles)) {
       if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d', $account->uid, $node->nid))) {
         return TRUE;
       }
-      $nodes = hierarchical_permissions_get_all_by_user($account);
+      $nodes = hierarchical_permissions_get_all_by_unit_manager($account);
       if (in_array($node->nid, array_keys($nodes))) {
         return TRUE;
       }
     }
-    /*if ($node->type == 'unit' && in_array('unit manager', $account->roles)) {
-      if (db_result(db_query("SELECT * FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='unit' AND p.uid=%d AND p.nid=%d", $account->uid, $node->nid))) {
-        return TRUE;
-      }
-      $units = hierarchical_permissions_get_units_by_user($account);
-      if (in_array($node->nid, array_keys($units))) {
-        return TRUE;
-      }
-    }*/
     if (in_array('resource manager', $account->roles)) {
-      if (db_result(db_query("SELECT * FROM {hierarchical_permissions} p INNER JOIN {node} n ON p.nid = n.nid WHERE n.type='course' AND p.uid=%d AND p.nid=%d", $account->uid, $node->nid))) {
+      if (db_result(db_query("SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d", $account->uid, $node->nid))) {
         return TRUE;
       }
-      $courses = hierarchical_permissions_get_courses_by_user($account);
+      $courses = hierarchical_permissions_get_all_by_resource_manager($account);
       if (in_array($node->nid, array_keys($courses))) {
         return TRUE;
       }
@@ -118,7 +108,7 @@ function _hierarchical_permissions_block($nid) {
             'data' => l($account->name, 'user/' . $account->uid),
           );
         }
-        $nodes = hierarchical_permissions_get_all_by_user($account);
+        $nodes = hierarchical_permissions_get_all_by_unit_manager($account);
         if (in_array($nid, array_keys($nodes))) {
           $users[] = array(
             'data' => l($account->name, 'user/' . $account->uid),
@@ -272,9 +262,9 @@ function hierarchical_permissions_get_courses_by_user($account, $op = 'node') {
 }
 
 /**
- * Returns a list of all nodes the user is an admin of.
+ * Returns a list of all nodes a 'unit manager' is an admin of.
  */
-function hierarchical_permissions_get_all_by_user($account) {
+function hierarchical_permissions_get_all_by_unit_manager($account) {
   $nodes = hierarchical_permissions_get_units_by_user($account);
   foreach ($nodes as $nid => $values) {
     hierarchical_permissions_get_courses_by_unit($nodes, node_load($nid));
@@ -286,14 +276,25 @@ function hierarchical_permissions_get_all_by_user($account) {
 }
 
 /**
+ * Returns a list of all nodes a 'resource manager' is an admin of.
+ */
+function hierarchical_permissions_get_all_by_resource_manager($account) {
+  $nodes = hierarchical_permissions_get_courses_by_user($account);
+  foreach ($nodes as $nid => $values) {
+    hierarchical_permissions_get_course_children($nodes, node_load($nid));
+  }
+  return $nodes;
+}
+
+/**
  * Recursively gets a list of child units for the current academic unit.
  */
 function hierarchical_permissions_get_unit_children(&$units, $node) {
   if (empty($node)) {
-    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field_parent_unit_nid IS NULL");
+    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field_parent_unit_nid IS NULL AND node.type = 'unit'");
   }
   else {
-    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d", $node->nid);
+    $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d AND node.type = 'unit'", $node->nid);
   }
   while ($unit = db_fetch_object($query)) {
     if (!empty($node)) {
