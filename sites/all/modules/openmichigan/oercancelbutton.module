@@ -14,5 +14,10 @@ function oercancelbutton_form_alter(&$form, $form_state, $form_id){
       // some more params....
     );
   }
+  if ($form_id == 'search_form') {
+    $form['basic']['#title'] = '';
+    $form['advanced']['#type'] = 'hidden';
+    // $form['basic']['#type'] = 'hidden';
+  }
 }
 ?>

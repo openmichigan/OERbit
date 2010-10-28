@@ -1,0 +1,76 @@
+<?php
+// $Id: blocks404.module,v 1.6 2010/07/15 11:13:08 johnalbin Exp $
+
+define('BLOCKS404_PAGE', 'blocks404');
+
+/**
+ * Implements hook_menu().
+ */
+function blocks404_menu() {
+  $items[BLOCKS404_PAGE] = array(
+    'title'           => 'Page not found',
+    'access callback' => TRUE,
+    'page callback'   => 'blocks404_404_page',
+    'type'            => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Our custom menu callback that returns Drupal's standard 404 message.
+ */
+function blocks404_404_page() {
+  return t('The requested page could not be found.');
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function blocks404_theme_registry_alter(&$theme_registry) {
+  // Insert our preprocess function ahead of template_preprocess_page().
+  array_unshift($theme_registry['page']['preprocess functions'], 'blocks404_preprocess_show_blocks');
+}
+
+/**
+ * Renders the left and right regions on 404 pages.
+ */
+function blocks404_preprocess_show_blocks(&$vars, $hook) {
+  // Drupal core sets a "HTTP/1.1 404 Not Found" header, but Pressflow only sets
+  // a "404 Not Found" header.
+  if (strpos(drupal_get_headers(), '404 Not Found') !== FALSE) {
+    // Show all regions.
+    $vars['show_blocks'] = TRUE;
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function blocks404_form_system_error_reporting_settings_alter(&$form, $form_state) {
+  // Since we don't care what site_404 is set to, let the user set it if they want.
+  if ($form['site_404']['#default_value'] == BLOCKS404_PAGE) {
+    $form['site_404']['#default_value'] = '';
+  }
+  // Insert our submit handler first.
+  array_unshift($form['#submit'], 'blocks404_site_404_submit');
+}
+
+/**
+ * Submit callback for system_error_reporting_settings form.
+ */
+function blocks404_site_404_submit($form, &$form_state) {
+  // Make sure site_404 is not empty.
+  if ($form_state['values']['site_404'] == '') {
+    $form_state['values']['site_404'] = BLOCKS404_PAGE;
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function blocks404_form_alter(&$form, $form_state, $form_id) {
+  if ($_GET['q'] == BLOCKS404_PAGE) {
+    module_load_include('inc', 'blocks404', 'blocks404.active');
+    _blocks404_form_alter($form, $form_state, $form_id);
+  }
+}

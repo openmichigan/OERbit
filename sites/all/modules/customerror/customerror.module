@@ -1,0 +1,256 @@
+<?php
+
+//$Id: customerror.module,v 1.17.2.6 2009/03/19 16:07:59 kbahey Exp $
+
+// Copyright 2005 Khalid Baheyeldin http://2bits.com
+
+
+/**
+ * @file
+ * Enables custom 404 (not found) and 403 (access denied) pages in Drupal
+ * with no need for creating real nodes under taxonomies
+ */
+
+function _customerror_enum_errors() {
+  // This is where the error codes and their default descriptions are
+  // stored. Add here as necessary.
+  $errors = array(
+    404 => t('requested page not found'),
+    403 => t('access denied')
+  );
+  
+  // Sorting array here by keys so they are logically sorted on form
+  ksort($errors);
+
+  return $errors;
+}
+
+function _customerror_fetch_error($error_code) {
+  $errors = _customerror_enum_errors();
+
+  $default_desc = t('unknown error: @error_code', array('@error_code' => $error_code));
+
+  $r = $default_desc;
+
+  foreach ($errors as $code => $desc) {
+    if ($error_code == $code) {
+      $r = $desc;
+    }
+  }
+  return $r;
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function customerror_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case 'admin/modules#description':
+    case 'admin/settings/customerr':
+      $output = t('Enables the creation of custom error pages for 404 and 403 errors.');
+      break;
+  }
+  return $output;
+}
+
+function customerror_admin_settings() {
+  $form = array(
+    'customerror_form_description' => array(
+      '#type' => 'markup',
+      '#value' => t('Enter the error pages that will be seen by your visitors when they get the respective errors. You can enter any HTML text. You can point the users to the FAQ, inform them that you reorganized the site, ask them to report the error, login or register, ...etc.')
+    )
+  );
+
+  $errors = _customerror_enum_errors();
+  foreach($errors as $code => $desc) {
+    if (variable_get('site_' . $code, '') != 'customerror/' . $code) {
+      drupal_set_message(t('Error reporting is not set for error !error. Please check the settings !link.', array('!error' => $code, '!link' => l(t('here'), 'admin/settings/error-reporting'))), 'error');
+    }
+  }
+
+  foreach($errors as $code => $desc) {
+    $group = 'customerror_' . $code . '_group';
+    $form[$group] = array(
+      '#type'          => 'fieldset',
+      '#title'         => t('!code Error Settings', array('!code' => $code)),
+      '#collapsed'     => true,
+      '#collapsible'   => true,
+    );
+    $form[$group]['customerror_' . $code . '_title'] = array(
+      '#type'          => 'textfield',
+      '#title'         => t('Title for @code', array('@code' => $code)),
+      '#default_value' => variable_get('customerror_' . $code . '_title', $desc),
+      '#size'          => 70,
+      '#maxlength'     => 70,
+      '#description'   => t('Title of @code error page', array('@code' => $code . ' error page')),
+    );
+    $form[$group]['customerror_' . $code] = array(
+      '#type'          => 'textarea',
+      '#title'         => t('Description for ') . $code,
+      '#default_value' => variable_get('customerror_' . $code, $desc),
+      '#rows'          => 10,
+      '#description'   => t('This text will be displayed if a @code (@desc) error occurs.', array('@code' => $code, '@desc' => $desc)),
+    );
+    $form[$group]['customerror_' . $code . '_php'] = array(
+      '#type'          => 'checkbox',
+      '#title'         => t('Allow PHP code to be executed for @code', array( '@code' => $code)),
+      '#default_value' => variable_get('customerror_' . $code . '_php', FALSE),
+      '#description'   => t('This allows you to include PHP code (enclosed in &lt;?php ?&gt; tags) for the @code (@desc) message. Note that this can be dangerous in some situations. Make sure that you are aware of the implications.', array('@code' => $code, '@desc' => $desc)),
+    );
+  }
+
+  $form['redirects'] = array(
+    '#type'            => 'fieldset',
+    '#title'           => t('Redirects'),
+    '#collapsed'       => TRUE,
+    '#collapsible'     => TRUE,
+  );
+  $form['redirects']['customerror_redirect'] = array(
+    '#type'            => 'textarea',
+    '#title'           => t('Redirect list'),
+    '#default_value'   => variable_get('customerror_redirect', ''),
+    '#rows'            => 10,
+    '#description'     => t('These are custom redirect pairs, one per line. Each pair requires a path to match (which is a regular expression) and a destination separated by a space. The keyword <em>&lt;front></em> is allowed as a destination. If you are unfamilar with regular expressions, a simple search string will work, but will match any part of the URl. For example <em>index.html &lt;front></em> will match both <em>http://example.com/index.html &amp; http://example.com/archive/index.html</em>.'),
+  );
+
+  return system_settings_form($form);
+}
+
+function customerror_menu() {
+  $items = array();
+
+  $items['admin/settings/customerror'] = array(
+    'title'            => 'Custom error',
+    'description'      => 'Administer custom error.',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('customerror_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type'             => MENU_NORMAL_ITEM,
+  );
+
+  $items['customerror'] = array(
+    'title'           => 'customerror',
+    'access callback' => TRUE,
+    'page callback'   => 'customerror_page',
+    'type'            => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+* Implementation of hook_simpletest().
+*/
+function customerror_simpletest() {
+  return array_keys(file_scan_directory(
+    drupal_get_path('module', 'customerror') . '/tests', '\.test$'));
+}
+
+function customerror_page() {
+  $code = arg(1);
+  $_SESSION['destination'] = $_REQUEST['destination'];
+
+  switch($code) {
+    case 403:
+    case 404:
+      // Check if we should redirect
+      customerror_check_redirect();
+
+      // Make sure that we sent an appropriate header
+      customerror_header($code);
+
+      drupal_set_title(variable_get('customerror_'. $code .'_title', _customerror_fetch_error($code)));
+      $output = theme('customerror', $code, variable_get('customerror_' . $code, _customerror_fetch_error($code)));
+      $output = (variable_get('customerror_' . $code . '_php', FALSE)) ? drupal_eval($output) : $output;
+      break;
+    default:
+      drupal_set_title(t('undefined error: ') . $code);
+      $output = _customerror_fetch_error($code);
+      break;
+  }
+  return $output;
+}
+
+function customerror_header($code) {
+  switch($code) {
+    case 403:
+      drupal_set_header('HTTP/1.1 403 Forbidden');
+      break;
+    case 404:
+      drupal_set_header('HTTP/1.1 404 Not Found');
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function customerror_theme() {
+  return array(
+    'customerror' => array(
+      'arguments' => array('code', 'content')
+    ),
+  );
+}
+
+/**
+ * Themeable function 
+ */
+function theme_customerror($code, $content) {
+  return $content;
+}
+
+function customerror_user($op, $edit, $user) {
+  switch($op) {
+    case 'login':
+      // Check if we have a destination saved in the session
+      if(!empty($_SESSION['destination'])) {
+        // If there is one, then set the REQUEST destination to it
+        $_REQUEST['destination'] = $_SESSION['destination'];
+        // And clear the one in the session
+        unset($_SESSION['destination']);
+        // user.module then does a drupal_goto() for us after we return from here
+      }
+  }
+}
+
+function customerror_check_redirect() {
+  $destination = $_REQUEST['destination'];
+  if (empty($destination)) {
+    return;
+  }
+
+  $list = explode("\n", variable_get('customerror_redirect', ''));
+  if (count($list) <= 1) {
+    return;
+  }
+
+  foreach($list as $item) {
+    list($src, $dst) = explode(' ', $item);
+    if (isset($src) && isset($dst)) {
+      $src = str_replace("/", "\\/", $src);
+      $dst = str_replace("\r", "", $dst);
+      // In case there are spaces in the URL, we escape them
+      $orig_dst = str_replace(" ", "%20", $destination);
+      if (preg_match('/'. $src .'/', $orig_dst)) {
+        $_REQUEST['destination'] = $dst;
+        drupal_goto($dst);
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter. We need this to be able to search from
+ * the error pages, otherwise the form POST's to the error page, bringing no
+ * results page.
+ */
+function customerror_form_alter($form_id, &$form) {
+  switch ($form_id) {
+    case 'search_theme_form':
+      if (arg(0) == 'customerror')
+        $form['#action'] = url('search/node');
+      break;
+  }
+}

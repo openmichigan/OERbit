@@ -1,0 +1,21 @@
+// $Id: CHANGELOG.txt,v 1.10 2010/07/15 11:27:22 johnalbin Exp $
+
+404 Blocks 6.x-1.3, 2010-07-15
+------------------------------
+- #601420 by mikey_p: blocks don't display on 404 pages under Pressflow
+
+404 Blocks 6.x-1.2, 2010-03-25
+------------------------------
+- #752448 by JohnAlbin and Alan D.: Simplify module by moving preprocess before
+  template_preprocess_page
+- #694666: Compatibility with Zen 6.x-2.x theme
+
+404 Blocks 6.x-1.1, 2009-07-01
+------------------------------
+- #475416 by libeco: Dutch translation
+- #374982: Doesn't work with Acquia Marina
+- #465196 by quicksketch: Insert JS/CSS added by blocks
+
+404 Blocks 6.x-1.0, 2009-01-06
+------------------------------
+- Initial release
