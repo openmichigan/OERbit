@@ -312,7 +312,13 @@ function module_grants_node_revision_access($revision_op, $node) {
   }
   // See if other modules have anything to say about this revision_op, i.e.
   // whether they implement hook_user_node_access($revision_op, $node).
-  $or_modules = TRUE; // variable_get('module_grants_OR_modules', FALSE);
+  if (TRUE) {
+    // OERDRUPAL-48  Our hierarchical_permissions module needs to be
+    // able to say NO, so this needs to be an AND
+    $or_modules = variable_get('module_grants_OR_modules', FALSE);
+  } else {
+    $or_modules = TRUE; // variable_get('module_grants_OR_modules', FALSE);
+  }
   $hook = 'user_node_access';
   foreach (module_implements($hook) as $module) {
     $result = module_invoke($module, $hook, $revision_op, $node);

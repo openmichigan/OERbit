@@ -24,7 +24,40 @@ function hierarchical_permissions_menu_alter(&$items) {
 }
 
 /**
- * Returns whether a user is admin of this node.
+ * Returns whether node is within space that user admins
+ */
+function hierarchical_permissions_user_has_admin($node, $account = NULL) {
+  if (empty($account)) {
+    global $user;
+    $account = $user;
+  }
+  if ($account->uid == 1 || in_array('site admin', $account->roles) || in_array('content manager', $account->roles)) {
+    return TRUE;
+  }
+  if (in_array('unit manager', $account->roles) || in_array('resource manager', $account->roles)) {
+    // Check for direct admin rights on the node
+    if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d', $account->uid, $node->nid))) {
+      return TRUE;
+    }
+    // Check if node is within hierarchy within which user has admin rights
+    $unit_nodes = array();
+    $course_nodes = array();
+    if (in_array('unit manager', $account->roles)) {
+      $unit_nodes = hierarchical_permissions_get_all_by_unit_manager($account);
+    }
+    if (in_array('resource manager', $account->roles)) {
+      $course_nodes = hierarchical_permissions_get_all_by_resource_manager($account);
+    }
+    $nodes = $unit_nodes + $course_nodes;
+    if (in_array($node->nid, array_keys($nodes))) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Returns whether a user can admin this node.
  */
 function hierarchical_permissions_access($op, $node, $account = NULL) {
   if ($op == 'edit' && in_array($node->type, array('unit', 'course', 'information', 'material', 'session', 'other'))) {
@@ -32,28 +65,7 @@ function hierarchical_permissions_access($op, $node, $account = NULL) {
       global $user;
       $account = $user;
     }
-    if ($account->uid == 1 || in_array('site administrator', $account->roles) || in_array('content manager', $account->roles)) {
-      return TRUE;
-    }
-    if (in_array('unit manager', $account->roles)) {
-      if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d', $account->uid, $node->nid))) {
-        return TRUE;
-      }
-      $nodes = hierarchical_permissions_get_all_by_unit_manager($account);
-      if (in_array($node->nid, array_keys($nodes))) {
-        return TRUE;
-      }
-    }
-    if (in_array('resource manager', $account->roles)) {
-      if (db_result(db_query("SELECT * FROM {hierarchical_permissions} WHERE uid=%d AND nid=%d", $account->uid, $node->nid))) {
-        return TRUE;
-      }
-      $courses = hierarchical_permissions_get_all_by_resource_manager($account);
-      if (in_array($node->nid, array_keys($courses))) {
-        return TRUE;
-      }
-    }
-    return FALSE;
+    return hierarchical_permissions_user_has_admin($node, $account);
   }
   if (module_exists('revisioning')) {
     return _revisioning_view_edit_access_callback($op, $node);
@@ -287,7 +299,7 @@ function hierarchical_permissions_get_all_by_resource_manager($account) {
 }
 
 /**
- * Recursively gets a list of child units for the current academic unit.
+ * Recursively gets a list of child units within the current academic unit.
  */
 function hierarchical_permissions_get_unit_children(&$units, $node) {
   if (empty($node)) {
@@ -296,10 +308,11 @@ function hierarchical_permissions_get_unit_children(&$units, $node) {
   else {
     $query = db_query("SELECT field.nid AS nid, node.title AS title FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d AND node.type = 'unit'", $node->nid);
   }
+  // BUG FIX This unit node must be added to the list, whether it has child units or not!
+  if (!empty($node)) {
+    $units[$node->nid] = $node->title;
+  }
   while ($unit = db_fetch_object($query)) {
-    if (!empty($node)) {
-      $units[$node->nid] = $node->title;
-    }
     if (!empty($unit->title)) {
       $units[$unit->nid] = $unit->title;
     }
@@ -320,7 +333,7 @@ function hierarchical_permissions_get_course_children(&$courses, $node) {
 }
 
 /**
- * Recursively gets a list of courses current academic unit.
+ * Recursively gets a list of courses within the current academic unit.
  */
 function hierarchical_permissions_get_courses_by_unit(&$courses, $node) {
   $query = db_query('SELECT field.nid AS nid, node.title AS title, node.type AS type FROM {node} node INNER JOIN {content_field_parent_unit} field ON node.nid = field.nid WHERE field.field_parent_unit_nid = %d', $node->nid);
@@ -332,4 +345,53 @@ function hierarchical_permissions_get_courses_by_unit(&$courses, $node) {
       hierarchical_permissions_get_courses_by_unit($courses, $child);
     }
   }
+}
+
+/**
+ * Implementation of hook_user_node_access().
+ *
+ * @see module_grants_node_revision_access()
+ *
+ * @param $revision_op
+ *   node or revision operation e.g. 'view revisions'
+ * @param $node
+ * @return the associated node operation required for this revision_op, or
+ *   FALSE if access to the node is to be denied.
+ *   Valid node operations to return are 'view', 'update', 'delete'.
+ */
+function hierarchical_permissions_user_node_access($revision_op, $node) {
+  global $user;
+
+  switch ($revision_op) {
+    case 'view current':
+      if ($node->status) {
+        break;
+      }
+      /* else fall through */
+    case 'compare to current':
+    case 'view revisions':
+    case 'view revision list':
+    case 'edit current':
+    case 'edit revisions':
+    case 'revert revisions':
+    case 'publish revisions':
+    case 'unpublish current revision':
+      if (hierarchical_permissions_user_has_admin($node, $user)) {
+        break;
+      } else {
+        return FALSE;
+      }
+      break;
+    case 'delete revisions':
+    case 'delete node':
+      if (hierarchical_permissions_user_has_admin($node, $user)) {
+        break;
+      } else {
+        return 'delete';
+      }
+      break;
+    default:
+      drupal_set_message("Unknown Revisioning operation '$revision_op'. Treating as 'view'.", 'warning', FALSE);
+  }
+  return 'view';
 }
