@@ -1996,7 +1996,7 @@ function openmichigan_views_views_default_views() {
         'story' => 0,
         'unit' => 0,
       ),
-      'validate_argument_node_access' => 1,
+      'validate_argument_node_access' => 0,
       'validate_argument_nid_type' => 'nid',
       'validate_argument_vocabulary' => array(
         '4' => 0,
@@ -3454,7 +3454,7 @@ function openmichigan_views_views_default_views() {
         'story' => 0,
         'unit' => 0,
       ),
-      'validate_argument_node_access' => 1,
+      'validate_argument_node_access' => 0,
       'validate_argument_nid_type' => 'nid',
       'validate_argument_vocabulary' => array(
         '4' => 0,
@@ -5075,7 +5075,7 @@ function openmichigan_views_views_default_views() {
         'story' => 0,
         'unit' => 0,
       ),
-      'validate_argument_node_access' => 1,
+      'validate_argument_node_access' => 0,
       'validate_argument_nid_type' => 'nid',
       'validate_argument_vocabulary' => array(
         '4' => 0,
@@ -5896,7 +5896,7 @@ function openmichigan_views_views_default_views() {
         'story' => 0,
         'unit' => 0,
       ),
-      'validate_argument_node_access' => 1,
+      'validate_argument_node_access' => 0,
       'validate_argument_nid_type' => 'nid',
       'validate_argument_vocabulary' => array(
         '4' => 0,
@@ -7038,7 +7038,7 @@ function openmichigan_views_views_default_views() {
         'story' => 0,
         'unit' => 0,
       ),
-      'validate_argument_node_access' => 1,
+      'validate_argument_node_access' => 0,
       'validate_argument_nid_type' => 'nid',
       'validate_argument_vocabulary' => array(
         '4' => 0,
@@ -7328,7 +7328,7 @@ function openmichigan_views_views_default_views() {
         'story' => 0,
         'unit' => 0,
       ),
-      'validate_argument_node_access' => 1,
+      'validate_argument_node_access' => 0,
       'validate_argument_nid_type' => 'nid',
       'validate_argument_vocabulary' => array(
         '4' => 0,
