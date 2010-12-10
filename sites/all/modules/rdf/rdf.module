@@ -380,6 +380,22 @@ function rdf_form_alter(&$form, $form_state, $form_id) {
   }
 }
 
+/**
+ * Implementation of hook_link_alter().
+ */
+function rdf_link_alter($links) {
+  if (is_array($links)) {
+    array_walk($links, _rdf_add_link_subject);
+  }
+}
+function _rdf_add_link_subject(&$link, $key) {
+  if (strpos($key, "taxonomy_term_") === 0) {
+    if (array_key_exists('attributes', $link) && is_array($link['attributes'])) {
+      $link['attributes']['property'] = 'dc:subject';
+    }
+  }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // Forms API callbacks
 

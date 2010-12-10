@@ -54,7 +54,7 @@
    $courseDownload = $node->field_course_download_display[0]['value'];
    $courseTerm = $node->field_course_term[0]['value']." ". $node->field_course_year[0]['view'];
    
-   if ($terms) { $courseKeywords = '<div class="course-keywords">Keywords: <div class="terms terms-inline" property="dc:subject">'. $terms . '</div></div>'; } else { $courseKeywords = ''; }
+   if ($terms) { $courseKeywords = '<div class="course-keywords">Keywords: <div class="terms terms-inline">'. $terms . '</div></div>'; } else { $courseKeywords = ''; }
    
    
    
