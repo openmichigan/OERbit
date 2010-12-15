@@ -149,9 +149,9 @@ function navigation_get_siblings(&$node) {
  */
 function navigation_get_children(&$node) {
   $children = array();
-  $attributes = array('class' => 'navigation-courses');
   if (is_array($node->field_unit_courses[0]['items'])) {
     foreach ($node->field_unit_courses[0]['items'] as $item) {
+      $attributes = array();
       if ($item['nid'] == arg(1)) {
         $attributes['class'] = 'navigation-courses active';
       }
@@ -168,9 +168,9 @@ function navigation_get_children(&$node) {
       navigation_clean_children($children);
     }
   }
-  $attributes['class'] = 'navigation-sub-units';
   if (is_array($node->field_unit_sub_unit[0]['items'])) {
     foreach ($node->field_unit_sub_unit[0]['items'] as $item) {
+      $attributes['class'] = 'navigation-sub-units';
       if (!node_load($item['nid'])->status) {
         $attributes['class'] .= ' unpublished';
       }
