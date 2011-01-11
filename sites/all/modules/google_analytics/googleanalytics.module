@@ -1,5 +1,5 @@
 <?php
-// $Id: googleanalytics.module,v 1.19.2.10 2009/04/01 18:10:36 hass Exp $
+// $Id: googleanalytics.module,v 1.36.2.12 2010/09/14 21:52:35 hass Exp $
 
 /*
  * @file
@@ -7,15 +7,15 @@
  * Adds the required Javascript to the bottom of all your Drupal pages
  * to allow tracking by the Google Analytics statistics package.
  *
- * @author: Mike Carter <www.ixis.co.uk/contact>
+ * @author: Alexander Hass <http://drupal.org/user/85918>
  */
 
-define('GA_TRACKFILES_EXTENSIONS', '7z|aac|avi|csv|doc|exe|flv|gif|gz|jpe?g|js|mp(3|4|e?g)|mov|pdf|phps|png|ppt|rar|sit|tar|torrent|txt|wma|wmv|xls|xml|zip');
+define('GA_TRACKFILES_EXTENSIONS', '7z|aac|arc|arj|asf|asx|avi|bin|csv|doc|exe|flv|gif|gz|gzip|hqx|jar|jpe?g|js|mp(2|3|4|e?g)|mov(ie)?|msi|msp|pdf|phps|png|ppt|qtm?|ra(m|r)?|sea|sit|tar|tgz|torrent|txt|wav|wma|wmv|wpd|xls|xml|z|zip');
 
 function googleanalytics_help($path, $arg) {
   switch ($path) {
     case 'admin/settings/googleanalytics':
-      return t('<a href="@ga_url">Google Analytics</a> is a free statistics package based on the excellent Urchin system. This module provides services to better integrate Drupal with Google Analytics.', array('@ga_url' => 'http://www.google.com/analytics/'));
+      return t('<a href="@ga_url">Google Analytics</a> is a free (registration required) website traffic and marketing effectiveness service.', array('@ga_url' => 'http://www.google.com/analytics/'));
   }
 }
 
@@ -46,19 +46,10 @@ function googleanalytics_init() {
   // 2. Track page views based on visibility value.
   // 3. Check if we should track the currently active user's role.
   if (!empty($id) && _googleanalytics_visibility_pages() && _googleanalytics_visibility_user($user)) {
-    $scope = variable_get('googleanalytics_js_scope', 'footer');
 
-    // Should a local cached copy of ga.js be used?
-    $js_file = 'ga.js';
-    $url = 'http://www.google-analytics.com/'. $js_file;
-
-    if (variable_get('googleanalytics_cache', 0) && (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PUBLIC) && $source = _googleanalytics_cache($url)) {
-      drupal_add_js($source, 'module', $scope);
-    }
-    else {
-      $script = 'var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");';
-      $script .= 'document.write(unescape("%3Cscript src=\'" + gaJsHost + "google-analytics.com/'. $js_file .'\' type=\'text/javascript\'%3E%3C/script%3E"));';
-      drupal_add_js($script, 'inline', $scope);
+    // Custom tracking.
+    if (variable_get('googleanalytics_trackadsense', FALSE)) {
+      drupal_add_js('window.google_analytics_uacct = ' . drupal_to_js($id) . ';', 'inline', 'header');
     }
 
     // Add link tracking.
@@ -75,46 +66,39 @@ function googleanalytics_init() {
     }
     if (!empty($link_settings)) {
       drupal_add_js(array('googleanalytics' => $link_settings), 'setting', 'header');
-      drupal_add_js(drupal_get_path('module', 'googleanalytics') .'/googleanalytics.js', 'module', $scope);
-    }
-
-    // Custom tracking.
-    if (variable_get('googleanalytics_trackadsense', FALSE)) {
-      drupal_add_js('window.google_analytics_uacct = ' . drupal_to_js($id) . ';', 'inline', 'header');
+      drupal_add_js(drupal_get_path('module', 'googleanalytics') .'/googleanalytics.js', 'module', 'header');
     }
   }
 }
 
 /**
- * Implementation of hook_footer() to insert Javascript at the end of the page.
+ * Implementation of hook_footer() to insert JavaScript at the end of the page.
  */
 function googleanalytics_footer($main = 0) {
   global $user;
 
   $id = variable_get('googleanalytics_account', '');
 
+  // 1. Check if the GA account number has a value.
+  // 2. Track page views based on visibility value.
+  // 3. Check if we should track the currently active user's role.
   if (!empty($id) && _googleanalytics_visibility_pages() && _googleanalytics_visibility_user($user)) {
 
     // Add User profile segmentation values.
-    if (is_array($profile_fields = variable_get('googleanalytics_segmentation', '')) && ($user->uid > 0)) {
-
-      $p = module_invoke('profile', 'load_profile', $user);
+    $profile_fields = variable_get('googleanalytics_segmentation', array());
+    if (module_exists('profile') && !empty($profile_fields) && ($user->uid > 0)) {
+      // Extend the $user object with profile data.
+      profile_load_profile($user);
 
       $fields = array();
       foreach ($profile_fields as $field => $title) {
-        $value = $user->$field;
-
-        if (is_array($value)) {
-          $value = implode(',', $value);
-        }
-
-        $fields[$field] = $value;
+        $fields[$field] = is_array($user->$field) ? implode(',', $user->$field) : $user->$field;
       }
 
       // Only show segmentation variable if there are specified fields.
       $segmentation = '';
       if (count($fields) > 0) {
-        $segmentation = 'pageTracker._setVar('. drupal_to_js(implode(':', $fields)) .');';
+        $segmentation = '_gaq.push(["_setVar", ' . drupal_to_js(implode(':', $fields)) . ']);';
       }
     }
 
@@ -138,35 +122,58 @@ function googleanalytics_footer($main = 0) {
     }
 
     // Track access denied (403) and file not found (404) pages.
-    if (function_exists('drupal_get_headers')) {
-      $headers = drupal_get_headers();
-      if (strstr($headers, 'HTTP/1.1 403 Forbidden')) {
-        // See http://www.google.com/support/analytics/bin/answer.py?answer=86927
-        $url_custom = '"/403.html?page=" + document.location.pathname + document.location.search + "&from=" + document.referrer';
-      }
-      elseif (strstr($headers, 'HTTP/1.1 404 Not Found')) {
-        $url_custom = '"/404.html?page=" + document.location.pathname + document.location.search + "&from=" + document.referrer';
-      }
+    $headers = drupal_get_headers();
+    if (strstr($headers, '403 Forbidden')) {
+      // See http://www.google.com/support/analytics/bin/answer.py?answer=86927
+      $url_custom = '"/403.html?page=" + document.location.pathname + document.location.search + "&from=" + document.referrer';
+    }
+    elseif (strstr($headers, '404 Not Found')) {
+      $url_custom = '"/404.html?page=" + document.location.pathname + document.location.search + "&from=" + document.referrer';
     }
 
     // Add any custom code snippets if specified.
     $codesnippet_before = variable_get('googleanalytics_codesnippet_before', '');
     $codesnippet_after = variable_get('googleanalytics_codesnippet_after', '');
 
-    // Build tracker code for footer.
-    $script = 'try{';
-    $script .= 'var pageTracker = _gat._getTracker('. drupal_to_js($id) .');';
+    // Build tracker code.
+    $script = 'var _gaq = _gaq || [];';
+    $script .= '_gaq.push(["_setAccount", ' . drupal_to_js($id) . ']);';
+    if (variable_get('googleanalytics_tracker_anonymizeip', 0)) {
+      // FIXME: The Google API is currently broken and "_gat._anonymizeIp" is only
+      // a workaround until "_anonymizeIp" has been implemented/fixed.
+      $script .= '_gaq.push(["_gat._anonymizeIp"]);';
+    }
     if (!empty($segmentation)) {
       $script .= $segmentation;
     }
     if (!empty($codesnippet_before)) {
       $script .= $codesnippet_before;
     }
-    $script .= 'pageTracker._trackPageview('. $url_custom .');';
+    if (empty($url_custom)) {
+      $script .= '_gaq.push(["_trackPageview"]);';
+    }
+    else {
+      $script .= '_gaq.push(["_trackPageview", ' . $url_custom . ']);';
+    }
     if (!empty($codesnippet_after)) {
       $script .= $codesnippet_after;
     }
-    $script .= '} catch(err) {}';
+
+    $script .= '(function() {';
+    $script .= 'var ga = document.createElement("script");';
+    $script .= 'ga.type = "text/javascript";';
+    $script .= 'ga.async = true;';
+
+    // Should a local cached copy of ga.js be used?
+    if (variable_get('googleanalytics_cache', 0) && $path = _googleanalytics_cache('http://www.google-analytics.com/ga.js')) {
+      $script .= 'ga.src = "' . url($path) . '";';
+    }
+    else {
+      $script .= 'ga.src = ("https:" == document.location.protocol ? "https://ssl" : "http://www") + ".google-analytics.com/ga.js";';
+    }
+    $script .= 'var s = document.getElementsByTagName("script")[0];';
+    $script .= 's.parentNode.insertBefore(ga, s);';
+    $script .= '})();';
 
     drupal_add_js($script, 'inline', 'footer');
   }
@@ -211,27 +218,6 @@ function googleanalytics_user($type, $edit, &$account, $category = NULL) {
       break;
 
   }
-}
-
-/**
- * Implementation of hook_requirements().
- */
-function googleanalytics_requirements($phase) {
-  $requirements = array();
-
-  if ($phase == 'runtime') {
-    // Raise warning if Google user account has not been set yet.
-    if (!preg_match('/^UA-\d{4,}-\d+$/', variable_get('googleanalytics_account', 'UA-'))) {
-      $requirements['googleanalytics'] = array(
-        'title' => t('Google Analytics module'),
-        'description' => t('Google Analytics module has not been configured yet. Please configure its settings from the <a href="@url">Google Analytics settings page</a>.', array('@url' => url('admin/settings/googleanalytics'))),
-        'severity' => REQUIREMENT_ERROR,
-        'value' => t('Not configured'),
-      );
-    }
-  }
-
-  return $requirements;
 }
 
 /**

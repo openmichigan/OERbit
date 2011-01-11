@@ -1,5 +1,5 @@
 <?php
-// $Id: googleanalytics.admin.inc,v 1.4.2.12 2009/03/08 11:38:26 hass Exp $
+// $Id: googleanalytics.admin.inc,v 1.13.2.7 2010/08/15 16:54:48 hass Exp $
 
 /**
  * @file
@@ -18,12 +18,12 @@ function googleanalytics_admin_settings_form(&$form_state) {
 
   $form['account']['googleanalytics_account'] = array(
     '#type' => 'textfield',
-    '#title' => t('Google Analytics account number'),
+    '#title' => t('Web Property ID'),
     '#default_value' => variable_get('googleanalytics_account', 'UA-'),
     '#size' => 15,
     '#maxlength' => 20,
     '#required' => TRUE,
-    '#description' => t('The account number is unique to the websites domain. Click the <strong>Edit</strong> link in your Google Analytics account next to the appropriate profile on the <strong>Analytics Settings</strong> page, then select <strong>Check Status</strong> at the top-right of the table to find the account number (UA-xxxx-x) of your site. You can obtain a user account from the <a href="@url">Google Analytics</a> website.', array('@url' => 'http://www.google.com/analytics/')),
+    '#description' => t('This ID is unique to each site you want to track separately, and is in the form of UA-xxxxxxx-yy. To get a Web Property ID, <a href="@analytics">register your site with Google Analytics</a>, or if you already have registered your site, go to your Google Analytics Settings page to see the ID next to every site profile. <a href="@webpropertyid">Find more information in the documentation</a>.', array('@analytics' => 'http://www.google.com/analytics/', '@webpropertyid' => 'http://code.google.com/apis/analytics/docs/concepts/gaConceptsAccounts.html#webProperty')),
   );
 
   // Standard tracking configurations.
@@ -114,7 +114,7 @@ function googleanalytics_admin_settings_form(&$form_state) {
   // Compile a list of fields to show.
   $fields = variable_get('googleanalytics_segmentation_default_fields', array('roles' => t('User roles')));
   if ($profile_enabled) {
-    $result = db_query('SELECT name, title, type, weight FROM {profile_fields} ORDER BY weight');
+    $result = db_query('SELECT name, title FROM {profile_fields} ORDER BY weight');
     while ($record = db_fetch_object($result)) {
       $fields[$record->name] = $record->title;
     }
@@ -123,10 +123,10 @@ function googleanalytics_admin_settings_form(&$form_state) {
   $form['segmentation']['googleanalytics_segmentation'] = array(
     '#type' => 'select',
     '#title' => t('Add segmentation information to tracking code'),
-    '#description' => t('Segment users based on different properties, additionally to the basic IP address based tracking provided by Google Analytics.') . (!$profile_enabled ? ' '. t('<a href="@module_list">Enable the profile module</a> to be able to use profile fields for more granular tracking.', array('@module_list' => url('admin/build/modules'))) : '') .' '. t('Make sure you will not associate (or permit any third party to associate) any data gathered from Your Website(s) (or such third parties\' website(s)) with any personally identifying information from any source as part of Your use (or such third parties\' use) of the Google Analytics service. For more information see section 8.1 in the <a href="@ga_tos">Google Analytics terms of use</a>.', array('@ga_tos' => 'http://www.google.com/analytics/en-GB/tos.html')) .' '. t('Selecting one or more values is supported. To select multiple items, hold down CTRL (PC) or &#8984; (Mac) while selecting fields.'),
-    '#default_value' => variable_get('googleanalytics_segmentation', ''),
+    '#description' => t('Segment users based on different properties, additionally to the basic IP address based tracking provided by Google Analytics.') . (!$profile_enabled ? ' '. t('<a href="@module_list">Enable the profile module</a> to be able to use profile fields for more granular tracking.', array('@module_list' => url('admin/build/modules'))) : '') .' '. t('Make sure you will not associate (or permit any third party to associate) any data gathered from Your Website(s) (or such third parties\' website(s)) with any personally identifying information from any source as part of Your use (or such third parties\' use) of the Google Analytics service. For more information see section 8.1 in the <a href="@ga_tos">Google Analytics terms of use</a>.', array('@ga_tos' => 'http://www.google.com/analytics/en-GB/tos.html')) .' '. t('You can select multiple values.'),
+    '#default_value' => variable_get('googleanalytics_segmentation', array()),
     '#options' => $fields,
-    '#size' => (count($fields)>10) ? 10 : count($fields),
+    '#size' => count($fields)>3 ? 10 : 3,
     '#multiple' => TRUE
   );
 
@@ -160,7 +160,7 @@ function googleanalytics_admin_settings_form(&$form_state) {
     '#title' => t('File extensions to track'),
     '#default_value' => variable_get('googleanalytics_trackfiles_extensions', GA_TRACKFILES_EXTENSIONS),
     '#description' => t('A pipe separated list of file extensions that should be tracked when clicked with regular expression support. Example: !extensions', array('!extensions' => GA_TRACKFILES_EXTENSIONS)),
-    '#maxlength' => 256,
+    '#maxlength' => 255,
   );
 
   // Advanced feature configurations.
@@ -171,10 +171,17 @@ function googleanalytics_admin_settings_form(&$form_state) {
     '#collapsed' => TRUE,
   );
 
+  $form['advanced']['googleanalytics_tracker_anonymizeip'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Anonymize visitors IP address'),
+    '#default_value' => variable_get('googleanalytics_tracker_anonymizeip', 0),
+    '#description' => t('Tell Google Analytics to anonymize the information sent by the tracker objects by removing the last octet of the IP address prior to its storage. Note that this will slightly reduce the accuracy of geographic reporting. In some countries it is not allowed to collect personally identifying information for privacy reasons and this setting may help you to comply with the local laws.'),
+  );
+
   $form['advanced']['googleanalytics_cache'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Cache tracking code file locally'),
-    '#description' => t("If checked, the tracking code file is retrieved from Google Analytics and cached locally. It is updated daily from Google's servers to ensure updates to tracking code are reflected in the local copy. Do not activate this until after Google Analytics has confirmed your tracker!"),
+    '#title' => t('Locally cache tracking code file'),
+    '#description' => t("If checked, the tracking code file is retrieved from Google Analytics and cached locally. It is updated daily from Google's servers to ensure updates to tracking code are reflected in the local copy. Do not activate this until after Google Analytics has confirmed that site tracking is working!"),
     '#default_value' => variable_get('googleanalytics_cache', 0),
   );
   if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE) {
@@ -226,7 +233,7 @@ function googleanalytics_admin_settings_form(&$form_state) {
     '#default_value' => variable_get('googleanalytics_codesnippet_before', ''),
     '#rows' => 5,
     '#wysiwyg' => FALSE,
-    '#description' => t('Code in this textarea will be added <strong>before</strong> pageTracker._trackPageview().')
+    '#description' => t("Code in this textarea will be added <strong>before</strong> _gaq.push(['_trackPageview'])."),
   );
   $form['advanced']['codesnippet']['googleanalytics_codesnippet_after'] = array(
     '#type' => 'textarea',
@@ -234,24 +241,31 @@ function googleanalytics_admin_settings_form(&$form_state) {
     '#default_value' => variable_get('googleanalytics_codesnippet_after', ''),
     '#rows' => 5,
     '#wysiwyg' => FALSE,
-    '#description' => t("Code in this textarea will be added <strong>after</strong> pageTracker._trackPageview(). This is useful if you'd like to track a site in two accounts.")
+    '#description' => t("Code in this textarea will be added <strong>after</strong> _gaq.push(['_trackPageview']). This is useful if you'd like to track a site in two accounts."),
   );
 
+  /* hook_footer() is not able to add code to head. Upgrade to D7 required.
   $form['advanced']['googleanalytics_js_scope'] = array(
     '#type' => 'select',
     '#title' => t('JavaScript scope'),
-    '#description' => t("<strong>Warning:</strong> Google recommends adding the external JavaScript files to footer for performance reasons."),
+    '#description' => t("Google recommends adding the external JavaScript files to header for performance reasons."),
     '#options' => array(
       'footer' => t('Footer'),
       'header' => t('Header'),
     ),
-    '#default_value' => variable_get('googleanalytics_js_scope', 'footer'),
-  );
+    '#default_value' => variable_get('googleanalytics_js_scope', 'header'),
+  ); */
 
   return system_settings_form($form);
 }
 
 function googleanalytics_admin_settings_form_validate($form, &$form_state) {
+  // Trim some text values.
+  $form_state['values']['googleanalytics_account'] = trim($form_state['values']['googleanalytics_account']);
+  $form_state['values']['googleanalytics_pages'] = trim($form_state['values']['googleanalytics_pages']);
+  $form_state['values']['googleanalytics_codesnippet_before'] = trim($form_state['values']['googleanalytics_codesnippet_before']);
+  $form_state['values']['googleanalytics_codesnippet_after'] = trim($form_state['values']['googleanalytics_codesnippet_after']);
+
   if (!preg_match('/^UA-\d{4,}-\d+$/', $form_state['values']['googleanalytics_account'])) {
     form_set_error('googleanalytics_account', t('A valid Google Analytics account number is case sensitive and formatted like UA-xxxxxx-x.'));
   }
@@ -269,9 +283,4 @@ function googleanalytics_admin_settings_form_validate($form, &$form_state) {
   if (preg_match('/(.*)<\/?script(.*)>(.*)/i', $form_state['values']['googleanalytics_codesnippet_after'])) {
     form_set_error('googleanalytics_codesnippet_after', t('Do not include the &lt;script&gt; tags in the javascript code snippets.'));
   }
-
-  // Trim some text area values.
-  $form_state['values']['googleanalytics_pages'] = trim($form_state['values']['googleanalytics_pages']);
-  $form_state['values']['googleanalytics_codesnippet_before'] = trim($form_state['values']['googleanalytics_codesnippet_before']);
-  $form_state['values']['googleanalytics_codesnippet_after'] = trim($form_state['values']['googleanalytics_codesnippet_after']);
 }
