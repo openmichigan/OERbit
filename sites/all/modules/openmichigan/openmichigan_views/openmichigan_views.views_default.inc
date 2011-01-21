@@ -5599,8 +5599,8 @@ function openmichigan_views_views_default_views() {
     'type' => 'none',
   ));
   $handler->override_option('header', '<h3 class="shaded"><a href="https://open.umich.edu/blog/">open.blog</a></h3>
-<div id="blogPic"><img src="sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>  
-<h4><a href="http://open.umich.edu/blog/feed/"><img src="sites/all/themes/oer/images/rss.gif" alt="RSS Feed" /></a>&nbsp;&nbsp;Recent Posts</h4>');
+<div id="blogPic"><img src="/sites/all/themes/oer/images/blogpic.jpg" alt="CC-BY_NC_SA: Three Gossips by TOJOSAN, Flickr"/></div>  
+<h4><a href="http://open.umich.edu/blog/feed/"><img src="/sites/all/themes/oer/images/rss.gif" alt="RSS Feed" /></a>&nbsp;&nbsp;Recent Posts</h4>');
   $handler->override_option('header_format', '2');
   $handler->override_option('header_empty', 1);
   $handler->override_option('items_per_page', 3);
