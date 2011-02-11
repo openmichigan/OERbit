@@ -129,21 +129,47 @@
   	  <div class="unit-website">
   	    <a class="ext" href="<?php print $node->field_website[0]['url']; ?>" target="<?php print $node->field_website[0]['attributes']['target']; ?>"><?php print $node->field_website[0]['display_title']; ?></a>
   	  </div>
-  	<?php } ?>
-  	
-  	<!-- Unit/Course listing -->
-  	<div class="unit-course-list">
-  	  <?php
-    	  if ($is_admin) {
-      	  print $node->content['courses_node_content_1']['#value'];
-    	    print $node->content['courses_node_content_2']['#value'];
-    	  }
-    	  else {
-    	    print $node->content['courses_node_content_3']['#value'];
-    	    print $node->content['courses_node_content_4']['#value'];
-    	  }
-    	?>
-    </div>
+   <?php } ?>
+
+  <!-- Unit/Course listing -->
+<?php
+  // bdr/kwc hack to work around views implementation in drupal  :)
+  $ctitle = 0;
+  $children = navigation_get_children($node);
+  $cindex = array_keys($children);
+
+  print '<div class="view-content unit-course-list view view-courses view-id-courses view-display-id-node_content_3 view-dom-id-1">';
+  foreach ($cindex as $ctop) {
+    $cinode = node_load($ctop);
+    // dpm($cinode,"CNW:");
+    // print "<br> Child Sticky/weight/creationdate: "."$cinode->sticky"."/"."$cinode->node_weight"."/"."$cinode->created"." ".format_date($cinode->created, $type = 'medium', $format = '', $timezone = NULL, $langcode = NULL);
+
+    // print "**** Types: "."$node->type"."-"."$cinode->type"."<br>";
+    if (($node->type != $cinode->type) && ($ctitle == 0) && ($cindex != NULL)) {
+      //if ($node->field_unit_type[0]['value'] == 'program') print "<br><b>Resource(s)</b><br>";
+      if ($cinode->field_content_type[0]['value'] == 'resource')
+        print "<br><b>Resource(s)</b><br>";
+      else
+        print "<br><b>Course(s)</b><br>";
+      $ctitle += 1;
+    }
+    if ($cinode->type == 'unit')
+      print "<h3>";
+    else
+      print "&rsaquo; ";
+    print "$children[$ctop]";
+    if ($cinode->type == 'unit') {
+      print "</h3>";
+    }
+    else
+      print "<br>";
+    $courses = navigation_get_children($cinode);
+    foreach ($courses as $cstring) {
+      print "&rsaquo; "."$cstring"."<br>";
+    }
+  }
+  print '</div>';
+?>
     
   </div>
   

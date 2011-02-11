@@ -159,28 +159,42 @@ function navigation_get_children(&$node) {
         $attributes['class'] = 'navigation-courses';
       }
       $item['title'] = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $item['nid']))->title;
+
+      // don't add weight stuff to class=navigation-course!
+      // thus we use parent "weight" for all children
       if (!node_load($item['nid'])->status) {
         $attributes['class'] .= ' unpublished';
       }
-      $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
+      $cprefix = $node->sticky.":".$node->node_weight.":".$node->created.$node->created;
+      $children[$item['nid']] = $cprefix . l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
     if (!empty($children)) {
       navigation_clean_children($children);
     }
   }
+
   if (is_array($node->field_unit_sub_unit[0]['items'])) {
     foreach ($node->field_unit_sub_unit[0]['items'] as $item) {
       $attributes['class'] = 'navigation-sub-units';
-      if (!node_load($item['nid'])->status) {
+      // this is where we needed to add weight stuff so we can sort in weight order
+      $gcnode = node_load($item['nid']);
+      if (!$gcnode->status) {
         $attributes['class'] .= ' unpublished';
       }
-      $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
+      $cprefix = $gcnode->sticky.":".$gcnode->node_weight.":".$gcnode->created.$node->created;
+      $children[$item['nid']] = $cprefix . l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
     if (!empty($children)) {
       navigation_clean_children($children);
     }
   }
-  uksort($children, 'navigation_node_sort');
+  // sort by weight order & then remove the "weight-order" prefix that was
+  // added to permit the children to be sorted in the desired order
+  asort($children);
+  foreach ($children as &$crow) {
+    $cpos = strpos($crow, "<");
+    $crow = substr($crow, $cpos);
+  }
   return $children;
 }
 
