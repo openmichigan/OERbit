@@ -41,6 +41,7 @@ function navigation_display() {
       $parents = array_reverse($parents);
       $siblings = navigation_get_siblings($node);
       if (!empty($siblings[$node->nid])) {
+// dpm(NULL, "navigation_display: calling navigation_get_children!");
         $siblings[$node->nid]['children'] = navigation_get_children($node);
       }
       if (!empty($parents)) {
@@ -149,6 +150,7 @@ function navigation_get_siblings(&$node) {
  */
 function navigation_get_children(&$node) {
   $children = array();
+  // dpm($node, "navigation_get_children: node is...");
   if (is_array($node->field_unit_courses[0]['items'])) {
     foreach ($node->field_unit_courses[0]['items'] as $item) {
       $attributes = array();
@@ -159,42 +161,29 @@ function navigation_get_children(&$node) {
         $attributes['class'] = 'navigation-courses';
       }
       $item['title'] = db_fetch_object(db_query('SELECT r.title FROM {node} n INNER JOIN {node_revisions} r ON n.vid = r.vid WHERE n.nid = %d', $item['nid']))->title;
-
-      // don't add weight stuff to class=navigation-course!
-      // thus we use parent "weight" for all children
       if (!node_load($item['nid'])->status) {
         $attributes['class'] .= ' unpublished';
       }
-      $cprefix = $node->sticky.":".$node->node_weight.":".$node->created.$node->created;
-      $children[$item['nid']] = $cprefix . l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
+      $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
     if (!empty($children)) {
       navigation_clean_children($children);
     }
   }
-
   if (is_array($node->field_unit_sub_unit[0]['items'])) {
     foreach ($node->field_unit_sub_unit[0]['items'] as $item) {
       $attributes['class'] = 'navigation-sub-units';
-      // this is where we needed to add weight stuff so we can sort in weight order
-      $gcnode = node_load($item['nid']);
-      if (!$gcnode->status) {
+      if (!node_load($item['nid'])->status) {
         $attributes['class'] .= ' unpublished';
       }
-      $cprefix = $gcnode->sticky.":".$gcnode->node_weight.":".$gcnode->created.$node->created;
-      $children[$item['nid']] = $cprefix . l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
+      $children[$item['nid']] = l($item['title'], 'node/' . $item['nid'], array('attributes' => $attributes));
     }
     if (!empty($children)) {
       navigation_clean_children($children);
     }
   }
-  // sort by weight order & then remove the "weight-order" prefix that was
-  // added to permit the children to be sorted in the desired order
-  asort($children);
-  foreach ($children as &$crow) {
-    $cpos = strpos($crow, "<");
-    $crow = substr($crow, $cpos);
-  }
+  // dpm($children, "navigation_get_children: children before uksort...");
+  uksort($children, 'navigation_node_sort');
   return $children;
 }
 
@@ -264,17 +253,31 @@ function navigation_views_pre_render(&$view) {
 }
 
 /**
- * Sort nodes based on node weight.
+ * Sort nodes based on type, node weight, title.
  */
 function navigation_node_sort($a, $b) {
   $a = node_load($a);
   $b = node_load($b);
-  if ($a->node_weight == $b->node_weight) {
-    return strcasecmp($a->title, $b->title);
-  }   
-  else {
+
+  // Sort node type 'unit' before 'courses'
+  if ($a->type != $b->type) {
+    return ($a->type == 'unit') ? -1 : 1;
+  }
+
+  // Sort course content type 'course' before content type 'resourse'
+  if ($a->type == 'course' && $b->type == 'course') {
+    if ($a->field_content_type != $b->field_content_type) {
+      return ($a->field_content_type == 'course') ? -1 : 1;
+    }
+  }
+
+  // Sort units by weight
+  if ($a->node_weight != $b->node_weight) {
     return ($a->node_weight > $b->node_weight) ? 1 : -1;
-  }   
+  }
+
+  // If we haven't decided yet, use title
+  return strcasecmp($a->title, $b->title);
 }
 
 /**

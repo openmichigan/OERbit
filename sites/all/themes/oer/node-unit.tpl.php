@@ -134,38 +134,37 @@
   <!-- Unit/Course listing -->
 <?php
   // bdr/kwc hack to work around views implementation in drupal  :)
-  $ctitle = 0;
+  $chead_printed = FALSE;
+  $rhead_printed = FALSE;
   $children = navigation_get_children($node);
-  $cindex = array_keys($children);
+  // dpm($children, "The children array returned from navigation_get_children");
+  $ckeys = array_keys($children);
 
   print '<div class="view-content unit-course-list view view-courses view-id-courses view-display-id-node_content_3 view-dom-id-1">';
-  foreach ($cindex as $ctop) {
-    $cinode = node_load($ctop);
-    // dpm($cinode,"CNW:");
-    // print "<br> Child Sticky/weight/creationdate: "."$cinode->sticky"."/"."$cinode->node_weight"."/"."$cinode->created"." ".format_date($cinode->created, $type = 'medium', $format = '', $timezone = NULL, $langcode = NULL);
+  foreach ($ckeys as $key) {
+    $cnode = node_load($key);
+    // dpm($cnode,"CNW:");
+    // print "<br> Child Sticky/weight/creationdate: "."$cnode->sticky"."/"."$cnode->node_weight"."/"."$cnode->created"." ".format_date($cnode->created, $type = 'medium', $format = '', $timezone = NULL, $langcode = NULL);
 
-    // print "**** Types: "."$node->type"."-"."$cinode->type"."<br>";
-    if (($node->type != $cinode->type) && ($ctitle == 0) && ($cindex != NULL)) {
-      //if ($node->field_unit_type[0]['value'] == 'program') print "<br><b>Resource(s)</b><br>";
-      if ($cinode->field_content_type[0]['value'] == 'resource')
+    // For courses, print "Course(s)" or "Resource(s)" heading, if not already printed, then print course link
+    if ($cnode->type == 'course') {
+      if ($cnode->field_content_type[0]['value'] == 'resource' && !$rhead_printed) {
         print "<br><b>Resource(s)</b><br>";
-      else
+	$rhead_printed = TRUE;
+      }
+      else if ($cnode->field_content_type[0]['value'] == 'course' && !$chead_printed) {
         print "<br><b>Course(s)</b><br>";
-      $ctitle += 1;
+	$chead_printed = TRUE;
+      }
+      print "&rsaquo; ".$children[$key]."<br>";
     }
-    if ($cinode->type == 'unit')
-      print "<h3>";
-    else
-      print "&rsaquo; ";
-    print "$children[$ctop]";
-    if ($cinode->type == 'unit') {
-      print "</h3>";
-    }
-    else
-      print "<br>";
-    $courses = navigation_get_children($cinode);
-    foreach ($courses as $cstring) {
-      print "&rsaquo; "."$cstring"."<br>";
+    // For units, print the unit link, then its children
+    if ($cnode->type == 'unit') {
+      print "<h3>".$children[$key]."</h3>";
+      $courses = navigation_get_children($cnode);
+      foreach ($courses as $cstring) {
+        print "&rsaquo; "."$cstring"."<br>";
+      }
     }
   }
   print '</div>';
