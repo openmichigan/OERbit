@@ -150,11 +150,11 @@
     if ($cnode->type == 'course') {
       if ($cnode->field_content_type[0]['value'] == 'resource' && !$rhead_printed) {
         print "<br><b>Resource(s)</b><br>";
-	$rhead_printed = TRUE;
+        $rhead_printed = TRUE;
       }
       else if ($cnode->field_content_type[0]['value'] == 'course' && !$chead_printed) {
         print "<br><b>Course(s)</b><br>";
-	$chead_printed = TRUE;
+        $chead_printed = TRUE;
       }
       print "&rsaquo; ".$children[$key]."<br>";
     }
