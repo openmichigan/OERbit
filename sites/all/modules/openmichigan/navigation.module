@@ -264,16 +264,16 @@ function navigation_node_sort($a, $b) {
     return ($a->type == 'unit') ? -1 : 1;
   }
 
-  // Sort course content type 'course' before content type 'resourse'
+  // Sort course content type alphabetically
   if ($a->type == 'course' && $b->type == 'course') {
-    if ($a->field_content_type != $b->field_content_type) {
-      return ($a->field_content_type == 'course') ? -1 : 1;
+    if ($a->field_content_type[0]['value'] != $b->field_content_type[0]['value']) {
+      return strcasecmp($a->field_content_type[0]['value'], $b->field_content_type[0]['value']);
     }
   }
 
-  // Sort units by weight
+  // Sort by weight
   if ($a->node_weight != $b->node_weight) {
-    return ($a->node_weight > $b->node_weight) ? 1 : -1;
+    return ($a->node_weight < $b->node_weight) ? -1 : 1;
   }
 
   // If we haven't decided yet, use title
