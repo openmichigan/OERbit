@@ -1,4 +1,4 @@
-// $Id: ckeditor.config.js,v 1.2.2.7 2010/03/11 12:39:54 wwalc Exp $
+// $Id: ckeditor.config.js,v 1.2.2.10 2010/09/27 12:37:20 dczepierga Exp $
 
 /*
  WARNING: clear browser's cache after you modify this file.
@@ -46,7 +46,7 @@ CKEDITOR.editorConfig = function(config) {
     ['Format'],
     ['Bold','Italic','Underline','Strike','-','Subscript','Superscript'],
     ['NumberedList','BulletedList','-','Outdent','Indent','Blockquote'],
-    ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+    ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiRtl','BidiLtr'],
     ['Link','Unlink','Anchor','LinkToNode', 'LinkToMenu'],
     ['DrupalBreak', 'DrupalPageBreak']
    ];
@@ -71,7 +71,7 @@ CKEDITOR.editorConfig = function(config) {
       '/',
       ['Bold','Italic','Underline','Strike','-','Subscript','Superscript'],
       ['NumberedList','BulletedList','-','Outdent','Indent','Blockquote'],
-      ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+      ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiRtl','BidiLtr'],
       ['Link','Unlink','Anchor','LinkToNode', 'LinkToMenu'],
       '/',
       ['Format','Font','FontSize'],

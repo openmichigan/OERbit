@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.page.inc,v 1.1.2.2 2010/01/14 08:50:08 wwalc Exp $
+// $Id: ckeditor.page.inc,v 1.1.2.3 2010/09/15 15:03:33 wwalc Exp $
 /**
  * CKEditor - The text editor for Internet - http://ckeditor.com
  * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
@@ -189,6 +189,9 @@ function ckeditor_filter_xss() {
   $text = strtr($text, array('<!--' => '__COMMENT__START__', '-->' => '__COMMENT__END__'));
 
   foreach ($_POST['filters'] as $module_delta) {
+    if (!is_string($module_delta)) {
+	  continue;
+	}
     $module = strtok($module_delta, "/");
     $delta = strtok("/");
     $format = strtok("/");

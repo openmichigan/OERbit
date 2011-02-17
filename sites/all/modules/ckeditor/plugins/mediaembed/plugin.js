@@ -52,13 +52,13 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
               var realElement = CKEDITOR.dom.element.createFromHtml('<div class="media_embed"></div>');
               realElement.setHtml(content);
               var fakeElement = editor.createFakeElement( realElement , 'cke_mediaembed', 'div', true);
-              var matches = content.match(/width=\"?(\d+)\"?/i);
-              if (matches.length == 2) {
-                fakeElement.setStyle('width', cssifyLength(matches[1]));
+              var matches = content.match(/width=(["']?)(\d+)\1/i);
+              if (matches && matches.length == 3) {
+                fakeElement.setStyle('width', cssifyLength(matches[2]));
               }
-              matches = content.match(/height=\"?(\d+)\"?/i);
-              if (matches.length == 2) {
-                fakeElement.setStyle('height', cssifyLength(matches[1]));
+              matches = content.match(/height=([\"\']?)(\d+)\1/i);
+              if (matches && matches.length == 3) {
+                fakeElement.setStyle('height', cssifyLength(matches[2]));
               }
               editor.insertElement(fakeElement);
             }
@@ -89,14 +89,15 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
             'div' : function ( element ) {
               if( element.attributes['class'] == 'media_embed' ) {
                 for (var x in element.children) {
-                  if (typeof(element.children[x].attributes.width) != undefined) {
-                    element.children[x].attributes.width = element.attributes.width;
+                  if (typeof(element.children[x].attributes) != 'undefined') {
+                    if (typeof(element.children[x].attributes.width) != undefined) {
+                      element.children[x].attributes.width = element.attributes.width;
+                    }
+                    if (typeof(element.children[x].attributes.height) != undefined) {
+                      element.children[x].attributes.height = element.attributes.height;
+                    }
                   }
-                  if (typeof(element.children[x].attributes.height) != undefined) {
-                    element.children[x].attributes.height = element.attributes.height;
-                  }
-                  
-                }                
+                }
               }
             }
           }
@@ -116,8 +117,10 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
                 if (element.attributes[ 'class' ] == 'media_embed') {
                   var fakeElement = editor.createFakeParserElement(element, 'cke_mediaembed', 'div', true);
                   var fakeStyle = fakeElement.attributes.style || '';
-                  var height = element.children[0].attributes.height,
-                    width = element.children[0].attributes.width;
+                  if (typeof(element.children[0].attributes) != 'undefined') { 
+                    var height = element.children[0].attributes.height,
+                      width = element.children[0].attributes.width;
+                  }
                   if ( typeof width != 'undefined' )
                     fakeStyle = fakeElement.attributes.style = fakeStyle + 'width:' + cssifyLength( width ) + ';';
               

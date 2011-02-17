@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.admin.inc,v 1.2.2.14 2010/03/11 12:39:54 wwalc Exp $
+// $Id: ckeditor.admin.inc,v 1.2.2.19 2010/09/15 15:23:36 wwalc Exp $
 /**
  * CKEditor - The text editor for Internet - http://ckeditor.com
  * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
@@ -211,35 +211,37 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
     '#collapsed' => TRUE
   );
 
-  if (arg(3) == 'clone') {
-    //load all profiles to check their names
-    $profiles = ckeditor_profile_load();
-    $oldname = $profile->name;
-    $maxsize=128;   //default max name length
+  
+  switch (arg(3)) {
+    case 'clone':
+      //load all profiles to check their names
+      $profiles = ckeditor_profile_load();
+      $oldname = $profile->name;
+      $maxsize=128;   //default max name length
 
-    $res=array();
-    $pat = "/^(.*?)_([0-9]+)$/";
-    if (preg_match($pat, $oldname, $res)) {     // oldname like 'name_nr'
-      $name=$res[1];
-      $num=$res[2]+1;
-    }
-    else{
-      $name=$oldname;
-      $num=2;
-    }
+      $res=array();
+      $pat = "/^(.*?)_([0-9]+)$/";
+      if (preg_match($pat, $oldname, $res)) {     // oldname like 'name_nr'
+        $name=$res[1];
+        $num=$res[2]+1;
+      }
+      else{
+        $name=$oldname;
+        $num=2;
+      }
 
-    $newname=substr($name, 0, $maxsize-3) .'_'. $num;   // +limit
-    while (isset($profiles[$newname])) {            //find next free number
-      $num++;
-      $newname=substr($name, 0, $maxsize-3) .'_'. $num;
-
-    }
-    //dont clone rids
-    $profile->settings['rids']=array();
-    $profile->rids=array();
-  }
-  else {
-    $newname = $profile->name;
+      $newname=substr($name, 0, $maxsize-3) .'_'. $num;   // +limit
+      while (isset($profiles[$newname])) {            //find next free number
+        $num++;
+        $newname=substr($name, 0, $maxsize-3) .'_'. $num;
+      }
+      //dont clone rids
+      $profile->settings['rids']=array();
+      $profile->rids=array();
+      break;
+    case 'edit':
+      $newname = $profile->name;
+      break;
   }
 
   $form['basic']['name'] = array(
@@ -334,7 +336,7 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
   $form['ckeditor_exclude_settings']['min_rows'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum rows'),
-    '#default_value' => !empty($profile->settings['min_rows']) ? $profile->settings['min_rows'] : '5',
+    '#default_value' => !empty($profile->settings['min_rows']) ? $profile->settings['min_rows'] : '1',
     '#description' => t("CKEditor will be triggered if the textarea has more rows than entered here. Enter '1' if you do not want to use this feature."),
   );
 
@@ -604,7 +606,7 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
 
   $form['output']['formatting']['custom_formatting_options'] = array(
     '#type' => 'checkboxes',
-    '#default_value' => !empty($profile->settings['formatting']['custom_formatting_options']) ? array_keys((array) $profile->settings['formatting']['custom_formatting_options']) : array('indent' => 'indent', 'breakBeforeOpen' => 'breakBeforeOpen', 'breakAfterOpen' => 'breakAfterOpen', 'breakAfterClose' => 'breakAfterClose'),
+    '#default_value' => isset($profile->settings['formatting']['custom_formatting_options']) ? array_keys((array) $profile->settings['formatting']['custom_formatting_options']) : array('indent' => 'indent', 'breakBeforeOpen' => 'breakBeforeOpen', 'breakAfterOpen' => 'breakAfterOpen', 'breakAfterClose' => 'breakAfterClose'),
     '#options' => array(
       'indent' => t('indent the element contents'),
       'breakBeforeOpen' => t('break line before the opener tag'),
@@ -836,6 +838,16 @@ function ckeditor_admin_profile_form($form_state, $profile = NULL) {
       ),
       '#description' => t('If enabled, HTML content will be automatically changed to plain text when pasting.'),
   );
+  $form['advanced']['scayt_autoStartup'] = array(
+    '#type' => 'radios',
+    '#title' => t('Spell checker'),
+    '#default_value' => !empty($profile->settings['scayt_autoStartup']) ? $profile->settings['scayt_autoStartup'] : 'f',
+    '#description' => t('If enabled, turns on SCAYT (Spell Check As You Type) automatically after loading the editor.'),
+    '#options' => array(
+      'f' => t('No'),
+      't' => t('Yes')
+    ),
+  );
   $form['advanced']['theme_config_js'] = array(
     '#type' => 'radios',
     '#title' => t('Load ckeditor.config.js from theme path'),
@@ -894,6 +906,9 @@ function ckeditor_admin_profile_form_validate($form, &$form_state) {
 
   if (!$edit['name']) {
     form_set_error('name', t('You must give a profile name.'));
+  }
+  elseif (!preg_match('/^[A-Za-z0-9_]+$/', $edit['name'])) {
+	form_set_error('name', t('Enter valid profile name. Only alphanumeric and underscore characters are allowed.'));
   }
   elseif ($edit['name'] == 'CKEditor Global Profile') {
     form_set_error('name', t('This profile name is reserved. Please choose a different name.'));

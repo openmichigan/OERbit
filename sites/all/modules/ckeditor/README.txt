@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.3.2.7 2010/03/11 12:39:54 wwalc Exp $
+$Id: README.txt,v 1.3.2.11 2010/07/05 15:04:50 wwalc Exp $
 
 CONTENTS OF THIS FILE
 ---------------------
@@ -59,17 +59,19 @@ Note: this instruction assumes that you install CKEditor in
       contain a ckeditor directory.
    2. Download CKEditor from http://ckeditor.com/download. Unzip the
       contents of the ckeditor directory in the
-      sites/all/modules/ckeditor/ckeditor directory.
+      sites/all/modules/ckeditor/ckeditor or sites/all/libraries/ckeditor directory.
       Note: you can skip uploading "_samples" and "_source" folders.
    3. Enable the module as usual from Drupal's admin pages.
    4. Grant permissions for use of CKEditor in
       "Administer > User Management > Permissions"
       Note: to enable the file browser, read also the
             "How to enable the file browser" section.
-   5. Under "Administer > Site configuration > CKEditor", adjust
-      the ckeditor profiles. In each profile you can choose which textareas
-      will be replaced by CKEditor, select default toolbar and configure
-      some more advanced settings.
+   5. Under "Administer > Site configuration > CKEditor", adjust the ckeditor profiles.
+      Profiles determine what options are available to users based on system-wide roles. 
+      In each profile you can choose which textareas will be replaced by CKEditor, 
+      select default toolbar and configure some more advanced settings.
+      NOTE: User 1 must be assigned a system role that corresponds to the privileges required.
+      If no role is assigned to User 1, they will have the privileges of "authenticated user" 
    6. For the Rich Text Editing to work you also need to configure your filters
       for the users that may access Rich Text Editing.
       Either grant those users Full HTML access or use the following tags:
@@ -98,9 +100,11 @@ Installation troubleshooting
 If your CKEditor does not show you must check if all files are
 extracted correctly.
 
-The directory /modules/ckeditor/ckeditor/ should have the following files:
+The directory /modules/ckeditor/ckeditor/ or /libraries/ckeditor should have the following files:
 ckeditor.js, config.js, contents.css 
 and directories: "skins", "themes", "lang", "images"
+
+Alternative directory can be sites/all/libraries/ckeditor, module automatically recognize proper path to editor. Libraries directory is default path when drush is used to download editor javascript.  
 
 The correct directory structure is as follows:
 modules               <dir>
@@ -252,6 +256,7 @@ CKFinder is an AJAX based file manager created by CKEditor developers: http://ck
       (usually sites/default/settings.php) and set $cookie_domain variable to the
       appropiate domain (remember to uncomment that line). If you don't do this,
       CKFinder may show an information that the connector is disabled. 
+      As of Drupal 6.17 also the $base_url variable must be set.
 
 Modules: Link to content (EXPERIMENTAL)
 ---------------------------------------
@@ -356,6 +361,8 @@ you found an issue, please visit the official project page:
 
 Having problems? Take a look at the list of common problems when installing CKEditor:
   http://drupal.ckeditor.com/troubleshooting
+You might also check TROUBLESHOOTING.txt attached to this module, however 
+the online version is always up to date.
 
 How to tune up CKEditor to your theme and configure spell checker:
   http://drupal.ckeditor.com/tricks

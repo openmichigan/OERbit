@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.module,v 1.4.2.21 2010/03/05 10:32:47 mephir Exp $
+// $Id: ckeditor.module,v 1.4.2.31 2010/09/27 12:49:01 dczepierga Exp $
 /**
  * CKEditor - The text editor for Internet - http://ckeditor.com
  * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
@@ -495,7 +495,7 @@ function ckeditor_process_textarea($element) {
 
   $themepath = path_to_theme() .'/';
   $host = base_path();
-  if (!isset($lement['#rows'])){
+  if (!isset($element['#rows'])){
     $element['#rows'] = 5;
   }
   // only replace textarea when it has enough rows and it is enabled
@@ -554,7 +554,7 @@ function ckeditor_process_textarea($element) {
       $height = 400;
     }
     if (!$is_running) {
-      drupal_add_js($module_drupal_path .'/includes/ckeditor.utils.js', 'module', 'footer');
+      drupal_add_js($module_drupal_path .'/includes/ckeditor.utils.js', 'module', variable_get('preprocess_js', FALSE) ? 'header' : 'footer');
       /* In D6 drupal_add_js() can't add external JS, in D7 use drupal_add_js(...,'external') */
       if ( $conf['popup'] != 't' ) {
         if (isset($conf['ckeditor_load_method'])) {
@@ -627,23 +627,30 @@ function ckeditor_process_textarea($element) {
     $settings[$textarea_id]['height'] = $height;
     $settings[$textarea_id]['skin'] = $conf['skin'];
     $settings[$textarea_id]['format_tags'] = $conf['font_format'];
-    switch ($conf['language_direction']) {
-      case 'default': 
-        if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL) {
+    if (isset($conf['language_direction'])) {
+      switch ($conf['language_direction']) {
+        case 'default':
+          if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL) {
+            $settings[$textarea_id]['contentsLangDirection'] = 'rtl';
+          }
+          break;
+        case 'ltr':
+          $settings[$textarea_id]['contentsLangDirection'] = 'ltr';
+          break;
+        case 'rtl':
           $settings[$textarea_id]['contentsLangDirection'] = 'rtl';
-        }
-        break;
-      case 'ltr':
-        $settings[$textarea_id]['contentsLangDirection'] = 'ltr';
-        break;
-      case 'rtl':
-        $settings[$textarea_id]['contentsLangDirection'] = 'rtl';
-        break;
+          break;
+      }
+    }
+    if (isset($conf['scayt_autoStartup']) && $conf['scayt_autoStartup'] == 't') {
+      $settings[$textarea_id]['scayt_autoStartup'] = TRUE;
+    } else {
+      $settings[$textarea_id]['scayt_autoStartup'] = FALSE;
     }
     if ($conf['auto_lang']=="f") {
       $settings[$textarea_id]['language'] = $conf['lang'];
     }
-    if ($conf['forcePasteAsPlainText'] == 't') {
+    if (isset($conf['forcePasteAsPlainText']) && $conf['forcePasteAsPlainText'] == 't') {
       $settings[$textarea_id]['forcePasteAsPlainText'] = TRUE;
     }
     if (isset($conf['custom_formatting']) && $conf['custom_formatting'] == 't') {
@@ -670,7 +677,7 @@ function ckeditor_process_textarea($element) {
     if ($filebrowser == 'tinybrowser' && !module_exists('tinybrowser')) {
       $filebrowser = 'none';
     }
-    
+
     if ($filebrowser == 'ib' && !module_exists('imagebrowser')) {
       $filebrowser = 'none';
     }
@@ -740,7 +747,7 @@ function ckeditor_process_textarea($element) {
       $popup_win_size = strtolower($popup_win_size);
       $win_size = split('x', $popup_win_size);
     }
-    
+
     switch ($filebrowser) {
       case 'ckfinder':
         if (user_access('allow CKFinder file uploads')) {
@@ -763,15 +770,15 @@ function ckeditor_process_textarea($element) {
       case 'ib':
         if (user_access('browse own images')) {
           $settings[$textarea_id]['filebrowserBrowseUrl'] = $host ."index.php?q=imagebrowser/view/browser&app=ckeditor";
-          $settings[$textarea_id]['filebrowserWindowWidth'] = 680;
-          $settings[$textarea_id]['filebrowserWindowHeight'] = 439;
+          $settings[$textarea_id]['filebrowserWindowWidth'] = 700;
+          $settings[$textarea_id]['filebrowserWindowHeight'] = 520;
         }
         break;
       case 'tinybrowser':
         $settings[$textarea_id]['filebrowserBrowseUrl'] = $host . drupal_get_path('module','tinybrowser') . "/tinybrowser/tinybrowser.php?type=file";
         $settings[$textarea_id]['filebrowserWindowWidth'] = (int)$win_size[0] + 15;
         $settings[$textarea_id]['filebrowserWindowHeight'] = (int)$win_size[1] + 15;
-        break;        
+        break;
     }
 
     if ($filebrowser_image != $filebrowser) {
@@ -801,7 +808,7 @@ function ckeditor_process_textarea($element) {
           $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $host . drupal_get_path('module','tinybrowser') . "/tinybrowser/tinybrowser.php?type=image";
           $settings[$textarea_id]['filebrowserImageWindowWidth'] = (int)$win_size[0] + 15;
           $settings[$textarea_id]['filebrowserImageWindowHeight'] = (int)$win_size[1] + 15;
-          break;          
+          break;
       }
     }
 
@@ -832,7 +839,7 @@ function ckeditor_process_textarea($element) {
           $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $host . drupal_get_path('module','tinybrowser') . "/tinybrowser/tinybrowser.php?type=media";
           $settings[$textarea_id]['filebrowserFlashWindowWidth'] = (int)$win_size[0] + 15;
           $settings[$textarea_id]['filebrowserFlashWindowHeight'] = (int)$win_size[1] + 15;
-          break;          
+          break;
       }
     }
 
@@ -866,6 +873,7 @@ function ckeditor_process_textarea($element) {
     }
     // add custom stylesheet if configured
     // lets hope it exists but we'll leave that to the site admin
+    $query_string = '?'. substr(variable_get('css_js_query_string', '0'), 0, 1);
     $css_files = array();
     switch ($conf['css_mode']) {
       case 'theme':
@@ -879,7 +887,14 @@ function ckeditor_process_textarea($element) {
                 if ($type != "print") {
                   foreach ($stylesheets as $name => $path) {
                     if (file_exists($path)) {
-                      $css_files[$name] = $host . $path;
+                      $css_files[$name] = $host . $path . $query_string;
+                      // Grab rtl stylesheets ( will get rtl css files when thay are named with suffix "-rtl.css" (ex: fusion baased themes) )
+                      if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL && substr($path,0,-8) != "-rtl.css") {
+                        $rtl_path = substr($path,0,-4)."-rtl.css";
+                        if (file_exists($rtl_path)) {
+                          $css_files[$name."-rtl"] = $host . $rtl_path . $query_string;
+                        }
+                      }
                     }
                   }
                 }
@@ -891,7 +906,14 @@ function ckeditor_process_textarea($element) {
               if ($type != "print") {
                 foreach ($stylesheets as $name => $path) {
                   if (file_exists($path)) {
-                    $css_files[$name] = $host . $path;
+                    $css_files[$name] = $host . $path . $query_string;
+                    // Grab rtl stylesheets ( will get rtl css files when thay are named with suffix "-rtl.css" (ex: fusion baased themes) )
+                    if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL && substr($path,0,-8) != "-rtl.css") {
+                      $rtl_path = substr($path,0,-4)."-rtl.css";
+                      if (file_exists($rtl_path)) {
+                        $css_files[$name."-rtl"] = $host . $rtl_path . $query_string;
+                      }
+                    }
                   }
                   elseif (!empty($css_files[$name])) {
                     unset($css_files[$name]);
@@ -900,41 +922,54 @@ function ckeditor_process_textarea($element) {
               }
             }
           }
+          // Grab stylesheets local.css and local-rtl.css if they exist (fusion based themes)
+          if (file_exists($themepath . 'css/local.css')) {
+            $css_files[] = $host . $themepath . 'css/local.css' . $query_string;
+          }
+          if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL && file_exists($themepath . 'css/local-rtl.css')) {
+            $css_files[] = $host . $themepath . 'css/local-rtl.css' . $query_string;
+          }
+
           // Grab stylesheets from color module
           $color_paths = variable_get('color_'. $theme .'_stylesheets', array());
           if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL) {
             if (!empty($color_paths[1])) {
-              $css_files[] = $host . $color_paths[1];
+              $css_files[] = $host . $color_paths[1] . $query_string;
             }
           }
           elseif (!empty($color_paths[0])) {
-            $css_files[] = $host . $color_paths[0];
+            $css_files[] = $host . $color_paths[0] . $query_string;
           }
         }
         else {
           if (file_exists($themepath .'style.css')) {
-            $css_files[] = $host . $themepath .'style.css';
+            $css_files[] = $host . $themepath .'style.css' . $query_string;
           }
         }
-        $css_files[] = $module_full_path ."/ckeditor.css";
+        $css_files[] = $module_full_path ."/ckeditor.css" . $query_string;
         break;
 
       case 'self':
         if (file_exists($module_drupal_path .'/ckeditor.css')) {
-          $css_files[] = $module_full_path .'/ckeditor.css';
+          $css_files[] = $module_full_path .'/ckeditor.css' . $query_string;
         }
         foreach (explode(',', $conf['css_path']) as $css_path) {
           $css_path = trim(str_replace("%h%t", "%t", $css_path));
-          $css_files[] = str_replace(array('%h', '%t'), array($host, $host . $themepath), $css_path);
+          $css_files[] = str_replace(array('%h', '%t'), array($host, $host . $themepath), $css_path) . $query_string;
         }
         break;
 
       case 'none':
         if (file_exists($module_drupal_path .'/ckeditor.css')) {
-          $css_files[] = $module_full_path .'/ckeditor.css';
+          $css_files[] = $module_full_path .'/ckeditor.css' . $query_string;
         }
-        $css_files[] = $editor_path .'/contents.css';
+        $css_files[] = $editor_path .'/contents.css' . $query_string;
         break;
+    }
+    if ($conf['ckeditor_load_method'] == 'ckeditor_source.js') {
+      foreach ($css_files as $k => $v) {
+        $css_files[$k] = $v . '&t=' . time();
+      }
     }
     $settings[$textarea_id]['contentsCss'] = array_values($css_files);
 
@@ -964,7 +999,7 @@ function ckeditor_process_textarea($element) {
     }
 
     if ($conf['popup'] == 't') {
-      $suffix .= ' <span style="display:none" class="ckeditor_popuplink ckeditor_links">(<a href="#" onclick="ckeditorOpenPopup(\''. $textarea_id .'\', \''. $element['#id'] .'\', \''. $conf['width'] .'\');">'. t('Open rich text editor') ."</a>)</span>";
+      $suffix .= ' <span style="display:none" class="ckeditor_popuplink ckeditor_links">(<a href="#" onclick="return ckeditorOpenPopup(\''. $textarea_id .'\', \''. $element['#id'] .'\', \''. $conf['width'] .'\');">'. t('Open rich text editor') ."</a>)</span>";
     }
   }
 
@@ -991,7 +1026,7 @@ function ckeditor_process_textarea($element) {
   else {
     $element['#attributes']['class'] .= ' '. $class;
   }
-  //hack with patch jquery-ui dialog 
+  //hack with patch jquery-ui dialog
 
   return $element;
 }

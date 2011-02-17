@@ -1,4 +1,4 @@
-$Id: TROUBLESHOOTING.txt,v 1.2.2.2 2010/01/12 16:17:29 wwalc Exp $
+$Id: TROUBLESHOOTING.txt,v 1.2.2.3 2010/07/05 15:04:50 wwalc Exp $
 
 Note: the HTML version of this file (always up-to-date) is available online: http://drupal.ckeditor.com/troubleshooting
 
@@ -9,6 +9,7 @@ CONTENTS OF THIS FILE
  * Known module incompatibilities
  * Images aren't shown when submitted
  * I followed the instruction, but CKEditor doesn't show up (+ debugging instructions)
+ * Selected toolbar does not show for user 1
  * The CKEditor component is not installed correctly
  * CKEditor doesn't work after upgrading
  * Text alignment doesn't work
@@ -85,6 +86,20 @@ If CKEditor is enabled, but it doesn't show up, try the following steps:
             * the name and version of incompatible theme.
    4. Finally, if nothing helped, to find out where exactly error occured, you may use Firefox with Firebug extension. 
       Use the project's site to create a new support request providing as much information as possible, including the exact javascript error message that you got.
+
+Selected toolbar does not show for user 1
+-----------------------------------------
+
+There are two reasons why you're seeing a different toolbar (or don't see CKEditor at all):
+
+ - If "Allow users to customize CKEditor appearance" is enabled then each
+  user may override the profile settings in "Rich text editor settings" in admin/user/N/edit 
+  ("My Account" -> "Edit")
+
+ - A different profile is used for user 1 that you expect.
+  User 1 must be assigned a system role that corresponds to the privileges required.
+  If no role is assigned to User 1, they will have the privileges of "authenticated user" 
+  (usually it is the "Advanced" profile).
 
 The CKEditor component is not installed correctly
 ---------------------------------------------------------------------------
