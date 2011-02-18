@@ -846,6 +846,86 @@ function openmichigan_views_views_default_views() {
   ));
   $handler->override_option('displays', array());
   $handler->override_option('sitename_title', FALSE);
+  $handler = $view->new_display('feed', 'OCW Feed', 'feed_4');
+  $handler->override_option('filters', array(
+    'status' => array(
+      'operator' => '=',
+      'value' => '1',
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'status',
+      'table' => 'node',
+      'field' => 'status',
+      'relationship' => 'none',
+    ),
+    'type' => array(
+      'operator' => 'in',
+      'value' => array(
+        'course' => 'course',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'type',
+      'table' => 'node',
+      'field' => 'type',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
+    'field_content_type_value_many_to_one' => array(
+      'operator' => 'or',
+      'value' => array(
+        'course' => 'course',
+      ),
+      'group' => '0',
+      'exposed' => FALSE,
+      'expose' => array(
+        'operator' => FALSE,
+        'label' => '',
+      ),
+      'id' => 'field_content_type_value_many_to_one',
+      'table' => 'node_data_field_content_type',
+      'field' => 'field_content_type_value_many_to_one',
+      'override' => array(
+        'button' => 'Use default',
+      ),
+      'relationship' => 'none',
+      'reduce_duplicates' => 1,
+    ),
+  ));
+  $handler->override_option('style_plugin', 'rss');
+  $handler->override_option('style_options', array(
+    'mission_description' => FALSE,
+    'description' => '',
+  ));
+  $handler->override_option('row_plugin', 'node_rss');
+  $handler->override_option('row_options', array());
+  $handler->override_option('path', 'ocwfeed');
+  $handler->override_option('menu', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('tab_options', array(
+    'type' => 'none',
+    'title' => '',
+    'description' => '',
+    'weight' => 0,
+    'name' => 'navigation',
+  ));
+  $handler->override_option('displays', array());
+  $handler->override_option('sitename_title', FALSE);
   $views[$view->name] = $view;
 
   /*
