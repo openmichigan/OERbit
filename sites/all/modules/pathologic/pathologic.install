@@ -1,22 +1,33 @@
 <?php
-// $Id: pathologic.install,v 1.2 2009/12/28 01:15:48 garrettalbright Exp $
 
 /**
- * @file
- * Standard .install file for Pathologic.
+ * Your standard .install module.
  */
 
 /**
- * Implementation of hook_enable().
+ * Implementation of hook_update_N().
+ *
+ * Update to Pathologic 3
  */
-function pathologic_enable() {
-  drupal_set_message(t('The Pathologic module has been enabled; however, the Pathologic input filter must be added to the <a href="!ifs">input formats</a> in use on this site before it will have any effect. For more information, including complete installation and configuration instructions, please see <a href="http://drupal.org/node/257026">Pathologic&rsquo;s documentation</a>.', array('!ifs' => url('admin/settings/filters'))));
+function pathologic_update_6300() {
+  global $conf;
+  foreach (array_keys($conf) as $key) {
+    if (strpos($key, 'filter_pathologic_href_') === 0 || strpos($key, 'filter_pathologic_src') === 0) {
+      // We're not using these anymore
+      variable_del($key);
+    }
+    elseif (preg_match('/^filter_pathologic_abs_paths_(.*)$/', $key, $matches)) {
+      // This variable has a new name
+      variable_set('filter_pathologic_local_paths_' . $matches[1], variable_get($key, ''));
+      variable_del($key);
+    }
+  }
+  return array();
 }
 
 /**
  * Implementation of hook_uninstall().
  */
-
 function pathologic_uninstall() {
   // Iterate through the site's variables and delete ones created by Pathologic.
   global $conf;

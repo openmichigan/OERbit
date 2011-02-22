@@ -1,4 +1,46 @@
-$Id: CHANGELOG.txt,v 1.6.2.45 2010/03/11 12:39:54 wwalc Exp $
+$Id: CHANGELOG.txt,v 1.6.2.62 2010/09/29 09:22:45 dczepierga Exp $
+
+-----------------------------
+ 2010-09-29
+ New stable release: 6.x-1.2
+-----------------------------
+
+-- 2010-09-27
+- [#924020] by dczepierga: Add BiDi buttons to toolbar as default
+- [#818378] by ahwebd&fmjrey: Not all css files are loaded
+
+-- 2010-09-15
+- [#738474] by dczepierga: Cannot edit or delete poorly named profile that include forward slashes
+- [#742160] by dczepierga: warning: strtok() expects parameter 1 to be string in ckeditor.page.inc
+- [#772396] by jcisio: Put ckeditor.utils.js in header for better aggregation
+
+-- 2010-06-18
+- [#827238]: README.txt should include the information about sites/all/libraries/
+- [#824918]: Disabling, enabling Scayt
+
+-- 2010-06-16
+- [#822948]: Fixed: Migrating from fckeditor to ckeditor causes postgresql error
+- [#725086] by Dmitriy.trt: Fixed CKEditor does not appear on windows with non-empty window.opener
+
+-- 2010-06-14
+- [#814970]: Fixed: Teaser break not working with CKEditor 3.3
+
+-- 2010-05-07
+- [#776026]: Fixed: output default values are kept when editing a ckeditor profile
+
+-- 2010-05-06
+- [#772134]: Avoid Javascript Caching of editor CSS
+
+-- 2010-03-30
+- [#756516] by kosilka: mistake in variable name
+
+-- 2010-03-22
+- [#741572] Fixed compatibility with the Ajax module
+
+-- 2010-03-15
+- [#742662] Fixed Notices Undefined index: language_direction and forcePasteAsPlainText
+- [#742680] Fixed Notice: Undefined property: stdClass::$name
+- [#742244] Fixed Creating a CKEditor Profile makes editor disappear
 
 -----------------------------
  2010-03-11

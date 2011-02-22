@@ -1,5 +1,5 @@
 <?php
-// $Id: ckeditor.install,v 1.2.2.7 2010/03/09 15:38:01 mephir Exp $
+// $Id: ckeditor.install,v 1.2.2.10 2010/09/15 15:23:36 wwalc Exp $
 /*
  * CKEditor - The text editor for Internet - http://ckeditor.com
  * Copyright (C) 2003-2008 Frederico Caldeira Knabben
@@ -58,7 +58,7 @@ function ckeditor_install() {
   switch ($f_sv) {
     case 6201:
       db_query("INSERT INTO {ckeditor_role}(name, rid) SELECT name, rid FROM {fckeditor_role}");
-      $rs=db_query("SELECT * FROM {fckeditor_settings} WHERE 1");
+      $rs=db_query("SELECT * FROM {fckeditor_settings}");
       while ($row=db_fetch_array($rs)) {
         $nname=str_replace(array('FCKeditor', 'fckeditor'), array('CKEditor', 'ckeditor'), $row['name']);
         $settings=unserialize($row['settings']);
@@ -150,6 +150,7 @@ function ckeditor_install() {
       $arr['show_fieldnamehint'] = "t";
       $arr['ckeditor_load_method'] = "ckeditor.js";
       $arr['ckeditor_load_time_out'] = 0;
+      $arr['scayt_autoStartup'] = "f";
 
       db_query("INSERT INTO {ckeditor_settings} (name, settings) VALUES ('%s', '%s')", "Default", serialize($arr));
 
@@ -447,6 +448,25 @@ function _ckeditor_requirements_cookiedomainset() {
   }
 
   return FALSE;
+}
+
+/**
+ *	Implementation of hook_update_N().
+ *
+ *	Delete all plus signs from profiles name
+ */
+ 
+function ckeditor_update_6100(){
+	
+	$ret = array();
+	
+	$ret[] = update_sql( "UPDATE {ckeditor_role} SET name = REPLACE(name,'+','')");
+	$ret[] = update_sql( "UPDATE {ckeditor_role} SET name = REPLACE(name,'/','')");
+	$ret[] = update_sql( "UPDATE {ckeditor_settings} SET name = REPLACE(name,'+','')");
+	$ret[] = update_sql( "UPDATE {ckeditor_settings} SET name = REPLACE(name,'/','')");
+	
+	return $ret;
+	
 }
 
 /**
