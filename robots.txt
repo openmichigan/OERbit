@@ -25,7 +25,19 @@ Disallow: /misc/
 Disallow: /modules/
 Disallow: /profiles/
 Disallow: /scripts/
-Disallow: /sites/
+# Here at U-M, we want to allow indexing of uploaded files
+# We also want to allow an archiving site access to our
+# theming and CSS
+# We want to continue to exclude the thumbnail directories ...
+Disallow: /sites/default/files/imagecache/
+Disallow: /sites/default/files/imagefield_thumbs/
+Disallow: /sites/default/files/imagefield_thumbssites/
+# ... and disallow access to our settings file(s)
+Disallow: /sites/default/settings.php
+Disallow: /sites/oer.switchback.com//settings.php
+# ... and continue to exclude libraries and modules
+Disallow: /sites/all/libraries/
+Disallow: /sites/all/modules/
 Disallow: /themes/
 # Files
 Disallow: /CHANGELOG.txt
