@@ -1,5 +1,5 @@
 <?php
-// $Id: views_bulk_operations.install,v 1.1.2.5 2009/09/11 05:09:47 kratib Exp $
+// $Id: views_bulk_operations.install,v 1.1.2.6 2010/03/23 00:07:29 kratib Exp $
 
 /**
  * @file
@@ -42,7 +42,8 @@ function views_bulk_operations_update_6000() {
       $display_options = &$view->display[$display]->display_options;
       if (isset($display_options['style_plugin']) && $display_options['style_plugin'] == 'bulk') {
         $changed = TRUE;
-        $selected_operations = array_filter($display_options['style_options']['selected_operations']);
+        $selected_operations = isset($display_options['style_options']['selected_operations']) && is_array($display_options['style_options']['selected_operations']) ? 
+          array_filter($display_options['style_options']['selected_operations']) : array();
         $display_options['style_options']['selected_operations'] = array();
         if (!empty($selected_operations)) foreach ($selected_operations as $operation) {
           // If an old operation is identified, replace it.

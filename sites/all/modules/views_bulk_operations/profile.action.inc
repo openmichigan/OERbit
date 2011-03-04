@@ -1,5 +1,5 @@
 <?php
-// $Id: profile.action.inc,v 1.1.2.3 2009/10/08 21:37:55 kratib Exp $
+// $Id: profile.action.inc,v 1.1.2.6 2010/07/17 15:42:51 kratib Exp $
 
 function views_bulk_operations_profile_action_info() {
   if (!module_exists('profile')) return array();
@@ -8,6 +8,14 @@ function views_bulk_operations_profile_action_info() {
     'description' => t('Modify profile fields'),
     'configurable' => TRUE,
   ));
+}
+
+function views_bulk_operations_profile_action_theme() {
+  return array(
+    'views_bulk_operations_profile_action_form' => array(
+      'arguments' => array('form' => NULL),
+    ),
+  );
 }
 
 function views_bulk_operations_profile_action_form($context) {
@@ -25,13 +33,15 @@ function views_bulk_operations_profile_action_form($context) {
           'class' => 'profile-action-toggler', 
           'onchange' => 'Drupal.vbo.profileAction.updateField(this, true)',
         ),
+        '#default_value' => @$context[$field->name . '_check'],
       );
     }
   }
+  $form['#theme'] = 'views_bulk_operations_profile_action_form';
   return $form;
 }
 
-function theme_views_bulk_operations_profile_action_form(&$form) {
+function theme_views_bulk_operations_profile_action_form($form) {
   $header = array(theme('table_select_header_cell'), t('Category'), t('Field'));
   $rows = array();
   foreach (profile_categories() as $category) {
@@ -47,6 +57,7 @@ function theme_views_bulk_operations_profile_action_form(&$form) {
   }
 
   $output = theme('table', $header, $rows);
+  $output .= drupal_render($form);
   return $output;
 }
 

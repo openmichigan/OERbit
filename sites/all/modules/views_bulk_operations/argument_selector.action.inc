@@ -1,5 +1,5 @@
 <?php
-// $Id: argument_selector.action.inc,v 1.1.2.1 2009/05/28 22:23:10 kratib Exp $
+// $Id: argument_selector.action.inc,v 1.1.2.2 2010/03/17 02:56:50 kratib Exp $
 
 /**
  * @file 
@@ -16,7 +16,7 @@ function views_bulk_operations_argument_selector_action_info() {
       'type' => 'system',
       'aggregate' => TRUE,
       'configurable' => TRUE,
-      'hooks' => array(),
+      'hooks' => array('any' => TRUE),
     ),
   );
 }

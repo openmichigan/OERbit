@@ -1,5 +1,5 @@
 <?php
-// $Id: user_roles.action.inc,v 1.1.2.1 2009/04/16 03:08:52 kratib Exp $
+// $Id: user_roles.action.inc,v 1.1.2.2 2010/04/22 02:14:54 kratib Exp $
 
 function views_bulk_operations_user_roles_action_info() {
   return array('views_bulk_operations_user_roles_action' => array(
@@ -12,6 +12,13 @@ function views_bulk_operations_user_roles_action_info() {
 function views_bulk_operations_user_roles_action_form($context) {
   $roles = user_roles(TRUE);
   unset($roles[DRUPAL_AUTHENTICATED_RID]);  // Can't edit authenticated role.
+  if (module_exists('role_delegation')) {
+    foreach ($roles as $rid => $role) {
+      if (!user_access('assign all roles') && !user_access(_role_delegation_make_perm($role))) {
+        unset($roles[$rid]);
+      }
+    }
+  }
 
   $form['add_roles'] = array(
     '#type' => 'select',

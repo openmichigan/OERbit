@@ -6,9 +6,9 @@ package = Views
 core = 6.x
 php = 5.0
 
-; Information added by drupal.org packaging script on 2010-02-04
-version = "6.x-1.9"
+; Information added by drupal.org packaging script on 2010-10-06
+version = "6.x-1.10"
 core = "6.x"
 project = "views_bulk_operations"
-datestamp = "1265245814"
+datestamp = "1286380267"
 

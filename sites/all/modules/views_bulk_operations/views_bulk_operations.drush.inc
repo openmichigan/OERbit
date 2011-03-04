@@ -1,14 +1,14 @@
 <?php
-// $Id: views_bulk_operations.drush.inc,v 1.1.2.5 2009/09/27 21:14:42 kratib Exp $
+// $Id: views_bulk_operations.drush.inc,v 1.1.2.6 2010/02/23 21:12:37 kratib Exp $
 
 /**
  * Implementation of hook_drush_help().
  */
 function views_bulk_operations_drush_help($section) {
   switch ($section) {
-    case 'drush:vbo list':
+    case 'drush:vbo-list':
       return dt('List all Views Bulk Operations (VBO) views, along with the operations associated with each.');
-    case 'drush:vbo execute':
+    case 'drush:vbo-execute':
       return dt('Execute a bulk operation based on a Views Bulk Operations (VBO) view.');
   }
 }
@@ -17,11 +17,11 @@ function views_bulk_operations_drush_help($section) {
  * Implementation of hook_drush_command().
  */
 function views_bulk_operations_drush_command() {
-  $items['vbo list'] = array(
+  $items['vbo-list'] = array(
     'callback' => 'views_bulk_operations_drush_list',
     'description' => 'List all Views Bulk Operations (VBO) views, along with the operations associated with each.',
   );
-  $items['vbo execute'] = array(
+  $items['vbo-execute'] = array(
     'callback' => 'views_bulk_operations_drush_execute',
     'description' => 'Execute a bulk operation based on a Views Bulk Operations (VBO) view.',
     'arguments' => array(
@@ -30,11 +30,11 @@ function views_bulk_operations_drush_command() {
       'type:[name=]value ...' => 'Parameters to be passed as view input filters, view arguments or operation arguments, where type is respectively {input, argument, operation}.',
     ),
     'examples' => array(
-      '$ drush vbo execute admin_content node_publish_action' => 
+      '$ drush vbo-execute admin_content node_publish_action' => 
         'Publish nodes returned by view admin_content.',
-      '$ drush vbo execute 44 node_assign_owner_action operation:owner_uid=3' => 
+      '$ drush vbo-execute 44 node_assign_owner_action operation:owner_uid=3' => 
         'Change node ownership on nodes returned by view #44, passing argument owner_uid=3 to the action.',
-      '$ drush vbo execute admin_content node_unpublish_action input:type=expense argument:3' => 
+      '$ drush vbo-execute admin_content node_unpublish_action input:type=expense argument:3' => 
         'Unpublish nodes returned by view admin_content, filtering results of type expense and passing value 3 as first view argument.',
     ),
   );
