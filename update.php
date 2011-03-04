@@ -1,5 +1,5 @@
 <?php
-// $Id: update.php,v 1.252.2.3 2009/03/30 11:15:11 goba Exp $
+// $Id: update.php,v 1.252.2.4 2010/11/03 12:29:24 goba Exp $
 
 /**
  * @file
@@ -517,6 +517,31 @@ function update_fix_d6_requirements() {
       'primary key' => array('cid'),
     );
     db_create_table($ret, 'cache_block', $schema['cache_block']);
+
+    // Create the semaphore table now -- the menu system after 6.15 depends on
+    // this table, and menu code runs in updates prior to the table being
+    // created in its original update function, system_update_6054().
+    $schema['semaphore'] = array(
+      'fields' => array(
+        'name' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => ''),
+        'value' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => ''),
+        'expire' => array(
+          'type' => 'float',
+          'size' => 'big',
+          'not null' => TRUE),
+        ),
+      'indexes' => array('expire' => array('expire')),
+      'primary key' => array('name'),
+    );
+    db_create_table($ret, 'semaphore', $schema['semaphore']);
   }
 
   return $ret;
@@ -617,7 +642,6 @@ ini_set('display_errors', TRUE);
 
 // Access check:
 if (!empty($update_free_access) || $user->uid == 1) {
-  drupal_session_start();
 
   include_once './includes/install.inc';
   include_once './includes/batch.inc';

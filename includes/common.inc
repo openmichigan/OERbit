@@ -1,5 +1,5 @@
 <?php
-// $Id: common.inc,v 1.756.2.79 2010/03/04 00:15:28 goba Exp $
+// $Id: common.inc,v 1.756.2.106 2010/12/15 21:11:22 goba Exp $
 
 /**
  * @file
@@ -132,23 +132,30 @@ function drupal_clear_path_cache() {
   drupal_lookup_path('wipe');
 }
 
-/*
- * The function drupal_set_header() has been moved to includes/bootstrap.inc in Pressflow.
+/**
+ * Set an HTTP response header for the current page.
+ *
+ * Note: When sending a Content-Type header, always include a 'charset' type,
+ * too. This is necessary to avoid security bugs (e.g. UTF-7 XSS).
  */
+function drupal_set_header($header = NULL) {
+  // We use an array to guarantee there are no leading or trailing delimiters.
+  // Otherwise, header('') could get called when serving the page later, which
+  // ends HTTP headers prematurely on some PHP versions.
+  static $stored_headers = array();
+
+  if (strlen($header)) {
+    header($header);
+    $stored_headers[] = $header;
+  }
+  return implode("\n", $stored_headers);
+}
 
 /**
  * Get the HTTP response headers for the current page.
- *
- * This function is not called by Pressflow and remains here
- * only for Drupal 5/6 API compatibility.
  */
 function drupal_get_headers() {
-  $headers = drupal_set_header();
-  $header_text = array();
-  foreach ($headers as $name => $value) {
-    $header_text[] .= $name . ': ' . $value;
-  }
-  return implode("\n", $header_text);
+  return drupal_set_header();
 }
 
 /**
@@ -331,9 +338,9 @@ function drupal_goto($path = '', $query = NULL, $fragment = NULL, $http_response
     module_invoke_all('exit', $url);
   }
 
-  // Even though session_write_close() is registered as a shutdown function,
-  // we need all session data written to the database before redirecting.
-  drupal_session_commit();
+  // Even though session_write_close() is registered as a shutdown function, we
+  // need all session data written to the database before redirecting.
+  session_write_close();
 
   header('Location: '. $url, TRUE, $http_response_code);
 
@@ -351,7 +358,7 @@ function drupal_site_offline() {
   drupal_set_header('HTTP/1.1 503 Service unavailable');
   drupal_set_title(t('Site off-line'));
   print theme('maintenance_page', filter_xss_admin(variable_get('site_offline_message',
-    t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Pressflow'))))));
+    t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal'))))));
 }
 
 /**
@@ -430,8 +437,8 @@ function drupal_access_denied() {
  *   An integer representing how many times to retry the request in case of a
  *   redirect.
  * @return
- *   An object containing the HTTP request headers, response code, headers,
- *   data and redirect status.
+ *   An object containing the HTTP request headers, response code, protocol,
+ *   status message, headers, data and redirect status.
  */
 function drupal_http_request($url, $headers = array(), $method = 'GET', $data = NULL, $retry = 3) {
   global $db_prefix;
@@ -455,6 +462,7 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
 
   switch ($uri['scheme']) {
     case 'http':
+    case 'feed':
       $port = isset($uri['port']) ? $uri['port'] : 80;
       $host = $uri['host'] . ($port != 80 ? ':'. $port : '');
       $fp = @fsockopen($uri['host'], $port, $errno, $errstr, 15);
@@ -550,7 +558,10 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
   list($split, $result->data) = explode("\r\n\r\n", $response, 2);
   $split = preg_split("/\r\n|\n|\r/", $split);
 
-  list($protocol, $code, $text) = explode(' ', trim(array_shift($split)), 3);
+  list($protocol, $code, $status_message) = explode(' ', trim(array_shift($split)), 3);
+  $result->protocol = $protocol;
+  $result->status_message = $status_message;
+
   $result->headers = array();
 
   // Parse headers.
@@ -596,7 +607,7 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
 
       break;
     default:
-      $result->error = $text;
+      $result->error = $status_message;
   }
 
   $result->code = $code;
@@ -942,14 +953,15 @@ function t($string, $args = array(), $langcode = NULL) {
  */
 
 /**
- * Verify the syntax of the given e-mail address.
+ * Verifies the syntax of the given e-mail address.
  *
- * Empty e-mail addresses are allowed. See RFC 2822 for details.
+ * See RFC 2822 for details.
  *
  * @param $mail
  *   A string containing an e-mail address.
  * @return
- *   TRUE if the address is in a valid format.
+ *   1 if the email address is valid, 0 if it is invalid or empty, and FALSE if
+ *   there is an input error (such as passing in an array instead of a string).
  */
 function valid_email_address($mail) {
   $user = '[a-zA-Z0-9_\-\.\+\^!#\$%&*+\/\=\?\`\|\{\}~\']+';
@@ -978,7 +990,7 @@ function valid_url($url, $absolute = FALSE) {
   if ($absolute) {
     return (bool)preg_match("
       /^                                                      # Start at the beginning of the text
-      (?:ftp|https?):\/\/                                     # Look for ftp, http, or https schemes
+      (?:ftp|https?|feed):\/\/                                # Look for ftp, http, https or feed schemes
       (?:                                                     # Userinfo (optional) which is typically
         (?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*      # a username or a username and password
         (?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@          # combination
@@ -1371,42 +1383,48 @@ function format_date($timestamp, $type = 'medium', $format = '', $timezone = NUL
  */
 
 /**
- * Generate a URL from a Drupal menu path. Will also pass-through existing URLs.
- *
- * @param $path
- *   The Drupal path being linked to, such as "admin/content/node", or an
- *   existing URL like "http://drupal.org/".  The special path
- *   '<front>' may also be given and will generate the site's base URL.
- * @param $options
- *   An associative array of additional options, with the following keys:
- *   - 'query'
- *       A URL-encoded query string to append to the link, or an array of query
- *       key/value-pairs without any URL-encoding.
- *   - 'fragment'
- *       A fragment identifier (or named anchor) to append to the link.
- *       Do not include the '#' character.
- *   - 'absolute' (default FALSE)
- *       Whether to force the output to be an absolute link (beginning with
- *       http:). Useful for links that will be displayed outside the site, such
- *       as in an RSS feed.
- *   - 'alias' (default FALSE)
- *       Whether the given path is an alias already.
- *   - 'external'
- *       Whether the given path is an external URL.
- *   - 'language'
- *       An optional language object. Used to build the URL to link to and
- *       look up the proper alias for the link.
- *   - 'base_url'
- *       Only used internally, to modify the base URL when a language dependent
- *       URL requires so.
- *   - 'prefix'
- *       Only used internally, to modify the path when a language dependent URL
- *       requires so.
- * @return
- *   A string containing a URL to the given path.
+ * Generates an internal or external URL.
  *
  * When creating links in modules, consider whether l() could be a better
  * alternative than url().
+ *
+ * @param $path
+ *   The internal path or external URL being linked to, such as "node/34" or
+ *   "http://example.com/foo". A few notes:
+ *   - If you provide a full URL, it will be considered an external URL.
+ *   - If you provide only the path (e.g. "node/34"), it will be
+ *     considered an internal link. In this case, it should be a system URL,
+ *     and it will be replaced with the alias, if one exists. Additional query
+ *     arguments for internal paths must be supplied in $options['query'], not
+ *     included in $path.
+ *   - If you provide an internal path and $options['alias'] is set to TRUE, the
+ *     path is assumed already to be the correct path alias, and the alias is
+ *     not looked up.
+ *   - The special string '<front>' generates a link to the site's base URL.
+ *   - If your external URL contains a query (e.g. http://example.com/foo?a=b),
+ *     then you can either URL encode the query keys and values yourself and
+ *     include them in $path, or use $options['query'] to let this function
+ *     URL encode them.
+ * @param $options
+ *   An associative array of additional options, with the following elements:
+ *   - 'query': A URL-encoded query string to append to the link, or an array of
+ *     query key/value-pairs without any URL-encoding.
+ *   - 'fragment': A fragment identifier (named anchor) to append to the URL.
+ *     Do not include the leading '#' character.
+ *   - 'absolute' (default FALSE): Whether to force the output to be an absolute
+ *     link (beginning with http:). Useful for links that will be displayed
+ *     outside the site, such as in an RSS feed.
+ *   - 'alias' (default FALSE): Whether the given path is a URL alias already.
+ *   - 'external': Whether the given path is an external URL.
+ *   - 'language': An optional language object. Used to build the URL to link
+ *     to and look up the proper alias for the link.
+ *   - 'base_url': Only used internally, to modify the base URL when a language
+ *     dependent URL requires so.
+ *   - 'prefix': Only used internally, to modify the path when a language
+ *     dependent URL requires so.
+ *
+ * @return
+ *   A string containing a URL to the given path.
  */
 function url($path = NULL, $options = array()) {
   // Merge in defaults.
@@ -1533,47 +1551,37 @@ function drupal_attributes($attributes = array()) {
 }
 
 /**
- * Format an internal Drupal link.
+ * Formats an internal or external URL link as an HTML anchor tag.
  *
- * This function correctly handles aliased paths, and allows themes to highlight
- * links to the current page correctly, so all internal links output by modules
- * should be generated by this function if possible.
+ * This function correctly handles aliased paths, and adds an 'active' class
+ * attribute to links that point to the current page (for theming), so all
+ * internal links output by modules should be generated by this function if
+ * possible.
  *
  * @param $text
- *   The text to be enclosed with the anchor tag.
+ *   The link text for the anchor tag.
  * @param $path
- *   The Drupal path being linked to, such as "admin/content/node". Can be an
- *   external or internal URL.
- *     - If you provide the full URL, it will be considered an external URL.
- *     - If you provide only the path (e.g. "admin/content/node"), it is
- *       considered an internal link. In this case, it must be a system URL
- *       as the url() function will generate the alias.
- *     - If you provide '<front>', it generates a link to the site's
- *       base URL (again via the url() function).
- *     - If you provide a path, and 'alias' is set to TRUE (see below), it is
- *       used as is.
+ *   The internal path or external URL being linked to, such as "node/34" or
+ *   "http://example.com/foo". After the url() function is called to construct
+ *   the URL from $path and $options, the resulting URL is passed through
+ *   check_url() before it is inserted into the HTML anchor tag, to ensure
+ *   well-formed HTML. See url() for more information and notes.
  * @param $options
- *   An associative array of additional options, with the following keys:
- *     - 'attributes'
- *       An associative array of HTML attributes to apply to the anchor tag.
- *     - 'query'
- *       A query string to append to the link, or an array of query key/value
- *       properties.
- *     - 'fragment'
- *       A fragment identifier (named anchor) to append to the link.
- *       Do not include the '#' character.
- *     - 'absolute' (default FALSE)
- *       Whether to force the output to be an absolute link (beginning with
- *       http:). Useful for links that will be displayed outside the site, such
- *       as in an RSS feed.
- *     - 'html' (default FALSE)
- *       Whether the title is HTML, or just plain-text. For example for making
- *       an image a link, this must be set to TRUE, or else you will see the
- *       escaped HTML.
- *     - 'alias' (default FALSE)
- *       Whether the given path is an alias already.
+ *   An associative array of additional options, with the following elements:
+ *   - 'attributes': An associative array of HTML attributes to apply to the
+ *     anchor tag.
+ *   - 'html' (default FALSE): Whether $text is HTML or just plain-text. For
+ *     example, to make an image tag into a link, this must be set to TRUE, or
+ *     you will see the escaped HTML image tag.
+ *   - 'language': An optional language object. If the path being linked to is
+ *     internal to the site, $options['language'] is used to look up the alias
+ *     for the URL, and to determine whether the link is "active", or pointing
+ *     to the current page (the language as well as the path must match).This
+ *     element is also used by url().
+ *   - Additional $options elements used by the url() function.
+ *
  * @return
- *   an HTML string containing a link to the given path.
+ *   An HTML string containing a link to the given path.
  */
 function l($text, $path, $options = array()) {
   global $language;
@@ -1611,14 +1619,7 @@ function l($text, $path, $options = array()) {
  * react to the closing of the page by calling hook_exit().
  */
 function drupal_page_footer() {
-  global $user;
-
-  // Write the session, and open one if needed.
-  drupal_session_commit();
-
-  // Do not cache if cache is disabled or external.
-  $cache = variable_get('cache', CACHE_DISABLED);
-  if ($cache != CACHE_DISABLED && $cache != CACHE_EXTERNAL) {
+  if (variable_get('cache', CACHE_DISABLED) != CACHE_DISABLED) {
     page_set_cache();
   }
 
@@ -1706,7 +1707,7 @@ function drupal_eval($code) {
  * Returns the path to a system item (module, theme, etc.).
  *
  * @param $type
- *   The type of the item (i.e. theme, theme_engine, module).
+ *   The type of the item (i.e. theme, theme_engine, module, profile).
  * @param $name
  *   The name of the item for which the path is requested.
  *
@@ -1744,7 +1745,7 @@ function drupal_add_link($attributes) {
  *
  * @param $path
  *   (optional) The path to the CSS file relative to the base_path(), e.g.,
- *   /modules/devel/devel.css.
+ *   modules/devel/devel.css.
  *
  *   Modules should always prefix the names of their CSS files with the module
  *   name, for example: system-menus.css rather than simply menus.css. Themes
@@ -2017,10 +2018,21 @@ function drupal_load_stylesheet($file, $optimize = NULL) {
 
     if ($_optimize) {
       // Perform some safe CSS optimizations.
-      $contents = preg_replace('<
-        \s*([@{}:;,]|\)\s|\s\()\s* |  # Remove whitespace around separators, but keep space around parentheses.
-        /\*([^*\\\\]|\*(?!/))+\*/     # Remove comments that are not CSS hacks.
-        >x', '\1', $contents);
+      // Regexp to match comment blocks.
+      $comment     = '/\*[^*]*\*+(?:[^/*][^*]*\*+)*/';
+      // Regexp to match double quoted strings.
+      $double_quot = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"';
+      // Regexp to match single quoted strings.
+      $single_quot = "'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'";
+      $contents = preg_replace_callback(
+        "<$double_quot|$single_quot|$comment>Ss",  // Match all comment blocks along
+        "_process_comment",                        // with double/single quoted strings
+        $contents);                                // and feed them to _process_comment().
+      $contents = preg_replace(
+        '<\s*([@{}:;,]|\)\s|\s\()\s*>S',           // Remove whitespace around separators,
+        '\1', $contents);                          // but keep space around parentheses.
+      // End the file with a new line.
+      $contents .= "\n";
     }
 
     // Change back directory.
@@ -2028,6 +2040,41 @@ function drupal_load_stylesheet($file, $optimize = NULL) {
   }
 
   return $contents;
+}
+
+/**
+ * Process comment blocks.
+ *
+ * This is the callback function for the preg_replace_callback()
+ * used in drupal_load_stylesheet_content(). Support for comment
+ * hacks is implemented here.
+ */
+function _process_comment($matches) {
+  static $keep_nextone = FALSE;
+
+  // Quoted string, keep it.
+  if ($matches[0][0] == "'" || $matches[0][0] == '"') {
+    return $matches[0];
+  }
+  // End of IE-Mac hack, keep it.
+  if ($keep_nextone) {
+    $keep_nextone = FALSE;
+    return $matches[0];
+  }
+  switch (strrpos($matches[0], '\\')) {
+    case FALSE :
+      // No backslash, strip it.
+      return '';
+
+    case drupal_strlen($matches[0])-3 :
+      // Ends with \*/ so is a multi line IE-Mac hack, keep the next one also.
+      $keep_nextone = TRUE;
+      return '/*_\*/';
+
+    default :
+      // Single line IE-Mac hack.
+      return '/*\_*/';
+  }
 }
 
 /**
@@ -2040,8 +2087,16 @@ function _drupal_load_stylesheet($matches) {
   $filename = $matches[1];
   // Load the imported stylesheet and replace @import commands in there as well.
   $file = drupal_load_stylesheet($filename);
-  // Alter all url() paths, but not external.
-  return preg_replace('/url\(([\'"]?)(?![a-z]+:)([^\'")]+)[\'"]?\)?;/i', 'url(\1'. dirname($filename) .'/', $file);
+  // Determine the file's directory.
+  $directory = dirname($filename);
+  // If the file is in the current directory, make sure '.' doesn't appear in
+  // the url() path.
+  $directory = $directory == '.' ? '' : $directory .'/';
+
+  // Alter all internal url() paths. Leave external paths alone. We don't need
+  // to normalize absolute paths here (i.e. remove folder/... segments) because
+  // that will be done later.
+  return preg_replace('/url\s*\(([\'"]?)(?![a-z]+:|\/+)/i', 'url(\1'. $directory, $file);
 }
 
 /**
@@ -2408,8 +2463,8 @@ function drupal_build_js_cache($files, $filename) {
     // Build aggregate JS file.
     foreach ($files as $path => $info) {
       if ($info['preprocess']) {
-        // Append a ';' after each JS file to prevent them from running together.
-        $contents .= file_get_contents($path) .';';
+        // Append a ';' and a newline after each JS file to prevent them from running together.
+        $contents .= file_get_contents($path) .";\n";
       }
     }
 
@@ -2434,8 +2489,38 @@ function drupal_clear_js_cache() {
  * We use HTML-safe strings, i.e. with <, > and & escaped.
  */
 function drupal_to_js($var) {
-  // json_encode() does not escape <, > and &, so we do it with str_replace()
-  return str_replace(array("<", ">", "&"), array('\x3c', '\x3e', '\x26'), json_encode($var));
+  switch (gettype($var)) {
+    case 'boolean':
+      return $var ? 'true' : 'false'; // Lowercase necessary!
+    case 'integer':
+    case 'double':
+      return $var;
+    case 'resource':
+    case 'string':
+      return '"'. str_replace(array("\r", "\n", "<", ">", "&"),
+                              array('\r', '\n', '\x3c', '\x3e', '\x26'),
+                              addslashes($var)) .'"';
+    case 'array':
+      // Arrays in JSON can't be associative. If the array is empty or if it
+      // has sequential whole number keys starting with 0, it's not associative
+      // so we can go ahead and convert it as an array.
+      if (empty ($var) || array_keys($var) === range(0, sizeof($var) - 1)) {
+        $output = array();
+        foreach ($var as $v) {
+          $output[] = drupal_to_js($v);
+        }
+        return '[ '. implode(', ', $output) .' ]';
+      }
+      // Otherwise, fall through to convert the array as an object.
+    case 'object':
+      $output = array();
+      foreach ($var as $k => $v) {
+        $output[] = drupal_to_js(strval($k)) .': '. drupal_to_js($v);
+      }
+      return '{ '. implode(', ', $output) .' }';
+    default:
+      return 'null';
+  }
 }
 
 /**
@@ -2584,15 +2669,6 @@ function _drupal_bootstrap_full() {
   unicode_check();
   // Undo magic quotes
   fix_gpc_magic();
-
-  if (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'simpletest') !== FALSE) {
-    // Valid SimpleTest user-agent, log fatal errors to test specific file
-    // directory. The user-agent is validated in DRUPAL_BOOTSTRAP_DATABASE
-    // phase so as long as it is a SimpleTest user-agent it is valid.
-    ini_set('log_errors', 1);
-    ini_set('error_log', file_directory_path() . '/error.log');
-  }
-
   // Load all enabled modules
   module_load_all();
   // Let all modules take action before menu system handles the request
@@ -2605,56 +2681,30 @@ function _drupal_bootstrap_full() {
 /**
  * Store the current page in the cache.
  *
- * We try to store a gzipped version of the cache. This requires the
- * PHP zlib extension (http://php.net/manual/en/ref.zlib.php).
- * Presence of the extension is checked by testing for the function
- * gzencode. There are two compression algorithms: gzip and deflate.
- * The majority of all modern browsers support gzip or both of them.
- * We thus only deal with the gzip variant and unzip the cache in case
- * the browser does not accept gzip encoding.
+ * If page_compression is enabled, a gzipped version of the page is stored in
+ * the cache to avoid compressing the output on each request. The cache entry
+ * is unzipped in the relatively rare event that the page is requested by a
+ * client without gzip support.
+ *
+ * Page compression requires the PHP zlib extension
+ * (http://php.net/manual/en/ref.zlib.php).
  *
  * @see drupal_page_header
  */
 function page_set_cache() {
   global $user, $base_root;
 
-  if (drupal_page_is_cacheable()) {
-    $cache_page = TRUE;
-
-    $cache_lifetime = variable_get('page_cache_lifetime', 0);
-
-    $cache = (object) array(
-      'cid' => $base_root . request_uri(),
-      'data' => ob_get_clean(),
-      'expire' => $cache_lifetime > 0 ? $cache_lifetime : CACHE_TEMPORARY,
-      'created' => $_SERVER['REQUEST_TIME'],
-      'headers' => array(),
-    );
-    // Restore preferred header names based on the lower-case names returned
-    // by drupal_get_header().
-    $header_names = _drupal_set_preferred_header_name();
-    foreach (drupal_get_header() as $name_lower => $value) {
-      $cache->headers[$header_names[$name_lower]] = $value;
-    }
-    if (variable_get('page_compression', TRUE) && function_exists('gzencode')) {
-      // We do not store the data in case the zlib mode is deflate. This should
-      // be rarely happening.
-      if (zlib_get_coding_type() == 'deflate') {
-        $cache_page = FALSE;
+  if (!$user->uid && $_SERVER['REQUEST_METHOD'] == 'GET' && page_get_cache(TRUE)) {
+    // This will fail in some cases, see page_get_cache() for the explanation.
+    if ($data = ob_get_contents()) {
+      if (variable_get('page_compression', TRUE) && extension_loaded('zlib')) {
+        $data = gzencode($data, 9, FORCE_GZIP);
       }
-      elseif (zlib_get_coding_type() == FALSE) {
-        $cache->data = gzencode($cache->data, 9, FORCE_GZIP);
-      }
-      // The remaining case is 'gzip' which means the data is already
-      // compressed and nothing left to do but to store it.
+      ob_end_flush();
+      cache_set($base_root . request_uri(), $data, 'cache_page', CACHE_TEMPORARY, drupal_get_headers());
     }
-    if ($cache_page && $cache->data) {
-      cache_set($cache->cid, $cache->data, 'cache_page', $cache->expire, serialize($cache->headers));
-    }
-    drupal_page_cache_header($cache);
   }
 }
-
 
 /**
  * Executes a cron run when called
@@ -2786,18 +2836,28 @@ function drupal_system_listing($mask, $directory, $key = 'name', $min_depth = 1)
 
 
 /**
- * This dispatch function hands off structured Drupal arrays to type-specific
- * *_alter implementations. It ensures a consistent interface for all altering
- * operations.
+ * Hands off alterable variables to type-specific *_alter implementations.
+ *
+ * This dispatch function hands off the passed in variables to type-specific
+ * hook_TYPE_alter() implementations in modules. It ensures a consistent
+ * interface for all altering operations.
  *
  * @param $type
- *   The data type of the structured array. 'form', 'links',
- *   'node_content', and so on are several examples.
+ *   A string describing the type of the alterable $data (e.g. 'form',
+ *   'profile').
  * @param $data
- *   The structured array to be altered.
+ *   The variable that will be passed to hook_TYPE_alter() implementations to
+ *   be altered. The type of this variable depends on $type. For example, when
+ *   altering a 'form', $data will be a structured array. When altering a
+ *   'profile', $data will be an object. If you need to pass additional
+ *   parameters by reference to the hook_TYPE_alter() functions, include them
+ *   as an array in $data['__drupal_alter_by_ref']. They will be unpacked and
+ *   passed to the hook_TYPE_alter() functions, before the additional
+ *   ... parameters (see below).
  * @param ...
- *   Any additional params will be passed on to the called
- *   hook_$type_alter functions.
+ *   Any additional parameters will be passed on to the hook_TYPE_alter()
+ *   functions (not by reference), after any by-reference parameters included
+ *   in $data (see above)
  */
 function drupal_alter($type, &$data) {
   // PHP's func_get_args() always returns copies of params, not references, so
@@ -2838,8 +2898,15 @@ function drupal_alter($type, &$data) {
  * Renders HTML given a structured array tree.
  *
  * Recursively iterates over each of the array elements, generating HTML code.
- * This function is usually called from within a another function, like
+ * This function is usually called from within another function, like
  * drupal_get_form() or node_view().
+ *
+ * drupal_render() flags each element with a '#printed' status to indicate that
+ * the element has been rendered, which allows individual elements of a given
+ * array to be rendered independently. This prevents elements from being
+ * rendered more than once on subsequent calls to drupal_render() if, for example,
+ * they are part of a larger array. If the same array or array element is passed
+ * more than once to drupal_render(), it simply returns a NULL value.
  *
  * @param $elements
  *   The structured array describing the data to be rendered.
@@ -3090,10 +3157,6 @@ function drupal_common_theme() {
     'pager_link' => array(
       'arguments' => array('text' => NULL, 'page_new' => NULL, 'element' => NULL, 'parameters' => array(), 'attributes' => array()),
     ),
-    // from locale.inc
-    'locale_admin_manage_screen' => array(
-      'arguments' => array('form' => NULL),
-    ),
     // from menu.inc
     'menu_item_link' => array(
       'arguments' => array('item' => NULL),
@@ -3209,7 +3272,10 @@ function drupal_get_schema($table = NULL, $rebuild = FALSE) {
 
       // Invoke hook_schema for all modules.
       foreach (module_implements('schema') as $module) {
-        $current = module_invoke($module, 'schema');
+        // Cast the result of hook_schema() to an array, as a NULL return value
+        // would cause array_merge() to set the $schema variable to NULL as well.
+        // That would break modules which use $schema further down the line.
+        $current = (array) module_invoke($module, 'schema');
         _drupal_initialize_schema($module, $current);
         $schema = array_merge($schema, $current);
       }
@@ -3306,15 +3372,17 @@ function drupal_uninstall_schema($module) {
  */
 function drupal_get_schema_unprocessed($module, $table = NULL) {
   // Load the .install file to get hook_schema.
-  module_load_include('install', $module);
+  module_load_install($module);
   $schema = module_invoke($module, 'schema');
 
   if (!is_null($table) && isset($schema[$table])) {
     return $schema[$table];
   }
-  else {
+  elseif (!empty($schema)) {
     return $schema;
   }
+
+  return array();
 }
 
 /**
@@ -3634,6 +3702,8 @@ function watchdog_severity_levels() {
 
 /**
  * Explode a string of given tags into an array.
+ *
+ * @see drupal_implode_tags()
  */
 function drupal_explode_tags($tags) {
   // This regexp allows the following types of user input:
@@ -3658,6 +3728,8 @@ function drupal_explode_tags($tags) {
 
 /**
  * Implode an array of tags into a string.
+ *
+ * @see drupal_explode_tags()
  */
 function drupal_implode_tags($tags) {
   $encoded_tags = array();
@@ -3724,263 +3796,4 @@ function _drupal_flush_css_js() {
     $new_character = $characters[mt_rand(0, strlen($characters) - 1)];
   }
   variable_set('css_js_query_string', $new_character . substr($string_history, 0, 19));
-}
-
-/**
- * Error reporting level: display no errors.
- */
-define('ERROR_REPORTING_HIDE', 0);
-
-/**
- * Error reporting level: display errors and warnings.
- */
-define('ERROR_REPORTING_DISPLAY_SOME', 1);
-
-/**
- * Error reporting level: display all messages.
- */
-define('ERROR_REPORTING_DISPLAY_ALL', 2);
-
-/**
- * Custom PHP error handler.
- *
- * @param $error_level
- *   The level of the error raised.
- * @param $message
- *   The error message.
- * @param $filename
- *   The filename that the error was raised in.
- * @param $line
- *   The line number the error was raised at.
- * @param $context
- *   An array that points to the active symbol table at the point the error occurred.
- */
-function _drupal_error_handler($error_level, $message, $filename, $line, $context) {
-  if ($error_level & error_reporting()) {
-    // All these constants are documented at http://php.net/manual/en/errorfunc.constants.php
-    $types = array(
-      E_ERROR => 'Error',
-      E_WARNING => 'Warning',
-      E_PARSE => 'Parse error',
-      E_NOTICE => 'Notice',
-      E_CORE_ERROR => 'Core error',
-      E_CORE_WARNING => 'Core warning',
-      E_COMPILE_ERROR => 'Compile error',
-      E_COMPILE_WARNING => 'Compile warning',
-      E_USER_ERROR => 'User error',
-      E_USER_WARNING => 'User warning',
-      E_USER_NOTICE => 'User notice',
-      E_STRICT => 'Strict warning',
-      E_RECOVERABLE_ERROR => 'Recoverable fatal error'
-    );
-    $caller = _drupal_get_last_caller(debug_backtrace());
-
-    // We treat recoverable errors as fatal.
-    _drupal_log_error(array(
-      '%type' => isset($types[$error_level]) ? $types[$error_level] : 'Unknown error',
-      '%message' => $message,
-      '%function' => $caller['function'],
-      '%file' => $caller['file'],
-      '%line' => $caller['line'],
-    ), $error_level == E_RECOVERABLE_ERROR);
-  }
-}
-
-/**
- * Custom PHP exception handler.
- *
- * Uncaught exceptions are those not enclosed in a try/catch block. They are
- * always fatal: the execution of the script will stop as soon as the exception
- * handler exits.
- *
- * @param $exception
- *   The exception object that was thrown.
- */
-function _drupal_exception_handler($exception) {
-  // Log the message to the watchdog and return an error page to the user.
-  _drupal_log_error(_drupal_decode_exception($exception), TRUE);
-}
-
-/**
- * Decode an exception, especially to retrive the correct caller.
- *
- * @param $exception
- *   The exception object that was thrown.
- * @return An error in the format expected by _drupal_log_error().
- */
-function _drupal_decode_exception($exception) {
-  $message = $exception->getMessage();
-
-  $backtrace = $exception->getTrace();
-  // Add the line throwing the exception to the backtrace.
-  array_unshift($backtrace, array('line' => $exception->getLine(), 'file' => $exception->getFile()));
-
-  // For PDOException errors, we try to return the initial caller,
-  // skipping internal functions of the database layer.
-  if ($exception instanceof PDOException) {
-    // The first element in the stack is the call, the second element gives us the caller.
-    // We skip calls that occurred in one of the classes of the database layer
-    // or in one of its global functions.
-    $db_functions = array('db_query', 'pager_query', 'db_query_range', 'db_query_temporary', 'update_sql');
-    while (!empty($backtrace[1]) && ($caller = $backtrace[1]) &&
-        ((isset($caller['class']) && (strpos($caller['class'], 'Query') !== FALSE || strpos($caller['class'], 'Database') !== FALSE || strpos($caller['class'], 'PDO') !== FALSE)) ||
-        in_array($caller['function'], $db_functions))) {
-      // We remove that call.
-      array_shift($backtrace);
-    }
-    if (isset($exception->query_string, $exception->args)) {
-      $message .= ": " . $exception->query_string . "; " . print_r($exception->args, TRUE);
-    }
-  }
-  $caller = _drupal_get_last_caller($backtrace);
-
-  return array(
-    '%type' => get_class($exception),
-    '%message' => $message,
-    '%function' => $caller['function'],
-    '%file' => $caller['file'],
-    '%line' => $caller['line'],
-  );
-}
-
-/**
- * Log a PHP error or exception, display an error page in fatal cases.
- *
- * @param $error
- *   An array with the following keys: %type, %message, %function, %file, %line.
- * @param $fatal
- *   TRUE if the error is fatal.
- */
-function _drupal_log_error($error, $fatal = FALSE) {
-  // Initialize a maintenance theme if the boostrap was not complete.
-  // Do it early because drupal_set_message() triggers a drupal_theme_initialize().
-  if ($fatal && (drupal_get_bootstrap_phase() != DRUPAL_BOOTSTRAP_FULL)) {
-    unset($GLOBALS['theme']);
-    if (!defined('MAINTENANCE_MODE')) {
-      define('MAINTENANCE_MODE', 'error');
-    }
-    drupal_maintenance_theme();
-  }
-
-  // When running inside the testing framework, we relay the errors
-  // to the tested site by the way of HTTP headers.
-  if (isset($_SERVER['HTTP_USER_AGENT']) && preg_match("/^simpletest\d+;/", $_SERVER['HTTP_USER_AGENT']) && !headers_sent() && (!defined('SIMPLETEST_COLLECT_ERRORS') || SIMPLETEST_COLLECT_ERRORS)) {
-    // $number does not use drupal_static as it should not be reset
-    // as it uniquely identifies each PHP error.
-    static $number = 0;
-    $assertion = array(
-      $error['%message'],
-      $error['%type'],
-      array(
-        'function' => $error['%function'],
-        'file' => $error['%file'],
-        'line' => $error['%line'],
-      ),
-    );
-    header('X-Drupal-Assertion-' . $number . ': ' . rawurlencode(serialize($assertion)));
-    $number++;
-  }
-
-  try {
-    watchdog('php', '%type: %message in %function (line %line of %file).', $error, WATCHDOG_ERROR);
-  }
-  catch (Exception $e) {
-    // Ignore any additional watchdog exception, as that probably means
-    // that the database was not initialized correctly.
-  }
-
-  if ($fatal) {
-    drupal_set_header('500 Service unavailable (with message)');
-  }
-
-  if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
-    if ($fatal) {
-      // When called from JavaScript, simply output the error message.
-      print t('%type: %message in %function (line %line of %file).', $error);
-      exit;
-    }
-  }
-  else {
-    // Display the message if the current error reporting level allows this type
-    // of message to be displayed, and unconditionnaly in update.php.
-    $error_level = variable_get('error_level', ERROR_REPORTING_DISPLAY_ALL);
-    $display_error = $error_level == ERROR_REPORTING_DISPLAY_ALL || ($error_level == ERROR_REPORTING_DISPLAY_SOME && $error['%type'] != 'Notice');
-    if ($display_error || (defined('MAINTENANCE_MODE') && MAINTENANCE_MODE == 'update')) {
-      $class = 'error';
-
-      // If error type is 'User notice' then treat it as debug information
-      // instead of an error message, see dd().
-      if ($error['%type'] == 'User notice') {
-        $error['%type'] = 'Debug';
-        $class = 'status';
-      }
-
-      drupal_set_message(t('%type: %message in %function (line %line of %file).', $error), $class);
-    }
-
-    if ($fatal) {
-      drupal_set_title(t('Error'));
-      // We fallback to a maintenance page at this point, because the page generation
-      // itself can generate errors.
-      print theme('maintenance_page', t('The website encountered an unexpected error. Please try again later.'));
-      exit;
-    }
-  }
-}
-
-/**
- * Gets the last caller from a backtrace.
- *
- * @param $backtrace
- *   A standard PHP backtrace.
- * @return
- *   An associative array with keys 'file', 'line' and 'function'.
- */
-function _drupal_get_last_caller($backtrace) {
-  // Errors that occur inside PHP internal functions do not generate
-  // information about file and line. Ignore black listed functions.
-  $blacklist = array('debug');
-  while (($backtrace && !isset($backtrace[0]['line'])) ||
-         (isset($backtrace[1]['function']) && in_array($backtrace[1]['function'], $blacklist))) {
-    array_shift($backtrace);
-  }
-
-  // The first trace is the call itself.
-  // It gives us the line and the file of the last call.
-  $call = $backtrace[0];
-
-  // The second call give us the function where the call originated.
-  if (isset($backtrace[1])) {
-    if (isset($backtrace[1]['class'])) {
-      $call['function'] = $backtrace[1]['class'] . $backtrace[1]['type'] . $backtrace[1]['function'] . '()';
-    }
-    else {
-      $call['function'] = $backtrace[1]['function'] . '()';
-    }
-  }
-  else {
-    $call['function'] = 'main()';
-  }
-  return $call;
-}
-
-/**
- * Debug function used for outputting debug information.
- *
- * The debug information is passed on to trigger_error() after being converted
- * to a string using _drupal_debug_message().
- *
- * @param $data
- *   Data to be output.
- * @param $label
- *   Label to prefix the data.
- * @param $print_r
- *   Flag to switch between print_r() and var_export() for data conversion to
- *   string. Set $print_r to TRUE when dealing with a recursive data structure
- *   as var_export() will generate an error.
- */
-function debug($data, $label = NULL, $print_r = FALSE) {
-  // Print $data contents to string.
-  $string = $print_r ? print_r($data, TRUE) : var_export($data, TRUE);
-  trigger_error(trim($label ? "$label: $string" : $string));
 }

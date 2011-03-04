@@ -1,5 +1,5 @@
 <?php
-// $Id: node.module,v 1.947.2.22 2010/03/03 21:36:37 goba Exp $
+// $Id: node.module,v 1.947.2.29 2010/12/15 12:53:33 goba Exp $
 
 /**
  * @file
@@ -749,10 +749,10 @@ function node_load($param = array(), $revision = NULL, $reset = NULL) {
   // No db_rewrite_sql is applied so as to get complete indexing for search.
   if ($revision) {
     array_unshift($arguments, $revision);
-    $node = db_fetch_object(db_query_slave('SELECT '. $fields .' FROM {node} n INNER JOIN {users} u ON u.uid = n.uid INNER JOIN {node_revisions} r ON r.nid = n.nid AND r.vid = %d WHERE '. $cond, $arguments));
+    $node = db_fetch_object(db_query('SELECT '. $fields .' FROM {node} n INNER JOIN {users} u ON u.uid = n.uid INNER JOIN {node_revisions} r ON r.nid = n.nid AND r.vid = %d WHERE '. $cond, $arguments));
   }
   else {
-    $node = db_fetch_object(db_query_slave('SELECT '. $fields .' FROM {node} n INNER JOIN {users} u ON u.uid = n.uid INNER JOIN {node_revisions} r ON r.vid = n.vid WHERE '. $cond, $arguments));
+    $node = db_fetch_object(db_query('SELECT '. $fields .' FROM {node} n INNER JOIN {users} u ON u.uid = n.uid INNER JOIN {node_revisions} r ON r.vid = n.vid WHERE '. $cond, $arguments));
   }
 
   if ($node && $node->nid) {
@@ -816,7 +816,13 @@ function node_validate($node, $form = array()) {
 }
 
 /**
- * Prepare node for save and allow modules to make changes.
+ * Prepares a node for saving by populating teaser, author, and creation date.
+ *
+ * @param object|array $node
+ *   A node object or array.
+ *
+ * @return
+ *   A validated node object with a populated teaser, author, and creation date.
  */
 function node_submit($node) {
   global $user;
@@ -1232,7 +1238,10 @@ function node_search($op = 'search', $keys = NULL) {
       }
       if ($weight = (int)variable_get('node_rank_recent', 5)) {
         // Exponential decay with half-life of 6 months, starting at last indexed node
-        $ranking[] = '%d * POW(2, (GREATEST(MAX(n.created), MAX(n.changed), MAX(c.last_comment_timestamp)) - %d) * 6.43e-8)';
+        // c.last_comment_timestamp may be NULL. Since both MAX(anynumber, NULL) and
+        // GREATEST(anynumber, NULL) return NULL, we use COALESCE(MAX(c.last_comment_timestamp), 0)
+        // to prevent it from being NULL.
+        $ranking[] = '%d * POW(2, (GREATEST(MAX(n.created), MAX(n.changed), COALESCE(MAX(c.last_comment_timestamp), 0)) - %d) * 6.43e-8)';
         $arguments2[] = $weight;
         $arguments2[] = (int)variable_get('node_cron_last', 0);
         $join2 .= ' LEFT JOIN {node_comment_statistics} c ON c.nid = i.sid';
@@ -1285,9 +1294,13 @@ function node_search($op = 'search', $keys = NULL) {
         $node->body = drupal_render($node->content);
 
         // Fetch comments for snippet.
-        $node->body .= module_invoke('comment', 'nodeapi', $node, 'update index');
+        if (module_exists('comment')) {
+          $node->body .= comment_nodeapi($node, 'update index');
+        }
         // Fetch terms for snippet.
-        $node->body .= module_invoke('taxonomy', 'nodeapi', $node, 'update index');
+        if (module_exists('taxonomy')) {
+          $node->body .= taxonomy_nodeapi($node, 'update index');
+        }
 
         $extra = node_invoke_nodeapi($node, 'search result');
         $results[] = array(
@@ -1730,7 +1743,7 @@ function node_feed($nids = FALSE, $channel = array()) {
 
   $channel_defaults = array(
     'version'     => '2.0',
-    'title'       => variable_get('site_name', 'Pressflow'),
+    'title'       => variable_get('site_name', 'Drupal'),
     'link'        => $base_url,
     'description' => variable_get('site_mission', ''),
     'language'    => $language->language
@@ -1761,11 +1774,11 @@ function node_page_default() {
 
   if ($num_rows) {
     $feed_url = url('rss.xml', array('absolute' => TRUE));
-    drupal_add_feed($feed_url, variable_get('site_name', 'Pressflow') .' '. t('RSS'));
+    drupal_add_feed($feed_url, variable_get('site_name', 'Drupal') .' '. t('RSS'));
     $output .= theme('pager', NULL, variable_get('default_nodes_main', 10));
   }
   else {
-    $default_message = t('<h1 class="title">Welcome to your new Pressflow website!</h1><p>Please follow these steps to set up and start using your website:</p>');
+    $default_message = t('<h1 class="title">Welcome to your new Drupal website!</h1><p>Please follow these steps to set up and start using your website:</p>');
     $default_message .= '<ol>';
 
     $default_message .= '<li>'. t('<strong>Configure your website</strong> Once logged in, visit the <a href="@admin">administration section</a>, where you can <a href="@config">customize and configure</a> all aspects of your website.', array('@admin' => url('admin'), '@config' => url('admin/settings'))) .'</li>';
@@ -2183,13 +2196,13 @@ function node_db_rewrite_sql($query, $primary_table, $primary_field) {
 }
 
 /**
- * This function will call module invoke to get a list of grants and then
- * write them to the database. It is called at node save, and should be
- * called by modules whenever something other than a node_save causes
- * the permissions on a node to change.
+ * Gets the list of node access grants and writes them to the database.
  *
- * This function is the only function that should write to the node_access
- * table.
+ * This function is called when a node is saved, and can also be called by
+ * modules if something other than a node save causes node access permissions
+ * to change. It collects all node access grants for the node from
+ * hook_node_access_records() implementations and saves the collected
+ * grants to the database.
  *
  * @param $node
  *   The $node to acquire grants for.
@@ -2213,12 +2226,12 @@ function node_access_acquire_grants($node) {
 }
 
 /**
- * This function will write a list of grants to the database, deleting
- * any pre-existing grants. If a realm is provided, it will only
- * delete grants from that realm, but it will always delete a grant
- * from the 'all' realm. Modules which utilize node_access can
- * use this function when doing mass updates due to widespread permission
- * changes.
+ * Writes a list of grants to the database, deleting any previously saved ones.
+ *
+ * If a realm is provided, it will only delete grants from that realm, but it
+ * will always delete a grant from the 'all' realm. Modules that utilize
+ * node_access can use this function when doing mass updates due to widespread
+ * permission changes.
  *
  * @param $node
  *   The $node being written to. All that is necessary is that it contain a nid.
@@ -2376,7 +2389,7 @@ function _node_access_rebuild_batch_operation(&$context) {
       node_access_acquire_grants($loaded_node);
     }
     $context['sandbox']['progress']++;
-    $context['sandbox']['current_node'] = $loaded_node->nid;
+    $context['sandbox']['current_node'] = $row['nid'];
   }
 
   // Multistep processing : report progress.
@@ -2681,7 +2694,7 @@ function node_save_action($node) {
 function node_assign_owner_action(&$node, $context) {
   $node->uid = $context['owner_uid'];
   $owner_name = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", $context['owner_uid']));
-  watchdog('action', 'Changed owner of @type %title to uid %name.', array('@type' => node_get_types('type', $node), '%title' => $node->title, '%name' => $owner_name));
+  watchdog('action', 'Changed owner of @type %title to uid %name.', array('@type' => node_get_types('name', $node), '%title' => $node->title, '%name' => $owner_name));
 }
 
 function node_assign_owner_action_form($context) {

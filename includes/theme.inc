@@ -1,5 +1,5 @@
 <?php
-// $Id: theme.inc,v 1.415.2.27 2010/03/01 10:02:01 goba Exp $
+// $Id: theme.inc,v 1.415.2.28 2010/11/03 19:03:19 goba Exp $
 
 /**
  * @file
@@ -1244,6 +1244,7 @@ function theme_links($links, $attributes = array('class' => 'links')) {
  *
  * @param $path
  *   Either the path of the image file (relative to base_path()) or a full URL.
+ *   If this is a full URL, $getsize must be set to FALSE or nothing will be returned.
  * @param $alt
  *   The alternative text for text-based browsers.
  * @param $title
@@ -1252,6 +1253,8 @@ function theme_links($links, $attributes = array('class' => 'links')) {
  *   Associative array of attributes to be placed in the img tag.
  * @param $getsize
  *   If set to TRUE, the image's dimension are fetched and added as width/height attributes.
+ *   Defaults to TRUE. Must be set to FALSE if $path is a full URL.
+ * 
  * @return
  *   A string containing the image tag.
  */
@@ -1842,10 +1845,10 @@ function template_preprocess_page(&$variables) {
 
   // Construct page title
   if (drupal_get_title()) {
-    $head_title = array(strip_tags(drupal_get_title()), variable_get('site_name', 'Pressflow'));
+    $head_title = array(strip_tags(drupal_get_title()), variable_get('site_name', 'Drupal'));
   }
   else {
-    $head_title = array(variable_get('site_name', 'Pressflow'));
+    $head_title = array(variable_get('site_name', 'Drupal'));
     if (variable_get('site_slogan', '')) {
       $head_title[] = variable_get('site_slogan', '');
     }
@@ -1866,7 +1869,7 @@ function template_preprocess_page(&$variables) {
   $variables['primary_links']     = theme_get_setting('toggle_primary_links') ? menu_primary_links() : array();
   $variables['secondary_links']   = theme_get_setting('toggle_secondary_links') ? menu_secondary_links() : array();
   $variables['search_box']        = (theme_get_setting('toggle_search') ? drupal_get_form('search_theme_form') : '');
-  $variables['site_name']         = (theme_get_setting('toggle_name') ? filter_xss_admin(variable_get('site_name', 'Pressflow')) : '');
+  $variables['site_name']         = (theme_get_setting('toggle_name') ? filter_xss_admin(variable_get('site_name', 'Drupal')) : '');
   $variables['site_slogan']       = (theme_get_setting('toggle_slogan') ? filter_xss_admin(variable_get('site_slogan', '')) : '');
   $variables['css']               = drupal_add_css();
   $variables['styles']            = drupal_get_css();

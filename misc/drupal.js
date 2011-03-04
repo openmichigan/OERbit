@@ -5,7 +5,7 @@ var Drupal = Drupal || { 'settings': {}, 'behaviors': {}, 'themes': {}, 'locale'
 /**
  * Set the variable that indicates if JavaScript behaviors should be applied
  */
-Drupal.jsEnabled = true;
+Drupal.jsEnabled = document.getElementsByTagName && document.createElement && document.createTextNode && document.documentElement && document.getElementById;
 
 /**
  * Attach all registered behaviors to a page element.
@@ -36,10 +36,12 @@ Drupal.jsEnabled = true;
  */
 Drupal.attachBehaviors = function(context) {
   context = context || document;
-  // Execute all of them.
-  jQuery.each(Drupal.behaviors, function() {
-    this(context);
-  });
+  if (Drupal.jsEnabled) {
+    // Execute all of them.
+    jQuery.each(Drupal.behaviors, function() {
+      this(context);
+    });
+  }
 };
 
 /**
@@ -251,25 +253,30 @@ Drupal.getSelection = function (element) {
  */
 Drupal.ahahError = function(xmlhttp, uri) {
   if (xmlhttp.status == 200) {
-    if (jQuery.trim(xmlhttp.responseText)) {
+    if (jQuery.trim($(xmlhttp.responseText).text())) {
       var message = Drupal.t("An error occurred. \n@uri\n@text", {'@uri': uri, '@text': xmlhttp.responseText });
     }
     else {
-      var message = Drupal.t("An error occurred. \n@uri\n(no information available).", {'@uri': uri });
+      var message = Drupal.t("An error occurred. \n@uri\n(no information available).", {'@uri': uri, '@text': xmlhttp.responseText });
     }
   }
   else {
     var message = Drupal.t("An HTTP error @status occurred. \n@uri", {'@uri': uri, '@status': xmlhttp.status });
   }
-  return message.replace(/\n/g, '<br />');
+  return message;
 }
 
 // Global Killswitch on the <html> element
-$(document.documentElement).addClass('js');
-// Attach all behaviors.
-$(document).ready(function() {
-  Drupal.attachBehaviors(this);
-});
+if (Drupal.jsEnabled) {
+  // Global Killswitch on the <html> element
+  $(document.documentElement).addClass('js');
+  // 'js enabled' cookie
+  document.cookie = 'has_js=1; path=/';
+  // Attach all behaviors.
+  $(document).ready(function() {
+    Drupal.attachBehaviors(this);
+  });
+}
 
 /**
  * The default themes.

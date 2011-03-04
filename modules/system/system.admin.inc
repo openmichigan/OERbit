@@ -1,5 +1,5 @@
 <?php
-// $Id: system.admin.inc,v 1.63.2.14 2010/03/01 10:20:28 goba Exp $
+// $Id: system.admin.inc,v 1.63.2.16 2010/09/06 10:49:14 goba Exp $
 
 /**
  * @file
@@ -19,7 +19,7 @@ function system_main_admin_page($arg = NULL) {
 
   // Check for status report errors.
   if (system_status(TRUE) && user_access('administer site configuration')) {
-    drupal_set_message(t('One or more problems were detected with your Pressflow installation. Check the <a href="@status">status report</a> for more information.', array('@status' => url('admin/reports/status'))), 'error');
+    drupal_set_message(t('One or more problems were detected with your Drupal installation. Check the <a href="@status">status report</a> for more information.', array('@status' => url('admin/reports/status'))), 'error');
   }
   $blocks = array();
   if ($admin = db_fetch_array(db_query("SELECT menu_name, mlid FROM {menu_links} WHERE link_path = 'admin' AND module = 'system'"))) {
@@ -503,17 +503,6 @@ function system_theme_settings(&$form_state, $key = '') {
   }
 
   if ($key) {
-    // Include the theme's theme-settings.php file
-    $filename = './'. str_replace("/$key.info", '', $themes[$key]->filename) .'/theme-settings.php';
-    if (!file_exists($filename) and !empty($themes[$key]->info['base theme'])) {
-      // If the theme doesn't have a theme-settings.php file, use the base theme's.
-      $base = $themes[$key]->info['base theme'];
-      $filename = './'. str_replace("/$base.info", '', $themes[$base]->filename) .'/theme-settings.php';
-    }
-    if (file_exists($filename)) {
-      require_once $filename;
-    }
-
     // Call engine-specific settings.
     $function = $themes[$key]->prefix .'_engine_settings';
     if (function_exists($function)) {
@@ -523,16 +512,36 @@ function system_theme_settings(&$form_state, $key = '') {
         $form['engine_specific'] = array_merge($form['engine_specific'], $group);
       }
     }
-    // Call theme-specific settings.
-    $function = $key .'_settings';
-    if (!function_exists($function)) {
-      $function = $themes[$key]->prefix .'_settings';
+
+    // Create a list which includes the current theme and all its base themes.
+    if (isset($themes[$key]->base_themes)) {
+      $theme_keys = array_keys($themes[$key]->base_themes);
+      $theme_keys[] = $key;
     }
-    if (function_exists($function)) {
-      $group = $function($settings);
-      if (!empty($group)) {
-        $form['theme_specific'] = array('#type' => 'fieldset', '#title' => t('Theme-specific settings'), '#description' => t('These settings only exist for the %theme theme and all the styles based on it.', array('%theme' => $themes[$key]->info['name'])));
-        $form['theme_specific'] = array_merge($form['theme_specific'], $group);
+    else {
+      $theme_keys = array($key);
+    }
+
+    // Process the theme and all its base themes.
+    foreach ($theme_keys as $theme) {
+      // Include the theme-settings.php file.
+      $filename = './'. str_replace("/$theme.info", '', $themes[$theme]->filename) .'/theme-settings.php';
+      if (file_exists($filename)) {
+        require_once $filename;
+      }
+
+      $function = $theme .'_settings';
+      if (!function_exists($function)) {
+        $function = $themes[$theme]->prefix .'_settings';
+      }
+      if (function_exists($function)) {
+        $group = $function($settings);
+        if (!empty($group)) {
+          $form['theme_specific']['#type'] = 'fieldset';
+          $form['theme_specific']['#title'] = t('Theme-specific settings');
+          $form['theme_specific']['#description'] = t('These settings only exist for the %theme theme and all the styles based on it.', array('%theme' => $themes[$theme]->info['name']));
+          $form['theme_specific'] = array_merge($form['theme_specific'], $group);
+        }
       }
     }
   }
@@ -629,21 +638,22 @@ function system_modules($form_state = array()) {
   $files = module_rebuild_cache();
 
   // Remove hidden modules from display list.
-  foreach ($files as $filename => $file) {
+  $visible_files = $files;
+  foreach ($visible_files as $filename => $file) {
     if (!empty($file->info['hidden'])) {
-      unset($files[$filename]);
+      unset($visible_files[$filename]);
     }
   }
 
-  uasort($files, 'system_sort_modules_by_info_name');
+  uasort($visible_files, 'system_sort_modules_by_info_name');
 
   if (!empty($form_state['storage'])) {
-    return system_modules_confirm_form($files, $form_state['storage']);
+    return system_modules_confirm_form($visible_files, $form_state['storage']);
   }
   $dependencies = array();
 
   // Store module list for validation callback.
-  $form['validation_modules'] = array('#type' => 'value', '#value' => $files);
+  $form['validation_modules'] = array('#type' => 'value', '#value' => $visible_files);
 
   // Create storage for disabled modules as browser will disable checkboxes.
   $form['disabled_modules'] = array('#type' => 'value', '#value' => array());
@@ -651,7 +661,7 @@ function system_modules($form_state = array()) {
   // Traverse the files, checking for compatibility
   $incompatible_core = array();
   $incompatible_php = array();
-  foreach ($files as $filename => $file) {
+  foreach ($visible_files as $filename => $file) {
     // Ensure this module is compatible with this version of core.
     if (!isset($file->info['core']) || $file->info['core'] != DRUPAL_CORE_COMPATIBILITY) {
       $incompatible_core[$file->name] = $file->name;
@@ -666,7 +676,7 @@ function system_modules($form_state = array()) {
   $disabled = array();
   $throttle = array();
   // Traverse the files retrieved and build the form.
-  foreach ($files as $filename => $file) {
+  foreach ($visible_files as $filename => $file) {
     $form['name'][$filename] = array('#value' => $file->info['name']);
     $form['version'][$filename] = array('#value' => $file->info['version']);
     $form['description'][$filename] = array('#value' => t($file->info['description']));
@@ -688,18 +698,19 @@ function system_modules($form_state = array()) {
     // Check for missing dependencies.
     if (is_array($file->info['dependencies'])) {
       foreach ($file->info['dependencies'] as $dependency) {
-        if (!isset($files[$dependency]) || !$files[$dependency]->status) {
-          if (isset($files[$dependency])) {
-            $dependencies[] = t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => $files[$dependency]->info['name']));
+        if (!isset($files[$dependency])) {
+          $dependencies[] = t('@module (<span class="admin-missing">missing</span>)', array('@module' => drupal_ucfirst($dependency)));
+          $disabled[] = $filename;
+          $form['disabled_modules']['#value'][$filename] = FALSE;
+        }
+        // Only display visible modules.
+        elseif (isset($visible_files[$dependency])) {
+          if ($files[$dependency]->status) {
+            $dependencies[] = t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => $files[$dependency]->info['name']));
           }
           else {
-            $dependencies[] = t('@module (<span class="admin-missing">missing</span>)', array('@module' => drupal_ucfirst($dependency)));
-            $disabled[] = $filename;
-            $form['disabled_modules']['#value'][$filename] = FALSE;
+            $dependencies[] = t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => $files[$dependency]->info['name']));
           }
-        }
-        else {
-          $dependencies[] = t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => $files[$dependency]->info['name']));
         }
       }
 
@@ -716,13 +727,16 @@ function system_modules($form_state = array()) {
     // Mark dependents disabled so user can not remove modules being depended on.
     $dependents = array();
     foreach ($file->info['dependents'] as $dependent) {
-      if ($files[$dependent]->status == 1) {
-        $dependents[] = t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => $files[$dependent]->info['name']));
-        $disabled[] = $filename;
-        $form['disabled_modules']['#value'][$filename] = TRUE;
-      }
-      else {
-        $dependents[] = t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => $files[$dependent]->info['name']));
+      // Hidden modules are unset already.
+      if (isset($visible_files[$dependent])) {
+        if ($files[$dependent]->status == 1) {
+          $dependents[] = t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => $files[$dependent]->info['name']));
+          $disabled[] = $filename;
+          $form['disabled_modules']['#value'][$filename] = TRUE;
+        }
+        else {
+          $dependents[] = t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => $files[$dependent]->info['name']));
+        }
       }
     }
 
@@ -1141,7 +1155,7 @@ function system_site_information_settings() {
   $form['site_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
-    '#default_value' => variable_get('site_name', 'Pressflow'),
+    '#default_value' => variable_get('site_name', 'Drupal'),
     '#description' => t('The name of this website.'),
     '#required' => TRUE
   );
@@ -1266,33 +1280,28 @@ function system_logging_overview() {
  */
 function system_performance_settings() {
 
-  $description = '<p>'. t("The normal cache mode is suitable for most sites and does not cause any side effects. The aggressive cache mode causes Pressflow to skip the loading (boot) and unloading (exit) of enabled modules when serving a cached page. This results in an additional performance boost but can cause unwanted side effects.") .'</p>';
+  $description = '<p>'. t("The normal cache mode is suitable for most sites and does not cause any side effects. The aggressive cache mode causes Drupal to skip the loading (boot) and unloading (exit) of enabled modules when serving a cached page. This results in an additional performance boost but can cause unwanted side effects.") .'</p>';
 
   $problem_modules = array_unique(array_merge(module_implements('boot'), module_implements('exit')));
   sort($problem_modules);
 
   if (count($problem_modules) > 0) {
-    $description .= '<p>'. t('<strong class="error">The following enabled modules are potentially incompatible with aggressive- and external-mode caching and will not function properly: %modules</strong>', array('%modules' => implode(', ', $problem_modules))) .'.</p>';
+    $description .= '<p>'. t('<strong class="error">The following enabled modules are incompatible with aggressive mode caching and will not function properly: %modules</strong>', array('%modules' => implode(', ', $problem_modules))) .'.</p>';
   }
   else {
-    $description .= '<p>'. t('<strong class="ok">Currently, all enabled modules are compatible with an aggressive or external caching policy.</strong> Please note, if you use aggressive or external caching and enable new modules, you will need to check this page again to ensure compatibility.') .'</p>';
+    $description .= '<p>'. t('<strong class="ok">Currently, all enabled modules are compatible with the aggressive caching policy.</strong> Please note, if you use aggressive caching and enable new modules, you will need to check this page again to ensure compatibility.') .'</p>';
   }
   $form['page_cache'] = array(
     '#type' => 'fieldset',
     '#title' => t('Page cache'),
-    '#description' => t('Enabling the page cache will offer a significant performance boost. Pressflow can store and send compressed cached pages requested by <em>anonymous</em> users. By caching a web page, Pressflow does not have to construct the page each time it is viewed.'),
+    '#description' => t('Enabling the page cache will offer a significant performance boost. Drupal can store and send compressed cached pages requested by <em>anonymous</em> users. By caching a web page, Drupal does not have to construct the page each time it is viewed.'),
   );
 
   $form['page_cache']['cache'] = array(
     '#type' => 'radios',
     '#title' => t('Caching mode'),
     '#default_value' => variable_get('cache', CACHE_DISABLED),
-    '#options' => array(
-      CACHE_DISABLED => t('Disabled'),
-      CACHE_NORMAL => t('Normal (recommended for production sites, no side effects)'),
-      CACHE_AGGRESSIVE => t('Aggressive (experts only, possible side effects)'),
-      CACHE_EXTERNAL => t('External (experts only, possible side effects)'),
-    ),
+    '#options' => array(CACHE_DISABLED => t('Disabled'), CACHE_NORMAL => t('Normal (recommended for production sites, no side effects)'), CACHE_AGGRESSIVE => t('Aggressive (experts only, possible side effects)')),
     '#description' => $description
   );
 
@@ -1305,19 +1314,12 @@ function system_performance_settings() {
     '#options' => $period,
     '#description' => t('On high-traffic sites, it may be necessary to enforce a minimum cache lifetime. The minimum cache lifetime is the minimum amount of time that will elapse before the cache is emptied and recreated, and is applied to both page and block caches. A larger minimum cache lifetime offers better performance, but users will not see new content for a longer period of time.')
   );
-  $form['page_cache']['page_cache_max_age'] = array(
-    '#type' => 'select',
-    '#title' => t('Page cache maximum age'),
-    '#default_value' => variable_get('page_cache_max_age', 0),
-    '#options' => $period,
-    '#description' => t('Internal and external page caches will not deliver cached paged older than this setting.')
-  );
   $form['page_cache']['page_compression'] = array(
     '#type' => 'radios',
     '#title' => t('Page compression'),
     '#default_value' => variable_get('page_compression', TRUE),
     '#options' => array(t('Disabled'), t('Enabled')),
-    '#description' => t("By default, Pressflow compresses the pages it caches in order to save bandwidth and improve download times. This option should be disabled when using a webserver that performs compression."),
+    '#description' => t("By default, Drupal compresses the pages it caches in order to save bandwidth and improve download times. This option should be disabled when using a webserver that performs compression."),
   );
 
   $form['block_cache'] = array(
@@ -1667,7 +1669,7 @@ function system_site_maintenance_settings() {
   $form['site_offline_message'] = array(
     '#type' => 'textarea',
     '#title' => t('Site off-line message'),
-    '#default_value' => variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Pressflow')))),
+    '#default_value' => variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
     '#description' => t('Message to show visitors when the site is in off-line mode.')
   );
 

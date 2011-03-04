@@ -1,39 +1,35 @@
 <?php
-// $Id: menu_attributes.install,v 1.4 2009/04/21 21:43:42 schoonzie Exp $
+// $Id: menu_attributes.install,v 1.4.2.1 2010/07/24 17:38:40 davereid Exp $
 
 /**
  * @file
- * Provides the install, update, and uninstall functions for the Menu Attributes module
+ * Install, update and uninstall functions for the menu_attributes module.
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function menu_attributes_install() {
-  db_query("UPDATE {system} SET weight = 10 WHERE name = 'menu_attributes'");
-}
-
-function menu_attributes_update_1() {
-  $ret = array();
-  db_query("UPDATE {system} SET weight = 10 WHERE name = 'menu_attributes'");
-  return $ret;
+  db_query("UPDATE {system} SET weight = 10 WHERE type = 'module' AND name = 'menu_attributes'");
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function menu_attributes_uninstall() {
-  variable_del('menu_attributes_id_enable');
-  variable_del('menu_attributes_name_enable');
-  variable_del('menu_attributes_name_default');
-  variable_del('menu_attributes_target_enable');
-  variable_del('menu_attributes_target_default');
-  variable_del('menu_attributes_rel_enable');
-  variable_del('menu_attributes_rel_default');
-  variable_del('menu_attributes_class_enable');
-  variable_del('menu_attributes_class_default');
-  variable_del('menu_attributes_style_enable');
-  variable_del('menu_attributes_style_default');
-  variable_del('menu_attributes_accesskey_enable');
-  variable_del('menu_attributes_accesskey_default');
+  drupal_load('module', 'menu_attributes');
+  $attributes = menu_attributes_menu_attribute_info();
+  foreach (array_keys($attributes) as $attribute) {
+    variable_del("menu_attributes_{$attribute}_enable");
+    variable_del("menu_attributes_{$attribute}_default");
+  }
+}
+
+/**
+ * Update the module weight.
+ */
+function menu_attributes_update_1() {
+  $ret = array();
+  db_query("UPDATE {system} SET weight = 10 WHERE type = 'module' AND name = 'menu_attributes'");
+  return $ret;
 }
