@@ -61,7 +61,8 @@ function cosign_init() {
          *   "refresh" was needed to format the
          * "admin_menu" correctly after cosign login
          *******************************************/
-        drupal_session_regenerate();
+        //drupal_session_regenerate();  // Only available in pressflow and Drupal 7
+        sess_regenerate();
       }
     }
 
