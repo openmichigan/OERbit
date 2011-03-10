@@ -1,6 +1,16 @@
+# text editor backup files
+.*~
+*~
+\#*\#
+
+# configuration files
 .htaccess
+sites/oer.switchbackcms.com/settings.php
+sites/default/settings.php
+
+# Drupal content
+sites/default/files/*
+
+# Other ignored directories.
 blog/*
 wiki/*
-sites/default/files/*
-sites/oer.switchbackcms.com/settings.php
-
