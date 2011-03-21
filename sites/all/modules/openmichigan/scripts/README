@@ -1,0 +1,10 @@
+This directory contains some convenience scripts.
+
+At present, we have:
+
+db_cleanup.php - deletes all OER data from the OERbit DB. It will
+delete any course, resources, images you have put up post
+installation. Don't use this unless you're really sure you need to.
+
+reset_admin_info.php - which is a very quick and easy to way to reset
+the uid=1 username and password.
