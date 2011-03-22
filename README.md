@@ -24,7 +24,7 @@ be kept updated as new versions emerge.
 
 ### Mailing list ###
 Although we make no promises or guarantees to respond or actually be
-helpful, questions, rants (specially rants), raves, general comments
+helpful, questions, rants (especially rants), raves, general comments
 are welcome on the
 [OERbit Google group](http://groups.google.com/group/oerbit). The
 archives are publicly viewable but posting is restricted to members so
