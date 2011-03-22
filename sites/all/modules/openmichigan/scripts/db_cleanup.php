@@ -69,7 +69,7 @@ class CleanDB
           "aggregator_feed",
           "aggregator_item",
           "apachesolr_search_node",
-          //"authmap",
+          "authmap",
           "cache",
           "cache_apachesolr",
           "cache_block",
@@ -83,28 +83,8 @@ class CleanDB
           "cache_update",
           "cache_views",
           "cache_views_data",
+	  "captcha_sessions",
           "contact",
-          "content_field_code",
-          "content_field_content_reference",
-          "content_field_contributors",
-          "content_field_course_instructor",
-          "content_field_course_level",
-          "content_field_course_reference",
-          "content_field_creators",
-          "content_field_file",
-          "content_field_instructor_academic_unit",
-          "content_field_parent_unit",
-          "content_field_publisher",
-          "content_field_unit_top",
-          "content_field_video",
-          "content_field_website",
-          "content_type_course",
-          "content_type_information",
-          "content_type_instructor",
-          "content_type_material",
-          "content_type_other",
-          "content_type_session",
-          "content_type_unit",
           "hierarchical_permissions",
           "history",
           "image",
@@ -146,20 +126,53 @@ class CleanDB
    * for setting non standard column match names. The deletion is done
    * by del_related_nodes().
    */
-  private $rel_table_ops =
+  private $rel_nid_ops =
     array(
-	  "accessible_content_node_totals" => null,
 	  "creativecommons_node" => null,
           "node_access" => null,
           "nodewords" => array(
                                "join_col" => "id"
                                ),
-          "node_access" => null,
           "node_revisions" => null,
           "print_mail_node_conf" => null,
           "print_node_conf" => null,
           "workflow_node" => null,
           );
+
+
+  /**
+   * Tables from which rows referring to deleted node_revisions.vid
+   * values are deleted as the array keys. If the value isn't null, it
+   * is used for setting non standard column match names. The deletion
+   * is done by del_related_versions().
+   */
+  private $rel_vid_ops =
+    array(
+	  "accessible_content_node_totals" => null,
+	  "content_field_code" => null,
+          "content_field_content_reference" => null,
+          "content_field_contributors" => null,
+          "content_field_course_instructor" => null,
+          "content_field_course_level" => null,
+          "content_field_course_reference" => null,
+          "content_field_creators" => null,
+          "content_field_file" => null,
+          "content_field_instructor_academic_unit" => null,
+          "content_field_parent_unit" => null,
+          "content_field_publisher" => null,
+          "content_field_unit_top" => null,
+          "content_field_video" => null,
+          "content_field_website" => null,
+          "content_type_course" => null,
+          "content_type_information" => null,
+          "content_type_instructor" => null,
+          "content_type_material" => null,
+          "content_type_other" => null,
+          "content_type_page" => null,
+          "content_type_session" => null,
+          "content_type_unit" => null
+          );
+
 
   /**
    * Deletions from tables without doing any joins.
@@ -168,9 +181,13 @@ class CleanDB
     array(
 	  "users" => array("operator" => ">"),
 	  "users_roles" => array("operator" => "!="),
+	  "creativecommons_user" => array("operator" => "!="),
 	  "path_redirect" => array("operator" => "LIKE",
 				   "column" => "source",
 				   "compare_val" => "%education%"),
+	  "path_redirect" => array("operator" => "LIKE",
+				   "column" => "source",
+				   "compare_val" => "%node%"),
 	  "url_alias" => array("operator" => "LIKE",
 			       "column" => "src",
 			       "compare_val" => "%taxonomy%")
@@ -184,7 +201,8 @@ class CleanDB
 	  "node" => array("operator" => ">"),
 	  "node_revisions" => array("operator" => "!="),
 	  "workflow_node" => array("operator" => "!="),
-	  "accesslog" => array("operator" => "!=")
+	  "accesslog" => array("operator" => "!="),
+	  "files" => array("operator" => "!=")
 	  );
 
   /**
@@ -476,33 +494,44 @@ class CleanDB
 
 
   /**
-   * Build the queries used by del_related nodes. Uses the keys of the
-   * object property $rel_table_ops array as the list of tables.
-
+   * Build the queries used by del_related_nodes() and
+   * del_related_versions(). Uses the keys of the $deletions array as
+   * the list of tables.
+   *
    * Can match a table column other than the default "nid" against
    * node.nid if an array with the value of the key "join_col".
+   *
+   * @param $deletions array of tables from which content should be
+   * deleted. See the $rel_nid_ops or $rel_vid_ops object properties
+   * for examples.
+   *
+   * @param $ref_table string the table that will be LEFT joined
+   *
+   * @param $ref_col string the column in $ref_table against which the
+   * comparison will be done.
    *
    * @return string that is the SQL for deleting rows that referred to
    * nodes deleted by del_content_nodes().
    */
-  private function mk_del_node_related_queries()
+  private function mk_del_related_queries($deletions, $ref_table, $ref_col)
   {
     $query = null;
-    $tables = array_keys($this->rel_table_ops);
+    $tables = array_keys($deletions);
 
     foreach ($tables as $table) {
-      $raw_query = "DELETE FROM $table USING $table LEFT JOIN node ON $table.";
+      $raw_query = "DELETE FROM $table USING $table LEFT JOIN " .
+	"$ref_table ON $table.";
       // Conditional checks if "join_col" is specified and uses that
       // column name to compare against node.nid.
-      if (isset($this->rel_table_ops[$table]["join_col"])) {
-        $raw_query .= $this->rel_table_ops[$table]["join_col"];
+      if (isset($deletions[$table]["join_col"])) {
+        $raw_query .= $deletions[$table]["join_col"];
       } else {
-        $raw_query .= "nid";
+        $raw_query .= $ref_col;
       }
-      $raw_query .= " = node.nid WHERE node.nid IS NULL; ";
+      $raw_query .= " = $ref_table.$ref_col WHERE " .
+	"$ref_table.$ref_col IS NULL; ";
       $query .= $raw_query . $this->fix_auto_incr_query($table);
     }
-
     return $query;
   }
 
@@ -515,11 +544,13 @@ class CleanDB
   public function del_related_nodes()
   {
     $conf_msg = "Deleted rows representing deleted nodes from table ";
-    $query = $this->mk_del_node_related_queries();
+    $query = $this->mk_del_related_queries($this->rel_nid_ops,
+					   "node",
+					   "nid");
 
     if ($this->run_multi_query($query) === 0) {
       $this->multi_query_conf($conf_msg,
-			      array_keys($this->rel_table_ops),
+			      array_keys($this->rel_nid_ops),
 			      TRUE);
     }
   }
@@ -527,10 +558,10 @@ class CleanDB
 
   /**
    * A second pass on deleting content from the node_revisions
-   * table. The mk_del_node_related_queries() and del_related_nodes()
-   * only delete rows that correspond to deleted nodes. This function
-   * deletes all but the vid currently specified in the node table for
-   * each nid. Must run after del_related_nodes()
+   * table. The del_related_nodes() function only deletes rows that
+   * correspond to deleted nodes. This function deletes all but the
+   * vid currently specified in the node table for each nid. Must run
+   * after del_related_nodes()
    */
   public function del_extra_revs()
   {
@@ -548,11 +579,30 @@ class CleanDB
 
 
   /**
+   * Delete rows in various tables that refer to the versions deleted
+   * in del_extra_revs(). For this function to do anything useful, you
+   * MUST call del_extra_revs() first.
+   */
+  public function del_related_versions()
+  {
+    $conf_msg = "Deleted rows representing deleted versions from table ";
+    $query = $this->mk_del_related_queries($this->rel_vid_ops,
+					   "node_revisions",
+					   "vid");
+
+    if ($this->run_multi_query($query) === 0) {
+      $this->multi_query_conf($conf_msg,
+			      array_keys($this->rel_vid_ops),
+			      TRUE);
+    }
+  }
+
+
+  /**
    * Delete rows from tables using criteria within a single
    * table. This function uses the values of the $single_tbl_deletions
    * object property.
    */
-
   public function do_single_table_dels() {
     $query = null;
     $conf_msg = null;
@@ -968,12 +1018,13 @@ $db_clean->db_pass_prompt();
 $db_clean->db_connect();
 $db_clean->drop_extra_tables();
 $db_clean->truncate_tables();
-$db_clean->del_content_nodes();
+//$db_clean->del_content_nodes();
 $db_clean->del_related_nodes();
 $db_clean->del_extra_revs();
+$db_clean->del_related_versions();
 $db_clean->do_single_table_dels();
 $db_clean->do_single_table_ups();
-$db_clean->url_alias_cleanup();
+// $db_clean->url_alias_cleanup();
 $db_clean->files_cleanup();
 $db_clean->filefield_meta_cleanup();
 $db_clean->deactivate_cosign_auth();
