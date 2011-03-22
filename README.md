@@ -36,6 +36,6 @@ You are encouraged to fork this code on
 patches, enhancements etc.
 
 ### License ###
-OERbit and Drupal are licensed under the
+OERbit and Drupal are released under the
 [GPLv2 license](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html):
 [http://www.gnu.org/licenses/old-licenses/gpl-2.0.html](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
