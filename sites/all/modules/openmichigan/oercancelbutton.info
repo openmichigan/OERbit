@@ -1,6 +1,6 @@
 ; $Id$
 name = oercancelbutton
-description = stupid module to support Cancel Button on froms used with captcha
+description = module to support Cancel Button on forms used with captcha
 dependencies[] = webform
 package = Open Michigan
 core = 6.x
