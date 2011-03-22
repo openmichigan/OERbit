@@ -14,8 +14,8 @@ output.
 
 ### Getting started ###
 To get started with OERbit, please read the overview at
-http://open.umich.edu/wiki/OERbit and review the install instructions
-on that site.
+[http://open.umich.edu/wiki/OERbit](http://open.umich.edu/wiki/OERbit)
+and review the install instructions on that site.
 
 ### Docs ###
 All documentation is located on
@@ -38,4 +38,4 @@ patches, enhancements etc.
 ### License ###
 OERbit and Drupal are licensed under the
 [GPLv2 license](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html):
-http://www.gnu.org/licenses/old-licenses/gpl-2.0.html.
+[http://www.gnu.org/licenses/old-licenses/gpl-2.0.html](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
