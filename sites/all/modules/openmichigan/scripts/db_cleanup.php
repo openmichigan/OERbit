@@ -1,3 +1,4 @@
+<?php
 /*
  * COPYRIGHT 2011
  * The Regents of the University of Michigan
@@ -31,7 +32,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-<?php
 /**
  * This script removes all OER data from the OERbit DB. It will delete
  * any course, resources, images you have put up post installation.

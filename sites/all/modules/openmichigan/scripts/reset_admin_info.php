@@ -1,3 +1,4 @@
+<?php
 /*
  * COPYRIGHT 2011
  * The Regents of the University of Michigan
@@ -31,7 +32,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-<?php
 /**
  * This script provides a very simplified way to reset the username
  * and password of the predefined uid=1 OERbit user.
