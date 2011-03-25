@@ -35,6 +35,22 @@ You are encouraged to fork this code on
 [Github](http://github.com/openmichigan/oerbit). We'd love to receive
 patches, enhancements etc.
 
+### Bug, enhancements, new feature requests ###
+If you encounter a bug; would like an existing feature enhanced; or
+would like to request a new feature please look at the
+[https://github.com/openmichigan/oerbit/issues](issue tracker on
+Github). Search through the tracker and if you don't see something
+similar to what you'd like to say, please create a new one. If someone
+has already said what you were intending to say, you may vote for that
+issue.
+
+If you're not on Github, please [https://github.com/plans](sign up),
+it's free if you'd like to participate in projects or if you'd like to
+host open source projects. It's also quite fun to participate in
+projects on Github. If you're really not interested, you may join the
+[http://groups.google.com/group/oerbit](OERbit Google group) and share
+your thoughts on the group.
+
 ### License ###
 OERbit and Drupal are released under the
 [GPLv2 license](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html):
