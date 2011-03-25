@@ -35,7 +35,7 @@ You are encouraged to fork this code on
 [Github](http://github.com/openmichigan/oerbit). We'd love to receive
 patches, enhancements etc.
 
-### Bug, enhancements, new feature requests ###
+### Bug reports, enhancements, new feature requests ###
 If you encounter a bug; would like an existing feature enhanced; or
 would like to request a new feature please look at the
 [https://github.com/openmichigan/oerbit/issues](issue tracker on
