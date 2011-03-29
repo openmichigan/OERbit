@@ -35,6 +35,12 @@ You are encouraged to fork this code on
 [Github](http://github.com/openmichigan/oerbit). We'd love to receive
 patches, enhancements etc.
 
+### Tracking Development ###
+The master branch of git will always be the latest code and
+__should__ always work.  The _x.x_-__stable__ branches will
+relate to released versions that we will actually run in production.
+As the name implies, these branches will always be stable, working code.
+
 ### Bug reports, enhancements, new feature requests ###
 If you encounter a bug; would like an existing feature enhanced; or
 would like to request a new feature please look at the
