@@ -194,16 +194,32 @@ class CleanDB
 	  );
 
   /**
-   * Updates of table rows.
+   * Updates of table rows. Double quotes inside strings need to be
+   * escaped along with escaped backslashes to make MySQL happy.
    */
   private $single_tbl_ups =
     array(
-	  "node" => array("operator" => ">"),
-	  "node_revisions" => array("operator" => "!="),
-	  "workflow_node" => array("operator" => "!="),
-	  "accesslog" => array("operator" => "!="),
-	  "files" => array("operator" => "!=")
-	  );
+	  "node" => array(array("operator" => ">")),
+	  "node_revisions" => array(array("operator" => "!=")),
+	  "workflow_node" => array(array("operator" => "!=")),
+	  "accesslog" => array(array("operator" => "!=")),
+	  "files" => array(array("operator" => "!=")),
+	  "variable" => array(array("operator" => "=",
+				    "comp_column" => "name",
+				    "compare_val" => "recaptcha_public_key",
+				    "set_column" => "value",
+				    "value" => "s:3:\\\"xxx\\\""),
+			      array("operator" => "=",
+				    "comp_column" => "name",
+				    "compare_val" => "recaptcha_private_key",
+				    "set_column" => "value",
+				    "value" => "s:3:\\\"xxx\\\""),
+			      array("operator" => "=",
+				    "comp_column" => "name",
+				    "compare_val" => "googleanalytics_account",
+				    "set_column" => "value",
+				    "value" => "s:0:\\\"\\\"")));
+
 
   /**
    * Define setters.
@@ -668,9 +684,27 @@ class CleanDB
     $operator = $options["operator"];
     $value = 1;
     $compare_val = $value;
+    $comp_column = "uid";
+    $set_column = $comp_column;
 
-     return "UPDATE $table SET $table.uid = \"$value\" WHERE " .
-      "$table.uid $operator \"$compare_val\"; ";
+    if (isset($options["value"])) {
+      $value = $options["value"];
+    }
+
+    if (isset($options["compare_val"])) {
+      $compare_val = $options["compare_val"];
+    }
+
+    if (isset($options["comp_column"])) {
+      $comp_column = $options["comp_column"];
+    }
+
+    if (isset($options["set_column"])) {
+      $set_column = $options["set_column"];
+    }
+
+     return "UPDATE $table SET $table.$set_column = \"$value\" WHERE " .
+      "$table.$comp_column $operator \"$compare_val\"; ";
   }
 
 
@@ -685,12 +719,14 @@ class CleanDB
     $tables = array_keys($this->single_tbl_ups);
 
     foreach($tables as $table) {
-      $query .=
-	$this->mk_single_tbl_up_query($table,
-				      $this->single_tbl_ups[$table]
-				      );
+      foreach($this->single_tbl_ups[$table] as $operation) {
+	$query .=
+	  $this->mk_single_tbl_up_query($table,
+					$operation
+					);
 
-      $conf_msg .= $this->single_tbl_up_conf($table);
+	$conf_msg .= $this->single_tbl_up_conf($table);
+      }
     }
 
     if ($this->run_multi_query($query) === 0) {
@@ -809,6 +845,7 @@ class CleanDB
     }
   }
 
+
   /**
    * Generate the query that will be used to remove left over records
    * in the files table.
@@ -856,6 +893,8 @@ class CleanDB
    * Cleanup the filefield_meta table. This function MUST run after
    * the files_cleanup function.
    */
+  // TODO: We could abstract the LEFT JOIN deletions so we don't have
+  // to do different queries for different tables.
   public function filefield_meta_cleanup()
   {
     $query = "DELETE FROM filefield_meta USING filefield_meta LEFT JOIN " .
@@ -1024,7 +1063,7 @@ $db_clean->del_extra_revs();
 $db_clean->del_related_versions();
 $db_clean->do_single_table_dels();
 $db_clean->do_single_table_ups();
-// $db_clean->url_alias_cleanup();
+//$db_clean->url_alias_cleanup();
 $db_clean->files_cleanup();
 $db_clean->filefield_meta_cleanup();
 $db_clean->deactivate_cosign_auth();
