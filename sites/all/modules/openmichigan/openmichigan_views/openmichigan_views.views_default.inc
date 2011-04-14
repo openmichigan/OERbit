@@ -2883,6 +2883,11 @@ function openmichigan_views_views_default_views() {
       'field' => 'field_material_type_value',
       'relationship' => 'none',
     ),
+    'weight' => array(
+      'id' => 'weight',
+      'table' => 'node_weight',
+      'field' => 'weight',
+    ),
     'title' => array(
       'order' => 'ASC',
       'id' => 'title',
