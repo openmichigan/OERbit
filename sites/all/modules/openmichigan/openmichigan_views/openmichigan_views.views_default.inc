@@ -5327,14 +5327,12 @@ function openmichigan_views_views_default_views() {
       ),
       'relationship' => 'none',
     ),
-    'title' => array(
+    'timestamp' => array(
       'order' => 'ASC',
-      'id' => 'title',
-      'table' => 'node',
-      'field' => 'title',
-      'override' => array(
-        'button' => 'Override',
-      ),
+      'granularity' => 'second',
+      'id' => 'timestamp',
+      'table' => 'node_revisions',
+      'field' => 'timestamp',
       'relationship' => 'none',
     ),
   ));
