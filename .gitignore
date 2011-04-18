@@ -14,3 +14,4 @@ sites/default/files/*
 # Other ignored directories.
 blog/*
 wiki/*
+favicon.ico
