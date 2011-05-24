@@ -20,7 +20,6 @@ function cosign_init() {
     // do nothing, user is logged in, and not logging out...
   }
   else {
-    watchdog('cosign', "login: $user->name");
     //webserver_auth_init();
     $authname = '';
 
@@ -56,6 +55,7 @@ function cosign_init() {
             drupal_goto('http://' . $_SERVER['SERVER_NAME'] . base_path() . "invalidlogin");
         }
         $user = user_external_load($authname);
+        watchdog('cosign', "login: $authname");
         /*******************************************
          * bdr - added this line so only 1 web page
          *   "refresh" was needed to format the
