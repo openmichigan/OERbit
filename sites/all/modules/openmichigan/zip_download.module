@@ -110,10 +110,12 @@ function zip_download_form(&$form_state, $node) {
 	unset ($_SESSION['zip_download_status']);
 	unset ($_SESSION['zip_download_progress']);
 
+        $zname = (str_replace("/", "-", $node->path).'.zip'); 
+
 	$form['filename'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Save Zip Archive to'),
-		'#default_value' => 'Archive.zip',
+                '#default_value' => $zname,
 		'#size' => 60,
 		'#maxlength' => 64,
 		'#description' => t('Save the download archive file with this name.'),
@@ -292,6 +294,7 @@ function zip_download_process(&$node, $filename = "Archive.zip") {
 	}
 
 	if (count($files) > 0) {
+                $filename = (str_replace("/", "-", $node->path).'.zip');
 		$tmp = tempnam(file_directory_temp(), "ZIPDL_");
 		if (zip_download_create_archive($tmp, $files)) {
 			if (zip_download_file_transfer($tmp, $filename)) {
