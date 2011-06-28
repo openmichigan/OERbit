@@ -1,5 +1,4 @@
 <?php
-// $Id: recaptcha.admin.inc,v 1.1.2.1 2009/08/10 17:50:02 robloach Exp $
 
 /**
  * @file
@@ -35,6 +34,12 @@ function recaptcha_admin_settings() {
     '#title' => t('Secure Connection'),
     '#default_value' => variable_get('recaptcha_secure_connection', FALSE),
     '#description' => t('Connect to the reCAPTCHA server using a secure connection.'),
+  );
+  $form['recaptcha_ajax_api'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('AJAX API'),
+    '#default_value' => variable_get('recaptcha_ajax_api', FALSE),
+    '#description' => t('Use the AJAX API to display reCAPTCHA.'),
   );
   $form['recaptcha_theme_settings'] = array(
     '#type' => 'fieldset',

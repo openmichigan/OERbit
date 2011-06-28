@@ -1,5 +1,4 @@
 <?php
-/* $Id: recaptcha_mailhide.module,v 1.1.2.7.2.5 2009/09/29 02:51:30 robloach Exp $ */
 
 /**
  * @file
@@ -50,14 +49,14 @@ function recaptcha_mailhide_filter($op, $delta = 0, $format = -1, $text = '') {
           '#title' => t('Public Key'),
           '#default_value' => variable_get('recaptcha_mailhide_public_key', ''),
           '#maxlength' => 50,
-          '#description' => t('Your public Mailhide key obtained from <a href="@url" target="_blank">reCAPTCHA</a>.', array('@url' => 'http://mailhide.recaptcha.net/apikey')),
+          '#description' => t('Your public Mailhide key obtained from <a href="@url" target="_blank">reCAPTCHA</a>.', array('@url' => 'http://www.google.com/recaptcha/mailhide/apikey')),
           );
         $form['filter_recaptcha']['recaptcha_mailhide_private_key'] = array(
           '#type' => 'textfield',
           '#title' => t('Private Key'),
           '#default_value' => variable_get('recaptcha_mailhide_private_key', ''),
           '#maxlength' => 50,
-          '#description' => t('Your private Mailhide key obtained from <a href="@url" target="_blank">reCAPTCHA</a>.', array('@url' => 'http://mailhide.recaptcha.net/apikey')),
+          '#description' => t('Your private Mailhide key obtained from <a href="@url" target="_blank">reCAPTCHA</a>.', array('@url' => 'http://www.google.com/recaptcha/mailhide/apikey')),
           );
         return $form;
       break;

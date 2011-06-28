@@ -1,5 +1,4 @@
 <?php
-/* $Id: recaptcha.module,v 1.13.2.4.2.11.2.12 2009/09/23 17:27:35 robloach Exp $ */
 
 /**
  * @file
@@ -86,10 +85,21 @@ function recaptcha_captcha() {
         $recaptcha_tabindex = variable_get('recaptcha_tabindex', NULL);
         $recaptcha_public_key = variable_get('recaptcha_public_key', '');
         $recaptcha_form_value = NULL;
+        $recaptcha_ajax_api = variable_get('recaptcha_ajax_api', FALSE);
+
+        if ($recaptcha_ajax_api) {
+          // By default CAPTCHA turns off page caching on
+          // any page where a CAPTCHA challenge appears. 
+          // If recaptcha is using AJAX API, set caching
+          // back to it's old state as stored in DB.
+          global $conf;
+          $cache = variable_get('cache', FALSE);
+          $conf['cache'] = $cache;
+        }
 
         // Construct the Javascript, but only display it once.
         static $_recaptcha_jsadded = FALSE;
-        if ($_recaptcha_jsadded == FALSE) {
+        if ($_recaptcha_jsadded == FALSE && $recaptcha_ajax_api == FALSE) {
           $_recaptcha_jsadded = TRUE;
           $recaptcha_options = array(
             'theme' => $recaptcha_theme,
@@ -124,10 +134,24 @@ function recaptcha_captcha() {
           '#type' => 'hidden',
           '#value' => 'reCAPTCHA',
         );
-        $captcha['form']['captcha_form'] = array(
-          '#type' => 'item',
-          '#value' => ($recaptcha_form_value ? '<div id="recaptcha_custom_theme_widget">'. $recaptcha_form_value .'</div>' : '') . $html,
-        );
+
+        // Expose the form, either straight HTML, or using the AJAX API.
+        if ($recaptcha_ajax_api == FALSE) {
+          $captcha['form']['captcha_form'] = array(
+            '#type' => 'item',
+            '#value' => ($recaptcha_form_value ? '<div id="recaptcha_custom_theme_widget">'. $recaptcha_form_value .'</div>' : '') . $html,
+          );
+        }
+        else {
+          $html = ($recaptcha_theme == 'custom') ? theme('recaptcha_custom_widget') : '';
+          $captcha['form']['captcha_form'] = array(
+            '#type' => 'item',
+            '#value' => '<div id="recaptcha_ajax_api_container">'. $html .'</div>',
+          );
+          $js = "$(function() { Recaptcha.create('$recaptcha_public_key', 'recaptcha_ajax_api_container', {theme: '$recaptcha_theme'});});";
+          drupal_add_js($js, 'inline', 'header');
+          drupal_set_html_head('<script type="text/javascript" src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>');
+        }
       }
       return $captcha;
   }
@@ -137,10 +161,11 @@ function recaptcha_captcha() {
  * CAPTCHA Callback; Validates the reCAPTCHA code.
  */
 function recaptcha_captcha_validation($solution = NULL, $response = NULL) {
+  global $user;
   if ($response == 'reCAPTCHA' && isset($_POST['recaptcha_challenge_field']) && isset($_POST['recaptcha_response_field'])) {
     $resp = recaptcha_check_answer(
       variable_get('recaptcha_private_key', ''),
-      $_SERVER['REMOTE_ADDR'],
+      $user->hostname,
       $_POST['recaptcha_challenge_field'],
       $_POST['recaptcha_response_field']
     );

@@ -1,4 +1,3 @@
-$Id: README.txt,v 1.13.4.2.2.6.2.3 2009/09/23 17:27:35 robloach Exp $
 
 reCAPTCHA for Drupal
 ====================
