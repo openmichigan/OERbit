@@ -2,7 +2,7 @@ Overview
 --------
 Webform supports theming similar to the CCK or Views modules. Any webform
 may be themed on the server side, though doing so may require a reasonable
-amount of knowledge about the Drupal Forms API. More information about the Forms
+amount of knowledge about the Drupal Form API. More information about the Form
 API may be found at http://api.drupal.org/api/file/developer/topics/forms_api.html
 
 Theme submission e-mails
@@ -30,17 +30,9 @@ customize the display of e-mails sent by each individual webform.
 - To get a better idea of what variables are available to you, you can include
   the print_r function in your email. Simply include the line:
 
-  <?php print_r($form_values) ?>
+  <?php print_r($submission) ?>
 
   to get a listing of all the available fields you can use in your mail.
-
-- Important Note for Webform Themers: When webform added support for fieldsets
-  (i.e. nested fields), it became necessary to increase the complexity of themed
-  e-mails. Previously, the $form_values variable only sent the values of the
-  form in a flat array. Now, $form_values contains two arrays of information:
-
-  $form_values['submitted'] => An array of fields and their submitted values (identical to the previous value of $form_values)
-  $form_values['submitted_tree'] => An array of fields and their values structured in a recursive array
 
 - Advanced Webform e-mail Theming: Theming the e-mail headers may also be done
   by overriding the theme_webform_mail_headers() function from webform.module.
@@ -108,4 +100,16 @@ of the phptemplate engine.
   you have good reason to do so (like you're forwarding your webform to a custom
   PHP or PERL script).
 
-$Id: THEMING.txt,v 1.10.2.3 2008/09/06 06:07:56 quicksketch Exp $
+Theme display of a webform submission display
+---------------------------------------------
+
+Theming the display of a webform submission works the same way as theming a
+webform form. Webform uses Drupal "renderable" style arrays for the display of
+submissions, just like most forms in Drupal.
+
+The template file for theming submissions is webform-submission.tpl.php. You can
+use webform-submission-[node id here].tpl.php for individual nodes if desired.
+Note that the contents of this template are used not only for display of
+submissions in the Webform interface but also in e-mails when printing out
+the %email_values token.
+

@@ -1,5 +1,4 @@
 <?php
-// $Id: webform.install,v 1.22.2.17 2009/05/20 20:27:28 quicksketch Exp $
 
 /**
  * @file
@@ -7,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function webform_schema() {
   $schema = array();
@@ -16,7 +15,7 @@ function webform_schema() {
     'description' => 'Table for storing additional properties for webform nodes.',
     'fields' => array(
       'nid' => array(
-        'description' => 'The node identifier of a webform',
+        'description' => 'The node identifier of a webform.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -26,12 +25,60 @@ function webform_schema() {
         'type' => 'text',
         'not null' => TRUE,
       ),
+      'confirmation_format' => array(
+        'description' => 'The input format used by the confirmation message.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'redirect_url' => array(
+        'description' => 'The URL a user is redirected to after submitting a form.',
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => '<confirmation>',
+      ),
+      'status' => array(
+        'description' => 'Boolean value of a webform for open (1) or closed (0).',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'block' => array(
+         'description' => 'Boolean value for whether this form be available as a block.',
+         'type' => 'int',
+         'size' => 'tiny',
+         'not null' => TRUE,
+         'default' => 0,
+      ),
       'teaser' => array(
         'description' => 'Boolean value for whether the entire form should be displayed on the teaser.',
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
+      ),
+      'allow_draft' => array(
+         'description' => 'Boolean value for whether submissions to this form be saved as a draft.',
+         'type' => 'int',
+         'size' => 'tiny',
+         'not null' => TRUE,
+         'default' => 0,
+      ),
+      'auto_save' => array(
+         'description' => 'Boolean value for whether submissions to this form should be auto-saved between pages.',
+         'type' => 'int',
+         'size' => 'tiny',
+         'not null' => TRUE,
+         'default' => 0,
+      ),
+      'submit_notice' => array(
+        'description' => 'Boolean value for whether to show or hide the previous submissions notification.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
       ),
       'submit_text' => array(
         'description' => 'The title of the submit button on the form.',
@@ -51,36 +98,6 @@ function webform_schema() {
         'not null' => TRUE,
         'default' => -1,
       ),
-      'email' => array(
-        'description' => 'The primary e-mail address for receiving submission results.',
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'email_from_name' => array(
-        'description' => 'The name of the sender in sent submission e-mails.',
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'email_from_address' => array(
-        'description' => 'The address of the sender in sent submission e-mails.',
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'email_subject' => array(
-        'description' => 'The subject of sent submission e-mails',
-        'type' => 'varchar',
-        'length' => 255,
-      ),
-      'additional_validate' => array(
-        'description' => 'PHP code for additional functionality when validating a form.',
-        'type' => 'text',
-        'not null' => TRUE,
-      ),
-      'additional_submit' => array(
-        'description' => 'PHP code for additional functionality when submitting a form.',
-        'type' => 'text',
-        'not null' => TRUE,
-      ),
     ),
     'primary key' => array('nid'),
   );
@@ -89,7 +106,7 @@ function webform_schema() {
     'description' => 'Stores information about components for webform nodes.',
     'fields' => array(
       'nid' => array(
-        'description' => 'The node identifier of a webform',
+        'description' => 'The node identifier of a webform.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -143,13 +160,6 @@ function webform_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'email' => array(
-        'description' => 'Boolean flag for if submitted values for this component will be included in sent e-mails.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
       'weight' => array(
         'description' => 'Determines the position of this component in the form.',
         'type' => 'int',
@@ -159,6 +169,77 @@ function webform_schema() {
       ),
     ),
     'primary key' => array('nid', 'cid'),
+  );
+
+  $schema['webform_emails'] = array(
+    'description' => 'Holds information regarding e-mails that should be sent upon submitting a webform',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'eid' => array(
+        'description' => 'The e-mail identifier for this row\'s settings.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'email' => array(
+        'description' => 'The e-mail address that will be sent to upon submission. This may be an e-mail address, the special key "default" or a numeric value. If a numeric value is used, the value of a component will be substituted on submission.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'subject' => array(
+        'description' => 'The e-mail subject that will be used. This may be a string, the special key "default" or a numeric value. If a numeric value is used, the value of a component will be substituted on submission.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'from_name' => array(
+        'description' => 'The e-mail "from" name that will be used. This may be a string, the special key "default" or a numeric value. If a numeric value is used, the value of a component will be substituted on submission.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'from_address' => array(
+        'description' => 'The e-mail "from" e-mail address that will be used. This may be a string, the special key "default" or a numeric value. If a numeric value is used, the value of a component will be substituted on submission.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'template' => array(
+        'description' => 'A template that will be used for the sent e-mail. This may be a string or the special key "default", which will use the template provided by the theming layer.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'excluded_components' => array(
+        'description' => 'A list of components that will not be included in the %email_values token. A list of CIDs separated by commas.',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'html' => array(
+        'description' => 'Determines if the e-mail will be sent in an HTML format. Requires Mime Mail module.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'attachments' => array(
+        'description' => 'Determines if the e-mail will include file attachments. Requires Mime Mail module.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid', 'eid'),
   );
 
   $schema['webform_roles'] = array(
@@ -192,7 +273,7 @@ function webform_schema() {
         'not null' => TRUE,
       ),
       'nid' => array(
-        'description' => 'The node identifier of a webform',
+        'description' => 'The node identifier of a webform.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -204,6 +285,13 @@ function webform_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
+      ),
+      'is_draft' => array(
+         'description' => 'Is this a draft of the submission?',
+         'type' => 'int',
+         'size' => 'tiny',
+         'not null' => TRUE,
+         'default' => 0,
       ),
       'submitted' => array(
         'description' => 'Timestamp of when the form was submitted.',
@@ -217,17 +305,20 @@ function webform_schema() {
         'length' => 128,
       ),
     ),
+    'primary key' => array('sid'),
     'unique keys' => array(
       'sid_nid' => array('sid', 'nid'),
     ),
-    'primary key' => array('sid'),
+    'indexes' => array(
+      'nid_uid_sid' => array('nid', 'uid', 'sid'),
+    ),
   );
 
   $schema['webform_submitted_data'] = array(
     'description' => 'Stores all submitted field data for webform submissions.',
     'fields' => array(
       'nid' => array(
-        'description' => 'The node identifier of a webform',
+        'description' => 'The node identifier of a webform.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -250,11 +341,10 @@ function webform_schema() {
       ),
       'no' => array(
         'description' => 'Usually this value is 0, but if a field has multiple values (such as a time or date), it may require multiple rows in the database.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
+        'type' => 'varchar',
+        'length' => 128,
         'not null' => TRUE,
-        'default' => 0,
+        'default' => '0',
       ),
       'data' => array(
         'description' => 'The submitted value of this field, may be serialized for some components.',
@@ -263,42 +353,60 @@ function webform_schema() {
         'not null' => TRUE,
       ),
     ),
+    'primary key' => array('nid', 'sid', 'cid', 'no'),
     'indexes' => array(
       'nid' => array('nid'),
       'sid_nid' => array('sid', 'nid'),
     ),
-    'primary key' => array('nid', 'sid', 'cid', 'no'),
   );
 
   return $schema;
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function webform_install() {
+  module_load_include('inc', 'node', 'content_types');
   db_query("UPDATE {system} SET weight = -1 WHERE name='webform' AND type='module'");
   drupal_install_schema('webform');
+
+  // Create the default webform type.
+  $webform_type = array(
+    'type' => 'webform',
+    'name' => st('Webform'),
+    'module' => 'node',
+    'description' => st('Create a new form or questionnaire accessible to users. Submission results and statistics are recorded and accessible to privileged users.'),
+    'custom' => TRUE,
+    'modified' => TRUE,
+    'locked' => FALSE,
+  );
+  $webform_type = (object) _node_type_set_defaults($webform_type);
+  node_type_save($webform_type);
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function webform_uninstall() {
   // Unset webform variables.
+  variable_del('webform_node_types');
+  variable_del('webform_node_types_primary');
   variable_del('webform_use_cookies');
-  variable_del('webform_debug');
-  variable_del('webform_enable_fieldset');
   variable_del('webform_default_from_address');
   variable_del('webform_default_from_name');
   variable_del('webform_default_subject');
+  variable_del('webform_default_format');
+  variable_del('webform_format_override');
   variable_del('webform_csv_delimiter');
+  variable_del('webform_allowed_tags');
+  variable_del('webform_blocks');
 
   $component_list = array();
-  $path = drupal_get_path('module', 'webform') .'/components';
+  $path = drupal_get_path('module', 'webform') . '/components';
   $files = file_scan_directory($path, '^.*\.inc$');
   foreach ($files as $filename => $file) {
-    variable_del('webform_enable_'. $file->name, 1);
+    variable_del('webform_enable_' . $file->name, 1);
   }
 
   // Delete uploaded files.
@@ -310,501 +418,33 @@ function webform_uninstall() {
 }
 
 /**
- * Schema changes include component id's (cid) keys in the webform_component
- * and webform_submitted_data tables.
+ * Implements hook_requirements().
  */
-function webform_update_1() {
+function webform_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
 
-  $ret = array();
-
-  // Start the normal update.
-  $ret[] = update_sql('CREATE TABLE {webform_tmp} ( '.
-                      " nid int(10) unsigned NOT NULL default '0', ".
-                      " sid int(10) unsigned NOT NULL default '0', ".
-                      " cid int(10) unsigned NOT NULL default '0', ".
-                      " no int(10) unsigned NOT NULL default '0', ".
-                      ' data longtext, '.
-                      ' PRIMARY KEY  (nid, sid, cid, no) '.
-                      ')');
-  $result = db_query('SELECT ws.nid, ws.sid, wc.cid, ws.name, ws.data '.
-                     ' FROM {webform_submitted_data} ws, {webform_component} wc '.
-                     ' WHERE ws.nid = wc.nid '.
-                     ' AND ws.name = wc.name ');
-
-  while ($row = db_fetch_object($result)) {
-    $data = unserialize($row->data);
-    if ( is_array($data) ) {
-      foreach ($data as $k => $v) {
-        db_query("INSERT INTO {webform_tmp} (nid, sid, cid, no, data) VALUES (%d, %d, %d, %d, '%s')", $row->nid, $row->sid, $row->cid, $k, $v);
-      }
-    }
-    else {
-      db_query("INSERT INTO {webform_tmp} (nid, sid, cid, no, data) VALUES (%d, %d, %d, %d, '%s')", $row->nid, $row->sid, $row->cid, 0, $row->data);
-    }
+  if (version_compare(VERSION, '6.16') < 0) {
+    $requirements['webform_drupal_version'] = array(
+      'title' => $t('Webform'),
+      'value' => VERSION,
+      'severity' => REQUIREMENT_ERROR,
+      'description' => $t('Webform requires at least version @version of Drupal core.', array('@version' => '6.16')),
+    );
   }
 
-  $ret[] = update_sql('DROP TABLE {webform_submitted_data}');
-  $ret[] = update_sql('ALTER TABLE {webform_tmp} RENAME TO {webform_submitted_data}');
-
-  $ret[] = update_sql('CREATE TABLE {webform_submissions} ( '.
-                      " nid int(10) unsigned NOT NULL default '0', ".
-                      " sid int(10) unsigned NOT NULL default '0', ".
-                      " submitted int(11) NOT NULL default '0', ".
-                      ' PRIMARY KEY (nid, sid) '.
-                      ')');
-
-  return $ret;
+  return $requirements;
 }
 
 /**
- * Schema changes 2: Added redirect_post column in webform table.
+ * Set the minimum upgrade version.
+ *
+ * This should allow updates from any 2.x version of Webform (for D5 or D6),
+ * but prevent updates from any version prior to Webform 1.10.
  */
-function webform_update_2() {
-
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'pgsql':
-      $ret[] = update_sql("ALTER TABLE {webform} ADD redirect_post int(1) UNSIGNED NOT NULL DEFAULT '0'");
-      break;
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql("ALTER TABLE {webform} ADD redirect_post int(1) UNSIGNED NOT NULL DEFAULT '0' AFTER confirmation");
-      break;
-  }
-
-  return $ret;
+function webform_update_last_removed() {
+  return 20;
 }
-
-
-/**
- * Schema change 3: Update to UTF8
- */
-function webform_update_3() {
-  return _system_update_utf8(array('webform', 'webform_component', 'webform_role_node', 'webform_submissions', 'webform_submitted_data'));
-}
-
-/**
- * Schema change 4: Remove the webform_role_node table, node access can be handled by other modules made for this purpose.
- * Add additional columns to webform_submissions for recording of repeated submissions (IP Address, Browser, etc).
- * Add additional columns to webform for setting submission limitations
- * Change 'maintain webforms' permission into two seperate perms: 'edit webforms', 'access webform results'
- */
-function webform_update_4() {
-  $ret[] = update_sql('DROP TABLE if exists {webform_role_node}');
-  $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD user varchar(128) AFTER submitted');
-  $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD remote_addr varchar(128) AFTER user');
-  $ret[] = update_sql("ALTER TABLE {webform} ADD submit_limit int(2) NOT NULL DEFAULT '-1' AFTER redirect_post");
-  $ret[] = update_sql("ALTER TABLE {webform} ADD submit_interval int(10) NOT NULL DEFAULT '157784630' AFTER submit_limit"); // 5 years in seconds.
-
-  // Split 'maintain webforms' permissions into both 'edit webforms' and 'access webform results'.
-  $result = db_query('SELECT rid, perm FROM {permission}');
-  while ($row = db_fetch_object($result)) {
-    if (strpos($row->perm, 'maintain webforms') !== FALSE) {
-      $updated_perm = str_replace('maintain webforms', 'edit webforms, access webform results', $row->perm);
-      $ret[] = update_sql("UPDATE {permission} SET perm = '%s' WHERE rid = %d", $updated_perm, $row->rid);
-    }
-  }
-  return $ret;
-}
-
-/**
- * Update MySQL sequence name to be cross-database compatible.
- */
-function webform_update_5() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      db_query('LOCK TABLES {sequences} WRITE');
-      $ret[] = update_sql(sprintf("UPDATE {sequences} SET name = '%s' WHERE name = '%s'", db_prefix_tables('{webform_submissions}_sid'), db_prefix_tables('{webform_submissions}_id')));
-      db_query('UNLOCK TABLES');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Add a parent ID to all components, allowing nested fieldsets.
- */
-function webform_update_6() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'pgsql':
-      $ret[] = update_sql("ALTER TABLE {webform_component} ADD pid integer NOT NULL DEFAULT '0'");
-      break;
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql('ALTER TABLE {webform_component} ADD pid int(10) NOT NULL DEFAULT 0 AFTER cid');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Allow much larger default values for components.
- */
-function webform_update_7() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'pgsql':
-      db_change_column($ret, 'webform_component', 'value', 'value', 'TEXT', array('not null' => FALSE, 'default' => 'NULL'));
-      break;
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql('ALTER TABLE {webform_component} CHANGE value value TEXT NULL DEFAULT NULL');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Add additional validate and submit processing columns.
- */
-function webform_update_8() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'pgsql':
-      $ret[] = update_sql('ALTER TABLE {webform} ADD additional_validate text DEFAULT NULL');
-      $ret[] = update_sql('ALTER TABLE {webform} ADD additional_submit text DEFAULT NULL');
-      break;
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql('ALTER TABLE {webform} ADD additional_validate text DEFAULT NULL AFTER email_subject');
-      $ret[] = update_sql('ALTER TABLE {webform} ADD additional_submit text DEFAULT NULL AFTER additional_validate');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Remove webform version variable, now obsolete with schema and version numbers.
- * Split columns for email_from into email_from_address and email_from_name
- */
-function webform_update_9() {
-  variable_del('webform_version');
-
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'pgsql':
-      db_change_column($ret, 'webform', 'email_from', 'email_from_address', 'varchar(255)', array('not null' => FALSE, 'default' => 'NULL'));
-      $ret[] = update_sql('ALTER TABLE {webform} ADD email_from_name varchar(255) NULL DEFAULT NULL');
-      break;
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql('ALTER TABLE {webform} CHANGE email_from email_from_address varchar(255) NULL DEFAULT NULL');
-      $ret[] = update_sql('ALTER TABLE {webform} ADD email_from_name varchar(255) NULL DEFAULT NULL AFTER email');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Add the form_key column to the webform_component table.
- */
-function webform_update_10() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'pgsql':
-      $ret[] = update_sql('ALTER TABLE {webform_component} ADD form_key varchar(128) NULL DEFAULT NULL');
-      break;
-
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql('ALTER TABLE {webform_component} ADD form_key varchar(128) NULL DEFAULT NULL AFTER pid');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Add unique indexes on Submission IDs for faster joins.
- */
-function webform_update_11() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD INDEX sid (sid)');
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} ADD INDEX sid (sid)');
-      break;
-    case 'pgsql':
-      $ret[] = update_sql('CREATE INDEX {webform_submissions}_sid_idx ON {webform_submissions} (sid)');
-      $ret[] = update_sql('CREATE INDEX {webform_submitted_data}_sid_idx ON {webform_submitted_data} (sid)');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Change 'user' column to 'uid' in webform_submissions table.
- */
-function webform_update_12() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD uid int(10) NOT NULL DEFAULT 0 AFTER sid');
-      $ret[] = update_sql('UPDATE {webform_submissions} ws set uid = (SELECT uid FROM {users} u WHERE u.name = ws.user)');
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} DROP user');
-      break;
-    case 'pgsql':
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD uid integer NOT NULL DEFAULT 0');
-      $ret[] = update_sql('UPDATE {webform_submissions} ws set uid = (SELECT uid FROM {users} u WHERE u.name = ws.user)');
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} DROP user');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Update to the 2.x version of webform.
- */
-function webform_update_13() {
-  $ret = array();
-
-  // Set the webform weight to -1. This is needed to have webform's hook_menu()
-  // take precedence over node_menu().
-  $ret[] = update_sql("UPDATE {system} SET weight = -1 WHERE type = 'module' and name = 'webform'");
-
-  // Ensure crufty submission data that was not removed when webform nodes
-  // were deleted is cleared out before doing key changes.
-  $ret[] = update_sql("DELETE FROM {webform} WHERE nid NOT IN (SELECT nid FROM {node} WHERE type = 'webform')");
-  $ret[] = update_sql("DELETE FROM {webform_component} WHERE nid NOT IN (SELECT nid FROM {node} WHERE type = 'webform')");
-  $ret[] = update_sql("DELETE FROM {webform_submissions} WHERE nid NOT IN (SELECT nid FROM {node} WHERE type = 'webform')");
-  $ret[] = update_sql("DELETE FROM {webform_submitted_data} WHERE nid NOT IN (SELECT nid FROM {node} WHERE type = 'webform')");
-  $result = db_query('SELECT nid FROM {webform}');
-  while ($row = db_fetch_object($result)) {
-    db_query("DELETE FROM {webform_submitted_data} WHERE nid = %d AND cid NOT IN (SELECT cid FROM {webform_component} c WHERE c.nid = %d)", $row->nid, $row->nid);
-  }
-
-  // Convert timestamp-based cids to small integers starting at 1 for each node.
-  $result = db_query('SELECT nid, cid FROM {webform_component} ORDER BY nid ASC, cid ASC');
-  $nid = 0;
-  while ($component = db_fetch_array($result)) {
-    if ($component['nid'] != $nid) {
-      $nid = $component['nid'];
-      $cid = 1;
-    }
-    $ret[] = update_sql('UPDATE {webform_component} SET cid = '. $cid .' WHERE nid = '. $nid .' AND cid = '. $component['cid']);
-    $ret[] = update_sql('UPDATE {webform_component} SET pid = '. $cid .' WHERE nid = '. $nid .' AND pid = '. $component['cid']);
-    $ret[] = update_sql('UPDATE {webform_submitted_data} SET cid = '. $cid .' WHERE nid = '. $nid .' AND cid = '. $component['cid']);
-    $cid++;
-  }
-
-  // Convert the cid and pid columns to smallints for efficiency.
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql("ALTER TABLE {webform_component} CHANGE cid cid smallint unsigned NOT NULL default '0'");
-      $ret[] = update_sql("ALTER TABLE {webform_component} CHANGE pid pid smallint unsigned NOT NULL default '0'");
-      $ret[] = update_sql("ALTER TABLE {webform_submitted_data} CHANGE cid cid smallint unsigned NOT NULL default '0'");
-      break;
-    case 'pgsql':
-      db_change_column($ret, 'webform_component', 'cid', 'cid', 'smallint', array('not null' => TRUE, 'default' => '0'));
-      db_change_column($ret, 'webform_component', 'pid', 'pid', 'smallint', array('not null' => TRUE, 'default' => '0'));
-      db_change_column($ret, 'webform_submitted_data', 'cid', 'cid', 'smallint', array('not null' => TRUE, 'default' => '0'));
-      break;
-  }
-  return $ret;
-}
-
-/**
- * Variable name changes.
- */
-function webform_update_14() {
-  $ret = array();
-  variable_set('webform_default_from_address', variable_get('webform_default_from_email', variable_get('site_mail', ini_get('sendmail_from'))));
-  variable_del('webform_default_from_email');
-
-  if ('Form submission from: ' == variable_get('webform_default_subject', 'Form submission from: ')) {
-    variable_set('webform_default_subject', 'Form submission from: %title');
-  }
-  return $ret;
-}
-
-/**
- * Convert 'CC' option in extra column to simply 'email'.
- * Set email value to '%useremail' instead of 'user email'.
- * Change the 'disabled' option from an attributes option to an individual option.
- */
-function webform_update_15() {
-  $ret = array();
-  $result = db_query("SELECT nid, cid, extra, value FROM {webform_component} WHERE type = 'email'");
-  while ($row = db_fetch_array($result)) {
-    $extra = unserialize($row['extra']);
-    if ($extra['carboncopy']) {
-      $extra['email'] = 1;
-      unset($extra['carboncopy']);
-    }
-    $value = $row['value'] == 'user email' ? '%useremail' : '';
-    db_query("UPDATE {webform_component} SET extra = '%s', value = '%s' WHERE nid = %d and cid = %d", serialize($extra), $value, $row['nid'], $row['cid']);
-  }
-
-  $result = db_query("SELECT nid, cid, extra FROM {webform_component} WHERE type IN ('email', 'textfield', 'textarea')");
-  while ($row = db_fetch_array($result)) {
-    $extra = unserialize($row['extra']);
-    if ($extra['attributes']['disabled']) {
-      $extra['disabled'] = 1;
-      unset($extra['attributes']['disabled']);
-      db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d and cid = %d", serialize($extra), $row['nid'], $row['cid']);
-    }
-  }
-  return $ret;
-}
-
-/**
- * Add the submit button text and teaser columns. Remove redirect_post.
- */
-function webform_update_16() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      $ret[] = update_sql('ALTER TABLE {webform} DROP redirect_post');
-      $ret[] = update_sql('ALTER TABLE {webform} ADD teaser tinyint NOT NULL DEFAULT 0 AFTER confirmation');
-      $ret[] = update_sql('ALTER TABLE {webform} ADD submit_text varchar(255) NULL DEFAULT NULL AFTER teaser');
-      break;
-    case 'pgsql':
-      $ret[] = update_sql('ALTER TABLE {webform} DROP redirect_post');
-      $ret[] = update_sql('ALTER TABLE {webform} ADD teaser smallint NOT NULL DEFAULT 0');
-      $ret[] = update_sql('ALTER TABLE {webform} ADD submit_text varchar(255) NULL DEFAULT NULL');
-      break;
-  }
-
-  return $ret;
-}
-
-/**
- * Set the submit interval to a real "unlimited" value instead of 5 years.
- */
-function webform_update_17() {
-  $ret = array();
-  $ret[] = update_sql('UPDATE {webform} SET submit_interval = -1 WHERE submit_interval = 157784630');
-  return $ret;
-}
-
-/**
- * Convert E-mail from name, address, and subject to integer values.
- */
-function webform_update_18() {
-  $ret = array();
-  $result = db_query('SELECT * FROM {webform}');
-  while ($webform = db_fetch_object($result)) {
-    foreach (array('email_from_name', 'email_from_address', 'email_subject') as $key) {
-      if ($webform->{$key} == 'Automatic' || $webform->{$key} == 'Default') {
-        $ret[] = update_sql('UPDATE {webform} SET '. $key ." = 'default' WHERE nid = ". $webform->nid);
-      }
-      elseif (!is_numeric($webform->{$key})) {
-        $cid = db_result(db_query("SELECT cid FROM {webform_component} WHERE name = '%s' AND nid = %d", $webform->{$key}, $webform->nid));
-        if ($cid) {
-          $ret[] = update_sql('UPDATE {webform} SET '. $key ." = '". $cid ."' WHERE nid = ". $webform->nid);
-        }
-      }
-    }
-  }
-  return $ret;
-}
-
-
-/**
- * Upgrade hook to remove the captcha component.
- */
-function webform_update_19() {
-  $ret = array();
-  variable_del('webform_enable_captcha');
-
-  // Check for the new version of captcha module.
-  if ($GLOBALS['db_type'] == 'pgsql') {
-    $captcha_exists = db_result(db_query("SELECT table_name FROM {information_schema.tables} WHERE table_schema = 'public' AND table_name LIKE 'captcha_points'"));
-  }
-  else {
-    $captcha_exists = db_result(db_query("SHOW TABLES LIKE 'captcha_points'"));
-  }
-
-  if (module_exists('image_captcha')) {
-    $captcha_module = 'image_captcha';
-    $captcha_type = 'Image';
-  }
-  else {
-    $captcha_module = 'captcha';
-    $captcha_type = 'Math';
-  }
-
-  $result = db_query("SELECT nid, cid FROM {webform_component} WHERE type = 'captcha'");
-  while ($component = db_fetch_object($result)) {
-    $ret[] = update_sql('DELETE FROM {webform_component} WHERE cid = '. $component->cid .' AND nid = '. $component->nid);
-    if ($captcha_exists) {
-      $added = db_result(db_query("SELECT form_id FROM {captcha_points} WHERE form_id = 'webform_client_form_". $component->nid ."'"));
-      if (!$added) {
-        $ret[] = update_sql("INSERT INTO {captcha_points} (form_id, module, type) VALUES ('webform_client_form_". $component->nid ."', '". $captcha_module ."', '". $captcha_type ."')");
-      }
-    }
-  }
-  return $ret;
-}
-
-/**
- * Set new primary keys for the submissions table.
- */
-function webform_update_20() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      // Update the webform_submissions table with sid primary key instead of nid, sid.
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} DROP INDEX sid');
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} DROP PRIMARY KEY');
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD UNIQUE INDEX sid_nid (sid, nid)');
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD PRIMARY KEY (sid)');
-
-      // Update webform_submitted_data table removing nid from the primary key.
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} DROP PRIMARY KEY');
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} DROP INDEX sid');
-      // While we've got these keys removed, decrease the size of the 'no' column.
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} CHANGE no no tinyint NOT NULL DEFAULT 0');
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} ADD PRIMARY KEY (sid, cid, no)');
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} ADD INDEX nid (nid)');
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} ADD INDEX sid_nid (sid, nid)');
-      break;
-    case 'pgsql':
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} DROP CONSTRAINT {webform_submissions}_pkey');
-      $ret[] = update_sql('DROP INDEX {webform_submissions}_sid_idx');
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD PRIMARY KEY (sid)');
-      $ret[] = update_sql('ALTER TABLE {webform_submissions} ADD CONSTRAINT {webform_submissions}_sid_nid_key UNIQUE (sid, nid)');
-
-      $ret[] = update_sql('DROP INDEX {webform_submitted_data}_sid_idx');
-      db_change_column($ret, 'webform_submitted_data', 'no', 'no', 'smallint', array('not null' => TRUE, 'default' => '0'));
-      $ret[] = update_sql('ALTER TABLE {webform_submitted_data} ADD PRIMARY KEY (sid, cid, no)');
-      $ret[] = update_sql('CREATE INDEX {webform_submitted_data}_nid_idx ON {webform_submitted_data} (nid)');
-      $ret[] = update_sql('CREATE INDEX {webform_submitted_data}_sid_nid_idx ON {webform_submitted_data} (sid, nid)');
-
-      $ret[] = update_sql('ALTER TABLE {webform_component} ADD PRIMARY KEY (nid, cid)');
-      break;
-  }
-  return $ret;
-}
-
-/**
- * Set the upgrade
- */
 
 /**
  * Upgrade to Drupal 6. Convert submissions sid column to auto-increment.
@@ -946,7 +586,7 @@ function webform_update_6203() {
  */
 function webform_update_6204() {
   $ret = array();
-  $ret[] = update_sql("UPDATE {files} SET status = 1 WHERE filepath LIKE '". file_directory_path() ."/webform/%'");
+  $ret[] = update_sql("UPDATE {files} SET status = 1 WHERE filepath LIKE '" . file_directory_path() . "/webform/%'");
   return $ret;
 }
 
@@ -1016,6 +656,704 @@ function webform_update_6205() {
 }
 
 /**
+ * Add a separate column for confirmation message input format.
+ */
+function webform_update_6301() {
+  $ret = array();
+
+  // Safety check to prevent re-adding existing column.
+  if (db_column_exists('webform', 'confirmation_format')) {
+    return $ret;
+  }
+
+  db_add_field($ret, 'webform', 'confirmation_format', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  $result = db_query("SELECT n.nid, nr.format FROM {node} n INNER JOIN {node_revisions} nr ON n.vid = nr.vid WHERE n.type = 'webform'");
+  while ($node = db_fetch_object($result)) {
+    db_query('UPDATE {webform} SET confirmation_format = %d WHERE nid = %d', $node->format, $node->nid);
+  }
+
+  return $ret;
+}
+
+/**
+ * Convert node-level e-mail settings to new webform_emails table.
+ */
+function webform_update_6302() {
+  $ret = array();
+
+  // Safety check to prevent recreating the webform_emails table.
+  if (db_table_exists('webform_emails')) {
+    return $ret;
+  }
+
+  $table = array(
+    'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'eid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'email' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'subject' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'from_name' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'from_address' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      ),
+      'template' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+      )
+    ),
+    'primary key' => array('nid', 'eid'),
+  );
+
+  db_create_table($ret, 'webform_emails', $table);
+
+  // Move over data from the webform table.
+  $result = db_query("SELECT w.nid, w.email, w.email_from_name, w.email_from_address, w.email_subject, wc.cid, wc.extra FROM {webform} w LEFT JOIN {webform_component} wc ON w.nid = wc.nid AND type IN ('select', 'hidden', 'email') ORDER BY nid");
+  $nid = 0;
+  while ($row = db_fetch_object($result)) {
+    // Insert an e-mail settings row for the default e-mail.
+    if ($row->nid != $nid) {
+      $nid = $row->nid;
+      $eid = 0;
+      if (!empty($row->email)) {
+        $eid++;
+        db_query("INSERT INTO {webform_emails} (nid, eid, email, subject, from_name, from_address, template) VALUES (%d, %d, '%s', '%s', '%s', '%s', 'default')", $nid, $eid, $row->email, $row->email_subject, $row->email_from_name, $row->email_from_address);
+      }
+    }
+
+    // Check for an e-mail based on a component.
+    if ($row->extra) {
+      $extra = unserialize($row->extra);
+      if ($extra['email']) {
+        $eid++;
+        unset($extra['email']);
+        db_query("INSERT INTO {webform_emails} (nid, eid, email, subject, from_name, from_address, template) VALUES (%d, %d, '%s', '%s', '%s', '%s', 'default')", $nid, $eid, $row->cid, $row->email_subject, $row->email_from_name, $row->email_from_address);
+        db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND cid = %d", serialize($extra), $row->nid, $row->cid);
+      }
+    }
+  }
+
+  // Remove columns from webform table.
+  db_drop_field($ret, 'webform', 'email');
+  db_drop_field($ret, 'webform', 'email_from_name');
+  db_drop_field($ret, 'webform', 'email_from_address');
+  db_drop_field($ret, 'webform', 'email_subject');
+
+  return $ret;
+}
+
+/**
+ * Add the submit_notice field and update all existing webforms to the 2.x previous submissions notice default.
+ */
+function webform_update_6303() {
+  $ret = array();
+  db_add_field($ret, 'webform', 'submit_notice', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  $ret[] = update_sql("UPDATE {webform} SET submit_notice = 1 WHERE submit_notice = 0");
+  return $ret;
+}
+
+/**
+ * Convert the webform content type to be owned by Node module.
+ */
+function webform_update_6304() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {node_type} SET module = 'node', custom = 1, modified = 1, locked = 0 WHERE type = 'webform'");
+  if (!db_affected_rows()) {
+    $ret[] = update_sql("INSERT INTO {node_type} (type, name, module, description, help, has_title, title_label, has_body, body_label, min_word_count, custom, modified, locked, orig_type) VALUES ('webform', 'Webform', 'node', 'Create a new form or questionnaire accessible to users. Submission results and statistics are recorded and accessible to privileged users.', '', 1, 'Title', 1, 'Body', 0, 1, 1, 0, 'webform')");
+  }
+
+  // This variable for some reason must be set manually.
+  variable_set('webform_node_types', array('webform'));
+
+  return $ret;
+}
+
+/**
+ * Migrate the renamed permissions. Add separate permissions for delete.
+ */
+function webform_update_6305() {
+  $ret = array();
+
+  $updated_permissions = array(
+    'create webforms' => array('add webform content'),
+    'edit own webforms' => array('edit own webform content', 'delete own webform content'),
+    'edit webforms' => array('edit any webform content', 'delete any webform content'),
+    'access webform results' => array('access all webform results'),
+    'edit webform submissions' => array('edit all webform submissions'),
+    'edit own webform submissions' => array('edit own webform submissions', 'delete own webform submissions'),
+    'clear webform results' => array('delete all webform submissions'),
+  );
+
+  $result = db_query("SELECT * FROM {role} r INNER JOIN {permission} p ON p.rid = r.rid");
+  while ($role = db_fetch_object($result)) {
+    $role->perm = drupal_map_assoc(explode(', ', db_escape_string($role->perm)));
+    foreach ($updated_permissions as $old => $new) {
+      if (isset($role->perm[$old])) {
+        unset($role->perm[$old]);
+        foreach ($new as $perm) {
+          $role->perm[$perm] = $perm;
+        }
+      }
+    }
+    $ret[] = update_sql("UPDATE {permission} SET perm = '" . implode(', ', $role->perm) . "' WHERE rid = " . $role->rid);
+  }
+
+  return $ret;
+}
+
+/**
+ * Add the ability to save as draft.
+ */
+function webform_update_6306() {
+  $ret = array();
+  db_add_field($ret, 'webform', 'allow_draft', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  db_add_field($ret, 'webform_submissions', 'is_draft', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  return $ret;
+}
+
+/**
+ * Convert the file component to use only FIDs instead of serialized arrays.
+ */
+function webform_update_6307() {
+  $ret = array();
+
+  $result = db_query("SELECT d.*, s.uid, s.submitted FROM {webform_submitted_data} d INNER JOIN {webform_component} c ON d.cid = c.cid AND d.nid = c.nid AND c.type = 'file' INNER JOIN {webform_submissions} s ON d.sid = s.sid");
+  while ($row = db_fetch_object($result)) {
+    $file = @unserialize($row->data);
+    // File name should always exist, even when upgrading from Drupal 5.
+    if ($file && isset($file['filename'])) {
+      // Create an entry in the files table if needed.
+      if (!isset($file['fid'])) {
+        db_query("INSERT INTO {files} (uid, filename, filepath, filemime, filesize, status, timestamp) VALUES (%d, '%s', '%s', '%s', %d, 1, %d)", $row->uid, $file['filename'], $file['filepath'], $file['filemime'], $file['filesize'], $row->submitted);
+        $fid = db_last_insert_id('files', 'fid');
+      }
+      else {
+        $fid = $file['fid'];
+      }
+      // Update the submitted data with the FID.
+      db_query("UPDATE {webform_submitted_data} SET data = '%d' WHERE nid = %d AND sid = %d AND cid = %d", $fid, $row->nid, $row->sid, $row->cid);
+    }
+    // Insert an empty entry, now just an empty string.
+    else {
+      db_query("UPDATE {webform_submitted_data} SET data = '' WHERE nid = %d AND sid = %d AND cid = %d", $row->nid, $row->sid, $row->cid);
+    }
+  }
+
+  $ret[] = array('success' => TRUE, 'query' => t('Updated file components to use numeric file IDs in the submitted values.'));
+
+  return $ret;
+}
+
+/**
+ * Convert "Include in e-mail" from the component-level to a per e-mail setting.
+ */
+function webform_update_6308() {
+  $ret = array();
+
+  // Add the new column to the e-mail table.
+  db_add_field($ret, 'webform_emails', 'excluded_components', array('type' => 'text', 'not null' => TRUE, 'initial' => ''));
+
+  // Build up our EXCLUSION lists, finding all components not in e-mails.
+  $result = db_query("SELECT nid, cid FROM {webform_component} WHERE email = 0 ORDER BY nid");
+  $nid = 0;
+  $excluded_components = array();
+  while ($row = db_fetch_object($result)) {
+    if ($nid != $row->nid) {
+      if (!empty($excluded_components)) {
+        db_query("UPDATE {webform_emails} SET excluded_components = '%s' WHERE nid = %d", implode(',', $excluded_components), $nid);
+      }
+      $nid = $row->nid;
+      $excluded_components = array();
+    }
+    $excluded_components[] = $row->cid;
+  }
+
+  // One last query for the last form in the list.
+  if (!empty($excluded_components)) {
+    db_query("UPDATE {webform_emails} SET excluded_components = '%s' WHERE nid = %d", implode(',', $excluded_components), $nid);
+  }
+
+  db_drop_field($ret, 'webform_component', 'email');
+
+  return $ret;
+}
+
+/**
+ * Fix permissions for all roles by adding an additional space after comma.
+ */
+function webform_update_6309() {
+  $ret = array();
+
+  $result = db_query("SELECT r.rid, p.perm FROM {role} r INNER JOIN {permission} p ON p.rid = r.rid");
+  while ($role = db_fetch_object($result)) {
+    $perms = explode(',', $role->perm);
+    foreach ($perms as $id => $perm) {
+      $perms[$id] = db_escape_string(trim($perm));
+    }
+    $ret[] = update_sql("UPDATE {permission} SET perm = '" . implode(', ', $perms) . "' WHERE rid = " . $role->rid);
+  }
+
+  return $ret;
+}
+
+/**
+ * Add the redirect_url field and update existing webforms to use it.
+ */
+function webform_update_6310() {
+  $ret = array();
+
+  // Safety check to prevent re-adding existing column.
+  if (db_column_exists('webform', 'redirect_url')) {
+    return $ret;
+  }
+
+  // Add the new redirect_url column.
+  db_add_field($ret, 'webform', 'redirect_url', array('type' => 'varchar', 'length' => '255'));
+
+  // If the webform is using the confirmation field as a redirect then move it
+  // to the new redirect_url field.
+  $result = db_query("SELECT nid, confirmation FROM {webform}");
+  while ($row = db_fetch_object($result)) {
+    $confirmation = trim(strip_tags($row->confirmation, '<front>'));
+    if (valid_url($confirmation, TRUE) || preg_match('/^internal:/', $confirmation)) {
+      $redirect_url = preg_replace('/^internal:/', '', $confirmation);
+      db_query("UPDATE {webform} SET redirect_url = '%s' WHERE nid = %d", $redirect_url, $row->nid);
+      db_query("UPDATE {webform} SET confirmation = '' WHERE nid = %d", $row->nid);
+    }
+    elseif (preg_match('/^message:/', $confirmation)) {
+      $message = preg_replace('/^message:/', '', $confirmation);
+      db_query("UPDATE {webform} SET redirect_url = '%s' WHERE nid = %d", 'node/' . $row->nid, $row->nid);
+      db_query("UPDATE {webform} SET confirmation = '%s' WHERE nid = %d", $message, $row->nid);
+    }
+  }
+
+  return $ret;
+}
+
+/**
+ * Convert the "no" column to be a varchar column instead of an integer.
+ */
+function webform_update_6311() {
+  $ret = array();
+
+  // Change the column.
+  db_drop_primary_key($ret, 'webform_submitted_data');
+  db_change_field($ret, 'webform_submitted_data', 'no', 'no', array('type' => 'varchar', 'length' => 128, 'not null' => TRUE, 'default' => '0'), array());
+  db_add_primary_key($ret, 'webform_submitted_data', array('nid', 'sid', 'cid', 'no'));
+
+  // Update date components.
+  $ret[] = update_sql("UPDATE {webform_submitted_data} SET no = 'month' WHERE no = '0' AND (nid, cid) IN (SELECT nid, cid FROM {webform_component} WHERE type = 'date')");
+  $ret[] = update_sql("UPDATE {webform_submitted_data} SET no = 'day' WHERE no = '1' AND (nid, cid) IN (SELECT nid, cid FROM {webform_component} WHERE type = 'date')");
+  $ret[] = update_sql("UPDATE {webform_submitted_data} SET no = 'year' WHERE no = '2' AND (nid, cid) IN (SELECT nid, cid FROM {webform_component} WHERE type = 'date')");
+
+  // Update time components.
+  $ret[] = update_sql("UPDATE {webform_submitted_data} SET no = 'hour' WHERE no = '0' AND (nid, cid) IN (SELECT nid, cid FROM {webform_component} WHERE type = 'time')");
+  $ret[] = update_sql("UPDATE {webform_submitted_data} SET no = 'minute' WHERE no = '1' AND (nid, cid) IN (SELECT nid, cid FROM {webform_component} WHERE type = 'time')");
+  $ret[] = update_sql("UPDATE {webform_submitted_data} SET no = 'ampm' WHERE no = '2' AND (nid, cid) IN (SELECT nid, cid FROM {webform_component} WHERE type = 'time')");
+
+  // Updating of select and grid components is done in following updates.
+
+  return $ret;
+}
+
+/**
+ * Convert select options to use numeric keys if none are manually specified.
+ */
+function webform_update_6312() {
+  $ret = array();
+
+  $result = db_query("SELECT * FROM {webform_component} WHERE type = 'select'");
+  while ($row = db_fetch_object($result)) {
+    $extra = unserialize($row->extra);
+    $lines = explode("\n", $extra['items']);
+
+    // Get a list of items that have manual keys or no keys at all.
+    $keys = array();
+    $values = array();
+    foreach ($lines as $line) {
+      $line = rtrim($line, "\r\n");
+      if (strlen($line) == 0) {
+        continue;
+      }
+      $matches = array();
+      if (preg_match('/^\<([^>]*)\>$/', $line, $matches)) {
+        $keys[] = '<group>';
+        $values[] = $line;
+      }
+      elseif (preg_match('/^([^|]+)\|(.*)$/', $line, $matches)) {
+        $keys[] = $matches[1];
+        $values[] = $matches[2];
+      }
+      else {
+        $keys[] = '<unknown>';
+        $values[] = $line;
+      }
+    }
+
+    // Assign new keys to items that have none.
+    $new_key = 0;
+    $new_keys = array();
+    $items = '';
+    foreach ($keys as $n => $key) {
+      if ($key == '<group>') {
+        $items .= $values[$n] . "\n";
+      }
+      elseif ($key == '<unknown>') {
+        while (in_array($new_key, $keys, TRUE) || in_array($new_key, $new_keys, TRUE)) {
+          $new_key++;
+        }
+        $new_keys[$n] = $new_key;
+        $items .= $new_key . '|' . $values[$n] . "\n";
+      }
+      else {
+        $items .= $key . '|' . $values[$n] . "\n";
+      }
+    }
+
+    // While we're here, get rid of the 'Y' value for options.
+    foreach ($extra as $key => $value) {
+      if ($value === 'Y') {
+        $extra[$key] = '1';
+      }
+      elseif ($value === 'N') {
+        $extra[$key] = 0;
+      }
+    }
+
+    // Update the component.
+    $extra['items'] = $items;
+    db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND cid = %d", serialize($extra), $row->nid, $row->cid);
+
+    // Update the saved results.
+    foreach ($new_keys as $delta => $new_key) {
+      db_query("UPDATE {webform_submitted_data} SET data = '%s' WHERE nid = %d AND cid = %d AND data = '%s'", $new_key, $row->nid, $row->cid, $values[$delta]);
+    }
+
+    // Delete empty rows, which are no longer stored for select lists.
+    db_query("DELETE FROM {webform_submitted_data} WHERE data = '' AND nid = %d AND cid = %d");
+  }
+
+  return $ret;
+}
+
+/**
+ * Create keys for all questions (which don't currently have keys at all),
+ * create keys for all options that don't yet have any, and then convert the
+ * existing data to use these keys.
+ */
+function webform_update_6313() {
+  $ret = array();
+
+  $result = db_query("SELECT * FROM {webform_component} WHERE type = 'grid'");
+  while ($row = db_fetch_object($result)) {
+    $extra = unserialize($row->extra);
+    $lines = explode("\n", $extra['options']);
+
+    // Get a list of items that have manual keys or no keys at all.
+    $keys = array();
+    $values = array();
+    foreach ($lines as $line) {
+      $line = rtrim($line, "\r\n");
+      if (strlen($line) == 0) {
+        continue;
+      }
+      $matches = array();
+      if (preg_match('/^([^|]+)\|(.*)$/', $line, $matches)) {
+        $keys[] = $matches[1];
+        $values[] = $matches[2];
+      }
+      else {
+        $keys[] = '<unknown>';
+        $values[] = $line;
+      }
+    }
+
+    // Assign new keys to options that have none.
+    $new_key = 0;
+    $new_keys = array();
+    $options = '';
+    foreach ($keys as $n => $key) {
+      if ($key == '<unknown>') {
+        while (in_array($new_key, $keys, TRUE) || in_array($new_key, $new_keys, TRUE)) {
+          $new_key++;
+        }
+        $new_keys[$n] = $new_key;
+        $options .= $new_key . '|' . $values[$n] . "\n";
+      }
+      else {
+        $options .= $key . '|' . $values[$n] . "\n";
+      }
+    }
+    $extra['options'] = $options;
+
+    // Assign question keys. This is easier since they don't have keys at all.
+    $lines = explode("\n", $extra['questions']);
+    $questions = array();
+    foreach ($lines as $delta => $line) {
+      $line = rtrim($line, "\r\n");
+      if (strlen($line) == 0) {
+        continue;
+      }
+      $questions[$delta] = $delta . '|' . $line;
+    }
+    $extra['questions'] = implode("\n", $questions);
+
+    // While we're here, get rid of the 'Y' value for options.
+    foreach ($extra as $key => $value) {
+      if ($value === 'Y') {
+        $extra[$key] = '1';
+      }
+      elseif ($value === 'N') {
+        $extra[$key] = 0;
+      }
+    }
+
+    // Update the component.
+    db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND cid = %d", serialize($extra), $row->nid, $row->cid);
+
+    // Convert the option values into keys if new ones were created.
+    foreach ($new_keys as $delta => $new_key) {
+      db_query("UPDATE {webform_submitted_data} SET data = '%s' WHERE nid = %d AND cid = %d AND data = '%s'", $new_key, $row->nid, $row->cid, $values[$delta]);
+    }
+
+    // Note: Converting the question values into keys is not necessary because
+    // data was already stored based on the question position. Since we assigned
+    // permanent keys based on position, all our keys are already accurate.
+
+    // Delete empty rows, which are no longer stored for grids.
+    db_query("DELETE FROM {webform_submitted_data} WHERE data = '' AND nid = %d AND cid = %d");
+  }
+
+  return $ret;
+}
+
+/**
+ * Convert Dates and Times into using ISO 8601 strings instead of 3 rows.
+ */
+function webform_update_6314() {
+  $ret = array();
+
+  // Note that we can't use webform_component_include(), because calls to
+  // hook_webform_component_info() will fail if webform.module is disabled.
+  drupal_load('module', 'webform');
+  module_load_include('inc', 'webform', 'components/time');
+  module_load_include('inc', 'webform', 'components/date');
+
+  $result = db_query("SELECT c.type, c.extra, d.* FROM {webform_component} c INNER JOIN {webform_submitted_data} d ON c.nid = d.nid AND c.cid = d.cid WHERE c.type = 'time' OR c.type = 'date' ORDER BY d.sid, d.cid");
+  $current_cid = NULL;
+  $current_sid = NULL;
+  while ($row = db_fetch_object($result)) {
+    if ($current_cid != $row->cid || $current_sid != $row->sid) {
+      $current_cid = $row->cid;
+      $current_sid = $row->sid;
+      $extra = unserialize($row->extra);
+      $value = array();
+    }
+
+    $value[$row->no] = $row->data;
+
+    // Update a complete date.
+    if ($row->type == 'date' && array_key_exists('day', $value) && array_key_exists('month', $value) && array_key_exists('year', $value)) {
+      $value = ($value['day'] && $value['month'] && $value['year']) ? webform_date_string($value, 'date') : '';
+      db_query("UPDATE {webform_submitted_data} SET no = '0', data = '%s' WHERE sid = %d AND cid = %d AND no = 'day'", $value, $current_sid, $current_cid);
+    }
+
+    // Update a complete time.
+    if ($row->type == 'time' && array_key_exists('hour', $value) && array_key_exists('minute', $value) && ($extra['hourformat'] == '24-hour' || array_key_exists('ampm', $value))) {
+      if ($extra['hourformat'] == '12-hour') {
+        $value = webform_time_convert($value, '24-hour');
+      }
+      $value = ($value['hour']) ? webform_date_string($value, 'time') : '';
+      db_query("UPDATE {webform_submitted_data} SET no = '0', data = '%s' WHERE sid = %d AND cid = %d AND no = 'hour'", $value, $current_sid, $current_cid);
+    }
+  }
+
+  // Remove all extra rows (which should just be day, minute, and ampm values).
+  db_query("DELETE FROM {webform_submitted_data} WHERE no IN ('day', 'month', 'year', 'hour', 'minute', 'second', 'ampm')");
+
+  $ret[] = array('success' => TRUE, 'query' => t('Updated date and time components to use ISO 8601 formatted strings in the submitted values.'));
+
+  return $ret;
+}
+
+/**
+ * Remove "daylight_savings" and the GMT option in "timezone".
+ */
+function webform_update_6315() {
+  $ret = array();
+
+  $result = db_query("SELECT * FROM {webform_component} WHERE type IN ('date', 'time')");
+  while ($row = db_fetch_object($result)) {
+    $extra = unserialize($row->extra);
+    if ($extra['timezone'] == 'gmt') {
+      $extra['timezone'] = 'site';
+    }
+    unset($extra['check_daylight_savings']);
+    db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND cid = %d", serialize($extra), $row->nid, $row->cid);
+  }
+
+  $ret[] = array('success' => TRUE, 'query' => t('Removed Webform-specific daylight savings handling, now provided by Date API module if available.'));
+
+  return $ret;
+}
+
+/**
+ * Remove the Webform Debug variable.
+ */
+function webform_update_6316() {
+  $ret = array();
+  variable_del('webform_debug');
+  $ret[] = array('success' => TRUE, 'query' => t('Removed the webform_debug variable which is no longer used.'));
+  return $ret;
+}
+
+/**
+ * Remove orphaned e-mail settings of nodes that have been deleted.
+ */
+function webform_update_6317() {
+  $ret = array();
+  $ret[] = update_sql("DELETE FROM {webform_emails} WHERE nid NOT IN (SELECT nid FROM {node})");
+  return $ret;
+}
+
+/**
+ * Ensure that the confirmation format column is correctly using size = 'tiny'.
+ */
+function webform_update_6318() {
+  $ret = array();
+  db_change_field($ret, 'webform', 'confirmation_format', 'confirmation_format', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  return $ret;
+}
+
+/**
+ * Add columns for e-mail HTML and attachment settings.
+ */
+function webform_update_6319() {
+  $ret = array();
+  if (!db_column_exists('webform_emails', 'html')) {
+    db_add_field($ret, 'webform_emails', 'html', array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'default' => 0, 'not null' => TRUE));
+    db_add_field($ret, 'webform_emails', 'attachments', array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'default' => 0, 'not null' => TRUE));
+  }
+  return $ret;
+}
+
+/**
+ * Set the default for the "submit_notice" column to 1.
+ */
+function webform_update_6320() {
+  $ret = array();
+  db_change_field($ret, 'webform', 'submit_notice', 'submit_notice', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
+  return $ret;
+}
+
+/**
+ * Add field for block feature and redirection setting.
+ */
+function webform_update_6321() {
+  $ret = array();
+  db_add_field($ret, 'webform', 'block', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'webform', 'redirect_url', 'redirect_url', array('type' => 'varchar', 'length' => 255, 'default' => '<confirmation>'));
+  update_sql("UPDATE {webform} SET redirect_url = '<confirmation>' WHERE redirect_url = ''");
+  return $ret;
+}
+
+/**
+ * Set additional_validate and additional_submit columns to allow NULL.
+ */
+function webform_update_6322() {
+  $ret = array();
+  if (db_column_exists('webform', 'additional_validate')) {
+    db_change_field($ret, 'webform', 'additional_validate', 'additional_validate', array('type' => 'text', 'not null' => FALSE));
+    db_change_field($ret, 'webform', 'additional_submit', 'additional_submit', array('type' => 'text', 'not null' => FALSE));
+  }
+  return $ret;
+}
+
+/**
+ * Add column for webform status (open or closed).
+ */
+function webform_update_6323() {
+  $ret = array();
+  if (!db_column_exists('webform', 'status')) {
+    db_add_field($ret, 'webform', 'status', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
+  }
+  return $ret;
+}
+
+/**
+ * Add the ability to auto-save as draft between pages.
+ */
+function webform_update_6324() {
+  $ret = array();
+  db_add_field($ret, 'webform', 'auto_save', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  return $ret;
+}
+
+/**
+ * Remove orphaned and unnecessary rows in the webform table.
+ */
+function webform_update_6325() {
+  $ret = array();
+  $result = db_query("SELECT nid FROM {webform} WHERE
+    nid NOT IN
+    (SELECT DISTINCT(w1.nid) FROM {webform} w1 INNER JOIN {webform_component} wc ON w1.nid = wc.nid)
+    AND nid NOT IN
+    (SELECT w2.nid FROM {webform} w2 INNER JOIN {node} n ON w2.nid = n.nid WHERE n.type = 'webform')"
+  );
+  $empty_nids = array();
+  while ($row = db_fetch_object($result)) {
+    $empty_nids[] = $row->nid;
+  }
+  if (!empty($empty_nids)) {
+    $empty_list = implode(',', $empty_nids);
+    $ret[] = update_sql("DELETE FROM {webform} WHERE nid in ($empty_list)");
+  }
+  return $ret;
+}
+
+/**
+ * Add an index for sid_nid_uid to webform_submissions.
+ */
+function webform_update_6326() {
+  $ret = array();
+  db_add_index($ret, 'webform_submissions', 'nid_uid_sid', array('nid', 'uid', 'sid'));
+  return $ret;
+}
+
+/**
+ * Remove unused Webform variables.
+ */
+function webform_update_6327() {
+  $ret = array();
+  variable_del('node_types');
+  variable_del('components');
+  return $ret;
+}
+
+/**
  * Recursively delete all files and folders in the specified filepath, then
  * delete the containing folder.
  *
@@ -1025,8 +1363,8 @@ function webform_update_6205() {
  *   A filepath relative to file_directory_path
  */
 function _webform_recursive_delete($path) {
-  if ($path) {
-    $listing = $path .'/*';
+  if ($path && is_dir($path)) {
+    $listing = $path . '/*';
     foreach (glob($listing) as $file) {
       if (is_file($file) === TRUE) {
         @unlink($file);

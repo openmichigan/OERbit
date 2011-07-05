@@ -1,16 +1,15 @@
 <?php
-// $Id$
 
 /**
  * @file
  * Webform module permission tests.
  */
 
-include_once(dirname(__FILE__) .'/webform.test');
+include_once(dirname(__FILE__) . '/webform.test');
 
 class WebformPermissionsTestCase extends WebformTestCase {
   /**
-   * Implementation of getInfo().
+   * Implements getInfo().
    */
   public static function getInfo() {
     return array(
@@ -21,14 +20,14 @@ class WebformPermissionsTestCase extends WebformTestCase {
   }
 
   /**
-   * Implementation of setUp().
+   * Implements setUp().
    */
   function setUp() {
     parent::setUp();
   }
 
   /**
-   * Implementation of tearDown().
+   * Implements tearDown().
    */
   function tearDown() {
     parent::tearDown();
@@ -45,8 +44,8 @@ class WebformPermissionsTestCase extends WebformTestCase {
 
     // Test that the authenticated user is able to access.
     $this->drupalLogin($this->webform_users['userAccess']);
-    $this->drupalGet('node/'. $node->nid);
-    $this->assertText($node->body, t('Webform node created and accessible to authenticated users at !url', array('!url' => 'node/'. $node->nid)), t('Webform'));
+    $this->drupalGet('node/' . $node->nid);
+    $this->assertText($node->body, t('Webform node created and accessible to authenticated users at !url', array('!url' => 'node/' . $node->nid)), t('Webform'));
 
     // Confirm that the submission has been created.
     $this->drupalPost(NULL, array(), 'Submit');
@@ -54,11 +53,10 @@ class WebformPermissionsTestCase extends WebformTestCase {
     $this->drupalLogout();
 
     // The anonymous user should not be able to submit.
-    $this->drupalGet('node/'. $node->nid);
+    $this->drupalGet('node/' . $node->nid);
     // Note: Should be: You must <a href="!login">login</a> or <a href="!register">register</a> to view this form.
     // Something in SimpleTest isn't handling the string correctly.
-    $this->assertText(t(' to view this form.', array('!login' => url('user/login'), '!register' => url('user/register'))), t('Anonymous user is not allowed to submit form.'), t('Webform'));
-    $this->drupalLogout();
+    $this->assertText('to view this form.', t('Anonymous user is not allowed to submit form.'), t('Webform'));
   }
 
   /**
