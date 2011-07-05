@@ -1,32 +1,33 @@
-// $Id: imce_set_inline.js,v 1.3.2.5 2009/09/21 14:26:39 ufku Exp $
+(function($) {
 
-var imceInline = {};
+var ii = window.imceInline = {};
 
-imceInline.initiate = function() {
-  $('div.imce-inline-wrapper').show().find('a').click(function() {
+// Drupal behavior
+Drupal.behaviors.imceInline = function(context) {
+  $('div.imce-inline-wrapper', context).not('.processed').addClass('processed').show().find('a').click(function() {
     var i = this.name.indexOf('-IMCE-');
-    imceInline.activeTextarea = $('#'+ this.name.substr(0, i)).get(0);
-    imceInline.activeType = this.name.substr(i+6);
+    ii.activeTextarea = $('#'+ this.name.substr(0, i)).get(0);
+    ii.activeType = this.name.substr(i+6);
  
-    if (typeof imceInline.pop == 'undefined' || imceInline.pop.closed) {
-      imceInline.pop = window.open(this.href + (this.href.indexOf('?') < 0 ? '?' : '&') +'app=nomatter|imceload@imceInlineImceLoad', '', 'width='+ 760 +',height='+ 560 +',resizable=1');
+    if (typeof ii.pop == 'undefined' || ii.pop.closed) {
+      ii.pop = window.open(this.href + (this.href.indexOf('?') < 0 ? '?' : '&') +'app=nomatter|imceload@imceInline.load', '', 'width='+ 760 +',height='+ 560 +',resizable=1');
     }
 
-    imceInline.pop.focus();
+    ii.pop.focus();
     return false;
   });
 };
 
 //function to be executed when imce loads.
-function imceInlineImceLoad(win) {
-  win.imce.setSendTo(Drupal.t('Send to @app', {'@app': Drupal.t('textarea')}), imceInline.insert);
+ii.load = function(win) {
+  win.imce.setSendTo(Drupal.t('Insert file'), ii.insert);
   $(window).unload(function() {
-    if (imceInline.pop && !imceInline.pop.closed) imceInline.pop.close();
+    if (ii.pop && !ii.pop.closed) ii.pop.close();
   });
 };
 
 //insert html at cursor position
-imceInline.insertAtCursor = function (field, txt, type) {
+ii.insertAtCursor = function (field, txt, type) {
   field.focus();
   if ('undefined' != typeof(field.selectionStart)) {
     if (type == 'link' && (field.selectionEnd-field.selectionStart)) {
@@ -46,12 +47,12 @@ imceInline.insertAtCursor = function (field, txt, type) {
 };
 
 //sendTo function
-imceInline.insert = function (file, win) {
-  var type = imceInline.activeType == 'link' ? 'link' : (file.width ? 'image' : 'link');
+ii.insert = function (file, win) {
+  var type = ii.activeType == 'link' ? 'link' : (file.width ? 'image' : 'link');
   var html = type == 'image' ? ('<img src="'+ file.url +'" width="'+ file.width +'" height="'+ file.height +'" alt="'+ file.name +'" />') : ('<a href="'+ file.url +'">'+ file.name +' ('+ file.size +')</a>');
-  imceInline.activeType = null;
+  ii.activeType = null;
   win.blur();
-  imceInline.insertAtCursor(imceInline.activeTextarea, html, type);
+  ii.insertAtCursor(ii.activeTextarea, html, type);
 };
 
-$(document).ready(imceInline.initiate);
+})(jQuery);

@@ -1,5 +1,9 @@
 <?php
-// $Id: imce.module,v 1.23.2.10 2010/05/29 02:06:32 ufku Exp $
+
+/**
+ * @file
+ * Implements the necessary hooks for the file browser to work properly.
+ */
 
 /**
  * Implementation of hook_menu().
@@ -9,37 +13,10 @@ function imce_menu() {
   $access = array('administer imce(execute PHP)');
   $items['imce'] = array(
     'title' => 'File browser',
-    'page callback' => 'imce_page',
+    'page callback' => 'imce',
     'access callback' => 'imce_access',
-    'file' => 'inc/page.inc',
+    'file' => 'inc/imce.page.inc',
     'type' => MENU_CALLBACK,
-  );
-  $items['admin/settings/imce'] = array(
-    'title' => 'IMCE',
-    'description' => 'Control how your image/file browser works.',
-    'page callback' => 'imce_admin',
-    'access arguments' => $access,
-    'file' => 'inc/admin.inc',
-  );
-  $items['admin/settings/imce/profiles'] = array(
-    'title' => 'Settings',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-  $items['admin/settings/imce/subdirectory'] = array(
-    'title' => 'Directory creation tool',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('imce_form_subdirectory'),
-    'access arguments' => $access,
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 1,
-    'file' => 'inc/subdir.inc',
-  );
-  $items['admin/settings/imce/profile'] = array(
-    'title' => 'Add new profile',
-    'page callback' => 'imce_profile_operations',
-    'access arguments' => $access,
-    'type' => MENU_CALLBACK,
-    'file' => 'inc/admin.inc',
   );
   $items['user/%user/imce'] = array(
     'title' => 'File browser',
@@ -47,9 +24,23 @@ function imce_menu() {
     'page arguments' => array(1),
     'access callback' => 'imce_user_page_access',
     'access arguments' => array(1),
-    'file' => 'inc/page.inc',
+    'file' => 'inc/imce.page.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
+  );
+  $items['admin/settings/imce'] = array(
+    'title' => 'IMCE',
+    'description' => 'Control how your image/file browser works.',
+    'page callback' => 'imce_admin',
+    'access arguments' => $access,
+    'file' => 'inc/imce.admin.inc',
+  );
+  $items['admin/settings/imce/profile'] = array(
+    'title' => 'Add new profile',
+    'page callback' => 'imce_profile_operations',
+    'access arguments' => $access,
+    'type' => MENU_CALLBACK,
+    'file' => 'inc/imce.admin.inc',
   );
   return $items;
 }
@@ -69,6 +60,12 @@ function imce_theme() {
   $theme['imce_admin']['function'] = 'imce_admin_theme';
   $theme['imce_directories']['function'] = 'imce_directories_theme';
   $theme['imce_thumbnails']['function'] = 'imce_thumbnails_theme';
+  $theme['imce_root_text'] = array(
+    'arguments' => array('imce_ref' => NULL),
+  );
+  $theme['imce_user_page'] = array(
+    'arguments' => array('account' => NULL),
+  );
   $theme['imce_file_list'] = array(
     'template' => 'imce-file-list',
     'arguments' => array('imce_ref' => NULL),
@@ -91,7 +88,7 @@ function imce_theme() {
  * Implementation of hook_file_download().
  */
 function imce_file_download($file) {
-  $serve = variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE && !variable_get('imce_settings_disable_private', 0) && ($path = file_create_path($file)) && file_exists($path);
+  $serve = variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE && !variable_get('imce_settings_disable_private', 0) && ($path = file_create_path($file)) && file_exists($path) && strpos(basename($path), '.');
   if ($serve) {
     if ($result = db_result(db_query("SELECT filemime FROM {files} WHERE filepath = '%s'", $path))) {
       $type = $result;
@@ -103,6 +100,26 @@ function imce_file_download($file) {
       $type = 'application/x-download';
     }
     return array('Content-type: '. $type, 'Content-Length: '. filesize($path));
+  }
+}
+
+/**
+ * Implementation of hook_file_delete().
+ */
+function imce_file_delete($file) {
+  db_query('DELETE FROM {imce_files} WHERE fid = %d', $file->fid);
+}
+
+/**
+ * Implementation of hook_file_references().
+ */
+function imce_file_references($file) {
+  //do not report reference count on internal file deletion
+  if (isset($file->imce_noref) && $file->imce_noref) {
+    return;
+  }
+  if (db_fetch_array(db_query('SELECT 1 FROM {imce_files} WHERE fid = %d', $file->fid))) {
+    return array('imce' => 1);
   }
 }
 
@@ -153,7 +170,7 @@ function imce_user_profile($user) {
 }
 
 /**
- * Check if the user has access to imce.
+ * Checks if the user has access to imce.
  */
 function imce_access($user = FALSE) {
   if ($user === FALSE) {
@@ -175,14 +192,14 @@ function imce_access($user = FALSE) {
 }
 
 /**
- * Defines access to user/{$account->uid}/imce for the $user.
+ * Checks access to user/{$account->uid}/imce for the $user.
  */
 function imce_user_page_access($account, $user = FALSE) {
   if ($user === FALSE) {
     global $user;
   }
 
-  return $user->uid == 1 || ($account->uid == $user->uid && ($profile = imce_user_profile($user)) && $profile['usertab']);
+  return ($user->uid == 1 || $account->uid == $user->uid) && ($profile = imce_user_profile($account)) && $profile['usertab'];
 }
 
 /**

@@ -1,5 +1,9 @@
 <?php
-// $Id: js.inc,v 1.6.2.1 2008/05/04 15:29:15 ufku Exp $
+
+/**
+ * @file
+ * Handles ajax file operations.
+ */
 
 /**
  * Ajax operation: navigate

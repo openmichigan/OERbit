@@ -1,55 +1,47 @@
-// $Id: README.txt,v 1.11.2.9 2010/02/01 15:42:58 ufku Exp $
 
+IMCE
+http://drupal.org/project/imce
+====================================
+
+DESCRIPTION
+-----------
 IMCE is an image/file uploader and browser that supports personal directories and quota.
 IMCE can easily be integrated into any WYSIWYG editor or any web application that needs a file browser.
 See INTEGRATION METHODS for more information.
 
-~~~~~~~~~~~FEATURES~~~~~~~~~~~
-
- -Basic file operations: upload, delete
+FEATURES
+-----------
+- Basic file operations: upload, delete
 - Image(jpg, png, gif) operations: resize, create thumbnails, preview
-- Support for private downloads.
-- Configurable limits for user roles: file size per upload, total directory size(quota), file extensions, and image dimensions.
-- Personal or shared folders for users.
-- User-friendly interface: directory and file listing, file sorting(by name, size, dimensions, date), selecting, preview, keyboard shortcuts(up, down, insert(or enter), delete).
-- Built-in support for inline image/file insertion into textareas.
-New in 6.x:
-- Improved UI:
-  - Tabbed interface for file operations.
-  - Resizable workspaces.
-  - Ftp-like directory navigation.
-  - Log messages.
-  - Additional keyboard shortcuts: home, end, ctrl+A, R(esize), T(humbnails), U(pload)
-  - Multiple file selection(using ctrl or shift).
-- Ajax file operations.
-- Operate on multiple files at a time.
-- Directory caching.
-- Themable layout using tpl files.
-- Improved configuration profiles.
-- Multiple personal or shared directory assignments for users.
-- Permissions per directory.
-- Option to use total user quota together with the directory quota.
-- Replace method options for existing files.
-- Multiple thumbnail definitions.
-- New integration API for wysiwyg editors.
+- Support for private file system
+- Configurable limits for user roles: file size per upload, directory quota, file extensions, and image dimensions
+- Personal or shared folders for users
+- Permissions per directory
+- Ftp-like directory navigation
+- File sorting by name, size, dimensions, date
+- Tabbed interface for file operations
+- Keyboard shortcuts(up, down, insert(or enter), delete, home, end, ctrl+A, R(esize), T(humbnails), U(pload)).
+- Built-in support for inline image/file insertion into textareas
+- Multiple file selection(using ctrl or shift)
+- Ajax file operations
+- Themable layout using tpl files
 
-
-~~~~~~~~~~INSTALLATION~~~~~~~~~~~
-
+INSTALLATION
+-----------
 1) Copy imce directory to your modules directory
 2) Enable the module at: /admin/build/modules
-3) Create configuration profiles and assign them to user roles at: /admin/settings/imce
-4) Test it at: /user/USER-ID/imce or /imce.
-5) See INTEGRATION METHODS to make IMCE collaborate with your application if it's not already integrated.
+3) Create configuration profiles and assign them to user roles at /admin/settings/imce
+4) Test it at /imce.
+5) See imce-content.tpl.php for some configuration options such as inline previewing.
+6) See INTEGRATION METHODS to make IMCE collaborate with your application if it's not already integrated.
 Notes:
  - When you configure IMCE for inline image/file insertion into textareas there should appear an IMCE link under each textarea you specified.
  - If you are uploading files containing unicode characters, it is strongly recommended to use the transliteration module that sanitizes filenames by converting characters from unicode to us-ascii. http://drupal.org/project/transliteration
- - If you are using CCK, you may want to check the Imce CCK Image module at http://drupal.org/project/imceimage
- or the File field sources module at http://drupal.org/project/filefield_sources
+ - If you are using CCK, you may want to check the File field sources module at http://drupal.org/project/filefield_sources
 
 
-~~~~~~FREQUENTLY FACED ISSUES~~~~~~
-
+FREQUENTLY FACED ISSUES
+-----------
 - Inaccessible/invalid directory or subdirectory:
 In some server configurations, manually(ftp or directly) created directories may not be writable by PHP(by IMCE). In this case, you have to set the chmod permissions of the directory to 0777 in order to make it writable by anyone. 
 You should also make sure that in each configuration profile all of the defined directories are located under drupal's file system path which is usually "files".
@@ -58,57 +50,49 @@ And also if "safe mode restriction" is active in your server, don't expect IMCE 
 - Disappearing images after node submission:
 Having nothing to do with IMCE, it appeared many times in issue queues. This is an input filtering issue that can be resolved by adding <img> tag into the default input format. Using Full HTML is another solution. See admin/settings/filters.
 
-- No browse button in IE/FF/at all:
-Probably talking about tinyMCE or FCKeditor. See INTEGRATION METHODS to learn to integrate it by yourself.
-
 - Upload does not work in Opera
 Jquery form plugin before version 2.09 has problems with Opera 9.2+. Replace Drupal's misc/jquery.form.js with the one at http://jquery.malsup.com/form/#download
 
-- IMCE may have problem working with Google Analytics and Secure pages modules. Just make sure to add imce* path to the exceptions list of these modules.
+- IMCE may have problem working with Google Analytics and Secure pages modules. Just make sure to add *imce* path to the exceptions list of these modules.
 
 
-~~~~~~~INTEGRATION METHODS~~~~~~~
+INTEGRATION METHODS
+-----------
 
-If you are using WYSIWYG module, you must also download and install http://drupal.org/project/imce_wysiwyg bridge module and enable IMCE as a plug-in in WYSIWYG settings.
+Here are the applications that already integrated IMCE.
 
-Here are the applications whose users are lucky that they don't have to read the details of integration methods.
+WYSIWYG:
+Install http://drupal.org/project/imce_wysiwyg bridge module and enable IMCE as a plug-in in WYSIWYG settings
 
-BUEditor: Obviously, the author knows how to integrate IMCE to his application:). Users need nothing to do.
+BUEditor:
+IMCE is integrated in image and link dialogs.
 
-FCKeditor(without WYSIWYG): Another module from another blessed author, which makes IMCE integration as simple as a single click. Fckeditor profile->File browser settings->IMCE integration
-Note: One can also override the settings at advanced settings->custom javascript configuration.
-Here are the lines that force imce integration (don't force unless you need to):
-LinkBrowser= true;
-ImageBrowser= true;
-FlashBrowser= true;
-LinkBrowserURL= '/?q=imce&app=FCKEditor|url@txtUrl';
-ImageBrowserURL= '/?q=imce&app=FCKEditor|url@txtUrl|width@txtWidth|height@txtHeight';
-FlashBrowserURL= '/?q=imce&app=FCKEditor|url@txtUrl';
+(F)CKeditor(without WYSIWYG): 
+(F)ckeditor profile->File browser settings->IMCE integration
 
-There may be other applications that integrated IMCE already. If your application is not one of them, please keep reading.
-
+If your application is not one of the above, please keep reading in order to learn how to integrate IMCE.
 
 Let's create a CASE and embody the IMCE integration on it:
 - An application named myApp
 - Has an url field for file url:
   <input type="text" name="urlField" id="urlField">
-- Has a browse button with click event: (This can be a text link or anything that is clickable)
+- Has a browse button with click event(inline or set by jQuery): (This can be a text link or anything that is clickable)
   <input type="button" value="Browse" onclick="openFileBrowser()">
   
 Now let's go through the integration methods and define the openFileBrowser function that opens IMCE and makes it fill our url field on file selection.
 
 
-~~~~~~~~INTEGRATION BY URL~~~~~~~
-
+INTEGRATION BY URL
+-----------
 When IMCE is opened using an url that contains &app=applicationName|fileProperty1@FieldId1|fileProperty2@FieldId2|...
 the specified fields are filled with the specified properties of the selected file.
 
 Avaliable file properties are: url, name, size(formatted), width, height, date(formatted), bytes(integer size in bytes), time(integer date timestamp), id(file id for newly uploaded files, 0 or integer), relpath(rawurlencoded path relative to file directory path.)
 
-In our CASE, we should open IMCE using this URL: /?q=imce&app=myApp|url@urlField which contains our application name and our url field id
+In our CASE, we should open IMCE using this URL: /imce?app=myApp|url@urlField which contains our application name and our url field id
 
 function openFileBrowser() {
-  window.open('/?q=imce&app=myApp|url@urlField', '', 'width=760,height=560,resizable=1');
+  window.open('/imce?app=myApp|url@urlField', '', 'width=760,height=560,resizable=1');
 }
 
 That's all we need. Leave the rest to IMCE.
@@ -116,7 +100,7 @@ It will automatically create an operation tab named "Send to myApp" that sends t
 Clicking the files in preview do the same thing as well.
 
 - What if we had another field for another file property e.g, Size: <input type="text" id="file-size"> ?
-- We should have opened imce using this URL: /?q=imce&app=myApp|url@urlField|size@file-size
+- We should have opened imce using this URL: /imce?app=myApp|url@urlField|size@file-size
 
 
 - USING imceload:
@@ -136,8 +120,8 @@ function myFileHandler (file, win) {
 Usually sendto method is easier to implement, on the other hand imceload method is more flexible as you manually add your sento operator and also can do any modification before IMCE shows up.
 
 
-~~~~~~~ADVANCED INTEGRATION~~~~~~~~~
-
+ADVANCED INTEGRATION
+-----------
 In case:
 - Your application wants to go beyond the simple "give me that file property" interaction with IMCE.
 - Your application wants IMCE to send multiple files to it.(e.g., a gallery application)
@@ -148,7 +132,7 @@ The initial step of advanced integration is the same as imceload-integration abo
 
 We open IMCE and set its onload function:
 
-window.open('/?q=imce&app=myApp|imceload@initiateMyApp', '', 'width=760,height=560,resizable=1'); //initiateMyApp(win) will run when imce loads
+window.open('/imce?app=myApp|imceload@initiateMyApp', '', 'width=760,height=560,resizable=1'); //initiateMyApp(win) will run when imce loads
 
 Now we define our initiator function in which we do the necessary manipulations to IMCE interface:
 
@@ -190,7 +174,7 @@ imce.opEnable(name), imce.opDisable(name): enable/disable operation tabs.
 Miscellaneous
 imce.setMessage(msg, type): logs a message of the type(status, warning, error)
 
-NOTE:
+NOTES:
 - All URL strings in the examples start with "/" considering the base path is "/".
 In case your drupal is running on a sub directory e.g, http://localhost/drupal, these URLs should start with "/drupal/".
 There is a safer solution that does not require manual URL fixing: If the Drupal javascript object is avaliable in your page you can use Drupal.settings.basePath at the beginning of URLs (Drupal.settings.basePath+'?q=imce....'). Note that, this won't work with multilingual paths with language prefixes.
