@@ -40,15 +40,27 @@
  */
 function oercancelbutton_form_alter(&$form, $form_state, $form_id){
   if($form_id == 'webform_client_form_258'){
-    $form['cancel'] = array(
-      '#type' => 'button',
-      '#value' => t('Cancel'),
-      '#id' => 'oercancelbutton_form',
-      '#weight' => 1005,
-      '#attributes' => array('class' => 'form-cancel', 'onClick' => 'location.replace("'. referer_uri() .'"); return false;'),
-      // some more params....
-    );
+    if (isset($form['actions']) && is_array($form['actions'])) {
+      $form['actions']['cancel'] = array(
+        '#type' => 'button',
+        '#value' => t('Cancel'),
+        '#id' => 'oercancelbutton_form',
+        '#weight' => 15,
+        '#attributes' => array('class' => 'form-cancel', 'onClick' => 'location.replace("'. referer_uri() .'"); return false;'),
+        // some more params....
+      );
+    } else {
+      $form['cancel'] = array(
+        '#type' => 'button',
+        '#value' => t('Cancel'),
+        '#id' => 'oercancelbutton_form',
+        '#weight' => 1005,
+        '#attributes' => array('class' => 'form-cancel', 'onClick' => 'location.replace("'. referer_uri() .'"); return false;'),
+        // some more params....
+      );
+    }
   }
+
   if ($form_id == 'search_form') {
     $form['basic']['#title'] = '';
     $form['advanced']['#type'] = 'hidden';
