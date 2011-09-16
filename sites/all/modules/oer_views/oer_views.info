@@ -1,0 +1,11 @@
+; $Id$
+
+name = Exported Views
+description = Exported views for OER
+dependencies[] = views
+dependencies[] = course
+dependencies[] = hierarchical_permissions
+dependencies[] = material
+dependencies[] = navigation
+package = OER
+core = 6.x
