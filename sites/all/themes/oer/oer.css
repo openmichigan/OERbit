@@ -204,6 +204,16 @@ a.social:hover span {
 	right: 0;
  }
 
+ #search-form .spelling-suggestions label {
+        display: inline;
+ }
+
+ /* apachesolr search customizations */
+.block-oer_tweaks ul,
+.block-apachesolr ul {
+        list-style: none;
+ }
+
 
 
 
@@ -2097,4 +2107,129 @@ filter: alpha(opacity=100) !important;
 	font-weight:normal;
 	line-height:13px;
 	padding:2px 0 5px 18px;
+}
+
+
+/************************************************************
+*
+*       Search Apachesolr
+*
+*************************************************************/
+
+
+#content .search-results.apachesolr_search-results p.title a{
+    color:#444;
+    font-weight:bolder;
+}
+#content .apachesolr_search-results .serach_result p.information{
+  margin-top: -8px;
+  line-height:.1em;
+ 
+}
+
+#content .apachesolr_search-results .serach_result p.search-snippet {}
+#content .apachesolr_search-results .serach_result p.breadcrumb {
+  
+  margin-top:-10px;
+  line-height:1.3em;
+  color:#444;
+}
+
+#content .apachesolr_search-results .serach_result p.breadcrumb a{
+  
+  margin-top:-10px;
+  line-height:1.3em;
+  color:#444;
+}
+
+#content .apachesolr_search-results .serach_result{
+ 
+  margin-bottom: 15px;
+}
+
+
+#main #content #content-inner #content-area .search-results.apachesolr_search-results{
+	border-top-style:solid;
+	border-top-color:#CCCCCC;
+	padding-top:10px;
+}
+
+#main #content #content-inner #apachesolr_results_count .form-item .apachesolr_count{
+	font-weight: bold;
+}
+
+
+
+.block-oer_tweaks .block-inner .content,
+#block-apachesolr-sort .block-inner .content  
+{
+   	text-align: left;
+   
+}
+
+
+.block-oer_tweaks .block-inner .content .item-list ul,
+#block-apachesolr-sort .block-inner .content .item-list ul 
+{
+   	padding:0;
+   
+}
+
+
+.block-oer_tweaks .block-inner .content .item-list ul li,
+#block-apachesolr-sort .block-inner .content .item-list ul li
+{
+   	padding-bottom:10px;
+   	text-align:left;
+   
+}
+
+.block-oer_tweaks .block-inner .content .item-list ul li a,
+#block-apachesolr-sort .block-inner .content .item-list ul li a
+
+{
+ 	margin-bottom = 20px;
+ 	text-decoration: none;
+ 	text-align: left;
+ 	color:#444;
+}
+
+#block-oer_tweaks-0 .block-inner .content .item-list ul,
+#block-oer_tweaks-3 .block-inner .content .item-list ul
+{
+
+	border-bottom-style:solid;
+	border-bottom-color:#CCCCCC;
+	padding-bottom: 10px;
+	text-align: left;
+
+}
+
+.block-oer_tweaks .block-inner .content .item-list ul li a:hover,
+.block-oer_tweaks .block-inner .content .item-list ul li a:active,
+.block-oer_tweaks .block-inner .content .item-list ul li a:hover.active, 
+#block-oer_tweaks-4 .block-inner .content .item-list ul li.first a:hover,
+#block-oer_tweaks-4 .block-inner .content .item-list ul li.first a:active,
+#block-oer_tweaks-4 .block-inner .content .item-list ul li.first a:hover.active,
+#block-apachesolr-sort .block-inner .content .item-list ul li a:hover,
+#block-apachesolr-sort .block-inner .content .item-list ul li a:active,
+#block-apachesolr-sort .block-inner .content .item-list ul li a:hover.active
+{
+ 	color:#963;
+ 	text-decoration: none;
+ 	text-align:left;
+	background: url(images/bg-primarynav.png);
+
+}
+.block-oer_tweaks .block-inner .content .item-list ul li.first a,
+#block-apachesolr-sort .block-inner .content .item-list ul li.first a
+{
+ 	color:#963;
+ 	background:none;
+ 
+}
+
+#block-oer_tweaks-4 .block-inner .content .item-list ul li.first a
+{
+ 	color:#444;
 }
