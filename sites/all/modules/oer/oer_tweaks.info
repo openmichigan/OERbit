@@ -1,0 +1,6 @@
+; $Id$
+name = OER Tweaks
+description = Tweaks
+package = OER
+core = 6.x
+

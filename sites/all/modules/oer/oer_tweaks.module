@@ -1,0 +1,554 @@
+<?php
+
+function oer_tweaks_apachesolr_update_index(&$doc, $node) {
+  // Define the "Main" Facet
+    // Everything facet, should be on top
+  $everything_types = array('course', 'material', 'instructor', 'page');
+  if (in_array($node->type, $everything_types)) {
+    $doc->addfield('sm_oer_main', 'Everything');
+  }
+  switch ($node->type) {
+    case 'course':
+      switch ($node->field_content_type[0]['value']) {
+        case 'course':
+          $doc->addfield('sm_oer_main', 'Courses');
+          break;
+        case 'resource':
+          $doc->addfield('sm_oer_main', 'Resources');
+          break;
+      }
+      break;
+    case 'instructor':
+      $doc->addfield('sm_oer_main', 'Instructor');
+      break;
+    case 'material':
+      if ($node->field_material_type[0]['value'] == 'lectures') {
+        $doc->addfield('sm_oer_main', 'Lectures');
+      }
+      if ($node->field_material_type[0]['value'] == 'software') {
+        $doc->addfield('sm_oer_main', 'Software');
+      }
+      if ($node->field_resource_type[0]['value'] == 'video') {
+        $doc->addfield('sm_oer_main', 'Videos');
+      }
+      if ($node->field_resource_type[0]['value'] == 'image') {
+        $doc->addfield('sm_oer_main', 'Images');
+      }
+      break;
+  }
+
+  $creator_types = array('course', 'material');
+  if (in_array($node->type, $creator_types)) {
+    foreach ($node->field_creators as $creator) {
+      if ($creator['value']) {
+        $doc->addfield('sm_oer_main', 'Authors');
+      }
+    }
+  }
+
+  // Defines the creative commons facet
+  if (isset($node->cc->type)) {
+    $types = array('by', 'by-sa', 'by-nc', 'by-nc-sa');
+    if (in_array($node->cc->type, $types)) {
+      $doc->addfield('sm_oer_cc', strtoupper($node->cc->type));
+    }
+    else {
+      if ($node->cc->type == 'zero' || $node->cc->type == 'mark') {
+        $doc->addfield('sm_oer_cc', 'Public Domain');
+      }
+      else {
+        $doc->addfield('sm_oer_cc', 'Other');
+      }
+    }
+  }
+
+  // Defines the instructor facet
+  if ($node->type == 'course') {
+    foreach ($node->field_course_instructor as $instructor) {
+      $instructor = node_load($instructor['nid']);
+      if (isset($instructor->title)) {
+        $doc->addfield('sm_oer_instructor', $instructor->title);
+      }
+    }
+  }
+  if (isset($node->field_course_reference[0]['nid'])) {
+    $course = node_load($node->field_course_reference[0]['nid']);
+    if (is_array($course->field_course_instructor)) {
+      foreach ($course->field_course_instructor as $instructor) {
+        $instructor = node_load($instructor['nid']);
+        if (isset($instructor->title)) {
+          $doc->addfield('sm_oer_instructor', $instructor->title);
+        }
+      }
+    }
+  }
+
+  // Defines the Creators facet
+  if (isset($node->field_creators)) {
+    if (is_array($node->field_creators)) {
+      foreach ($node->field_creators as $creator) {
+        $doc->addfield('sm_oer_creator', $creator['value']);
+      }
+    }
+  }
+}
+
+function oer_tweaks_apachesolr_modify_query(&$query, &$params, $caller) {
+  $filters = $query->get_filters('sm_oer_main');
+  if (empty($filters)) {
+    $query->add_filter('sm_oer_main', 'Everything');
+  }
+}
+
+function oer_tweaks_apachesolr_sort_links_alter($links) {
+  // Hide all unnecessary sorts
+  unset($links['sort_title']);
+  unset($links['type']);
+  unset($links['sort_name']);
+  $links['created']['options']['query']['solrsort'] = 'created desc';
+  $links['created']['direction'] = '';
+
+  if ($links['created']['active']) {
+    $links['created']['title'] = t('Sorted by date published');
+  }
+  else {
+    $links['created']['title'] = t('Sort by date published');
+  }
+
+  if ($links['score']['active']) {
+    $links['score']['title'] = t('Sorted by relevancy');
+  }
+  else {
+    $links['score']['title'] = t('Sort by relevancy');
+  }
+}
+
+function oer_tweaks_preprocess_search_result(&$vars) {
+  $node = $vars['result']['node'];
+  $nid = $node->__get('nid');
+
+  if ($nid) {
+    $node = node_load($nid);
+  }
+  $vars['update_date'] = 'Update: ' . date('F D, Y', $node->changed);
+  $vars['license'] = $node->cc->name;
+  $vars['type'] = oer_tweaks_search_result_node_type($node);
+  $vars['breadcrumb'] = oer_tweaks_search_result_breadcrumbs($node);
+}
+
+function oer_tweaks_search_result_node_type($node) {
+  switch ($node->type) {
+    case 'course':
+      switch ($node->field_content_type[0]['value']) {
+        case 'course':
+          return t('Course');
+        case 'resource':
+          return t('Resource');
+      }
+      break;
+    case 'instructor':
+      return t('Instructor (person)');
+    case 'material':
+      $fieldData = content_fields('field_material_type', $node->type);
+      $keys = explode("\n", $fieldData['allowed_values']);
+      foreach ($keys as $key) {
+        $temp = explode('|',$key,2);
+        $labels[$temp[0]] = $temp[1];
+      }
+
+      return t('!type (material)', array('!type' => $labels[$node->field_material_type[0]['value']]));
+    default:
+      return $node->type;
+  }
+}
+
+function oer_tweaks_search_result_breadcrumbs($node) {
+  if (isset($node->field_course_reference[0]['nid'])) {
+    $breadlast = node_load($node->field_course_reference[0]['nid']);
+    $breadfirst = oer_tweaks_find_top_unit($breadlast);
+  }
+  if ($node->type == 'course') {
+    $breadlast = $node;
+    $breadfirst = oer_tweaks_find_top_unit($node);
+  }
+  
+  if ($breadfirst != FALSE) {
+    return 'find > ' . l(strtolower($breadfirst->title), 'node/' . $breadfirst->nid) . ' > ... > ' . l(strtolower($breadlast->title), 'node/' . $breadlast->nid);
+  }
+  return;
+}
+
+function oer_tweaks_find_top_unit($node) {
+  if (isset($node->field_parent_unit[0]['nid'])) {
+    $node = node_load($node->field_parent_unit[0]['nid']);
+    return oer_tweaks_find_top_unit($node);
+  }
+  else {
+    if ($node->type == 'unit') {
+      return $node;
+    }
+    else {
+      return FALSE;
+    }
+  }
+}
+
+function oer_tweaks_apachesolr_facets() {
+  $facets['oer_tweaks_main'] = array(
+    'info' => t('OER Main Facet'),
+    'facet_field' => 'sm_oer_main',
+  );
+  $facets['oer_tweaks_cc'] = array(
+    'info' => t('Creative Commons'),
+    'facet_field' => 'sm_oer_cc',
+  );
+  $facets['oer_tweaks_instructor'] = array(
+    'info' => t('Instructor'),
+    'facet_field' => 'sm_oer_instructor',
+  );
+  $facets['oer_tweaks_creator'] = array(
+    'info' => t('Creator'),
+    'facet_field' => 'sm_oer_creator',
+  );
+
+  return $facets;
+}
+
+function oer_tweaks_preprocess_page(&$vars) {
+  if(arg(0) == 'search' && arg(1) == 'apachesolr_search' && apachesolr_has_searched()) {
+    $path = drupal_get_path('module', 'oer') . 'oer_tweaks.js';
+    drupal_add_js(drupal_get_path('module', 'oer_tweaks') . '/oer_tweaks.js');
+    $vars['scripts'] = drupal_get_js();
+    $response = apachesolr_static_response_cache();
+    $vars['num_results'] = $response->__get('response')->numFound;
+  }
+}
+
+function oer_tweaks_block($op = 'list', $delta = '0', $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0] = array(
+        'info' => t('OER Main Custom Apachesolr Filter'),
+      );
+      $blocks[1] = array(
+        'info' => t('OER Creative Commons Apachesolr Filter'),
+      );
+      $blocks[2] = array(
+        'info' => t('OER Instructor Facet'),
+      );
+      $blocks[3] = array(
+        'info' => t('OER Creator Facet'),
+      );
+      $blocks[4] = array(
+        'info' => t('OER Search Tools'),
+      );
+      return $blocks;
+    case 'view':
+      if ($delta == 0 && apachesolr_has_searched()) {
+        $response = apachesolr_static_response_cache();
+        $query = apachesolr_current_query();
+        $facets = apachesolr_get_enabled_facets('oer_tweaks');
+
+        return oer_tweaks_apachesolr_facet_block($response, $query, 'oer_tweaks', $delta, 'sm_oer_main', t('OER Main'));
+      }
+      if ($delta == 1 && apachesolr_has_searched()) {
+        $response = apachesolr_static_response_cache();
+        $query = apachesolr_current_query();
+        $facets = apachesolr_get_enabled_facets('oer_tweaks');
+
+        return oer_tweaks_apachesolr_facet_block($response, $query, 'oer_tweaks', $delta, 'sm_oer_cc', t('Creative Commons'));
+      }
+      if ($delta == 2 && apachesolr_has_searched()) {
+        $response = apachesolr_static_response_cache();
+        $query = apachesolr_current_query();
+        $facets = apachesolr_get_enabled_facets('oer_tweaks');
+
+        return oer_tweaks_apachesolr_facet_block($response, $query, 'oer_tweaks', $delta, 'sm_oer_instructor', t('Instructors'));
+      }
+      if ($delta == 3 && apachesolr_has_searched()) {
+        $response = apachesolr_static_response_cache();
+        $query = apachesolr_current_query();
+        $facets = apachesolr_get_enabled_facets('oer_tweaks');
+
+        return oer_tweaks_apachesolr_facet_block($response, $query, 'oer_tweaks', $delta, 'sm_oer_creator', t('Creators'));
+      }
+      if ($delta == 4 && apachesolr_has_searched()) {
+        return array(
+          'subject' => t('Search Tools'),
+          'content' => oer_tweaks_search_tools(),
+        );
+      }
+      return;
+
+    case 'configure':
+      if ($delta != 4) {
+        $form =  apachesolr_facetcount_form('oer_tweaks', $delta);
+        $anything = variable_get('apachesolr_facet_any_field', array());
+
+        $form['apachesolr_facet_any_field'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Anything Label'),
+          '#description' => t('If this field has a value, this block will have a "anything" facet, with this as the facet title, that will reset the query'),
+          '#default_value' => isset($anything['oer_tweaks'][$delta]) ? $anything['oer_tweaks'][$delta] : '',
+        );
+        return $form;
+      }
+      break;
+    case 'save':
+      if ($delta != 4) {
+        $anything = variable_get('apachesolr_facet_any_field', array());
+        if (isset($edit['apachesolr_facet_any_field'])) {
+          $anything[$edit['module']][$edit['delta']] = $edit['apachesolr_facet_any_field'];
+          variable_set('apachesolr_facet_any_field', $anything);
+        }
+
+        apachesolr_facetcount_save($edit);
+        break;
+      }
+      break;
+  }
+}
+
+function oer_tweaks_apachesolr_facet_block($response, $query, $module, $delta, $facet_field, $filter_by, $facet_callback = FALSE) {
+   if (!empty($response->facet_counts->facet_fields->$facet_field)) {
+    $contains_active = FALSE;
+    $items = array();
+
+    // Add functionality to display any field
+    $any = variable_get('apachesolr_facet_any_field', array());
+    if (isset($any[$module][$delta]) && $any[$module][$delta] != '') {
+      $active = FALSE;
+      $clone = clone $query;
+      $rout = $clone->get_filters($facet_field);
+      if (empty($rout)) {
+        $active = TRUE;
+      }
+      $include_any = $any[$module][$delta];
+      $clone->remove_filter($facet_field);
+      $options['query'] = $clone->get_url_queryvalues();
+      $link = theme('oer_tweaks_apachesolr_facet_link', $include_any, $clone->get_path(), $options, $active);
+      $items['**' . '*' . $include_any] = $link;
+    }
+
+    $filters = $query->get_filters();
+    foreach ($response->facet_counts->facet_fields->$facet_field as $facet => $count) {
+      $options = array();
+      $exclude = FALSE;
+
+      // Solr sends this back if it's empty.
+      if ($facet == '_empty_') {
+        $exclude = TRUE;
+        $facet = '[* TO *]';
+        $options['html'] = TRUE;
+      }
+
+      if ($facet_callback && function_exists($facet_callback)) {
+        $facet_text = $facet_callback($facet, $options);
+      }
+      elseif ($exclude) {
+        continue;
+        $facet_text = theme('placeholder', t('Missing this field'));
+      }
+      else {
+        $facet_text = $facet;
+      }
+
+      $active = $query->has_filter($facet_field, $facet);
+
+      if ($facet_field == 'sm_oer_main' && $facet == 'Everything') {
+        $filt = $query->get_filters('sm_oer_main');
+        if (empty($filt)) {
+          $active = TRUE;
+        }
+      }
+
+      if ($active || $facet_text == 'Everything') {
+        // '*' sorts before all numbers.
+        $sortpre = '*';
+        if ($facet_text == 'Everything') {
+          $sortpre = '**';
+        }
+      }
+      elseif ($exclude) {
+        // '-' sorts before all numbers, but after '*'.
+        $sortpre = '-';
+      }
+      else {
+        $sortpre = 1000000 - $count;
+      }
+
+      $new_query = clone $query;
+      if ($active) {
+        $contains_active = TRUE;
+        $new_query->remove_filter($facet_field, $facet);
+        $options['query'] = $new_query->get_url_queryvalues();
+        $link = theme('oer_tweaks_apachesolr_facet_link', $facet_text, $new_query->get_path(), $options, TRUE);
+      }
+      else {
+        $new_query->add_filter($facet_field, $facet, $exclude);
+        $options['query'] = $new_query->get_url_queryvalues();
+        $link = theme('oer_tweaks_apachesolr_facet_link', $facet_text, $new_query->get_path(), $options, FALSE);
+      }
+
+      if ($count || $active) {
+        $items[$sortpre . '*' . $facet_text] = $link;
+      }
+    }
+    // Unless a facet is active only display 2 or more.
+    if ($items && ($response->response->numFound > 1 || $contains_active)) {
+      ksort($items, SORT_STRING);
+      // Get information needed by the rest of the blocks about limits.
+      $initial_limits = variable_get('apachesolr_facet_query_initial_limits', array());
+      $limit = isset($initial_limits[$module][$delta]) ? $initial_limits[$module][$delta] : variable_get('apachesolr_facet_query_initial_limit_default', 10);
+      $output = theme('oer_tweaks_apachesolr_facet_list', $items, $limit);
+      return array('subject' => $filter_by, 'content' => $output);
+    }
+  }
+  return NULL;
+}
+
+function oer_tweaks_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'search_form') {
+    if (isset($form['basic']['apachesolr_search']['retain-filters'])) {
+      unset($form['basic']['apachesolr_search']['retain-filters']);
+    }
+    if (apachesolr_has_searched()) {
+      $response = apachesolr_static_response_cache();
+      $form['basic']['apachesolr_search']['num_found'] = array(
+        '#type' => 'item',
+        '#value' => t('Search found !start_div @count items !end_div', array('@count' => $response->__get('response')->numFound, '!start_div' => '<span class="apachesolr_count">', '!end_div' => '</span>')),
+        '#prefix' => '<div id="apachesolr_results_count">',
+        '#suffix' => '</div>',
+      );
+    }
+  }
+  if ($form_id == 'search_block_form') {
+    $form['search_block_form']['#title'] = t('Search');
+  }
+}
+
+function oer_tweaks_search_tools() {
+  $links = array();
+  $links[] = '<a href="#" id="togg-link">' . t('Hide search tools') . '</a>';
+  $links[] = '<a href="/' . $_GET['q'] . '">' . t('Reset Search Tools') . '</a>';
+
+  return theme('item_list', $links);
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function oer_tweaks_theme() {
+  return array(
+    /**
+     * Returns a link for a facet term, with the number (count) of results for that term
+     */
+    'oer_tweaks_apachesolr_facet_link' => array(
+      'arguments' => array('facet_text' => NULL, 'path' => NULL, 'options' => NULL, 'active' => FALSE),
+    ),
+    /**
+     * Returns a list of links from the above functions (apachesolr_facet_item and apachesolr_unclick_link)
+     */
+    'oer_tweaks_apachesolr_facet_list' => array(
+      'arguments' => array('items' => NULL, 'display_limit' => NULL),
+    ),
+  );
+}
+
+function theme_oer_tweaks_apachesolr_facet_link($facet_text, $path, $options = array(), $active = FALSE) {
+  $options['attributes']['class'][] = 'apachesolr-facet';
+  if ($active) {
+    $options['attributes']['class'][] = 'active';
+  }
+  $options['attributes']['class'] = implode(' ', $options['attributes']['class']);
+  return oer_tweaks_apachesolr_l($facet_text,  $path, $options);
+}
+
+function theme_oer_tweaks_apachesolr_facet_list($items, $display_limit = 0) {
+    // theme('item_list') expects a numerically indexed array.
+  $items = array_values($items);
+  // If there is a limit and the facet count is over the limit, hide the rest.
+  if (($display_limit > 0) && (count($items) > $display_limit)) {
+    // Show/hide extra facets.
+    drupal_add_js(drupal_get_path('module', 'apachesolr') . '/apachesolr.js');
+    // Split items array into displayed and hidden.
+    $hidden_items = array_splice($items, $display_limit);
+    foreach ($hidden_items as $hidden_item) {
+      if (!is_array($hidden_item)) {
+        $hidden_item = array('data' => $hidden_item);
+      }
+      $hidden_item['class'] = isset($hidden_item['class']) ? $hidden_item['class'] . ' apachesolr-hidden-facet' : 'apachesolr-hidden-facet';
+      $items[] = $hidden_item;
+    }
+  }
+  return theme('item_list', $items);
+}
+
+function theme_oer_tweaks_apachesolr_active_link($facet_text, $path, $options = array()) {
+  if (empty($options['html'])) {
+    $facet_text = check_plain($facet_text);
+  }
+  else {
+    // Don't pass this option as TRUE into apachesolr_l().
+    unset($options['html']);
+  }
+  $options['attributes']['class'] = 'apachesolr-active';
+  return oer_tweaks_apachesolr_l($facet_text,  $path, $options);
+}
+
+function oer_tweaks_apachesolr_l($text, $path, $options = array()) {
+  // Merge in defaults.
+  $options += array(
+    'attributes' => array(),
+    'html' => FALSE,
+    'query' => array(),
+  );
+
+  // Don't need this, and just to be safe.
+  unset($options['attributes']['title']);
+  // Double encode + characters for clean URL Apache quirks.
+  if (variable_get('clean_url', '0')) {
+    $path = str_replace('+', '%2B', $path);
+  }
+
+  // Retain GET parameters that ApacheSolr knows nothing about.
+  $query = apachesolr_current_query();
+
+
+  $get = array_diff_key($_GET, array('q' => 1, 'page' => 1), $options['query'], $query->get_url_queryvalues());
+  $options['query'] += $get;
+
+  $index = 0;
+  $string = $options['query']['filters'];
+  $newstring = '';
+  $in_quote = FALSE;
+
+  while (isset($string{$index})) {
+   $piece = $string{$index};
+   if ($piece == '"'){
+     $in_quote = ($in_quote == FALSE)? TRUE : FALSE;
+   }
+   if ($piece == ' ' && !$in_quote){
+     $piece = "_ _";
+   }
+   $newstring .= $piece;
+   $index++;
+  }
+
+
+  $filters = array_reverse(explode('_ _', $newstring));
+  $key = explode(':', $filters[0], 2);
+  $key = $key[0];
+  $filter_keep = $filters[0];
+  foreach ($filters as $filter) {
+    $temp = explode(':', $filter, 2);
+    if ($temp[0] != $key) {
+      $results[] = $filter;
+    }
+  }
+  $results[] = $filter_keep;
+  $options['query']['filters'] = implode(' ', $results);
+
+
+  return '<a href="'. check_url(url($path, $options)) .'"'. drupal_attributes($options['attributes']) .'>'. ($options['html'] ? $text : check_plain($text)) .'</a>';
+}
