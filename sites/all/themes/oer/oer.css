@@ -2206,13 +2206,13 @@ filter: alpha(opacity=100) !important;
 }
 
 .block-oer_tweaks .block-inner .content .item-list ul li a:hover,
-.block-oer_tweaks .block-inner .content .item-list ul li a:active,
+.block-oer_tweaks .block-inner .content .item-list ul li a.active,
 .block-oer_tweaks .block-inner .content .item-list ul li a:hover.active, 
 #block-oer_tweaks-4 .block-inner .content .item-list ul li.first a:hover,
-#block-oer_tweaks-4 .block-inner .content .item-list ul li.first a:active,
+#block-oer_tweaks-4 .block-inner .content .item-list ul li.first a.active,
 #block-oer_tweaks-4 .block-inner .content .item-list ul li.first a:hover.active,
 #block-apachesolr-sort .block-inner .content .item-list ul li a:hover,
-#block-apachesolr-sort .block-inner .content .item-list ul li a:active,
+#block-apachesolr-sort .block-inner .content .item-list ul li a.active,
 #block-apachesolr-sort .block-inner .content .item-list ul li a:hover.active
 {
  	color:#963;
@@ -2221,15 +2221,9 @@ filter: alpha(opacity=100) !important;
 	background: url(images/bg-primarynav.png);
 
 }
-.block-oer_tweaks .block-inner .content .item-list ul li.first a,
-#block-apachesolr-sort .block-inner .content .item-list ul li.first a
-{
- 	color:#963;
- 	background:none;
- 
-}
 
 #block-oer_tweaks-4 .block-inner .content .item-list ul li.first a
 {
  	color:#444;
 }
+
