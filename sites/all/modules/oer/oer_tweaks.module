@@ -130,7 +130,7 @@ function oer_tweaks_preprocess_search_result(&$vars) {
   if ($nid) {
     $node = node_load($nid);
   }
-  $vars['update_date'] = 'Update: ' . date('F D, Y', $node->changed);
+  $vars['update_date'] = 'Update: ' . date('F j, Y', $node->changed);
   $vars['license'] = $node->cc->name;
   $vars['type'] = oer_tweaks_search_result_node_type($node);
   $vars['breadcrumb'] = oer_tweaks_search_result_breadcrumbs($node);
