@@ -1,0 +1,23 @@
+<?php
+
+function oer_tweaks_install() {
+  $solr_any_fields = array(
+    'oer_tweaks' => array(
+      1 => 'Any License',
+      2 => 'Any Instructor',
+      3 => 'Any Creator',
+    ),
+  );
+  variable_set('apachesolr_facet_any_field', $solr_any_fields);
+}
+
+function oer_tweaks_update_6100(&$sandbox) {
+  $solr_any_fields = array(
+    'oer_tweaks' => array(
+      1 => 'Any License',
+      2 => 'Any Instructor',
+      3 => 'Any Creators',
+    ),
+  );
+  variable_set('apachesolr_facet_any_field', $solr_any_fields);
+}
