@@ -401,7 +401,7 @@ function oer_tweaks_apachesolr_facet_block($response, $query, $module, $delta, $
       $initial_limits = variable_get('apachesolr_facet_query_initial_limits', array());
       $limit = isset($initial_limits[$module][$delta]) ? $initial_limits[$module][$delta] : variable_get('apachesolr_facet_query_initial_limit_default', 10);
       $output = theme('oer_tweaks_apachesolr_facet_list', $items, $limit);
-      return array('subject' => $filter_by, 'content' => $output);
+      return array('subject' => '', 'content' => $output);
     }
   }
   return NULL;
