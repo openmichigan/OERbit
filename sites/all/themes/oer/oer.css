@@ -2140,6 +2140,7 @@ filter: alpha(opacity=100) !important;
   margin-top:-10px;
   line-height:1.3em;
   color:#444;
+  text-decoration: underline;
 }
 
 #content .apachesolr_search-results .serach_result{
