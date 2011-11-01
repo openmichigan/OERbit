@@ -125,7 +125,7 @@ function oer_tweaks_apachesolr_sort_links_alter($links) {
 
 function oer_tweaks_preprocess_search_result(&$vars) {
   $node = $vars['result']['node'];
-  $nid = $node->__get('nid');
+  $nid = $node->nid;
 
   if ($nid) {
     $node = node_load($nid);
