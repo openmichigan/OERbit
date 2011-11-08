@@ -46,13 +46,6 @@ function oerbit_search_strongarm() {
   $strongarm = new stdClass;
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
-  $strongarm->name = 'apachesolr_last_optimize';
-  $strongarm->value = 1316039642;
-  $export['apachesolr_last_optimize'] = $strongarm;
-
-  $strongarm = new stdClass;
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
   $strongarm->name = 'apachesolr_mlt_blocks';
   $strongarm->value = array(
     'mlt-001' => array(
