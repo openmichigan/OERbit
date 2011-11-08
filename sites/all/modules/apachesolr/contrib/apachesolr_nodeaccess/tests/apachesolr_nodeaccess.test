@@ -1,9 +1,5 @@
 <?php
-
-/**
- * @file
- *   Tests for the apachsolr_nodeaccess module.
- */
+// $Id: apachesolr_nodeaccess.test,v 1.1.2.3 2010/05/01 04:42:17 jpmckinney Exp $
 
 class DrupalApacheSolrNodeAccess extends DrupalWebTestCase {
   function getInfo() {
@@ -89,7 +85,7 @@ class DrupalApacheSolrNodeAccess extends DrupalWebTestCase {
     // Login as basic user
     $this->drupalLogin($basic_user);
 
-    module_load_include('php', 'apachesolr', 'Solr_Base_Query');
+    include_once drupal_get_path('module', 'apachesolr') .'/Solr_Base_Query.php';
     $query = apachesolr_current_query();
     $params = array();
 

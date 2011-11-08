@@ -1,9 +1,5 @@
 <?php
-
-/**
- * @file
- *   Tests for the apachsolr module: base subquery.
- */
+// $Id: solr_base_subquery.test,v 1.1.2.5 2010/05/01 03:32:03 jpmckinney Exp $
 
 class DrupalSolrSubQueryTests extends DrupalWebTestCase {
   function getInfo() {
