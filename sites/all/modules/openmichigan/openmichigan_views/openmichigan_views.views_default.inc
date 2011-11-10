@@ -2982,6 +2982,7 @@ function openmichigan_views_views_default_views() {
     'field_material_type_value_many_to_one' => array(
       'operator' => 'or',
       'value' => array(
+        'schedules' => 'schedules',
         'lectures' => 'lectures',
         'assign' => 'assign',
         'exams' => 'exams',
@@ -2992,6 +2993,7 @@ function openmichigan_views_views_default_views() {
         'handouts' => 'handouts',
         'cases' => 'cases',
         'supp-readings' => 'supp-readings',
+        'studentnotes' => 'studentnotes',
         'projects' => 'projects',
         'papers' => 'papers',
         'present' => 'present',
@@ -4511,9 +4513,6 @@ function openmichigan_views_views_default_views() {
       'id' => 'field_material_type_value',
       'table' => 'node_data_field_material_type',
       'field' => 'field_material_type_value',
-      'override' => array(
-        'button' => 'Override',
-      ),
       'relationship' => 'none',
     ),
   ));
@@ -4603,6 +4602,7 @@ function openmichigan_views_views_default_views() {
     'field_material_type_value_many_to_one' => array(
       'operator' => 'or',
       'value' => array(
+        'schedules' => 'schedules',
         'lectures' => 'lectures',
         'assign' => 'assign',
         'exams' => 'exams',
@@ -4613,6 +4613,7 @@ function openmichigan_views_views_default_views() {
         'handouts' => 'handouts',
         'cases' => 'cases',
         'supp-readings' => 'supp-readings',
+        'studentnotes' => 'studentnotes',
         'projects' => 'projects',
         'papers' => 'papers',
         'present' => 'present',
