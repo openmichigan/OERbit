@@ -1,5 +1,4 @@
 <?php
-// $Id: devel.module,v 1.258.2.77 2010/08/13 16:46:59 weitzman Exp $
 
 // This module holds functions useful for Drupal development.
 // Please contribute!
@@ -71,13 +70,6 @@ function devel_menu() {
     'page arguments' => array('devel_reinstall'),
     'description' => 'Run hook_uninstall() and then hook_install() for a given module.',
     'access arguments' => array('access devel information'),
-    'menu_name' => 'devel',
-  );
-  $items['devel/source'] = array(
-    'title' => 'Display the PHP code of any file in your Drupal installation',
-    'page callback' => 'devel_display_source',
-    'access arguments' => array('display source code'),
-    'type' => MENU_CALLBACK,
     'menu_name' => 'devel',
   );
   $items['devel/menu/reset'] = array(
@@ -202,12 +194,12 @@ function devel_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
-  $items['devel/theme/registry'] = array(     
-    'title' => 'Theme registry',     
-    'description' => 'View a list of available theme functions across the whole site.',     
-    'page callback' => 'devel_theme_registry',     
-    'access arguments' => array('access devel information'),     
-    'menu_name' => 'devel',     
+  $items['devel/theme/registry'] = array(
+    'title' => 'Theme registry',
+    'description' => 'View a list of available theme functions across the whole site.',
+    'page callback' => 'devel_theme_registry',
+    'access arguments' => array('access devel information'),
+    'menu_name' => 'devel',
   );
 
   return $items;
@@ -261,64 +253,6 @@ function devel_theme() { // &$cache, $type, $theme, $path
 }
 
 /**
- * Page callback to display syntax hilighted source code
- *
- * note: the path for this function is received via $_GET['path']
- *  example http://www.example.com/devel/source?file=modules/node/node.module
- *
- * @param $standalone
- *   Set to FALSE to place the code inside a Drupal page. Otherwise code displays on its own.
- */
-function devel_display_source($standalone = TRUE) {
-  $path = $_GET['file'];
-  // take out the nasties
-  $path = str_replace('../', '', $path);
-  $output = devel_highlight_file($path, $standalone);
-  if ($output) {
-    if ($standalone) {
-      print $output;
-      exit();
-    }
-    return $output;
-  }
-  else {
-    drupal_set_message(t('Invalid file path'), 'error');
-    drupal_not_found();
-  }
-}
-
-/**
- * Return PHP highlighted file
- *
- * @param $path
- *   path to the file
- *    *warning* there is NO VALIDATION in this function
- *    Beware of paths such as '../../../../../etc/apache/httpd.conf'
- *
- * @param $standalone
- *   should the returned HTML be wrapped in a full <html> page or will it be output by Drupal?
- */
-function devel_highlight_file($path = NULL, $standalone = FALSE) {
-  if (file_exists($path)) {
-    $source = highlight_file($path, TRUE);
-    // add anchor links before all functions so that we can link to a function within the source
-    // ** commented out because regexes aren't working **
-    //$source = preg_replace('!(\/\*\*.*?\*\/.*?)<br.*?function.*?#0000BB">(.*?)<\/span>!', '<a id="$2"></a> $0', $source);
-    //$source = preg_replace('!(\/\*\*.*?\*\/).*?function.*?#0000BB">(.*?)<\/span>!', '<a id="$2"></a> $0', $source);
-    if ($standalone) {
-      $source = <<<EOT
-<head><title>$path</title></head>
-<body>$source</body>
-EOT;
-    }
-    return $source;
-  }
-  else {
-    return FALSE;
-  }
-}
-
-/**
  * Implementation of hook_init().
  */
 function devel_init() {
@@ -327,19 +261,30 @@ function devel_init() {
       devel_set_handler(variable_get('devel_error_handler', DEVEL_ERROR_HANDLER_STANDARD));
       // We want to include the class early so that anyone may call krumo() as needed. See http://krumo.sourceforge.net/
       has_krumo();
-      
+
       // See http://www.firephp.org/.
       // Support Libraries API - http://drupal.org/project/libraries
       if (module_exists('libraries')) {
-        $path = libraries_get_path('FirePHPCore') . '/lib/FirePHPCore/';
+        $firephp_path = libraries_get_path('FirePHPCore');
+        $firephp_path = ($firephp_path ? $firephp_path . '/lib/FirePHPCore/' : '');
+        $chromephp_path = libraries_get_path('chromephp');
       }
       else {
-        $path = './'. drupal_get_path('module', 'devel') .'/FirePHPCore/lib/FirePHPCore/';
+        $firephp_path = './'. drupal_get_path('module', 'devel') .'/FirePHPCore/lib/FirePHPCore/';
+        $chromephp_path = './'. drupal_get_path('module', 'devel') .'/chromephp';
       }
-      if (file_exists($path .'fb.php')) {
-        include_once $path .'fb.php';
-        include_once $path .'FirePHP.class.php';
+
+      // Include FirePHP if it exists.
+      if (!empty($firephp_path) && file_exists($firephp_path .'fb.php')) {
+        include_once $firephp_path .'fb.php';
+        include_once $firephp_path .'FirePHP.class.php';
       }
+
+      // Include ChromePHP if it exists.
+      if (!empty($chromephp_path) && file_exists($chromephp_path .= '/ChromePhp.php')) {
+        include_once $chromephp_path;
+      }
+
       // Add CSS for query log if should be displayed.
       if (variable_get('devel_query_display', 0)) {
         drupal_add_css(drupal_get_path('module', 'devel') .'/devel.css');
@@ -398,10 +343,17 @@ function dfbt($label) {
   dfb($label, FirePHP::TRACE);
 }
 
+function dcp() {
+  if (class_exists('ChromePhp') && user_access('access devel information')) {
+    $args = func_get_args();
+    call_user_func_array(array('ChromePhp', 'log'), $args);
+  }
+}
+
 /**
  * Implements hook_watchdog().
  */
-function devel_watchdog(array $log_entry) {
+function devel_watchdog($log_entry) {
   if (class_exists('FirePHP')) {
     switch ($log_entry['severity']) {
       case WATCHDOG_EMERG:
@@ -466,10 +418,27 @@ function devel_silent() {
     );
 }
 
+function devel_xhprof_enable() {
+  if (extension_loaded('xhprof') && variable_get('devel_xhprof_enabled', FALSE)) {
+    if ($path = variable_get('devel_xhprof_directory', '')) {
+      include_once $path . '/xhprof_lib/utils/xhprof_lib.php';
+      include_once $path . '/xhprof_lib/utils/xhprof_runs.php';
+      // @todo: consider a variable per-flag instead.
+      xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
+
+      register_shutdown_function('devel_shutdown_xhprof_drush');
+    }
+  }
+}
+
+
 /**
  * Implementation of hook_boot(). Runs even for cached pages.
  */
 function devel_boot() {
+  // Initialize XHProf.
+  devel_xhprof_enable();
+
   if (!devel_silent()) {
     devel_start();
   }
@@ -487,11 +456,30 @@ function devel_start() {
   register_shutdown_function('devel_shutdown');
 }
 
-function backtrace_error_handler($errno, $message, $filename, $line) {
-  // Don't respond to the error if it was suppressed with a '@'
-  if (error_reporting() == 0) return;
+function backtrace_error_handler($errno, $message, $filename, $line, $context) {
+  // Hide stack trace and parameters from unqualified users.
+  if (!user_access('access devel information')) {
+    return drupal_error_handler($errno, $message, $filename, $line, $context);
+  }
+  // Don't respond to the error if it was suppressed with a '@'.
+  if (error_reporting() == 0) {
+    return;
+  }
+  // Don't respond to warning caused by ourselves.
+  if (preg_match('#Cannot modify header information - headers already sent by \\([^\\)]*[/\\\\]devel[/\\\\]#', $message)) {
+    return;
+  }
+  if ($errno & (E_ALL ^ E_DEPRECATED)) {
+    // Only write each distinct NOTICE message once, as repeats do not give any
+    // further information and can choke the page output.
+    if ($errno == E_NOTICE) {
+      static $written = array();
+      if (!empty($written[$line][$filename][$message])) {
+        return;
+      }
+      $written[$line][$filename][$message] = TRUE;
+    }
 
-  if ($errno & (E_ALL ^ E_NOTICE)) {
     // We can't use the PHP E_* constants here as not all versions of PHP have all
     // the constants defined, so for consistency, we just use the numeric equivelant.
     $types = array(
@@ -511,17 +499,21 @@ function backtrace_error_handler($errno, $message, $filename, $line) {
       8192 => 'deprecated',
       16384 => 'user deprecated',
     );
-    $entry = $types[$errno] .': '. $message .' in '. $filename .' on line '. $line .'.';
+    $type = $types[$errno];
+    $backtrace = debug_backtrace();
+    array_shift($backtrace);
+    $variables = array('%error' => $type, '%message' => $message, '%function' => $backtrace[0]['function'] .'()', '%file' => $filename, '%line' => $line);
+    $counter = count($backtrace);
 
     if (variable_get('error_level', 1) == 1) {
-      $backtrace = debug_backtrace();
       foreach ($backtrace as $call) {
-        $nicetrace[$call['function']] = $call;
+        $nicetrace[--$counter . ': ' . $call['function']] = $call;
       }
+      print t('%error: %message in %function (line %line of %file).', $variables) ." =&gt;\n";
       krumo($nicetrace);
     }
 
-    watchdog('php', '%message in %file on line %line.', array('%error' => $types[$errno], '%message' => $message, '%file' => $filename, '%line' => $line), WATCHDOG_ERROR);
+    watchdog('php', '%error: %message in %function (line %line of %file).', $variables, WATCHDOG_ERROR);
   }
 }
 
@@ -547,17 +539,23 @@ function devel_block($op = 'list', $delta = 0, $edit = array()) {
     return $blocks;
   }
   elseif ($op == 'configure' && $delta == 0) {
-    $form['devel_switch_user_list_size'] = array(
+    $form['list_size'] = array(
       '#type' => 'textfield',
       '#title' => t('Number of users to display in the list'),
       '#default_value' => variable_get('devel_switch_user_list_size', 10),
       '#size' => '3',
       '#maxlength' => '4',
     );
+    $form['show_form'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Allow entering any user name'),
+      '#default_value' => variable_get('devel_switch_user_show_form', TRUE),
+    );
     return $form;
   }
   elseif ($op == 'save' && $delta == 0) {
-    variable_set('devel_switch_user_list_size', $edit['devel_switch_user_list_size']);
+    variable_set('devel_switch_user_list_size', $edit['list_size']);
+    variable_set('devel_switch_user_show_form', $edit['show_form']);
   }
   elseif ($op == 'view') {
     $block = array();
@@ -583,7 +581,9 @@ function devel_block_switch_user() {
   if (!empty($links) || user_access('switch users')) {
     $block['subject'] = t('Switch user');
     $block['content'] = theme('links', $links);
-    $block['content'] .= drupal_get_form('devel_switch_user_form');
+    if (variable_get('devel_switch_user_show_form', TRUE)) {
+      $block['content'] .= drupal_get_form('devel_switch_user_form');
+    }
     return $block;
   }
 }
@@ -594,12 +594,13 @@ function devel_switch_user_list() {
     $list_size = variable_get('devel_switch_user_list_size', 10);
     $dest = drupal_get_destination();
     // Try to find at least $list_size users that can switch.
+    // Inactive users are omitted from all of the following db selects.
     $roles = user_roles(TRUE, 'switch users');
     if (isset($roles[DRUPAL_AUTHENTICATED_RID])) {
       // If authenticated users have this permission, just grab
       // the last $list_size users, since there won't be records in
       // {user_roles} and every user on the system can switch.
-      $users = db_query_range("SELECT DISTINCT u.uid, u.name, u.access FROM {users} u WHERE u.uid > 0 ORDER BY u.access DESC", 0, $list_size);
+      $accounts = db_query_range("SELECT DISTINCT u.uid, u.name, u.access FROM {users} u WHERE u.uid > 0 AND u.status > 0 ORDER BY u.access DESC", 0, $list_size);
     }
     else {
       $where = array('u.uid = 1');
@@ -607,29 +608,29 @@ function devel_switch_user_list() {
         $where[] = 'r.rid IN ('. implode(',', array_keys($roles)) .')';
       }
       $where_sql = implode(' OR ', $where);
-      $users = db_query_range("SELECT DISTINCT u.uid, u.name, u.access FROM {users} u LEFT JOIN {users_roles} r ON u.uid = r.uid WHERE $where_sql ORDER BY u.access DESC", 0, $list_size);
+      $accounts = db_query_range("SELECT DISTINCT u.uid, u.name, u.access FROM {users} u LEFT JOIN {users_roles} r ON u.uid = r.uid WHERE ($where_sql) AND u.status > 0 ORDER BY u.access DESC", 0, $list_size);
     }
-    while ($user = db_fetch_object($users)) {
-      $links[$user->uid] = array(
-        'title' => theme('placeholder', $user->name),
-        'href' => 'devel/switch/'. $user->name,
+    while ($account = db_fetch_object($accounts)) {
+      $links[$account->uid] = array(
+        'title' => theme('placeholder', $account->name),
+        'href' => 'devel/switch/'. $account->name,
         'query' => $dest,
         'attributes' => array('title' => t('This user can switch back.')),
         'html' => TRUE,
-        'last_access' => $user->access,
+        'last_access' => $account->access,
       );
     }
     $num_links = count($links);
     if ($num_links < $list_size) {
       // If we don't have enough, add distinct uids until we hit $list_size.
-      $users = db_query_range('SELECT uid, name, access FROM {users} WHERE uid > 0 AND uid NOT IN ('. implode(',', array_keys($links)) .') ORDER BY access DESC', 0, $list_size - $num_links);
-      while ($user = db_fetch_object($users)) {
-        $links[$user->uid] = array(
-          'title' => $user->name ? $user->name : 'anon',
-          'href' => 'devel/switch/'. $user->name,
+      $accounts = db_query_range('SELECT uid, name, access FROM {users} WHERE uid > 0 AND uid NOT IN ('. implode(',', array_keys($links)) .') AND status > 0 ORDER BY access DESC', 0, $list_size - $num_links);
+      while ($account = db_fetch_object($accounts)) {
+        $links[$account->uid] = array(
+          'title' => $account->name ? $account->name : 'anon',
+          'href' => 'devel/switch/'. $account->name,
           'query' => $dest,
           'attributes' => array('title' => t('Caution: this user will be unable to switch back.')),
-          'last_access' => $user->access,
+          'last_access' => $account->access,
         );
       }
       uasort($links, '_devel_switch_user_list_cmp');
@@ -722,13 +723,10 @@ function devel_exit($destination = NULL) {
   }
 }
 
-// Borrowed from Drush.
+// Borrowed from Drupal 7 - drupal_is_cli().
 function devel_verify_cli() {
-  if (php_sapi_name() == 'cgi') {
-    return (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0);
-  }
-
-  return (php_sapi_name() == 'cli');
+  return ((!isset($_SERVER['SERVER_SOFTWARE']) || $_SERVER['SERVER_SOFTWARE'] == 'PHP CLI')
+      && (php_sapi_name() == 'cli' || (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0)));
 }
 
 
@@ -738,6 +736,19 @@ function devel_verify_cli() {
 function devel_shutdown() {
   // Register the real shutdown function so it runs later than other shutdown functions.
   register_shutdown_function('devel_shutdown_real');
+}
+
+/**
+ * Log URL to Drush log if this is a drush request.
+ *
+ * This shutdown function is registered by devel_xhprof_enable()
+ */
+function devel_shutdown_xhprof_drush() {
+  global $devel_run_id;
+  $devel_run_id = variable_get('devel_xhprof_enabled', FALSE) ? devel_shutdown_xhprof(): NULL;
+  if ($devel_run_id && function_exists('drush_log')) {
+    drush_log('xhprof link: ' . devel_xhprof_link($devel_run_id, 'url'), 'notice');
+  }
 }
 
 /**
@@ -802,6 +813,9 @@ function devel_shutdown_real() {
         // theme() may not be available. not t() either.
         $output .= t_safe($msg, $args);
       }
+
+      $output .= devel_xhprof_link_show();
+
       // TODO: gzip this text if we are sending a gzip page. see drupal_page_header().
     }
 
@@ -811,6 +825,14 @@ function devel_shutdown_real() {
   }
   devel_store_queries();
 }
+
+function devel_shutdown_xhprof() {
+  $namespace = variable_get('site_name', '');  // namespace for your application
+  $xhprof_data = xhprof_disable();
+  $xhprof_runs = new XHProfRuns_Default();
+  return $xhprof_runs->save_run($xhprof_data, $namespace);
+}
+
 
 function devel_store_queries() {
   if (variable_get('devel_store_queries', 0) && rand(1, variable_get('devel_store_random', 1)) == 1) {
@@ -983,6 +1005,32 @@ function devel_admin_settings() {
     '#size' => 4,
     '#description' => t('If storing query statistics, only store every nth page view. 1 means every page view, 2 every second, and so on.'));
 
+    $form['xhprof'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'XHProf',
+      '#description' => t('XHProf is a php extension which is essential for profiling your Drupal site. It pinpoints slow functions, and also memory hogging functions.'),
+    );
+    $description = extension_loaded('xhprof') ? t('Profile requests with the xhprof php extension.') : '<span class="warning">' . t('You must enable the <a href="!url">xhprof php extension</a> to use this feature.', array('!url' => url('http://techportal.ibuildings.com/2009/12/01/profiling-with-xhprof/'))) . '</span>';
+    $form['xhprof']['devel_xhprof_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable profiling of all page views and <a href="!drush">drush</a> requests.', array('!drush' => url('http://drush.ws'))),
+      '#default_value' => variable_get('devel_xhprof_enabled', FALSE),
+      '#description' => $description,
+      '#disabled' => !extension_loaded('xhprof'),
+    );
+    $form['xhprof']['devel_xhprof_directory'] = array(
+      '#type' => 'textfield',
+      '#title' => 'xhprof directory',
+      '#description' => t('Location of the xhprof source code on your system, usually somewhere in /usr/local/share or /usr/share, include the leading forward slash.'),
+      '#default_value' => variable_get('devel_xhprof_directory', ''),
+    );
+    $form['xhprof']['devel_xhprof_url'] = array(
+      '#type' => 'textfield',
+      '#title' => 'XHProf URL',
+      '#description' => t('Path to the publically accessible xhprof_html - required to display profiler reports. You will need to set this up outside Drupal, for example at http://xhprof.localhost/xhprof_html'),
+      '#default_value' => variable_get('devel_xhprof_url', ''),
+    );
+
   $form['devel_api_url'] = array('#type' => 'textfield',
     '#title' => t('API Site'),
     '#default_value' => variable_get('devel_api_url', 'api.drupal.org'),
@@ -1079,10 +1127,12 @@ function devel_execute_block_form() {
  * Generates the execute form.
  */
 function devel_execute_form() {
+  drupal_add_css(drupal_get_path('module', 'devel') .'/devel.css');
   $form['execute']['code'] = array(
     '#type' => 'textarea',
     '#title' => t('PHP code to execute'),
     '#description' => t('Enter some code. Do not use <code>&lt;?php ?&gt;</code> tags.'),
+    '#rows' => 20,
   );
   $form['execute']['op'] = array('#type' => 'submit', '#value' => t('Execute'));
   $form['#redirect'] = FALSE;
@@ -1606,10 +1656,10 @@ function theme_devel_querylog($header = array(), $rows = array()) {
 function _devel_table_sort($a, $b) {
   $a = is_array($a[0]) ? $a[0]['data'] : $a[0];
   $b = is_array($b[0]) ? $b[0]['data'] : $b[0];
-  if ($a < $b) { 
+  if ($a < $b) {
     return 1;
   }
-  if ($a > $b) { 
+  if ($a > $b) {
     return -1;
   }
   return 0;
@@ -1622,6 +1672,26 @@ function devel_timer() {
   $time = timer_read('page');
   return t_safe(' Page execution time was @time ms.', array('@time' => $time));
 }
+
+/**
+ * Displays page execution time at the bottom of the page.
+ */
+function devel_xhprof_link_show() {
+  if (variable_get('devel_xhprof_enabled', FALSE)) {
+    return devel_xhprof_link($GLOBALS['devel_run_id']);
+  }
+}
+
+function devel_xhprof_link($run_id, $type = 'link') {
+  // @todo: render results from within Drupal.
+  $xhprof_url = variable_get('devel_xhprof_url', '');
+  $namespace = variable_get('site_name', '');  // namespace for your application
+  if ($xhprof_url) {
+    $url  = $xhprof_url . "/index.php?run=$run_id&source=$namespace";
+    return $type == 'url' ? $url : t('<a href="@xhprof">XHProf output</a>. ', array('@xhprof' => $url));
+  }
+}
+
 
 /**
  * Prints the arguments passed into the current function
@@ -1760,8 +1830,10 @@ function ddebug_backtrace() {
   if (user_access('access devel information')) {
     $trace = debug_backtrace();
     array_shift($trace);
-    foreach ($trace as $key => $value) {
-      $rich_trace[$value['function']] = $value;
+    $count = count($trace);
+    foreach ($trace as $i => $call) {
+      $key = ($count - $i) .': '. $call['function'];
+      $rich_trace[$key] = $call;
     }
     if (has_krumo()) {
       print krumo($rich_trace);
@@ -1787,6 +1859,32 @@ function db_queryd($query) {
   _db_query_callback($args, TRUE);
   $query = preg_replace_callback(DB_QUERY_REGEXP, '_db_query_callback', $query);
   return _db_query($query, 1);
+}
+
+/**
+ * Debugging version of db_query_range().
+ *
+ * Echoes the query to the browser.
+ */
+function db_queryd_range($query) {
+  $args = func_get_args();
+  $count = array_pop($args);
+  $from = array_pop($args);
+  array_shift($args);
+
+  $query = db_prefix_tables($query);
+  if (isset($args[0]) and is_array($args[0])) { // 'All arguments in one array' syntax
+    $args = $args[0];
+  }
+  _db_query_callback($args, TRUE);
+  $query = preg_replace_callback(DB_QUERY_REGEXP, '_db_query_callback', $query);
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    $query .= ' LIMIT '. (int)$count .' OFFSET '. (int)$from;
+  }
+  else {
+    $query .= ' LIMIT '. (int)$from .', '. (int)$count;
+  }
+  return _db_query($query ,1);
 }
 
 // Only define our mail wrapper if the devel module is the current mail
@@ -1876,20 +1974,38 @@ function devel_rebuild_node_comment_statistics_page() {
   drupal_goto('admin');
 }
 
-/**
- * Regenerate the data in node_comment_statistics table.
+/*
+ * Rebuild ncs table.
  *
- * @return void
- **/
+ * Note: In drupal 6, this function depends on dbtng module.
+ */
 function devel_rebuild_node_comment_statistics() {
   // Empty table
-  $sql = "DELETE FROM {node_comment_statistics}";
-  db_query($sql);
+  db_truncate('node_comment_statistics')->execute();
 
-  $sql = "INSERT INTO {node_comment_statistics} (nid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) (select nid, c.timestamp, name, uid, comment_count FROM {comments} c INNER JOIN (SELECT MAX(timestamp) AS timestamp, COUNT(*) AS comment_count FROM {comments} WHERE status=%d GROUP BY nid) AS c2 ON c.nid = c2.nid AND c.timestamp=c2.timestamp)";
+  // TODO: DBTNG. Ignore keyword is Mysql only? Is only used in the rare case when
+  // two comments on the same node share same timestamp.
+  $sql = "
+    INSERT IGNORE INTO {node_comment_statistics} (nid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) (
+      SELECT c.nid, c.timestamp, c.name, c.uid, c2.comment_count FROM {comments} c
+      JOIN (
+        SELECT c.nid, MAX(c.timestamp) AS timestamp, COUNT(*) AS comment_count FROM {comments} c WHERE status = %d GROUP BY c.nid
+      ) AS c2 ON c.nid = c2.nid AND c.timestamp = c2.timestamp
+    )";
   db_query($sql, COMMENT_PUBLISHED);
 
-  // Insert 0 count records into the node_comment_statistics for nodes that are missing. See comment_enable()
-  db_query_temporary("SELECT n.nid, n.created, n.uid FROM {node} n LEFT JOIN {node_comment_statistics} c ON n.nid = c.nid WHERE c.comment_count IS NULL", 'missing_nids');
-  db_query("INSERT INTO {node_comment_statistics} (nid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) SELECT n.nid, n.created, NULL, n.uid, 0 FROM missing_nids n");
+  // Insert records into the node_comment_statistics for nodes that are missing.
+  $query = db_select('node', 'n');
+  $query->leftJoin('node_comment_statistics', 'ncs', 'ncs.nid = n.nid');
+  $query->addField('n', 'changed', 'last_comment_timestamp');
+  $query->addField('n', 'uid', 'last_comment_uid');
+  $query->addField('n', 'nid');
+  $query->addExpression('0', 'comment_count');
+  $query->addExpression('NULL', 'last_comment_name');
+  $query->isNull('ncs.comment_count');
+
+  db_insert('node_comment_statistics')
+    ->from($query)
+    ->execute();
 }
+
