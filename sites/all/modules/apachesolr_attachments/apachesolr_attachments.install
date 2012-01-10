@@ -1,0 +1,150 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function apachesolr_attachments_install() {
+  drupal_install_schema('apachesolr_attachments');
+} 
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function apachesolr_attachments_uninstall() {
+  variable_del('apachesolr_attachments_tika_path');
+  variable_del('apachesolr_attachments_tika_jar');
+  variable_del('apachesolr_attachments_exclude_types');
+  variable_del('apachesolr_attachment_excluded_extensions');
+  variable_del('apachesolr_attachment_extract_using');
+  variable_del('apachesolr_attachment_excluded_mime');
+  variable_del('apachesolr_attachments_cron_limit');
+  variable_del('apachesolr_attachements_cron_time_limit');
+  variable_del('apachesolr_attachements_cron_try');
+  apachesolr_clear_last_index('apachesolr_attachments');
+  drupal_uninstall_schema('apachesolr_attachments');
+}
+
+/**
+ * hook_requirements().
+ */
+function apachesolr_attachments_requirements($phase) {
+
+  $requirements = array();
+  // Ensure translations don't break at install time
+  $t = get_t();
+  if ($phase == 'runtime') {
+    if (variable_get('apachesolr_attachment_extract_using', 'tika') == 'tika') {
+      $temp = tempnam(file_directory_temp(), 'asa');
+      $java = variable_get('apachesolr_attachments_java', 'java');
+      exec($java .' -version > '. $temp .' 2>&1');
+      $stderror = file_get_contents($temp);
+      $found = preg_match('/Runtime Environment/', $stderror);
+  
+      if (!$found) {
+        $requirements['apachesolr_attachments_java']  = array(
+          'title' => $t('Java executable not found'),
+          'description' => $t('Could not execute a java command.  You may need to set the path of the correct java executable as the variable \'apachesolr_attachments_java\' in settings.php.'),
+          'severity' => REQUIREMENT_ERROR,
+        );
+      }
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function apachesolr_attachments_schema() {
+  $schema['apachesolr_attachments_files'] = array(
+    'description' => 'Stores information for uploaded files.',
+    'fields' => array(
+      'fid' => array(
+        'description' => 'Primary Key: Unique files ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'nid' => array(
+        'description' => 'The {node}.nid where the file is attached.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'removed' => array(
+        'description' => 'file is no longer attached.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'default' => 0),
+      'sha1' => array(
+        'description' => 'file sha1 to check for changes.',
+        'type' => 'varchar',
+        'length' => 40,
+        'not null' => TRUE,
+        'default' => ''),
+      'body' => array(
+        'description' => 'The cached body (extracted text) of the file (except for text files).',
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big'),
+     ),
+    'indexes' => array(
+      'nid' => array('nid'),
+      'removed' => array('removed'),
+      ),
+    'primary key' => array('fid'),
+    );
+
+  return $schema;
+}
+
+/**
+ * Add sha1 and body fields to {apachesolr_attachments_files}.
+ */
+function apachesolr_attachments_update_6000() {
+  $ret = array();
+
+  $schema = array(
+    'description' => 'file sha1 to check for changes.',
+    'type' => 'varchar',
+    'length' => 40,
+    'not null' => TRUE,
+    'default' => '',
+  );
+  db_add_field($ret, 'apachesolr_attachments_files', 'sha1', $schema);
+
+  $schema = array(
+    'description' => 'The cached body (extracted text) of the file (except for text files).',
+    'type' => 'text',
+    'not null' => FALSE,
+    'size' => 'big',
+  );
+  db_add_field($ret, 'apachesolr_attachments_files', 'body', $schema);
+
+  return $ret;
+}
+
+/**
+ * Force reindex for entity field.
+ */
+function apachesolr_attachments_update_6001() {
+  $ret = array();
+  apachesolr_clear_last_index('apachesolr_attachments');
+  return $ret;
+}
+
+/**
+ * Update body field to not null = FALSE
+ */
+function apachesolr_attachments_update_6002() {
+  $ret = array();
+  
+  db_change_field($ret, 'apachesolr_attachments_files', 'body', 'body', array(
+    'description' => 'The cached body (extracted text) of the file (except for text files).',
+    'type' => 'text',
+    'not null' => FALSE,
+    'size' => 'big')
+  );
+
+  return $ret;
+}

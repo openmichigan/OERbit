@@ -130,6 +130,9 @@ function oer_tweaks_preprocess_search_result(&$vars) {
   if ($nid) {
     $node = node_load($nid);
   }
+  if (isset($vars['result']['title_file'])) {
+    $vars['title_file'] = $vars['result']['title_file'];
+  }
   $vars['update_date'] = 'Update: ' . date('F j, Y', $node->changed);
   $vars['license'] = $node->cc->name;
   $vars['type'] = oer_tweaks_search_result_node_type($node);
@@ -551,4 +554,46 @@ function oer_tweaks_apachesolr_l($text, $path, $options = array()) {
 
 
   return '<a href="'. check_url(url($path, $options)) .'"'. drupal_attributes($options['attributes']) .'>'. ($options['html'] ? $text : check_plain($text)) .'</a>';
+}
+
+
+/**
+ * Implementation of hook_apachesolr_process_results().
+ *
+ * When using the Apache Solr search module, everything is treated as a node
+ * and as such values like the link and type won't be configured correctly if
+ * it is a file attachement. We override such values here as needed.
+ */
+function oer_tweaks_apachesolr_process_results(&$results) {
+
+  foreach ($results as &$item) {
+    /**
+    if (isset($item['node']->ss_filemime)) {
+      $nid = $item['node']->nid;
+      if (in_array($nid, $nids)) {
+        $item['link'] = file_create_url($item['node']->path);
+
+      }
+      $node_link = t('<em>attached to:</em> !node_link', array('!node_link' => l($item['node']->ss_file_node_title, 'node/'. $nid)));
+      $icon = theme('filefield_icon', array('filemime' => $item['node']->ss_filemime));
+      $file_type = t('!icon @filemime', array('@filemime' => $item['node']->ss_filemime, '!icon' => $icon));
+      $item['snippet'] .= '<span>' . $file_type .' '. $node_link . '</span>';
+      $item['extra'] = array();
+      $item['type'] = t('File attachment');
+    }
+     * 
+     */
+    if (isset($item['fields']['type']) && $item['fields']['type'] == 'material') {
+      $node = node_load($item['fields']['nid']);
+      if (is_array($node->field_file) && !is_null($node->field_file['0'])) {
+        $item['title_file'] = array();
+        foreach ($node->field_file as $file) {
+          $type = explode('/', $file['filemime']);
+          $item['title_file'][] = '[' . l($type[1], $file['filepath']) . ']';
+        }
+        $item['title_file'] = implode(' ', $item['title_file']);
+      }
+      
+    }
+  }
 }

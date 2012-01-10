@@ -1,0 +1,44 @@
+
+Apache Solr Attachments x.x-x.x, xxxx-xx-xx
+------------------------------
+
+Apache Solr Attachments 6.x-1.x, xxxx-xx-xx
+------------------------------
+#1162608 by rdebieux, jpmckinney: Remove file from index if node unpublished.
+#1162492 by jpmckinney: Add helpful message for Windows users.
+#1100306 by jpmckinney: Search by filename.
+#1064976 by jpmckinney: Respect hook_apachesolr_node_exclude.
+#1059768 by jpmckinney: Make error message more helpful.
+#1059756 by jpmckinney: Missing drupal_set_message.
+#1059744 by jpmckinney: Some variables not deleted in hook_uninstall.
+#1059734 by jpmckinney: "attachements" typo.
+#1059374 by jpmckinney: apachesolr_attachment_tika_path should be apachesolr_attachments_tika_path.
+#907504 by DomoSapiens: apachesolr_attachments_apachesolr_process_results creates invalid html.
+#936466 by aaron1234nz, halstead: Body field can be NULL on initial insert.
+#936464 by aaron1234nz, halstead: Watchdog has a limit of 16 characters in the type field. 
+
+Apache Solr Attachments 6.x-1.1.0-beta2, 2010-06-28
+------------------------------
+#815104 by ebeyrent, pwolanin minimal handling for failed Solr extraction.
+
+Apache Solr Attachments 6.x-1.1.0-beta1, 2010-02-07
+------------------------------
+#635480 by pwolanin, use hook_apachesolr_update_index with namespace.
+#698672 by Agileware, fix ids so files get deleted from the index on cron.
+#698694 by pwolanin, retain information on removed files during cache clear.
+
+Apache Solr Attachments 6.x-1.0-alpha2, 2009-12-27
+------------------------------
+#666090 by pwolanin, add cron settings to the UI.
+#506526 by pwolanin, Preserve file paths on Windows.
+#664154 by pwolanin, Update for RC4 of ApacheSolr module and updated schema 0.9.4
+#616426 by pwolanin, set  extractFormat as 'text' for Solr Cell.
+
+Apache Solr Attachments 6.x-2.0-alpha1, 2009-10-27
+------------------------------
+#490078 by pwolanin, enable use of Solr Cell, aka ExtractingRequestHandler.
+#540974 by pwolanin, update docs for installing tika 0.3 and 0.4.
+#610816 by pwolanin, don't need to add path again to fl.
+#508576 by EclipseGc, respect Node Access on Files.
+#461514 by pwolanin, get rows not results, better limiting on cron.
+#449214 by pwolanin, rewrite to use tika 0.3 for text extraction.
