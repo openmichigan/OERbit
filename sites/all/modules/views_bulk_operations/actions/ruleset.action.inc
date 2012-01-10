@@ -1,11 +1,11 @@
 <?php
-// $Id: ruleset.action.inc,v 1.1.2.6 2010/06/23 06:13:06 kratib Exp $
 
 function views_bulk_operations_ruleset_action_info() {
   if (!module_exists('rules')) return array();
+
   $actions = array();
   foreach (rules_get_configured_items('rule_sets') as $ruleset_key => $ruleset) {
-    if (count($ruleset['arguments']) == 1) { // For now, we only accept rulesets with one argument (taken to be the 'type')
+    if (count($ruleset['arguments']) == 1) { // One argument: typed action
       $arg = key($ruleset['arguments']);
       $actions["views_bulk_operations_ruleset_action_{$ruleset_key}"] = array(
         'type' => $ruleset['arguments'][$arg]['type'],
@@ -33,30 +33,9 @@ function views_bulk_operations_ruleset_action_info() {
         'description' => $ruleset['label'],
         'configurable' => TRUE,
         'rules_ignore' => TRUE,
-        'callback' => "views_bulk_operations_ruleset_action_{$ruleset_key}",
+        'callback' => "views_bulk_operations_ruleset_action",
         'form properties' => array('#arguments'),
       );
-      eval("
-if (!function_exists('views_bulk_operations_ruleset_action_{$ruleset_key}')) {
-  function views_bulk_operations_ruleset_action_{$ruleset_key}(&\$object, \$context) {
-    \$context['ruleset'] = '$ruleset_key';
-    return views_bulk_operations_ruleset_action(\$object, \$context);
-  }
-
-  function views_bulk_operations_ruleset_action_{$ruleset_key}_form(\$context) {
-    \$context['ruleset'] = '$ruleset_key';
-    return views_bulk_operations_ruleset_action_form(\$context);
-  }
-
-  function views_bulk_operations_ruleset_action_{$ruleset_key}_validate(\$form, \$form_state) {
-    return views_bulk_operations_ruleset_action_validate(\$form, \$form_state);
-  }
-
-  function views_bulk_operations_ruleset_action_{$ruleset_key}_submit(\$form, \$form_state) {
-    return views_bulk_operations_ruleset_action_submit(\$form, \$form_state);
-  }
-}
-      ");
     }
   }
   return $actions;
@@ -86,8 +65,10 @@ function views_bulk_operations_ruleset_action_form($context) {
     $form[$key] = array(
       '#type' => 'textarea',
       '#title' => $argument['label'],
-      '#description' => t('Argument of type %type. Enter PHP script that will return a value for this argument. 
-                           The variables <code>$object</code> and <code>$context</code> are available to this script.',
+      '#description' => t('Argument of type %type. Enter PHP script that will return a value for this argument.
+                           Note that Rules expects a entire object (e.g. <code>$node</code>) rather than an id (e.g. <code>$nid</code>).
+                           The variables <code>$object</code> and <code>$context</code> are available to this script.
+                           Do not include &lt;?php and ?&gt; tags.',
         array('%type' => $argument['type'])
       ),
       '#default_value' => @$context['args'][$key],
@@ -106,4 +87,3 @@ function views_bulk_operations_ruleset_action_submit($form, $form_state) {
   }
   return $submit;
 }
-

@@ -1,5 +1,4 @@
 <?php
-// $Id: user_roles.action.inc,v 1.1.2.2 2010/04/22 02:14:54 kratib Exp $
 
 function views_bulk_operations_user_roles_action_info() {
   return array('views_bulk_operations_user_roles_action' => array(
@@ -26,7 +25,8 @@ function views_bulk_operations_user_roles_action_form($context) {
     '#title' => t('Add roles'),
     '#description' => t('Choose one or more roles you would like to assign to the selected users.'),
     '#options' => $roles,
-    '#size' => 5
+    '#size' => 5,
+    '#default_value' => $context['add_roles'],
   );
   $form['remove_roles'] = array(
     '#type' => 'select',
@@ -34,7 +34,8 @@ function views_bulk_operations_user_roles_action_form($context) {
     '#title' => t('Remove roles'),
     '#description' => t('Choose one or more roles you would like to remove from the selected users.'),
     '#options' => $roles,
-    '#size' => 5
+    '#size' => 5,
+    '#default_value' => $context['remove_roles'],
   );
   return $form;
 }
@@ -56,7 +57,8 @@ function views_bulk_operations_user_roles_action(&$user, $context) {
   $roles = $user->roles;
   $selected = (is_array($context['add_roles']) ? $context['add_roles'] : array()) +
               (is_array($context['remove_roles']) ? $context['remove_roles'] : array());
-  $result = db_query("SELECT rid, name FROM {role} WHERE rid IN (%s)", implode(',', array_keys($selected)));
+  $placeholders = db_placeholders($selected);
+  $result = db_query("SELECT rid, name FROM {role} WHERE rid IN ($placeholders)", array_keys($selected));
   while ($role = db_fetch_object($result)) {
     if (isset($context['add_roles'][$role->rid])) {
       $add_roles[$role->rid] = $role->name;
@@ -73,4 +75,3 @@ function views_bulk_operations_user_roles_action(&$user, $context) {
   }
   user_save($user, array('roles' => $roles));
 }
-

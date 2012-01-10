@@ -1,5 +1,4 @@
 <?php
-// $Id: argument_selector.action.inc,v 1.1.2.2 2010/03/17 02:56:50 kratib Exp $
 
 /**
  * @file 

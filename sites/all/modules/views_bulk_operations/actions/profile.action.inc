@@ -1,5 +1,4 @@
 <?php
-// $Id: profile.action.inc,v 1.1.2.6 2010/07/17 15:42:51 kratib Exp $
 
 function views_bulk_operations_profile_action_info() {
   if (!module_exists('profile')) return array();
@@ -19,7 +18,7 @@ function views_bulk_operations_profile_action_theme() {
 }
 
 function views_bulk_operations_profile_action_form($context) {
-  drupal_add_js(drupal_get_path('module', 'views_bulk_operations') . '/profile.action.js');
+  drupal_add_js(drupal_get_path('module', 'views_bulk_operations') . '/js/profile.action.js');
 
   $form = array();
   foreach (profile_categories() as $category) {
@@ -28,9 +27,9 @@ function views_bulk_operations_profile_action_form($context) {
     while ($field = db_fetch_object($fields)) {
       $form[$category['name']][$field->name]['#required'] = FALSE;
       $form[$field->name . '_check'] = array(
-        '#type' => 'checkbox', 
+        '#type' => 'checkbox',
         '#attributes' => array(
-          'class' => 'profile-action-toggler', 
+          'class' => 'profile-action-toggler',
           'onchange' => 'Drupal.vbo.profileAction.updateField(this, true)',
         ),
         '#default_value' => @$context[$field->name . '_check'],
@@ -117,4 +116,3 @@ function _views_bulk_operations_profile_action_save(&$edit, &$user, $category, $
     $edit[$field->name] = NULL;
   }
 }
-
