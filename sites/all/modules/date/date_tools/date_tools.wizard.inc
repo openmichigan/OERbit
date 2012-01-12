@@ -1,8 +1,7 @@
 <?php
-// $Id: date_tools.wizard.inc,v 1.1.2.4 2010/08/12 14:14:57 karens Exp $
 
 function date_tools_wizard_form() {
-  
+
   $form = array();
   $form['type'] = array(
     '#type' => 'fieldset',
@@ -98,7 +97,7 @@ function date_tools_wizard_form() {
     '#title' => t('Add calendar blocks to the current theme'),
     '#access' => module_exists('calendar'),
     );   
-     
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -137,13 +136,13 @@ function date_tools_wizard_form_submit(&$form, &$form_state) {
 
 function date_tools_wizard_build($form_values) {
   extract($form_values);
-  
+
   $field_name = 'field_'. $field_name;
-  
+
   if (!empty($repeat)) {
     $widget_type .= '_repeat';
   }
-  
+
   // Create a node type if it doesn't already exist.
   // This makes it possible to add additional date fields to 
   // an existing type.
@@ -163,7 +162,7 @@ function date_tools_wizard_build($form_values) {
     }
     $name = $type->name;
   }
-  
+
   $field_settings = array(
     'field_name' => $field_name,
     'label' => $label,
@@ -178,9 +177,9 @@ function date_tools_wizard_build($form_values) {
 
   $field_settings['widget']['label'] = $label;
   $field_settings['widget']['type'] = $widget_type;
-    
+
   $date_field = date_tools_wizard_create_date_field($field_type, $widget_type, $tz_handling, $field_settings);
-  
+
   $view_name = '';
   if (!empty($calendar)) {
     $view_name = date_tools_wizard_create_calendar($name, $type_name, $date_field);
@@ -189,7 +188,7 @@ function date_tools_wizard_build($form_values) {
     }
   }
   return $view_name;
-  
+
 }
 
 function date_tools_wizard_include() {
@@ -308,9 +307,9 @@ function date_tools_wizard_tz_handling() {
 }
 
 function date_tools_wizard_create_content_type($name, $type_name, $description, $type_settings = array()) {
-  
+
   date_tools_wizard_include();
-  
+
   // Create the content type.
   $values  = array (
     'name' => $name,
@@ -336,7 +335,7 @@ function date_tools_wizard_create_content_type($name, $type_name, $description, 
     'locked' => '0',
     'url_str' => str_replace('_', '-', $type_name),
   );
-  
+
   // Allow overrides of these values.
   foreach ($type_settings as $key => $value) {
     $values[$key] = $value;
@@ -344,7 +343,7 @@ function date_tools_wizard_create_content_type($name, $type_name, $description, 
 
   $type = (object) _node_type_set_defaults($values);
   node_type_save($type);
-  
+
   if ($type == 'ical_feed') {
     // Default type to not be promoted and have comments disabled.
     variable_set('node_options_'. $type_name, array('status'));
@@ -355,36 +354,35 @@ function date_tools_wizard_create_content_type($name, $type_name, $description, 
     $theme_settings['toggle_node_info_'. $type_name] = FALSE;
     variable_set('theme_settings', $theme_settings);
   }
-  
+
   // Update the menu router information.
   menu_rebuild();
   content_clear_type_cache();
-  
-}
 
+}
 
 function date_tools_wizard_create_date_field($field_type, $widget_type, $tz_handling, $overrides = array()) {
   date_tools_wizard_include();
-  
+
   $field_name = $overrides['field_name'];
   $type_name = $overrides['type_name'];
-  
+
   // Create the date field.
-  
+
   // Set overrides that apply to all date fields.  
   $base_overrides = array(
-  
+
     'field_name' => $field_name,
     'type_name' => $type_name,
-    
+
     // Can be set to 0 (none), 1 (unlimited or repeating), 
     // or 2-9 for a fixed number of values.
     'multiple' => 0, 
-    
+
     // Set a display format that will show complete date information, 
     // to help test that values are correct.
     'default_format' => 'long',
-    
+
     // Set the date granularity.
     'granularity' => array (
       'year' => 'year',
@@ -393,12 +391,12 @@ function date_tools_wizard_create_date_field($field_type, $widget_type, $tz_hand
       'hour' => 'hour',
       'minute' => 'minute',
       ),
-    
+
     // Shall this date include a 'To date'?, can be blank, 'optional', or 'required'  
     'todate' => 'optional',
-    
+
    );    
-  
+
    // Widget overrides:
    $widget_overrides = array(
 
@@ -410,44 +408,44 @@ function date_tools_wizard_create_date_field($field_type, $widget_type, $tz_hand
     'default_value_code' => '', // The code to use with 'relative', like '+1 day'. 
     'default_value2' => 'blank',
     'default_value_code2' => '', // The code to use with 'relative', like '+1 day'. 
-    
+
     // Set format string to use for input forms, it controls order and type of date parts.
     // Input formats must have all date parts, including seconds.
     'input_format_custom' => variable_get('date_format_short', 'm/d/Y - H:i') .':s',
-    
+
     // Increment for minutes and seconds, can be 1, 5, 10, 15, or 30.
     'increment' => 15,
-    
+
     // Optional array of date parts that should be textfields in select widgets,
     // can be any combination of year, month, day, hour, minute, second.
     'text_parts' => array (),
-    
+
     // The number of years to go back and forward in drop-down year selectors.
     'year_range' => '0:+1',
-    
+
     // The place for the date part labels, can be 'above', 'within', or 'none'.
     'label_position' => 'above',
   );
-  
+
   $overrides = array_merge($base_overrides, $overrides);
   $overrides['widget'] = array_merge($widget_overrides, $overrides['widget']);
-    
+
   // Get field default values for this combination of field and widget type,
   // using a helper function in the Date module.
   $field = date_field_default_values($field_type, $widget_type, $tz_handling, $overrides);
-    
+
   $field = content_field_instance_collapse($field);
   $field = content_field_instance_create($field);
   $field = content_field_instance_expand($field);
-  
+
   return $field;
 }
 
 function date_tools_wizard_create_calendar($name, $type_name, $date_field) {
-  
+
   $date_name = !empty($date_field) ? $date_field['field_name'] : '';
   $path = 'calendar-'. str_replace('field_', '', $date_name);
-  
+
   // Add a default calendar for this content type.
   $calendar_options = variable_get('calendar_default_view_options', array());
   if (array_key_exists('calendar_'. $type_name, $calendar_options)) {
@@ -463,7 +461,7 @@ function date_tools_wizard_create_calendar($name, $type_name, $date_field) {
   );
   $calendar_options['calendar_'. $type_name] = $option;
   variable_set('calendar_default_view_options', $calendar_options);
-  
+
   // Make sure menu items get rebuilt as necessary.
   menu_rebuild();
 
@@ -472,7 +470,7 @@ function date_tools_wizard_create_calendar($name, $type_name, $date_field) {
 
   // Clear the page cache.
   cache_clear_all();  
-  
+
   // Remove this view from cache so we can edit it properly.
   views_object_cache_clear('view', 'calendar_'. $type_name);  
 
@@ -485,7 +483,7 @@ function date_tools_wizard_create_calendar($name, $type_name, $date_field) {
 function date_tools_wizard_create_blocks($type_name) {
   // Add calendar blocks to the default theme.
   $current_theme = variable_get('theme_default', 'garland');
-  
+
   // Legend block.
   $block = new stdClass();
   $block->theme = $current_theme;
@@ -496,12 +494,12 @@ function date_tools_wizard_create_blocks($type_name) {
   $block->module = 'calendar';
   $block->delta = 0;
   date_tools_wizard_add_block($block);
-  
+
   // Mini calendar block. 
   $block->module = 'views';
   $block->delta = 'calendar_'. $type_name .'-calendar_block_1';
   date_tools_wizard_add_block($block); 
-  
+
   // Upcoming events block.
   $block->module = 'views';
   $block->delta = 'calendar_'. $type_name .'-block_1';

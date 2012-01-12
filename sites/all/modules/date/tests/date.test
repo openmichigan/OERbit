@@ -19,9 +19,10 @@ class DateTestCase extends DrupalWebTestCase {
       'administer content types', 'administer nodes'
     ));
     $this->drupalLogin($this->privileged_user);
-    
+
     variable_set('date_format_long', 'D, m/d/Y - H:i');
     variable_set('date_format_short', 'm/d/Y - H:i');
+    variable_set('date_popup_timepicker', 'none');
   }
 
   function testDate() {  
@@ -98,7 +99,7 @@ class DateTestCase extends DrupalWebTestCase {
     $edit['_add_new_field[type]'] = $type;
     $edit['_add_new_field[widget_type]'] = $widget;
     $this->drupalPost('admin/content/node-type/story/fields', $edit, t('Save'));
-    
+
   }
 
   function dateForm($options) {
