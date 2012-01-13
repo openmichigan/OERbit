@@ -92,10 +92,9 @@ function apachesolr_attachments_schema() {
         'size' => 'big'),
      ),
     'indexes' => array(
-      'nid' => array('nid'),
       'removed' => array('removed'),
       ),
-    'primary key' => array('fid'),
+    'primary key' => array('fid', 'nid'),
     );
 
   return $schema;
@@ -150,4 +149,14 @@ function apachesolr_attachments_update_6002() {
   );
 
   return $ret;
+}
+
+/**
+ * Change primary key to a combination of fid and nid
+ */
+function apachesolr_attachments_update_6003() {
+  $ret = array();
+  db_drop_index($ret, 'apachesolr_attachments_files', 'nid');
+  db_drop_primary_key($ret, 'apachesolr_attachments_files');
+  db_add_primary_key($ret, 'apachesolr_attachments_files', array('fid', 'nid'));
 }

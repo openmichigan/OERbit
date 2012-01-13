@@ -311,11 +311,15 @@ function course_form_alter(&$form, &$form_state, $form_id) {
     $form['creativecommons']['metadata']['creator']['#default_value'] = $parent->cc->metadata['creator'];
     $form['creativecommons']['metadata']['rights']['#default_value'] = $parent->cc->metadata['rights'];
     $form['creativecommons']['metadata']['date']['#default_value'] = $parent->cc->metadata['date'];
-    foreach ($parent->field_creators as $key => $creator) {
-      $form['field_creators'][$key]['#default_value']['value'] = $creator['value'];
+    if (is_array($parent->field_creators)) {
+      foreach ($parent->field_creators as $key => $creator) {
+        $form['field_creators'][$key]['#default_value']['value'] = $creator['value'];
+      }
     }
-    foreach ($parent->field_contributors as $key => $contributors) {
-      $form['field_contributors'][$key]['#default_value']['value'] = $contributors['value'];
+    if (is_array($parent->field_contributors)) {
+      foreach ($parent->field_contributors as $key => $contributors) {
+        $form['field_contributors'][$key]['#default_value']['value'] = $contributors['value'];
+      }
     }
     $form['field_publisher'][0]['#default_value']['value'] = $parent->field_publisher[0]['value'];
   }

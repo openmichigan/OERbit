@@ -1,7 +1,7 @@
 core = "6.x"
 dependencies[] = "apachesolr"
 dependencies[] = "apachesolr_nodeaccess"
-dependencies[] = "apachesolr_rdf"
+dependencies[] = "apachesolr_attachments"
 dependencies[] = "apachesolr_search"
 dependencies[] = "context"
 dependencies[] = "features"

@@ -47,7 +47,7 @@
  */
 ?>
 <p class="title">
-  <a href="<?php print $url; ?>"><?php print $title; ?></a><span div="result-file-links"><?php print $title_file; ?></span>
+  <a href="<?php print $url; ?>"><?php print $title; ?></a><span class="result-file-links"><?php print $title_file; ?></span>
 </p>
 <div class="serach_result">
   <p class="information">

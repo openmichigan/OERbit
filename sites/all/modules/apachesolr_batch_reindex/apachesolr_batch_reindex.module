@@ -1,0 +1,202 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * This is the file description for Apachesolr Batch Reindex module.
+ *
+ * In this more verbose, multi-line description, you can specify what this
+ * file does exactly. Make sure to wrap your documentation in column 78 so
+ * that the file can be displayed nicely in default-sized consoles.
+ */
+
+function apachesolr_batch_reindex_menu() {
+  $items['admin/settings/apachesolr/reindex'] = array(
+    'title'            => 'Batch Reindex',
+    'page callback'    => 'apachesolr_batch_reindex_settings_page',
+    'access arguments' => array('administer site configuration'),
+    'weight'           => 1,
+    'type'             => MENU_LOCAL_TASK,
+    'file'             => 'apachesolr_batch_reindex.admin.inc',
+  );
+  return $items;
+}
+
+
+/**
+* The $batch can include the following values. Only 'operations'
+* and 'finished' are required, all others will be set to default values.
+*
+* @param operations
+*   An array of callbacks and arguments for the callbacks.
+*   There can be one callback called one time, one callback
+*   called repeatedly with different arguments, different
+*   callbacks with the same arguments, one callback with no
+*   arguments, etc.
+*
+* @param finished
+*   A callback to be used when the batch finishes.
+*
+* @param title
+*   A title to be displayed to the end user when the batch starts.
+*
+* @param init_message
+*   An initial message to be displayed to the end user when the batch starts.
+*
+* @param progress_message
+*   A progress message for the end user. Placeholders are available.
+*   Placeholders note the progression by operation, i.e. if there are
+*   2 operations, the message will look like:
+*    'Processed 1 out of 2.'
+*    'Processed 2 out of 2.'
+*   Placeholders include:
+*     @current, @remaining, @total and @percentage
+*
+* @param error_message
+*   The error message that will be displayed to the end user if the batch
+*   fails.
+*
+*/
+function batch_apachesolr_reindex() {
+  $batch = array(
+    'operations' => array(
+      array('batch_apachesolr_reindex_process', array()),
+      ),
+    'finished' => 'batch_apachesolr_reindex_finished',
+    'title' => t('Reindexing nodes'),
+    'init_message' => t('Batch reindexing is starting.'),
+    //'progress_message' => t('Reindexed @current out of @total.'),
+    'error_message' => t('Batch reindexing has encountered an error.'),
+  );
+  batch_set($batch);
+
+  // If this function was called from a form submit handler, stop here,
+  // FAPI will handle calling batch_process().
+
+  // If not called from a submit handler, add the following,
+  // noting the url the user should be sent to once the batch
+  // is finished.
+  batch_process('admin/settings/apachesolr/index');
+}
+
+/**
+* Batch Operation Callback
+*
+* Each batch operation callback will iterate over and over until
+* $context['finished'] is set to 1. After each pass, batch.inc will
+* check its timer and see if it is time for a new http request,
+* i.e. when more than 1 minute has elapsed since the last request.
+*
+* An entire batch that processes very quickly might only need a single
+* http request even if it iterates through the callback several times,
+* while slower processes might initiate a new http request on every
+* iteration of the callback.
+*
+* This means you should set your processing up to do in each iteration
+* only as much as you can do without a php timeout, then let batch.inc
+* decide if it needs to make a fresh http request.
+*
+* @param options1, options2
+*   If any arguments were sent to the operations callback, they
+*   will be the first argments available to the callback.
+*
+* @param context
+*   $context is an array that will contain information about the
+*   status of the batch. The values in $context will retain their
+*   values as the batch progresses.
+*
+* @param $context['sandbox']
+*   Use the $context['sandbox'] rather than $_SESSION to store the
+*   information needed to track information between successive calls.
+*   The values in the sandbox will be stored and updated in the database
+*   between http requests until the batch finishes processing. This will
+*   avoid problems if the user navigates away from the page before the
+*   batch finishes.
+*
+* @param $context['results']
+*   The array of results gathered so far by the batch processing.
+*   The current operation can append its own.
+*
+* @param $context['message']
+*   A text message displayed in the progress page.
+*
+* @param $context['finished']
+*   A float number between 0 and 1 informing the processing engine
+*   of the completion level for the operation.
+*
+*   1 (or no value explicitly set) means the operation is finished
+*   and the batch processing can continue to the next operation.
+*/
+function batch_apachesolr_reindex_process(&$context) {
+  if (empty($context['sandbox'])) {
+    try {
+      // Get the $solr object
+      $solr = apachesolr_get_solr();
+      // If there is no server available, don't continue.
+      if (!$solr->ping()) {
+        throw new Exception(t('No Solr instance available during indexing.'));
+      }
+    }
+    catch (Exception $e) {
+      watchdog('Apache Solr', $e->getMessage(), NULL, WATCHDOG_ERROR);
+      return FALSE;
+    }
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['current_node'] = 0;
+    variable_del('apachesolr_index_last');
+    db_query("DELETE FROM {apachesolr_search_node}");
+    // Populate table
+    db_query("INSERT INTO {apachesolr_search_node} (nid, status, changed)
+              SELECT n.nid, n.status, GREATEST(n.created, n.changed, c.last_comment_timestamp) AS changed
+              FROM {node} n LEFT JOIN {apachesolr_search_node} asn ON n.nid = asn.nid
+              LEFT JOIN {node_comment_statistics} c ON n.nid = c.nid
+              WHERE asn.changed IS NULL");
+     // Make sure no nodes end up with a timestamp that's in the future.
+     $time = time();
+     db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE changed > %d", $time, $time);
+  }
+  // For this example, we decide that we can safely process
+  // max set in settings for cron limit or 50 nodes at a time without a timeout.
+  $limit = variable_get('apachesolr_cron_limit', 50);
+
+  // Pull the total and remaining variables using apachesolr_search status function.
+  // This is used to push the progress bar for each group of nodes being indexed.
+  // Must set progress before calling the apachesolr_index_nodes() function to properly increment
+  // the progress else progress and total will never equal.
+  $status = module_invoke('apachesolr_search', 'search', 'status');
+  $remaining = $status['remaining'];
+  $total = $status['total'];
+  $nodes_indexed = db_result(db_query('SELECT COUNT(nid) FROM {apachesolr_search_node}'));
+  $context['sandbox']['progress'] += min($limit, $remaining);
+  $number_indexed = min($limit, $remaining);
+  $context['message'] = t('Reindexing @current of @total.', array('@current' => $context['sandbox']['progress'], '@total' => $total));
+  $context['sandbox']['max'] = $total;
+
+  // With each pass through the callback, retrieve the next group of nids.
+  $result = apachesolr_get_nodes_to_index('apachesolr_search', $limit);
+  apachesolr_index_nodes($result, 'apachesolr_search');
+
+  // Inform the batch engine that we are not finished,
+  // and provide an estimation of the completion level we reached.
+  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
+}
+
+/**
+* Batch 'finished' callback
+*/
+function batch_apachesolr_reindex_finished($success, $results, $operations) {
+  if ($success) {
+    // Here we do something meaningful with the results.
+    $message = format_plural(count($results), '1 item successfully processed:', '@count items successfully processed:');
+    $message .= theme('item_list', $results);
+  }
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    $message = 'An error occurred while processing '. $error_operation[0] .' with arguments :'. print_r($error_operation[0], TRUE);
+  }
+  drupal_set_message($message);
+}

@@ -2189,7 +2189,7 @@ filter: alpha(opacity=100) !important;
 #block-apachesolr-sort .block-inner .content .item-list ul li a
 
 {
- 	margin-bottom = 20px;
+ 	margin-bottom: 20px;
  	text-decoration: none;
  	text-align: left;
  	color:#444;
@@ -2228,3 +2228,9 @@ filter: alpha(opacity=100) !important;
  	color:#444;
 }
 
+.result-file-links
+{
+  padding-left: 3px;
+  font-size: small;
+  font-variant: small-caps;
+}

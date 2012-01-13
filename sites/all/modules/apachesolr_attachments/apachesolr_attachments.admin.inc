@@ -296,7 +296,8 @@ function apachesolr_attachments_delete_index() {
  */
 function apachesolr_attachments_add_documents(&$documents, $nid, $namespace = 'apachesolr_attachments') {
   $node = node_load($nid, NULL, TRUE);
-  if (!empty($node->nid)) {
+  $index_mode = apachesolr_attachments_get_index_mode($node);
+  if (!empty($node->nid) && $index_mode == 'seperate') {
 
     $hash = apachesolr_site_hash();
 
