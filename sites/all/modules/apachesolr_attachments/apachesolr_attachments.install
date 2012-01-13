@@ -20,8 +20,11 @@ function apachesolr_attachments_uninstall() {
   variable_del('apachesolr_attachments_cron_limit');
   variable_del('apachesolr_attachements_cron_time_limit');
   variable_del('apachesolr_attachements_cron_try');
-  apachesolr_clear_last_index('apachesolr_attachments');
+  $stored = variable_get('apachesolr_index_last', array());
+  unset($stored['apachesolr_attachments']);
+  variable_set('apachesolr_index_last', $stored);
   drupal_uninstall_schema('apachesolr_attachments');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'apachesolr_attachments_content_type_indexing_%%'");
 }
 
 /**

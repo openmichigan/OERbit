@@ -16,7 +16,7 @@ function apachesolr_attachments_admin_page() {
 
 /**
  * Displays the Attachment Settings Form.
-*/
+ */
 function apachesolr_attachments_settings() {
   $default = implode(' ', apachesolr_attachments_default_excluded());
   $form['apachesolr_attachment_excluded_extensions'] = array(
@@ -81,6 +81,73 @@ function apachesolr_attachments_settings() {
   $form['#validate'][] = 'apachesolr_attachments_settings_validate';
   $form['#submit'][] = 'apachesolr_attachments_settings_submit';
   return $form;
+}
+
+/**
+ * Form callback for content type settings.
+ */
+function apachesolr_attachments_content_type_settings() {
+  list($excluded_types) = _apachesolr_exclude_types('apachesolr_attachments');
+  $types = array_diff_key(node_get_types('names'), $excluded_types);
+
+  foreach ($types as $key => $name) {
+    $form['content_type-settings']['apachesolr_attachments_content_type_indexing_' . $key] = array(
+      '#type' => 'radios',
+      '#title' => t('@type', array('@type' => $name)),
+      '#default_value' => variable_get('apachesolr_attachments_content_type_indexing_' . $key, 'seperate'),
+      '#options' => array(
+        'seperate' => t('Attachments as separate entities'),
+        'parent' => t('Attachments as part of parent node'),
+        'none' => t("Don't index attachments"),
+      ),
+    );
+  }
+
+  $form = system_settings_form($form);
+  $form['#theme'] = 'apachesolr_attachments_content_type_settings'; // reset form theme.
+  return $form;
+}
+
+/**
+ * Theme callback for apachesolr_attachments content type settings.
+ *
+ * This groups radio elements into a table that should be more manageble for
+ * larger numbers of content types.
+ *
+ * @group themeable
+ */
+function theme_apachesolr_attachments_content_type_settings($form) {
+
+  $headers = array();
+  $rows = array();
+  foreach (element_children($form['content_type-settings']) as $index) {
+    $element = &$form['content_type-settings'][$index];
+    $row = array();
+
+    if (empty($headers)) {
+      $headers[] = t('Content type');
+      foreach (element_children($element) as $sub_index) {
+        $headers[] = $element[$sub_index]['#title'];
+      }
+    }
+
+    foreach (element_children($element) as $sub_index) {
+      unset($element[$sub_index]['#title']);
+      $row[] = drupal_render($element[$sub_index]);
+    }
+    // Toss actual rendering.
+    $label = drupal_render($element);
+    // Hack out radios raper that's not very useful now.
+    $label = str_replace('<div class="form-radios"></div>', '', $label);
+    array_unshift($row, $label);
+    $rows[] = $row;
+  }
+
+  $output = theme('table', $headers, $rows);
+
+  $output .= drupal_render($form);
+
+  return $output;
 }
 
 function apachesolr_attachments_settings_validate($form, &$form_state) {
@@ -243,29 +310,7 @@ function apachesolr_attachments_add_documents(&$documents, $nid, $namespace = 'a
     }
 
     if ($build_document) {
-      // Since there is no notification for an attachment being unassociated with a
-      // node (but that action will trigger it to be indexed again), we check for
-      // fids that were added before but no longer present on this node.
-
-      $fids = array();
-      $result = db_query("SELECT fid FROM {apachesolr_attachments_files} WHERE nid = %d", $node->nid);
-      while ($row = db_fetch_array($result)) {
-        $fids[$row['fid']] = $row['fid'];
-      }
-
-      $files = apachesolr_attachments_get_indexable_files($node);
-
-      // Find deleted files.
-      $missing_fids = array_diff_key($fids, $files);
-      if ($missing_fids) {
-        db_query("UPDATE {apachesolr_attachments_files} SET removed = 1 WHERE fid IN (". db_placeholders($missing_fids) .")", $missing_fids);
-      }
-      $new_files = array_diff_key($files, $fids);
-      // Add new files.
-      foreach ($new_files as $file) {
-        db_query("INSERT INTO {apachesolr_attachments_files} (fid, nid, removed, sha1) VALUES (%d, %d, 0, '')", $file->fid, $node->nid);
-      }
-      foreach ($files as $file) {
+      foreach (apachesolr_attachments_update_indexable_files($node) as $file) {
         $text = apachesolr_attachments_get_attachment_text($file);
 
         if ($text) {
@@ -318,6 +363,43 @@ function apachesolr_attachments_add_documents(&$documents, $nid, $namespace = 'a
     }
   }
 }
+
+/**
+ * Builds an updated list of indexable files and updates related caches.
+ *
+ * @param $node
+ * A Drupal node object associated with the files.
+ * @return
+ * A list of indexable file objects.
+ */
+function apachesolr_attachments_update_indexable_files($node) {
+
+  // Since there is no notification for an attachment being unassociated with a
+  // node (but that action will trigger it to be indexed again), we check for
+  // fids that were added before but no longer present on this node.
+
+  $fids = array();
+  $result = db_query("SELECT fid FROM {apachesolr_attachments_files} WHERE nid = %d", $node->nid);
+  while ($row = db_fetch_array($result)) {
+    $fids[$row['fid']] = $row['fid'];
+  }
+
+  $files = apachesolr_attachments_get_indexable_files($node);
+
+  // Find deleted files.
+  $missing_fids = array_diff_key($fids, $files);
+  if ($missing_fids) {
+    db_query("UPDATE {apachesolr_attachments_files} SET removed = 1 WHERE fid IN (". db_placeholders($missing_fids) .")", $missing_fids);
+  }
+  $new_files = array_diff_key($files, $fids);
+  // Add new files.
+  foreach ($new_files as $file) {
+    db_query("INSERT INTO {apachesolr_attachments_files} (fid, nid, removed, sha1) VALUES (%d, %d, 0, '')", $file->fid, $node->nid);
+  }
+
+  return $files;
+}
+
 
 /**
  * Return all non-excluded file attachments for a particular node
@@ -402,10 +484,17 @@ function apachesolr_attachments_get_cck_file_fields() {
  * @throws Exception
  */
 function apachesolr_attachments_get_attachment_text($file) {
+  // We need the apachesolr_clean_text function so include this file:
+  module_load_include('inc', 'apachesolr', 'apachesolr.index');
+
   // Any down-side to using realpath()?
   $filepath = realpath($file->filepath);
   // Check that we have a valid filepath.
-  if (!($filepath) || !is_file($filepath)) {
+  if (!$filepath) {
+    return FALSE;
+  }
+  elseif (!is_file($filepath)) {
+    watchdog('Apache Solr Attachments', '%filepath is not a valid file path', array('%filepath' => $filepath), WATCHDOG_WARNING);
     return FALSE;
   }
 
@@ -421,6 +510,7 @@ function apachesolr_attachments_get_attachment_text($file) {
 
   $sha1 = sha1_file($filepath);
   if ($sha1 === FALSE) {
+    watchdog('Apache Solr Attachments', 'Failed to calculate hash of %filepath', array('%filepath' => $filepath), WATCHDOG_ERROR);
     return FALSE;
   }
 
@@ -443,12 +533,14 @@ function apachesolr_attachments_get_attachment_text($file) {
       // Exceptions from Solr may be transient, or indicate a problem with a specific file.
       // Shortened project name because the watchdog limits type to 16 characters.
       watchdog('ApacheSolrAttach', "Exception occured sending %filepath to Solr\n!message", array('%filepath' => $file->filepath, '!message' => nl2br(check_plain($e->getMessage()))), WATCHDOG_ERROR);
-      return '';
+      return FALSE;
     }
   }
+
   // Strip bad control characters.
   $text = iconv("UTF-8", "UTF-8//IGNORE", $text);
   $text = trim(apachesolr_clean_text($text));
+
   // Save the extracted, cleaned text to the DB.
   db_query("UPDATE {apachesolr_attachments_files} SET sha1 = '%s', body = '%s' WHERE fid = %d", $sha1, $text, $file->fid);
 
@@ -463,20 +555,27 @@ function apachesolr_attachments_get_attachment_text($file) {
 function apachesolr_attachments_extract_using_tika($filepath) {
   $tika_path = realpath(variable_get('apachesolr_attachments_tika_path', ''));
 
-  $tika = realpath($tika_path .'/'. variable_get('apachesolr_attachments_tika_jar', 'tika-0.3.jar'));
-  if (!($tika) || !is_file($tika)) {
+  $tika = realpath($tika_path . '/' . variable_get('apachesolr_attachments_tika_jar', 'tika-0.3.jar'));
+  if (!$tika || !is_file($tika)) {
     throw new Exception(t('Invalid path or filename for tika application jar.'));
   }
 
-  $java = variable_get('apachesolr_attachments_java', 'java');
-  // By default force UTF-8 output.
-  $java_opts = ' ' . variable_get('apachesolr_attachments_java_opts', '-Dfile.encoding=UTF8');
-  $cmd = escapeshellcmd($java . $java_opts) .' -cp '. escapeshellarg($tika_path) .' -jar '. escapeshellarg($tika) .' -t '. escapeshellarg($filepath);
-
+  $cmd = '';
   // Add a work-around for a MAMP bug + java 1.5.
   if (strpos(ini_get('extension_dir'), 'MAMP/')) {
-    $cmd = 'export DYLD_LIBRARY_PATH=""; '. $cmd;
+    $cmd .= 'export DYLD_LIBRARY_PATH=""; ';
   }
+  // Support UTF-8 encoded filenames.
+  if (mb_detect_encoding($filepath, 'ASCII,UTF-8', true) == 'UTF-8') {
+    $cmd .= 'export LANG="en_US.utf-8"; ';
+    setlocale(LC_CTYPE, 'UTF8', 'en_US.UTF-8');
+  }
+
+  // By default force UTF-8 output.
+  $cmd .= escapeshellcmd(variable_get('apachesolr_attachments_java', 'java')) . ' ' .
+    escapeshellarg(variable_get('apachesolr_attachments_java_opts', '-Dfile.encoding=UTF8')) .
+    ' -cp ' . escapeshellarg($tika_path) . ' -jar ' . escapeshellarg($tika) .
+    ' -t '. escapeshellarg($filepath);
 
   return shell_exec($cmd);
 }

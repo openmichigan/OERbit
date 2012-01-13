@@ -4,6 +4,11 @@ Apache Solr Attachments x.x-x.x, xxxx-xx-xx
 
 Apache Solr Attachments 6.x-1.x, xxxx-xx-xx
 ------------------------------
+#1189864 by jpmckinney: More verbose logging during text extraction.
+#1162252 by steveoriol, jpmckinney: Allow UTF-8 characters in filenames.
+ 
+Apache Solr Attachments 6.x-1.0-beta3, 2011-05-26
+------------------------------
 #1162608 by rdebieux, jpmckinney: Remove file from index if node unpublished.
 #1162492 by jpmckinney: Add helpful message for Windows users.
 #1100306 by jpmckinney: Search by filename.
@@ -17,11 +22,11 @@ Apache Solr Attachments 6.x-1.x, xxxx-xx-xx
 #936466 by aaron1234nz, halstead: Body field can be NULL on initial insert.
 #936464 by aaron1234nz, halstead: Watchdog has a limit of 16 characters in the type field. 
 
-Apache Solr Attachments 6.x-1.1.0-beta2, 2010-06-28
+Apache Solr Attachments 6.x-1.0-beta2, 2010-06-28
 ------------------------------
 #815104 by ebeyrent, pwolanin minimal handling for failed Solr extraction.
 
-Apache Solr Attachments 6.x-1.1.0-beta1, 2010-02-07
+Apache Solr Attachments 6.x-1.0-beta1, 2010-02-07
 ------------------------------
 #635480 by pwolanin, use hook_apachesolr_update_index with namespace.
 #698672 by Agileware, fix ids so files get deleted from the index on cron.

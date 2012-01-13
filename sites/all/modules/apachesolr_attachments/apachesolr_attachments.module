@@ -20,6 +20,20 @@ function apachesolr_attachments_menu() {
     'file' => 'apachesolr_attachments.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
+  $items['admin/settings/apachesolr/attachments/general'] = array(
+    'title' => 'General',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/settings/apachesolr/attachments/content_type'] = array(
+    'title' => 'Content type',
+    'description' => 'Administer Apache Solr Attachments per content settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('apachesolr_attachments_content_type_settings'),
+    'access arguments' => array('administer search'),
+    'file' => 'apachesolr_attachments.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
   $items['admin/settings/apachesolr/attachments/confirm/reindex'] = array(
     'title' => 'Reindex all files',
     'page callback' => 'drupal_get_form',
@@ -89,6 +103,20 @@ function apachesolr_attachments_search($op = 'search', $keys = NULL) {
 }
 
 /**
+ * Implementation of hook_theme().
+ */
+function apachesolr_attachments_theme() {
+  return array(
+    // Point this to our admin file for the theme function.
+    'apachesolr_attachments_content_type_settings' => array(
+      'arguments' => array('form' => NULL),
+      'file' => 'apachesolr_attachments.admin.inc',
+    ),
+  );
+}
+
+
+/**
  * Implementation of hook_apachesolr_types_exclude().
  */
 function apachesolr_attachments_apachesolr_types_exclude($namespace) {
@@ -135,6 +163,34 @@ function apachesolr_attachments_nodeapi($node, $op) {
     // Mark attachments for later re-deletion in case the query fails.
     db_query("UPDATE {apachesolr_attachments_files} SET removed = 1 WHERE nid = %d", $node->nid);
   }
+  if ($op == 'update index') {
+    $index_mode = apachesolr_attachments_get_index_mode($node);
+    if ($index_mode == 'parent') {
+
+      module_load_include('inc', 'apachesolr_attachments', 'apachesolr_attachments.admin');
+
+      $text = '';
+      foreach (apachesolr_attachments_update_indexable_files($node) as $file) {
+        $text .= "\n " . apachesolr_attachments_get_attachment_text($file);
+      }
+
+      return $text;
+    }
+  }
+}
+
+/**
+ * Get the indexing mode for the attachments of a given node.
+ *
+ * @param $node
+ * A node object.
+ * @return
+ * Index mode
+ */
+function apachesolr_attachments_get_index_mode($node) {
+  $index_mode = variable_get('apachesolr_attachments_content_type_indexing_' . $node->type, 'seperate');
+  drupal_alter('apachesolr_attachments_index_mode', $index_mode, $node);
+  return $index_mode;
 }
 
 /**
