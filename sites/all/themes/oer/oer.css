@@ -182,18 +182,18 @@ a.social:hover span {
 }
 #header #block-search-0 input#edit-search-block-form-1 {
 	border:1px solid #A3ACB5;
-	font-size:100%;
-	margin: 0 25px 0 0;
+	font-size:150%;
+	margin: 0 50px 0 0;
 	padding:2px;
-	width:164px;
+	width:200px;
 }
 #header #block-search-0 input#edit-submit, #header #block-search-0 input#edit-submit-1, #header #block-search-0 input#edit-submit-2 { 
-	width: 22px;
-	height: 18px;
+	width: 50px;
+	height: 25px;
 	margin: 1px 0 0 5px;
 	padding: 0;
 	border: 0;
-	background: transparent url(images/go.gif) no-repeat center top;
+	background: transparent url(images/search.gif) no-repeat center top;
 	text-indent: -1000em;
 	cursor: pointer; /* hand-shaped cursor */
 	font-size: 0px;
@@ -203,6 +203,11 @@ a.social:hover span {
 	top: 0;
 	right: 0;
  }
+
+/* Label that says "Search:" */
+#edit-search-block-form-1-wrapper label {
+        display: none;
+}
 
 
 
