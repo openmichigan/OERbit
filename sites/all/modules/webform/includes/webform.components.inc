@@ -79,6 +79,7 @@ function webform_components_form($form_state, $node) {
   $form['add']['name'] = array(
     '#type' => 'textfield',
     '#size' => 24,
+    '#maxlength' => 255,
   );
 
   $form['add']['type'] = array(
@@ -156,7 +157,7 @@ function theme_webform_components_form($form) {
 
   $node = $form['#node'];
 
-  $header = array(t('Name'), t('Type'), t('Value'), t('Mandatory'), t('Weight'), array('data' => t('Operations'), 'colspan' => 3));
+  $header = array(t('Label'), t('Type'), t('Value'), t('Mandatory'), t('Weight'), array('data' => t('Operations'), 'colspan' => 3));
   $rows = array();
 
   // Add a row containing form elements for a new item.
@@ -357,15 +358,19 @@ function webform_component_edit_form(&$form_state, $node, $component, $clone = F
     '#type' => 'value',
     '#value' => $clone,
   );
-  $form['name'] = array(
-    '#type' => 'textfield',
-    '#default_value' => $component['name'],
-    '#title' => t('Label'),
-    '#description' => t('This is used as a descriptive label when displaying this form element.'),
-    '#required' => TRUE,
-    '#weight' => -10,
-    '#maxlength' => 255,
-  );
+
+  if (webform_component_feature($component['type'], 'title')) {
+    $form['name'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $component['name'],
+      '#title' => t('Label'),
+      '#description' => t('This is used as a descriptive label when displaying this form element.'),
+      '#required' => TRUE,
+      '#weight' => -10,
+      '#maxlength' => 255,
+    );
+  }
+
   $form['form_key'] = array(
     '#type' => 'textfield',
     '#default_value' => empty($component['form_key']) ? _webform_safe_name($component['name']) : $component['form_key'],
@@ -374,13 +379,16 @@ function webform_component_edit_form(&$form_state, $node, $component, $clone = F
     '#required' => TRUE,
     '#weight' => -9,
   );
-  $form['extra']['description'] = array(
-    '#type' => 'textarea',
-    '#default_value' => isset($component['extra']['description']) ? $component['extra']['description'] : '',
-    '#title' => t('Description'),
-    '#description' => t('A short description of the field used as help for the user when he/she uses the form.') . theme('webform_token_help'),
-    '#weight' => -1,
-  );
+
+  if (webform_component_feature($component['type'], 'description')) {
+    $form['extra']['description'] = array(
+      '#type' => 'textarea',
+      '#default_value' => isset($component['extra']['description']) ? $component['extra']['description'] : '',
+      '#title' => t('Description'),
+      '#description' => t('A short description of the field used as help for the user when he/she uses the form.') . theme('webform_token_help'),
+      '#weight' => -1,
+    );
+  }
 
   // Display settings.
   $form['display'] = array(
@@ -408,13 +416,26 @@ function webform_component_edit_form(&$form_state, $node, $component, $clone = F
       $form['display']['title_display'] = array(
         '#type' => 'checkbox',
         '#title' => t('Hide label'),
-        '#default_value' => !empty($component['extra']['title_display']),
+        '#default_value' => strcmp($component['extra']['title_display'], 'none') === 0,
         '#return_value' => 'none',
         '#description' => t('Do not display the label of this component.'),
       );
     }
     $form['display']['title_display']['#weight'] = 8;
     $form['display']['title_display']['#parents'] = array('extra', 'title_display');
+
+    if (webform_component_feature($component['type'], 'private')) {
+    // May user mark fields as Private?
+      $form['display']['private'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Private'),
+      '#default_value' => ($component['extra']['private'] == '1' ? TRUE : FALSE),
+      '#description' => t('Private fields are shown only to users with results access.'),
+      '#weight' => 45,
+      '#parents' => array('extra', 'private'),
+      '#disabled' => !webform_results_access($node),
+      );
+    }
   }
 
   // Validation settings.
@@ -705,6 +726,7 @@ function webform_component_insert(&$component) {
     $component['cid'] = isset($component['cid']) ? $component['cid'] : db_result(db_query('SELECT MAX(cid) FROM {webform_component} WHERE nid = %d', $component['nid'])) + 1;
     $component['value'] = isset($component['value']) ? $component['value'] : NULL;
     $component['mandatory'] = isset($component['mandatory']) ? $component['mandatory'] : 0;
+    $component['extra']['private'] = isset($component['extra']['private']) ? $component['extra']['private'] : 0;
     db_query("INSERT INTO {webform_component} (nid, cid, pid, form_key, name, type, value, extra, mandatory, weight) VALUES (%d, %d, %d, '%s', '%s', '%s', '%s', '%s', %d, %d)", $component['nid'], $component['cid'], $component['pid'], $component['form_key'], $component['name'], $component['type'], $component['value'], serialize($component['extra']), $component['mandatory'], $component['weight']);
     lock_release('webform_component_insert_' . $component['nid']);
   }
@@ -735,6 +757,7 @@ function webform_component_update($component) {
 
   $component['value'] = isset($component['value']) ? $component['value'] : NULL;
   $component['mandatory'] = isset($component['mandatory']) ? $component['mandatory'] : 0;
+  $component['extra']['private'] = isset($component['extra']['private']) ? $component['extra']['private'] : 0;
   $success = db_query("UPDATE {webform_component} SET pid = %d, form_key = '%s', name = '%s', type = '%s', value = '%s', extra = '%s', mandatory = %d, weight = %d WHERE nid = %d AND cid = %d", $component['pid'], $component['form_key'], $component['name'], $component['type'], $component['value'], serialize($component['extra']), $component['mandatory'], $component['weight'], $component['nid'], $component['cid']);
 
   // Post-update actions.
@@ -776,6 +799,7 @@ function webform_component_delete($node, $component) {
 
 /**
  * Recursively insert components into the database.
+ *
  * @param $node
  *   The node object containing the current webform.
  * @param $component
@@ -783,8 +807,9 @@ function webform_component_delete($node, $component) {
  */
 function webform_component_clone(&$node, &$component) {
   $original_cid = $component['cid'];
-  unset($component['cid']);
+  $component['cid'] = NULL;
   $new_cid = webform_component_insert($component);
+  $component['cid'] = $new_cid;
   if (webform_component_feature($component['type'], 'group')) {
     foreach ($node->webform['components'] as $cid => $child_component) {
       if ($child_component['pid'] == $original_cid) {
@@ -805,16 +830,20 @@ function webform_component_feature($type, $feature) {
   $components = webform_components();
   $defaults = array(
     'csv' => TRUE,
+    'default_value' => TRUE,
+    'description' => TRUE,
     'email' => TRUE,
     'email_address' => FALSE,
     'email_name' => FALSE,
     'required' => TRUE,
+    'title' => TRUE,
     'title_display' => TRUE,
     'title_inline' => TRUE,
     'conditional' => TRUE,
     'spam_analysis' => FALSE,
     'group' => FALSE,
     'attachment' => FALSE,
+    'private' => TRUE,
   );
   return isset($components[$type]['features'][$feature]) ? $components[$type]['features'][$feature] : !empty($defaults[$feature]);
 }
@@ -884,8 +913,9 @@ function webform_component_list($node, $component_filter = NULL, $indent = TRUE,
 function webform_component_select($element) {
   // Split the select list into checkboxes.
   foreach ($element['#options'] as $key => $label) {
-    $indents = 0;
-    $label = preg_replace('/^([\-])+/', '', $label, -1, $indents);
+    $label_length = strlen($label);
+    $label = preg_replace('/^(\-)+/', '', $label);
+    $indents = $label_length - strlen($label);
     $element[$key] = array(
       '#title' => $label,
       '#type' => 'checkbox',
@@ -978,7 +1008,7 @@ function webform_component_defaults(&$component) {
 function webform_validate_unique($element, $form_state) {
   if ($element['#value'] !== '') {
     $nid = $form_state['values']['details']['nid'];
-    $sid = $form_state['values']['details']['sid'];
+    $sid = empty($form_state['values']['details']['sid']) ? 0 : $form_state['values']['details']['sid'];
     $count = db_result(db_query("SELECT count(*) FROM {webform_submitted_data} WHERE nid = %d AND cid = %d AND sid <> %d AND LOWER(data) = '%s'", $nid, $element['#webform_component']['cid'], $sid, $element['#value']));
     if ($count) {
       form_error($element, t('The value %value has already been submitted once for the %title field. You may have already submitted this form, or you need to use a different value.', array('%value' => $element['#value'], '%title' => $element['#title'])));
