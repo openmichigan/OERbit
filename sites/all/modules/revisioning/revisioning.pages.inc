@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning.pages.inc,v 1.5 2010/05/06 03:27:42 rdeboer Exp $
 
 /**
  * @file
@@ -34,10 +33,6 @@ function revisioning_form_alter(&$form, &$form_state, $form_id) {
       );
     }
 
-    if (!variable_get('revisioning_allow_workflow_transition_via_edit_form', TRUE)) {
-      unset($form['workflow']);
-    }
-
     // In addition to node_form_submit() append our own handler to the list.
     $form['buttons']['submit']['#submit'][] = '_revisioning_form_submit';
 
@@ -47,7 +42,7 @@ function revisioning_form_alter(&$form, &$form_state, $form_id) {
     $nid = $form['#node']->nid;
     $vid = $form['#node']->vid;
     if (isset($form['buttons']['delete']) && user_access('delete revisions') && $vid != node_tools_get_current_node_revision_id($nid)) {
-      $form['buttons']['delete']['#value'] = 'Delete this revision';
+      $form['buttons']['delete']['#value'] =  t('Delete this revision');
       $form['buttons']['delete']['#submit'][] = '_revisioning_delete_submit';
     }
   }
@@ -81,10 +76,12 @@ function revisioning_form_node_type_form_alter(&$form, &$form_state) {
     '#description' => t('Use less disk space and avoid cluttering your revisions list. With the first option ticked, modifications are saved to the same copy (i.e. no additional revisions are created) until the content is published.')
     );
   $form['workflow']['revisioning']['revisioning_auto_publish'] = array(
-    '#title' => t('Auto-publish drafts of type %type (for moderators)', array('%type' => $content_type)),
+    '#title' => t('Auto-publish drafts of @this type %type (for moderators)', array(
+      '@this' => empty($content_type) ? t('this') : '', '%type' => $content_type)),
     '#type' => 'checkbox',
     '#default_value' => (int)variable_get('revisioning_auto_publish_'. $content_type, FALSE),
-    '#description' => t('If this box is ticked and the logged-in user has the "publish revisions" permission, then any draft of type %type is published immeditaley upon saving, without further review.', array('%type' => $content_type))
+    '#description' => t('If this box is ticked and the logged-in user has one of the "publish revisions" permissions, then any draft of @this type %type is published immediately upon saving, without further review.', array(
+      '@this' => empty($content_type) ? t('this') : '', '%type' => $content_type))
   );
 }
 
@@ -111,6 +108,12 @@ function revisioning_publish_confirm_submit($form, &$form_state) {
   $vid = $form_state['values']['revision'];
   _revisioning_publish_revision($nid, $vid);
   drupal_set_message(t('Revision has been published.'));
+
+  // [#886384]
+  global $base_url;
+  $url = $base_url . '/' . drupal_get_path_alias('node/'. $nid);
+  cache_clear_all($url, 'cache_page');
+
   // Redirect to the same page as unpublish and revert
   $form_state['redirect'] = "node/$nid/revisions";
 }
@@ -138,8 +141,39 @@ function revisioning_unpublish_confirm_submit($form, &$form_state) {
 //$type = $form_state['values']['type']; // machine name, eg. 'story' rather than 'Story'
   $title = $form_state['values']['title'];
   drupal_set_message(t('%title is no longer publicly visible.', array('%title' => $title)));
+
+  // [#886384]
+  global $base_url;
+  $url = $base_url . '/' . drupal_get_path_alias('node/'. $nid);
+  cache_clear_all($url, 'cache_page');
+
   // Redirect to the same page as publish and revert
   $form_state['redirect'] = "node/$nid/revisions";
+}
+
+function revisioning_delete_archived_confirm($form_state, $node) {
+  $node->num_archived = revisioning_get_number_of_archived_revisions($node);
+  $form['node']  = array('#type' => 'value', '#value' => $node);
+  $t = format_plural($node->num_archived,
+    'Are you sure you want to delete the archived revision of %title?',
+    'Are you sure you want to delete all @count archived revisions of %title?',
+    array('%title' => $node->title)
+  );
+  return confirm_form($form, $t, 'node/' . $node->nid . '/revisions',
+    t('This action cannot be undone.'),
+    t('Delete archived'), t('Cancel'));
+}
+
+/**
+ * Submission handler for the delete_archived_confirm form.
+ */
+function revisioning_delete_archived_confirm_submit($form, &$form_state) {
+  $node = $form_state['values']['node'];
+  revisioning_delete_archived_revisions($node);
+  drupal_set_message(format_plural($node->num_archived, 'One archived revision deleted.', '@count archived revisions deleted.'));
+  $form_state['redirect'] = ($node->num_revisions - $node->num_archived > 1)
+    ? 'node/' . $node->nid . '/revisions'
+    : 'node/' . $node->nid;
 }
 
 /**
@@ -173,7 +207,11 @@ function revisioning_form_node_revision_delete_confirm_alter(&$form, &$form_stat
  */
 function revisioning_revision_delete_confirm_pre_submit($form, &$form_state) {
   $node = $form['#node_revision'];
-  module_invoke_all('revisionapi', 'pre delete', $node);
+  $return = module_invoke_all('revisionapi', 'pre delete', $node);
+  if (in_array(FALSE, $return)) {
+    drupal_goto('node/'. $node->nid .'/revisions/'. $node->vid .'/view');
+    die;
+  }
 }
 
 /**

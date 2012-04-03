@@ -1,5 +1,4 @@
 <?php
-// $Id: revisions-summary.tpl.php,v 1.5 2009/04/30 03:26:48 rdeboer Exp $
 /**
  * @file
  * revisions-summary.tpl.php

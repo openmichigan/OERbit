@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_handler_filter_node_revision_moderation.inc,v 1.2 2010/04/08 01:46:26 rdeboer Exp $
 
 /**
  * @file
@@ -30,13 +29,12 @@ class revisioning_handler_filter_node_revision_moderation extends views_handler_
       }
     }
     else {
-      $where_clause = $this->table_alias .'.type IN ('. implode(',', $moderated_content_types) .')';
-      if (isset($this->value[0]) && $this->value[0] == REVISIONING_NOT_MODERATED) {
-        $where_clause = "!($where_clause)";
-      }
+      $moderated = !(isset($this->value[0]) && $this->value[0] == REVISIONING_NOT_MODERATED);
       if ($this->operator == 'not in') {
-        $where_clause = ($where_clause[0] == '!') ? drupal_substr($where_clause, 1) : "!($where_clause)";
+        $moderated = !$moderated;
       }
+      $where_operator = $moderated ? 'IN' : 'NOT IN';
+      $where_clause = $this->table_alias .'.type ' . $where_operator . ' ('. implode(',', $moderated_content_types) .')';
       $this->query->add_where($this->options['group'], $where_clause);
     }
   }

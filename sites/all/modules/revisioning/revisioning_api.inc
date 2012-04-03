@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_api.inc,v 1.12 2010/07/05 05:58:05 rdeboer Exp $
 
 /**
  * @file
@@ -156,6 +155,28 @@ function revisioning_get_latest_revision_id($nid) {
 }
 
 /**
+ * Get the id of the user who last edited the supplied node, ie. the author
+ * of the latest revision.
+ * This is irrespective of whether this latest revision is pending or not,
+ * unless TRUE is specified for the second argument, in which case the uid
+ * of the creator of the current revision (published or not) is returned.
+ *
+ * @param $nid
+ *  The id of the node whose most recent editor id is to be returned.
+ * @param $current
+ *  Whether the uid of the current or very latest revision should be returned.
+ * @return
+ *  A single number being the user id (uid).
+ */
+function revisioning_get_last_editor($nid, $current = FALSE) {
+  $sql = ($current)
+    ? "SELECT vid FROM {node} WHERE nid = %d"
+    : "SELECT MAX(vid) FROM {node_revisions} WHERE nid = %d";
+  $vid = db_result(db_query($sql, $nid));
+  return db_result(db_query("SELECT uid FROM {node_revisions} WHERE vid = %d", $vid));
+}
+
+/**
  * Revert node to selected revision without changing its publication status.
  *
  * @param $node
@@ -165,7 +186,11 @@ function revisioning_get_latest_revision_id($nid) {
  */
 function _revisioning_revertpublish_revision(&$node, $vid = NULL) {
   $node_revision = is_object($node) ? $node : node_load($node, $vid);
-  module_invoke_all('revisionapi', 'pre revert', $node_revision);
+  $return = module_invoke_all('revisionapi', 'pre revert', $node_revision);
+  if (in_array(FALSE, $return)) {
+    drupal_goto('node/'. $node_revision->nid .'/revisions/'. $node_revision->vid .'/view');
+    die;
+  }
   _revisioning_revert_revision($node_revision);
   module_invoke_all('revisionapi', 'post revert', $node_revision);
 }
@@ -193,27 +218,59 @@ function _revisioning_revert_revision(&$node, $vid = NULL) {
 }
 
 /**
- * Publish node, without calling node_save()
+ * Publish node, without calling node_save().
+ * @obsolete
+ *  This function is no longer used. Use _revisioning_publish_revision().
  *
  * @param $node
  *  Target $node object or nid of target node
- */
-function _revisioning_publish_node($node) {
-  $nid = is_object($node) ? $node->nid : $node;
-  db_query("UPDATE {node} SET status=1 WHERE nid=%d", $nid);
-  cache_clear_all();
+ * @param $clear_cache
+ *   Whether to clear the cache afterwards or not. Clearing the cache on every
+ *   node during bulk operations can be time-consuming.
+ *
+function _revisioning_publish_node($node, $clear_cache = TRUE) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+  db_query("UPDATE {node} SET status=1 WHERE nid=%d", $node->nid);
+  // Let other modules know there was an update on the node, just like
+  // node_save() does.
+  $node->status = 1;
+  node_invoke_nodeapi($node, 'update');
+  // Update the node access table for this node.
+  node_access_acquire_grants($node);
+  if ($clear_cache) {
+    cache_clear_all();
+  }
 }
+ */
 
 /**
  * Unpublish node, without calling node_save().
  *
  * @param $node
- *  Target $node object or nid of target node
+ *  Target $node object or nid.
+ * @param $clear_cache
+ *   Whether to clear the cache afterwards or not. Clearing the cache on every
+ *   node during bulk operations can be time-consuming.
  */
-function _revisioning_unpublish_node($node) {
-  $nid = is_object($node) ? $node->nid : $node;
-  db_query("UPDATE {node} SET status=0 WHERE nid=%d", $nid);
-  cache_clear_all();
+function _revisioning_unpublish_node($node, $clear_cache = TRUE) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+  db_query("UPDATE {node} SET status=0 WHERE nid=%d", $node->nid);
+  // Let other modules know there was an update on the node, just like
+  // node_save() does.
+  $node->status = 0;
+  $node->bypass_nodeapi = TRUE; // avoid revisioning_nodeapi() doing stuff
+  $node->pathauto_perform_alias = FALSE; // avoid pathauto_nodeapi() doing stuff
+  node_invoke_nodeapi($node, 'update');
+  // Update the node access table for this node.
+  node_access_acquire_grants($node);
+
+  if ($clear_cache) {
+    cache_clear_all();
+  }
 }
 
 /**
@@ -251,13 +308,11 @@ function _revisioning_delete_revision(&$node, $vid = NULL) {
  *
  * @param $node
  *  Target $node object or nid of target node
- *
- * @TODO: Shouldn't we invoke hook_nodeapi('update'..) too, since we are updating node?
  */
 function _revisioning_unpublish_revision(&$node) {
   $node_revision = is_object($node) ? $node : node_load($node);
   module_invoke_all('revisionapi', 'pre unpublish', $node_revision);
-  _revisioning_unpublish_node($node_revision->nid);
+  _revisioning_unpublish_node($node_revision);
   watchdog('content', 'Unpublished @type %title', array('@type' => $node_revision->type, '%title' => $node_revision->title), WATCHDOG_NOTICE, l(t('view'), "node/$node_revision->nid"));
   module_invoke_all('revisionapi', 'post unpublish', $node_revision);
 }
@@ -272,15 +327,29 @@ function _revisioning_unpublish_revision(&$node) {
  *  Target $node object (loaded with target revision) or nid of target node
  * @param $vid
  *  optional vid of revision to make current, if provided $node is not object.
- *
- * @TODO: Shouldn't we invoke hook_nodeapi('update'..) too, since we are updating node ?
+ * @param $clear_cache
+ *   Whether to clear the cache afterwards or not. Clearing the cache on every
+ *   node during bulk operations can be time-consuming.
  */
-function _revisioning_publish_revision(&$node, $vid = NULL) {
+function _revisioning_publish_revision(&$node, $vid = NULL, $clear_cache = TRUE) {
   $node_revision = is_object($node) ? $node : node_load($node, $vid);
-  module_invoke_all('revisionapi', 'pre publish', $node_revision);
+  $return = module_invoke_all('revisionapi', 'pre publish', $node_revision);
+  if (in_array(FALSE, $return)) {
+    drupal_goto('node/'. $node_revision->nid .'/revisions/'. $node_revision->vid .'/view');
+    die;
+  }
   // Update node table, making sure the "published" (ie. status) flag is set
   db_query("UPDATE {node} SET vid=%d, title='%s', status=1 WHERE nid=%d", $node_revision->vid, $node_revision->title, $node_revision->nid);
-  cache_clear_all();
+  if ($clear_cache) {
+    cache_clear_all();
+  }
+  $node_revision->status = 1;
+  $node_revision->bypass_nodeapi = TRUE; // avoid revisioning_nodeapi() doing stuff
+  $node_revision->pathauto_perform_alias = FALSE; // avoid pathauto_nodeapi() doing stuff
+  node_invoke_nodeapi($node_revision, 'update');
+  // Update the node access table for this node.
+  node_access_acquire_grants($node_revision);
+
   watchdog('content', 'Published rev #%revision of @type %title', array('@type' => $node_revision->type, '%title' => $node_revision->title, '%revision' => $node_revision->vid), WATCHDOG_NOTICE, l(t('view'), "node/$node_revision->nid/revisions/$node_revision->vid/view"));
   module_invoke_all('revisionapi', 'post publish', $node_revision);
 }
@@ -300,11 +369,13 @@ function _revisioning_publish_revision(&$node, $vid = NULL) {
 function _revisioning_publish_latest_revision(&$node) {
   // Get latest pending revision or take the current provided it's UNpublished
   $latest_pending = array_shift(_revisioning_get_pending_revisions($node->nid));
-  if (!$latest_pending && !$node->status && $node->is_current) {
-    _revisioning_publish_revision($node);
-    return TRUE;
+  if (!$latest_pending) {
+    if (!$node->status && $node->is_current) {
+      _revisioning_publish_revision($node);
+      return TRUE;
+    }
   }
-  if ($latest_pending) {
+  else {
     _revisioning_publish_revision($node->nid, $latest_pending->vid);
     return TRUE;
   }
@@ -335,6 +406,25 @@ function _revisioning_get_number_of_revisions_newer_than($vid, $nid) {
  */
 function _revisioning_get_number_of_pending_revisions($nid) {
   return db_result(db_query("SELECT COUNT(*) FROM {node} n INNER JOIN {node_revisions} r ON n.nid=r.nid WHERE (r.vid>n.vid AND n.nid=%d)", $nid));
+}
+
+/**
+ * Get the number of archived revisions belonging to a node.
+ * @param
+ *  $nid, id of the node
+ * @return
+ *  A count representing the number of archived revisions for the node
+ *  Returns zero if there is only one (i.e. the current) revision.
+ */
+function revisioning_get_number_of_archived_revisions($node) {
+  return db_result(db_query('SELECT COUNT(vid) FROM {node_revisions} WHERE nid = %d AND vid < %d', $node->nid, $node->current_revision_id));
+}
+
+/**
+ * Delete all revisions with a vid less than the current.
+ */
+function revisioning_delete_archived_revisions($node) {
+  return db_query('DELETE FROM {node_revisions} WHERE nid = %d AND vid < %d', $node->nid, $node->current_revision_id);
 }
 
 /**
@@ -473,4 +563,11 @@ function revisioning_moderated_content_types() {
     }
   }
   return $moderated_content_types;
+}
+
+/**
+ * Return the id of the user who created the revision by the supplied vid.
+ */
+function revisioning_get_revision_uid($vid) {
+  return db_result(db_query('SELECT uid FROM {node_revisions} WHERE vid = %d', $vid));
 }

@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning.module,v 1.95 2010/07/05 02:31:21 rdeboer Exp $
 
 /**
  * @file
@@ -66,10 +65,13 @@ function revisioning_perm() {
   $perms = array_merge($perms, array('view revision status messages',
     'edit revisions', 'publish revisions', 'unpublish current revision'));
   // Add per node-type view perms in same way as edit perms of node module.
+  // TOOD only do this for content types that have the "Create new revision" ticked
   foreach (node_get_types() as $type) {
     $name = check_plain($type->type);
     $perms[] = 'view revisions of own '. $name .' content';
     $perms[] = 'view revisions of any '. $name .' content';
+    $perms[] = 'publish revisions of own '. $name .' content';
+    $perms[] = 'publish revisions of any '. $name .' content';
   }
   return $perms;
 }
@@ -299,8 +301,9 @@ function revisioning_menu_alter(&$items) {
   $items['node/%node/revisions']['page callback'] = '_revisioning_present_node';
   $items['node/%node/revisions']['page arguments'] = array(1);
 
-  // Unset old menu items defined in node.module, as these are replaced by
-  // ones that use the %vid wildcard instead of % and have proper callbacks.
+  // Unset old menu items defined in node.module (or module_grants.module), as
+  // these are replaced by ones that use the %vid wildcard instead of % and
+  // come with the appropriate callbacks.
   unset($items['node/%node/revisions/%/view']);
   unset($items['node/%node/revisions/%/revert']);
   unset($items['node/%node/revisions/%/delete']);
@@ -313,7 +316,7 @@ function revisioning_menu_alter(&$items) {
   // This is here rather than in revisioning_menu() as Diff may redefine
   // the node/%node/revisions/list item.
   $items['node/%node/revisions/list'] = array(
-    'title' => 'List all revisions',
+    'title' => t('List all revisions'),
     'access callback' => '_revisioning_node_revision_access',
     'access arguments' => array('view revision list', 1),
     'file' => 'node.pages.inc',
@@ -323,6 +326,15 @@ function revisioning_menu_alter(&$items) {
     'weight' => -20,
   );
 
+  $items['node/%node/revisions/delete-archived'] = array(
+    'title' => t('Delete archived revisions'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('revisioning_delete_archived_confirm', 1),
+    'access callback' => '_revisioning_node_revision_access',
+    'access arguments' => array('delete archived revisions', 1),
+    'type' => MENU_CALLBACK,
+  );
+
   // Apart from administrators, allow those that pass the 'trigger_access_check'
   // to configure the revisioning triggers. This means that users must have at
   // least 'administer actions' and 'access administration pages' (the latter is
@@ -330,6 +342,9 @@ function revisioning_menu_alter(&$items) {
   if (module_exists('trigger')) {
     $items['admin/build/trigger/revisioning']['access callback'] = 'trigger_access_check';
   }
+
+  // [#1024864]: Allow other modules to make further alterations
+  drupal_alter('revisioning_menu', $items);
 }
 
 /**
@@ -353,6 +368,9 @@ function revisioning_menu_alter(&$items) {
  * especially 'load'.
  */
 function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if (!empty($node->bypass_nodeapi)) {
+    return;
+  }
 
   switch ($op) {
     case 'load': // called at the end of node_load()
@@ -377,7 +395,11 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       break;
 
     case 'prepare': // presenting edit form
-      _revisioning_prepare_msg($node);
+      // Check that we're dealing with the current node, not its translation source
+      $current_nid = arg(1);
+      if (is_numeric($current_nid) && $current_nid == $node->nid) {
+        _revisioning_prepare_msg($node);
+      }
       break;
 
     case 'presave': // for edits, called from node_save(), prior to _node_save_revision()
@@ -390,17 +412,42 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         }
         // Save title of current revision to restore at $op=='update' time
         $node->current_title = db_result(db_query('SELECT title FROM {node} WHERE nid=%d', $node->nid));
-        if (user_access('publish revisions') && variable_get('revisioning_auto_publish_'. $node->type, FALSE)) {
-          drupal_set_message(t('Auto-publishing this revision.'));
-          $node->status = TRUE;
-          // Make sure the 'update' does NOT reset vid, so that new revision becomes current
-          unset($node->current_revision_id);
+
+        if (variable_get('revisioning_auto_publish_'. $node->type, FALSE)) {
+          if (user_access('publish revisions') ||
+              user_access("publish revisions of any $node->type content") ||
+             (user_access("publish revisions of own $node->type content") && $node->revision_uid == $user->uid)) {
+            if (!$node->status) {
+              // Fix for [#751092] (thanks naquah and mirgorod_a).
+              // If the Publish box has just been unticked, do not auto-publish.
+              if (isset($node->nid)) {
+                 // Existing published node for which Publish box was unticked.
+                if (db_result(db_query("SELECT status FROM {node} WHERE nid = %d", $node->nid))) {
+                  break;
+                }
+              }
+              else {
+                $node_options = variable_get('node_options_'. $node->type, array());
+                if (in_array('status', $node_options)) {
+                  // New node for which Publish box is ticked by default but was
+                  // unticked on the edit form.
+                  break;
+                }
+              }
+            }
+            drupal_set_message(t('Auto-publishing this revision.'));
+            $node->status = TRUE;
+            // Make sure the 'update' does NOT reset vid, so that new revision becomes current
+            unset($node->current_revision_id);
+          }
         }
       }
       break;
 
     case 'insert': // new node, called from node_save(), after _node_save_revision()
-      _revisioning_insert_msg($node);
+      if ($node->revision_moderation) {
+        _revisioning_insert_msg($node);
+      }
       break;
 
     case 'update':  // edited node, called from node_save(), after _node_save_revision()
@@ -416,7 +463,6 @@ function revisioning_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       module_invoke_all('revisionapi', 'post delete', $node);
       break;
   }
-  return; // $node_extras;
 }
 
 /**
@@ -470,8 +516,9 @@ function revisioning_block($op = 'list', $delta = 0, $edit = array()) {
       break;
 
     case 'view':
+      $max_nodes = variable_get('revisioning_block_num_pending', 100);
       $order = variable_get('revisioning_block_order', REVISIONS_BLOCK_OLDEST_AT_TOP) == REVISIONS_BLOCK_OLDEST_AT_TOP ? 'ASC' : 'DESC';
-      $nodes = node_tools_get_nodes('update', NO_FILTER, NO_FILTER, NO_FILTER, TRUE, TRUE, 100, 'timestamp '. $order);
+      $nodes = node_tools_get_nodes('update', NO_FILTER, NO_FILTER, NO_FILTER, TRUE, TRUE, $max_nodes, 'timestamp '. $order);
       if (!empty($nodes)) {
         return _theme_revisions_pending_block($nodes);
       }
@@ -527,6 +574,8 @@ function vid_to_arg($arg, &$map, $index) {
 function revisioning_user_node_access($revision_op, $node) {
   global $user;
 
+  $type = check_plain($node->type);
+
   switch ($revision_op) {
     case 'view current':
       break;
@@ -536,7 +585,6 @@ function revisioning_user_node_access($revision_op, $node) {
       if (user_access('view revisions', $user)) { // node.module
         break;
       }
-      $type = check_plain($node->type);
       if (user_access('view revisions of any '. $type .' content', $user)) {
         break;
       }
@@ -553,18 +601,25 @@ function revisioning_user_node_access($revision_op, $node) {
       return user_access($revision_op, $user) ? 'update' : FALSE;
 
     case 'publish revisions':
+      if (user_access('publish revisions of any '. $type .' content', $user)) {
+        break;
+      }
+      if (($node->uid == $user->uid) && user_access('publish revisions of own '. $type .' content', $user)) {
+        break;
+      }
     case 'unpublish current revision':
       return user_access($revision_op, $user) ? 'view' : FALSE;
 
     case 'delete revisions':
-      if (!user_access($revision_op, $user)) {
+    case 'delete archived revisions':
+      if (!user_access('delete revisions', $user)) {
         return FALSE;
       }
     case 'delete node':
       return 'delete';
 
     default:
-      drupal_set_message("Unknown Revisioning operation '$revision_op'. Treating as 'view'.", 'warning', FALSE);
+      drupal_set_message(t("Unknown Revisioning operation '%op'. Treating as 'view'.", array('%op' => $revision_op)), 'warning', FALSE);
   }
   return 'view';
 }
@@ -589,6 +644,9 @@ function _revisioning_operation_appropriate($revision_op, $node) {
       // @TODO ...unless it's the only revision, in which case delete the
       // entire node; however this requires a different URL.
       return !$node->is_current;
+
+    case 'delete archived revisions':
+      break;
 
     case 'view revision list': // i.e. node revisions summary
       if ($node->num_revisions == 1 && !$node->revision_moderation
@@ -651,7 +709,7 @@ function _revisioning_operation_appropriate($revision_op, $node) {
 function _revisioning_node_revision_access($revision_op, $node) {
 
   if (!isset($node->num_revisions) || !isset($node->is_current)) {
-    drupal_set_message('Node object data incomplete -- have you enabled the Node Tools submodule?', 'warning', FALSE);
+    drupal_set_message(t('Node object data incomplete -- have you enabled the Node Tools submodule?'), 'warning', FALSE);
   }
   if (!_revisioning_operation_appropriate($revision_op, $node)) {
     return FALSE;
@@ -693,7 +751,7 @@ function _revisioning_view_edit_access_callback($op, $node) {
   $load_op = _revisioning_load_op($node, $op);
 
   $vid = arg(3);
-  if (is_numeric($vid)) {
+  if (/*!empty($node->revision_moderation) && */is_numeric($vid)) {
     // The View, Edit primary tabs are requested indirectly, in the context of
     // the secondary tabs under Revisions, e.g. node/%/revisions/%
     if ($load_op == REVISIONING_LOAD_CURRENT && $vid == $node->current_revision_id) {

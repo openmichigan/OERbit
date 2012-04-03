@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning.admin.inc,v 1.4 2010/07/05 02:31:21 rdeboer Exp $
 
 /**
  * @file
@@ -34,14 +33,5 @@ function revisioning_admin_configure() {
     '#default_value' => variable_get('revisioning_edit_callback', REVISIONING_LOAD_CURRENT),
     '#description' => t('The first option represents default core behaviour.')
   );
-  if (module_exists('workflow')) {
-    $form['revisioning_allow_workflow_transition_via_edit_form'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Allow workflow state transistion via content edit form'),
-      '#default_value' => variable_get('revisioning_allow_workflow_transition_via_edit_form', TRUE),
-      '#description' => t('If unticked, state transitions are only possible via the Workflow tab. Make sure you have enabled the Workflow tab permissions <a href="!link">here</a>',
-        array('!link' => '/admin/build/workflow/edit'))
-    );
-  }
   return system_settings_form($form);
 }

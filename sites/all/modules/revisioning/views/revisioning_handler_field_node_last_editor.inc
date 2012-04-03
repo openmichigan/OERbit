@@ -2,10 +2,10 @@
 
 /**
  * @file
- *  Handler for the 'Node: number of revisions' field.
+ *  Handler for the 'Node: last edited by' field.
  */
 
-class revisioning_handler_field_node_number_of_revisions extends views_handler_field {
+class revisioning_handler_field_node_last_editor extends views_handler_field {
 
   function construct() {
     parent::construct();
@@ -17,14 +17,15 @@ class revisioning_handler_field_node_number_of_revisions extends views_handler_f
   }
 
   function query() {
-    // Not calling parent::query() as it will treat 'number of revisions' as
-    // a real db field.
+    // Not calling parent::query() as it will treat 'last_editor' as a real db field.
     $this->ensure_my_table();
     $this->add_additional_fields();
   }
 
   function render($values) {
     $nid = $values->{$this->aliases['nid']};
-    return node_tools_get_number_of_revisions($nid);
+    $uid = revisioning_get_last_editor($nid, FALSE);
+    $account = user_load($uid);
+    return $account->name;
   }
 }

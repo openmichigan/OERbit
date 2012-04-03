@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_handler_filter_node_number_of_revisions.inc,v 1.2 2010/04/01 01:39:53 rdeboer Exp $
 
 /**
  * @file
@@ -19,7 +18,7 @@ class revisioning_handler_filter_node_number_of_revisions extends views_handler_
     if (!empty($info[$this->operator]['method'])) {
       $node_table = $this->ensure_my_table();
       $revisions_table = $this->query->ensure_table('node_revisions');
-      $pseudo_field = '(SELECT COUNT(vid) FROM {'. $revisions_table .'} WHERE nid=$node_table.nid)';
+      $pseudo_field = '(SELECT COUNT(vid) FROM {'. $revisions_table ."} WHERE nid=$node_table.nid)";
       $this->{$info[$this->operator]['method']}($pseudo_field);
     }
   }

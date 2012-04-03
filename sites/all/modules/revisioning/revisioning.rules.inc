@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning.rules.inc,v 1.6 2010/03/16 06:13:34 rdeboer Exp $
 
 /**
  * @file
@@ -19,7 +18,7 @@ function revisioning_rules_condition_info() {
       'arguments' => array(
         'node' => array('type' => 'node', 'label' => t('Content'))
       ),
-      'help' => t('Evaluates to TRUE, if the node has one or more pending revision'),
+      'help' => t('Evaluates to TRUE, if the node has one or more pending revisions.'),
       'module' => 'Revisioning',
     ),
     'revisioning_condition_revision_is' => array(
@@ -27,7 +26,7 @@ function revisioning_rules_condition_info() {
       'arguments' => array(
         'node' => array('type' => 'node', 'label' => t('Content'))
       ),
-      'help' => t('Evaluates to TRUE, if revision is one of selected types'),
+      'help' => t('Evaluates to TRUE, if the revision is in one of the selected states.'),
       'module' => 'Revisioning',
     ),
   );
@@ -37,13 +36,24 @@ function revisioning_rules_condition_info() {
  * Condition: check for pending revisions of the node.
  */
 function revisioning_node_has_pending($node, $settings) {
-  return (_revisioning_get_number_of_pending_revisions($node->nid) > 0);
+  $nid = is_numeric($node) ? $node : $node->nid;
+  $num_pending = _revisioning_get_number_of_pending_revisions($nid);
+  return $num_pending > 0 || (is_object($node) && !$node->status && ($node->num_revisions = node_tools_get_number_of_revisions($node->nid)) <= 1);
 }
 
 /*
  * Condition: check for pending revisions of the node.
  */
 function revisioning_condition_revision_is($node, $settings) {
+  // For some reason, when a node is published, rather than updated, $node will
+  // be the nid, without any vid info, so we can't load the revision.
+  if (!is_object($node) || empty($node->revision_moderation)) {
+    return FALSE;
+  }
+
+  $node->is_current = node_tools_revision_is_current($node);
+  $node->is_pending = _revisioning_node_is_pending($node);
+  $node->num_revisions = node_tools_get_number_of_revisions($node->nid);
   $type = _revisioning_revision_is($node);
   return in_array($type, $settings['revision_type']);
 }
@@ -67,14 +77,14 @@ function revisioning_condition_revision_is_form($settings = array(), &$form) {
  */
 function revisioning_condition_revision_is_label($settings, $argument_labels) {
   $names = array_intersect_key(revisioning_revision_states(), $settings['revision_type']);
-  return t('Revision status of @node is: @type', $argument_labels + array('@type' => implode(' or ', $names)));
+  return t('Revision status of @node is: @type', $argument_labels + array('@type' => implode(t(' or '), $names)));
 }
 
 /**
  * Label callback for "revisioning_node_has_pending" condition.
  */
 function revisioning_node_has_pending_label($settings, $argument_labels) {
-  return t('Content "@node" has pending revision(s)', $argument_labels);
+  return t('@node has pending revision(s)', $argument_labels);
 }
 
 /************************** Rules Events **************************************/
@@ -97,6 +107,9 @@ function revisioning_rules_event_info() {
     ),
     'revisioning_post_revert' => $default + array(
       'label' => t('Node has been reverted to revision'),
+    ),
+    'revisioning_pre_publish' => $default + array(
+      'label' => t('Node revision is going to be published'),
     ),
     'revisioning_pre_delete' => $default + array(
       'label' => t('Node revision is going to be deleted'),
@@ -195,6 +208,12 @@ function revisioning_rules_action_info() {
         'node' => array('type' => 'node', 'label' => t('content')),
       ),
     ),
+    'revisioning_rules_action_create_pending_revision' => $default + array(
+      'label' => t('Create a new pending revision of a node'),
+      'arguments' => array(
+        'node' => array('type' => 'node', 'label' => t('content')),
+      ),
+    ),
     'revisioning_rules_action_load_current' => $default + array(
       'label' => t('Load current revision of content'),
       'arguments' => array(
@@ -226,6 +245,22 @@ function revisioning_rules_loaded_current_label($settings, $argument_labels) {
   return t('Loaded current revision of "@node"', $argument_labels);
 }
 
+
+/**
+ * Action: publish most recent pending revision.
+ */
+function revisioning_rules_action_publish_latest($node) {
+  $published = _revisioning_publish_latest_revision($node);
+}
+
+/**
+ * Action: create pending revision.
+ */
+function revisioning_rules_action_create_pending_revision($node) {
+  revisioning_create_pending_revision_action($node);
+  return array('node' => $node);
+}
+
 /**
  * Action: load current revision of provided node.
  */
@@ -236,11 +271,4 @@ function revisioning_rules_action_load_current($node) {
     return array('loaded_current_revision' => $current);
   }
   return array('loaded_current_revision' => $node);
-}
-
-/**
- * Action: publish most recent pending revision.
- */
-function revisioning_rules_action_publish_latest($node) {
-  $published = _revisioning_publish_latest_revision($node);
 }
