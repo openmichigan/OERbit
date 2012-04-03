@@ -31,6 +31,12 @@ if (!defined('E_DEPRECATED')) {
 }
 
 /**
+ * Error code indicating that the request made by drupal_http_request() exceeded
+ * the specified timeout.
+ */
+define('HTTP_REQUEST_TIMEOUT', -1);
+
+/**
  * Set content for a specified region.
  *
  * @param $region
@@ -354,7 +360,7 @@ function drupal_goto($path = '', $query = NULL, $fragment = NULL, $http_response
  */
 function drupal_site_offline() {
   drupal_maintenance_theme();
-  drupal_set_header('HTTP/1.1 503 Service unavailable');
+  drupal_set_header($_SERVER['SERVER_PROTOCOL'] .' 503 Service unavailable');
   drupal_set_title(t('Site off-line'));
   print theme('maintenance_page', filter_xss_admin(variable_get('site_offline_message',
     t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal'))))));
@@ -364,7 +370,7 @@ function drupal_site_offline() {
  * Generates a 404 error if the request can not be handled.
  */
 function drupal_not_found() {
-  drupal_set_header('HTTP/1.1 404 Not Found');
+  drupal_set_header($_SERVER['SERVER_PROTOCOL'] .' 404 Not Found');
 
   watchdog('page not found', check_plain($_GET['q']), NULL, WATCHDOG_WARNING);
 
@@ -394,7 +400,7 @@ function drupal_not_found() {
  * Generates a 403 error if the request is not allowed.
  */
 function drupal_access_denied() {
-  drupal_set_header('HTTP/1.1 403 Forbidden');
+  drupal_set_header($_SERVER['SERVER_PROTOCOL'] .' 403 Forbidden');
 
   watchdog('access denied', check_plain($_GET['q']), NULL, WATCHDOG_WARNING);
 
@@ -435,11 +441,15 @@ function drupal_access_denied() {
  * @param $retry
  *   An integer representing how many times to retry the request in case of a
  *   redirect.
+ * @param $timeout
+ *   A float representing the maximum number of seconds the function call may
+ *   take. The default is 30 seconds. If a timeout occurs, the error code is set
+ *   to the HTTP_REQUEST_TIMEOUT constant.
  * @return
  *   An object containing the HTTP request headers, response code, protocol,
  *   status message, headers, data and redirect status.
  */
-function drupal_http_request($url, $headers = array(), $method = 'GET', $data = NULL, $retry = 3) {
+function drupal_http_request($url, $headers = array(), $method = 'GET', $data = NULL, $retry = 3, $timeout = 30.0) {
   global $db_prefix;
 
   $result = new stdClass();
@@ -459,18 +469,20 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
     return $result;
   }
 
+  timer_start(__FUNCTION__);
+
   switch ($uri['scheme']) {
     case 'http':
     case 'feed':
       $port = isset($uri['port']) ? $uri['port'] : 80;
       $host = $uri['host'] . ($port != 80 ? ':'. $port : '');
-      $fp = @fsockopen($uri['host'], $port, $errno, $errstr, 15);
+      $fp = @fsockopen($uri['host'], $port, $errno, $errstr, $timeout);
       break;
     case 'https':
       // Note: Only works for PHP 4.3 compiled with OpenSSL.
       $port = isset($uri['port']) ? $uri['port'] : 443;
       $host = $uri['host'] . ($port != 443 ? ':'. $port : '');
-      $fp = @fsockopen('ssl://'. $uri['host'], $port, $errno, $errstr, 20);
+      $fp = @fsockopen('ssl://'. $uri['host'], $port, $errno, $errstr, $timeout);
       break;
     default:
       $result->error = 'invalid schema '. $uri['scheme'];
@@ -544,11 +556,25 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
 
   $result->request = $request;
 
-  fwrite($fp, $request);
+  // Calculate how much time is left of the original timeout value.
+  $time_left = $timeout - timer_read(__FUNCTION__) / 1000;
+  if ($time_left > 0) {
+    stream_set_timeout($fp, floor($time_left), floor(1000000 * fmod($time_left, 1)));
+    fwrite($fp, $request);
+  }
 
   // Fetch response.
   $response = '';
-  while (!feof($fp) && $chunk = fread($fp, 1024)) {
+  while (!feof($fp)) {
+    // Calculate how much time is left of the original timeout value.
+    $time_left = $timeout - timer_read(__FUNCTION__) / 1000;
+    if ($time_left <= 0) {
+      $result->code = HTTP_REQUEST_TIMEOUT;
+      $result->error = 'request timed out';
+      return $result;
+    }
+    stream_set_timeout($fp, floor($time_left), floor(1000000 * fmod($time_left, 1)));
+    $chunk = fread($fp, 1024);
     $response .= $chunk;
   }
   fclose($fp);
@@ -597,9 +623,13 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
     case 302: // Moved temporarily
     case 307: // Moved temporarily
       $location = $result->headers['Location'];
-
-      if ($retry) {
-        $result = drupal_http_request($result->headers['Location'], $headers, $method, $data, --$retry);
+      $timeout -= timer_read(__FUNCTION__) / 1000;
+      if ($timeout <= 0) {
+        $result->code = HTTP_REQUEST_TIMEOUT;
+        $result->error = 'request timed out';
+      }
+      elseif ($retry) {
+        $result = drupal_http_request($result->headers['Location'], $headers, $method, $data, --$retry, $timeout);
         $result->redirect_code = $result->code;
       }
       $result->redirect_url = $location;
@@ -652,7 +682,9 @@ function drupal_error_handler($errno, $message, $filename, $line, $context) {
       }
     }
 
-    $entry = check_plain($types[$errno]) .': '. filter_xss($message) .' in '. check_plain($filename) .' on line '. check_plain($line) .'.';
+    // Try to use filter_xss(). If it's too early in the bootstrap process for
+    // filter_xss() to be loaded, use check_plain() instead.
+    $entry = check_plain($types[$errno]) .': '. (function_exists('filter_xss') ? filter_xss($message) : check_plain($message)) .' in '. check_plain($filename) .' on line '. check_plain($line) .'.';
 
     // Force display of error messages in update.php.
     if (variable_get('error_level', 1) == 1 || strstr($_SERVER['SCRIPT_NAME'], 'update.php')) {
@@ -1788,8 +1820,11 @@ function drupal_add_link($attributes) {
  *
  *   Typical candidates for caching are for example styles for nodes across
  *   the site, or used in the theme.
+ *
  * @return
  *   An array of CSS files.
+ *
+ * @see drupal_get_css()
  */
 function drupal_add_css($path = NULL, $type = 'module', $media = 'all', $preprocess = TRUE) {
   static $css = array();
@@ -1835,8 +1870,11 @@ function drupal_add_css($path = NULL, $type = 'module', $media = 'all', $preproc
  * @param $css
  *   (optional) An array of CSS files. If no array is provided, the default
  *   stylesheets array is used instead.
+ *
  * @return
  *   A string of XHTML CSS tags.
+ *
+ * @see drupal_add_css()
  */
 function drupal_get_css($css = NULL) {
   $output = '';
