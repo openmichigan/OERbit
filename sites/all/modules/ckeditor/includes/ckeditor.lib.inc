@@ -1,12 +1,11 @@
 <?php
-// $Id: ckeditor.lib.inc,v 1.1 2009/12/04 20:36:57 wwalc Exp $
 /**
- * CKEditor - The text editor for Internet - http://ckeditor.com
- * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
+ * CKEditor - The text editor for the Internet - http://ckeditor.com
+ * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
- * Licensed under the terms of any of the following licenses at your
+ * Licensed under the terms of any of the following licenses of your
  * choice:
  *
  *  - GNU General Public License Version 2 or later (the "GPL")
@@ -25,9 +24,13 @@
  *
  * This module allows Drupal to replace textarea fields with CKEditor.
  *
- * This HTML text editor brings to the web many of the powerful functionalities
- * of known desktop editors like Word. It's really  lightweight and doesn't
- * require any kind of installation on the client computer.
+ * CKEditor is an online rich text editor that can be embedded inside web pages.
+ * It is a WYSIWYG (What You See Is What You Get) editor which means that the
+ * text edited in it looks as similar as possible to the results end users will
+ * see after the document gets published. It brings to the Web popular editing
+ * features found in desktop word processors such as Microsoft Word and
+ * OpenOffice.org Writer. CKEditor is truly lightweight and does not require any
+ * kind of installation on the client computer.
  */
 
 /**
@@ -100,51 +103,6 @@ function ckeditor_resolve_url($path) {
   return FALSE;
 }
 
-function ckeditor_load_toolbar_options() {
-  $arr = array('Basic' => 'Basic', 'Full' => 'Full');
-  $module_drupal_path = drupal_get_path('module', 'ckeditor');
-  $editor_local_path  = ckeditor_path(TRUE);
-  $ckconfig_js = $editor_local_path .'/config.js';
-  $ckeditor_config_js = $module_drupal_path .'/ckeditor.config.js';
-  if (file_exists($ckconfig_js) && is_readable($ckconfig_js)) {
-    $fp = @fopen($ckconfig_js, "r");
-    if ($fp) {
-      while (!feof($fp)) {
-        $line = fgets($fp, 1024);
-        $matches = array();
-        if (preg_match('/config.toolbar_([a-z0-9_]+)/i', $line, $matches)) {
-          $arr[$matches[1]] = drupal_ucfirst($matches[1]);
-        }
-      }
-      fclose($fp);
-    }
-  }
-  if (file_exists($ckeditor_config_js) && is_readable($ckeditor_config_js)) {
-    $fp = @fopen($ckeditor_config_js, "r");
-    if ($fp) {
-      while (!feof($fp)) {
-        $line = fgets($fp, 1024);
-        $matches = array();
-        if (preg_match('/config.toolbar_([a-z0-9_]+)/i', $line, $matches)) {
-          $arr[$matches[1]] = drupal_ucfirst($matches[1]);
-        }
-      }
-      fclose($fp);
-    }
-  }
-
-  //oops, we have no information about toolbars, let's use hardcoded array
-  if (empty($arr)) {
-    $arr = array(
-      'Basic' => 'Basic',
-      'Default' => 'Default',
-    );
-  }
-  asort($arr);
-
-  return $arr;
-}
-
 function ckeditor_load_skin_options() {
   $arr = array();
   $editor_local_path  = ckeditor_path(TRUE);
@@ -177,22 +135,20 @@ function ckeditor_load_skin_options() {
 
 function ckeditor_load_lang_options() {
   $arr = array();
-  $editor_local_path  = ckeditor_path(TRUE);
-  $lang_dir     = $editor_local_path .'/editor/lang';
-  if (is_dir($lang_dir)) {
-    $dh = @opendir($lang_dir);
-    if (FALSE !== $dh ) {
-      while (($file = readdir($dh)) !== FALSE) {
-        if (in_array($file, array(".", "..", "CVS", ".svn"))) {
-          continue;
-        }
-        $matches = array();
-        if (is_file($lang_dir . DIRECTORY_SEPARATOR . $file) && preg_match('/^(.*?)\.js$/', $file, $matches)) {
-          $lang = $matches[1];
-          $arr[$lang] = drupal_strtoupper($lang);
-        }
-      }
-      closedir( $dh );
+  $editor_local_path = ckeditor_path(TRUE);
+  $lang_file = $editor_local_path . '/lang/_languages.js';
+  if (file_exists($lang_file)) {
+    $f = fopen($lang_file, 'r');
+    $file = fread($f, filesize($lang_file));
+    $tmp = explode('{', $file);
+    if (isset($tmp[2])) {
+      $tmp = explode('}', $tmp[2]);
+    }
+    $langs = explode(',', $tmp[0]);
+    foreach ($langs AS $lang) {
+      preg_match("/'?(\w+-?\w+)'?:'([\w\s\(\)]+)'/i", $lang, $matches);
+      if (isset($matches[1]) && isset($matches[2]))
+        $arr[$matches[1]] = $matches[2];
     }
   }
 
@@ -261,6 +217,257 @@ function ckeditor_load_lang_options() {
   return $arr;
 }
 
+/**
+ * List of CKEditor plugins
+ *
+ * @return array
+ */
+function ckeditor_load_plugins($render = FALSE) {
+  $arr = array();
+  $base_path = '%base_path%';
+  $editor_path = '%editor_path%';
+  $ckeditor_path = '%ckeditor_path%';
+  $plugin_dir = '%plugin_dir%';
+  $plugin_dir_additional = '%plugin_dir_extra%';
+  $pattern = '#\.addButton\([\s]*[\'"](.*?)[\'"][\s]*\,[\s]*\{[\s]*(.*?)[\s]*\}#s';
+
+  /*
+   * External plugins
+   */
+  if (module_exists('ckeditor_swf') && file_exists(drupal_get_path('module', 'ckeditor_swf') . '/plugins/swf/plugin.js')) {
+    $arr['ckeditor_swf'] = array(
+      'name' => 'swf',
+      'desc' => t('Support for the CKEditor SWF module'),
+      'path' => $base_path . drupal_get_path('module', 'ckeditor_swf') . '/plugins/swf/',
+      'buttons' => FALSE,
+      'default' => 't'
+      );
+  }
+
+  if (module_exists('ckeditor_link') && file_exists(drupal_get_path('module', 'ckeditor_link') . '/plugins/link/plugin.js')) {
+    $arr['ckeditor_link'] = array(
+      'name' => 'drupal_path',
+      'desc' => t('Support for the CKEditor Link module'),
+      'path' => $base_path . drupal_get_path('module', 'ckeditor_link') . '/plugins/link/',
+      'buttons' => FALSE,
+      'default' => 't'
+    );
+  }
+
+  if (module_exists('linkit') && file_exists(drupal_get_path('module', 'linkit') . '/editors/ckeditor/plugin.js')) {
+    $arr['linkit'] = array(
+      'name' => 'Linkit',
+      'desc' => t('Support for the Linkit module <em>(buttons: Linkit)</em>'),
+      'path' => $base_path . drupal_get_path('module', 'linkit') . '/editors/ckeditor/',
+      'buttons' => array(
+        'Linkit' => array(
+          'title' => 'Linkit',
+          'icon' => $base_path . drupal_get_path('module', 'linkit') . '/editors/ckeditor/linkit.png'
+        )
+      ),
+      'default' => 't'
+    );
+  }
+
+  /*
+   * CKEditor build-in plugins
+   */
+  $_editor_path = ckeditor_path(TRUE) . '/';
+  if (file_exists($_editor_path . 'plugins/tableresize/plugin.js')) {
+    $arr['tableresize'] = array(
+      'name' => 'tableresize',
+      'desc' => t('Table Resize plugin'),
+      'path' => $base_path . $editor_path . 'plugins/tableresize/',
+      'buttons' => FALSE,
+      'default' => 't'
+    );
+  }
+
+  if (file_exists($_editor_path . 'plugins/autogrow/plugin.js')) {
+    $arr['autogrow'] = array(
+      'name' => 'autogrow',
+      'desc' => t('Auto Grow plugin'),
+      'path' => $base_path . $editor_path . 'plugins/autogrow/',
+      'buttons' => FALSE,
+      'default' => 'f'
+    );
+  }
+
+  if (file_exists($_editor_path . 'plugins/stylesheetparser/plugin.js')) {
+    $arr['stylesheetparser'] = array(
+      'name' => 'stylesheetparser',
+      'desc' => t('Stylesheet Parser plugin'),
+      'path' => $base_path . $editor_path . 'plugins/stylesheetparser/',
+      'buttons' => FALSE,
+      'default' => 'f'
+  );
+}
+
+  /*
+   * CKEditor module plugins
+   */
+  $_plugin_dir = drupal_get_path('module', 'ckeditor') . '/plugins/';
+  if (is_dir($_plugin_dir) && $handle = opendir($_plugin_dir)) {
+    while (false !== ($file = readdir($handle))) {
+      if (is_dir($_plugin_dir . $file) && file_exists($_plugin_dir . $file . '/plugin.js')) {
+        $source = file_get_contents($_plugin_dir . $file . '/plugin.js');
+        $buttons = array();
+        if (preg_match_all($pattern, $source, $matches)) {
+          foreach ($matches[1] as $i => $button_name) {
+            if (preg_match('#(icon)[\s]*\:[\s]*([^\,\n]*)#', $matches[2][$i], $matches2)) {
+              $buttons[$button_name] = array();
+              $buttons[$button_name]['label'] = $button_name;
+              $matches2[2] = str_replace(array('this.path', '+', '\'', '"'), array('', '', '', ''), $matches2[2]);
+              $buttons[$button_name]['icon'] = trim($matches2[2]);
+            }
+          }
+        }
+        if (preg_match('#@file ([^\n\r]*)#', $source, $matches)) {
+          $arr[$file] = array(
+            'name' => $file,
+            'desc' => t($matches[1]),
+            'path' => $base_path . $plugin_dir . $file . '/',
+            'buttons' => (count($buttons) > 0) ? $buttons : FALSE,
+            'default' => 'f'
+          );
+        }
+        else {
+          $arr[$file] = array(
+            'name' => $file,
+            'desc' => t('Plugin file: ' . $file),
+            'path' => $base_path . $plugin_dir . $file . '/',
+            'buttons' => (count($buttons) > 0) ? $buttons : FALSE,
+            'default' => 'f'
+          );
+        }
+      }
+    }
+
+    closedir($handle);
+  }
+
+  /*
+   * CKEditor module plugins - additional directory
+   */
+  $_plugin_dir_additional = ckeditor_plugins_path(TRUE) . '/';
+  if ($_plugin_dir != $_plugin_dir_additional && is_dir($_plugin_dir_additional) && $handle = opendir($_plugin_dir_additional)) {
+    while (false !== ($file = readdir($handle))) {
+      if (is_dir($_plugin_dir_additional . $file) && file_exists($_plugin_dir_additional . $file . '/plugin.js')) {
+        $source = file_get_contents($_plugin_dir_additional . $file . '/plugin.js');
+        $buttons = array();
+        if (preg_match_all($pattern, $source, $matches)) {
+          foreach ($matches[1] as $i => $button_name) {
+            if (preg_match('#(icon)[\s]*\:[\s]*([^\,\n]*)#', $matches[2][$i], $matches2)) {
+              $buttons[$button_name] = array();
+              $buttons[$button_name]['label'] = $button_name;
+              $matches2[2] = str_replace(array('this.path', '+', '\'', '"'), array('', '', '', ''), $matches2[2]);
+              $buttons[$button_name]['icon'] = trim($matches2[2]);
+            }
+          }
+        }
+        if (preg_match('#@file ([^\n\r]*)#', $source, $matches)) {
+          $arr[$file] = array(
+            'name' => $file,
+            'desc' => t($matches[1]),
+            'path' => $base_path . $plugin_dir_additional . $file . '/',
+            'buttons' => (count($buttons) > 0) ? $buttons : FALSE,
+            'default' => 'f'
+          );
+        }
+        else {
+          $arr[$file] = array(
+            'name' => $file,
+            'desc' => t('Plugin file: ' . $file),
+            'path' => $base_path . $plugin_dir_additional . $file . '/',
+            'buttons' => (count($buttons) > 0) ? $buttons : FALSE,
+            'default' => 'f'
+          );
+        }
+      }
+    }
+
+    closedir($handle);
+  }
+
+  /*
+   * CKEditor plugins registered by hook
+   */
+  $plugins = module_invoke_all('ckeditor_plugin');
+
+  foreach ($plugins as $i => $plugin) {
+    if (file_exists($plugin['path'] . 'plugin.js')) {
+      $source = file_get_contents($plugin['path'] . 'plugin.js');
+      $plugins[$i]['path'] = $base_path . $plugin['path'];
+      if (!isset($plugin['buttons']) || count($plugin['buttons']) == 0) {
+        $buttons = array();
+        if (preg_match_all($pattern, $source, $matches)) {
+          foreach ($matches[1] as $j => $button_name) {
+            if (preg_match('#(icon)[\s]*\:[\s]*([^\,\n]*)#', $matches[2][$j], $matches2)) {
+              $buttons[$button_name] = array();
+              $buttons[$button_name]['label'] = $button_name;
+              $matches2[2] = str_replace(array('this.path', '+', '\'', '"'), array('', '', '', ''), $matches2[2]);
+              $buttons[$button_name]['icon'] = trim($matches2[2]);
+            }
+          }
+        }
+        $plugins[$i]['buttons'] = (count($buttons) > 0) ? $buttons : FALSE;
+      }
+    }
+    else {
+      unset($plugins[$i]);
+    }
+  }
+  $arr = array_merge($arr, $plugins);
+
+  if (isset($arr['linktomenu']) && module_exists('linktocontent') == FALSE) {
+    unset($arr['linktomenu']);
+  }
+
+  if (isset($arr['linktonode']) && module_exists('linktocontent') == FALSE) {
+    unset($arr['linktonode']);
+  }
+
+  if (isset($arr['imce']) && module_exists('imce') == FALSE) {
+    unset($arr['imce']);
+  }
+
+  //remove page break button if there is no module to do this
+  if (isset($arr['drupalbreaks']['buttons']['DrupalPageBreak']) && !module_exists('paging') && !module_exists('pagebreak')) {
+    unset($arr['drupalbreaks']['buttons']['DrupalPageBreak']);
+  }
+
+  if (isset($arr['drupalbreaks'])) {
+    $arr['drupalbreaks']['default'] = 't';
+  }
+
+  ksort($arr);
+
+  if ($render === TRUE) {
+    $arr = ckeditor_plugins_render($arr);
+  }
+
+  return $arr;
+}
+
+/**
+ * Render CKEditor plugins path
+ */
+function ckeditor_plugins_render($plugins) {
+  $render = array();
+  $render["%base_path%"] = base_path();
+  $render["%editor_path%"] = ckeditor_path(TRUE) . '/';
+  $render["%ckeditor_path%"] = drupal_get_path('module', 'ckeditor') . '/';
+  $render["%plugin_dir%"] = $render["%ckeditor_path%"] . 'plugins/';
+  $render["%plugin_dir_extra%"] = ckeditor_plugins_path(TRUE) . '/';
+
+  foreach ((array) $plugins as $i => $plugin) {
+    $plugins[$i]['path'] = str_replace(array_keys($render), array_values($render), $plugin['path']);
+  }
+
+  return $plugins;
+}
+
+
 function ckeditor_user_get_setting($user, $profile, $setting) {
   $default = array(
     'default' => 't',
@@ -284,9 +491,11 @@ function ckeditor_user_get_setting($user, $profile, $setting) {
   return $status;
 }
 
-function ckeditor_user_get_profile($user, $element_id = NULL) {
+function ckeditor_user_get_profile($user, $element_id = 'edit-body', $url = NULL) {
   $rids = array();
-
+  if (is_null($url)) {
+      $url = $_GET['q'];
+  }
   // Since ckeditor_profile_load() makes a db hit, only call it when we're pretty sure
   // we're gonna render ckeditor.
   $sorted_roles = ckeditor_sorted_roles();
@@ -318,7 +527,7 @@ function ckeditor_user_get_profile($user, $element_id = NULL) {
         $profile = ckeditor_profile_load($profile_name);
 
         $conf = $profile->settings;
-        $enabled = ckeditor_is_enabled(empty($conf['excl_mode']) ? '0' : $conf['excl_mode'], empty($conf['excl_regex']) ? '' : $conf['excl_regex'], $element_id, $_GET['q']);
+        $enabled = ckeditor_is_enabled(empty($conf['excl_mode']) ? '0' : $conf['excl_mode'], empty($conf['excl_regex']) ? '' : $conf['excl_regex'], $element_id, $url);
 
         if ($enabled) {
           return $profile;
@@ -368,12 +577,14 @@ function ckeditor_sorted_roles($clear = FALSE) {
  *    returns true if CKEditor is enabled
  */
 function ckeditor_is_enabled($excl_mode, $excl_regex, $element_id, $get_q) {
+  global $theme;
+
   $front = variable_get('site_frontpage', 'node');
   $excl_regex = str_replace('<front>', $front, $excl_regex);
   $nodetype = ckeditor_get_nodetype($get_q);
   $element_id = str_replace('.', '\.', $element_id);
 
-  $match = !empty($excl_regex) && preg_match($excl_regex, $nodetype .'@'. $get_q .'.'. $element_id);
+  $match = !empty($excl_regex) && preg_match($excl_regex, $theme . ':' . $nodetype .'@'. $get_q .'.'. $element_id);
 
   return ($excl_mode == '0' xor $match);
 }

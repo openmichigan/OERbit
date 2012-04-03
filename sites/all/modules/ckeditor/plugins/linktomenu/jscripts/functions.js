@@ -1,4 +1,3 @@
-// $Id: functions.js,v 1.2 2009/12/04 20:36:57 wwalc Exp $
 
 function selectRow(row) {
 	if (!row) {

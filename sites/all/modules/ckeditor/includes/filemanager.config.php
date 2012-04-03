@@ -1,13 +1,12 @@
 <?php
 
-// $Id: filemanager.config.php,v 1.1 2009/12/04 20:36:57 wwalc Exp $
 /**
- * CKEditor - The text editor for Internet - http://ckeditor.com
- * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
+ * CKEditor - The text editor for the Internet - http://ckeditor.com
+ * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
- * Licensed under the terms of any of the following licenses at your
+ * Licensed under the terms of any of the following licenses of your
  * choice:
  *
  *  - GNU General Public License Version 2 or later (the "GPL")
@@ -24,7 +23,8 @@
  * @file
  * CKEditor Module for Drupal 6.x
  *
- * This file is required by CKEeditor module if you want to enable CKFinder ajax file browser
+ * This file is required by the CKEeditor module if you want to enable CKFinder,
+ * an advanced Ajax file browser.
  *
  */
 
@@ -90,4 +90,5 @@ else {
   $baseUrl = strtr(base_path(), array(
     '/modules/ckeditor/ckfinder/core/connector/php' => '',
   )) . file_directory_path() .'/';
+  $baseDir = resolveUrl($baseUrl);
 }
