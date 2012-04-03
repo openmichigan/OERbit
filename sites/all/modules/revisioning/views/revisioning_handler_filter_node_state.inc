@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_handler_filter_node_state.inc,v 1.4 2010/04/01 01:39:53 rdeboer Exp $
 
 /**
  * @file
@@ -45,7 +44,7 @@ class revisioning_handler_filter_node_state extends views_handler_filter_in_oper
     if (!empty($subclauses)) {
       $where_clause = implode(' OR ', $subclauses);
       if ($this->operator == 'not in') {
-        $where_clause = "!($where_clause)";
+        $where_clause = "not ($where_clause)";
       }
       $this->query->add_where($this->options['group'], $where_clause);
     }

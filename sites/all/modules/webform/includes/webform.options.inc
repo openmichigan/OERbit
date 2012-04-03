@@ -39,7 +39,7 @@ function _webform_options_info() {
 /**
  * Option list containing the days of the week.
  */
-function webform_options_days() {
+function webform_options_days($component, $flat, $filter, $arguments) {
   $days = array(
     'sunday' => t('Sunday'),
     'monday' => t('Monday'),
@@ -62,14 +62,14 @@ function webform_options_days() {
 /**
  * Options list containing country names.
  */
-function webform_options_countries() {
+function webform_options_countries($component, $flat, $filter, $arguments) {
   return countries_api_get_array();
 }
 
 /**
  * Options list containing United States states and territories.
  */
-function webform_options_united_states() {
+function webform_options_united_states($component, $flat, $filter, $arguments) {
   return array(
     'AL' => t('Alabama'),
     'AK' => t('Alaska'),

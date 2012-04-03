@@ -1,4 +1,3 @@
-$Id: README.txt,v 1.9 2010/07/09 23:53:13 rdeboer Exp $
 
 DESCRIPTION
 ===========

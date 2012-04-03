@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning.install,v 1.16 2010/07/05 02:31:21 rdeboer Exp $
 
 /**
  * @file
@@ -10,6 +9,8 @@
  * Implementation of hook_install().
  */
 function revisioning_install() {
+  // Panels override fix, see http://drupal.org/node/519924.
+  variable_set('page_manager_override_anyway', TRUE);
 }
 
 /**
@@ -17,7 +18,7 @@ function revisioning_install() {
  */
 function revisioning_update_6307() {
   $ret = array();
-  // Panels override fix, see http://drupal.org/node/519924#comment-2617370.
+  // Panels override fix, see http://drupal.org/node/519924.
   variable_set('page_manager_override_anyway', TRUE);
   return $ret;
 }
@@ -25,15 +26,14 @@ function revisioning_update_6307() {
 /**
  * Implementation of hook_update_N().
  *
- * Place ourselves after Workflow so that we can alter some of the forms created
- * by Workflow.
- * If Workflow isn't installed at the time that Revisioning is installed, set
- * Revisioning weight to 1, which is higher than the default.
+ * Alteration of Workflow form is realised through Workflow Extensions module,
+ * removing the need to change weights.
+ * In fact change of weight is related to the trouble described in [#482126],
+ * comment #9,
  */
-function revisioning_update_6310() {
+function revisioning_update_6313() {
   $ret = array();
-  $weight = 1 + (int)db_result(db_query("SELECT weight FROM {system} WHERE name = 'workflow'"));
-  $ret[] = update_sql("UPDATE {system} SET weight = $weight WHERE name = 'revisioning'");
+  $ret[] = update_sql("UPDATE {system} SET weight = 0 WHERE name = 'revisioning'");
   return $ret;
 }
 

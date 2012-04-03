@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
+Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
 
@@ -16,7 +16,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
       {
         label: 'IMCE',
         command: 'IMCEWindow',
-        icon: this.path + 'images/icon.gif'
+        icon: this.path + 'images/icon.png'
       });
     
       //opening imce window

@@ -1,5 +1,4 @@
 <?php
-// $Id: linkchecker.install,v 1.2.2.36 2009/08/18 20:16:31 hass Exp $
 
 /**
  * @file
@@ -114,6 +113,13 @@ function linkchecker_schema() {
     ),
     'primary key' => array('lid'),
     'unique keys' => array('urlhash' => array('urlhash')),
+    'indexes' => array(
+      'method' => array('method'),
+      'code' => array('code'),
+      'fail_count' => array('fail_count'),
+      'last_checked' => array('last_checked'),
+      'status' => array('status'),
+    ),
   );
 
   $schema['linkchecker_boxes'] = array(
@@ -131,6 +137,7 @@ function linkchecker_schema() {
       ),
     ),
     'primary key' => array('bid', 'lid'),
+    'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_nodes'] = array(
@@ -148,6 +155,7 @@ function linkchecker_schema() {
       ),
     ),
     'primary key' => array('nid', 'lid'),
+    'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_comments'] = array(
@@ -165,6 +173,7 @@ function linkchecker_schema() {
       ),
     ),
     'primary key' => array('cid', 'lid'),
+    'indexes' => array('lid' => array('lid')),
   );
 
   return $schema;
@@ -179,16 +188,6 @@ function linkchecker_requirements($phase) {
 
   switch ($phase) {
     case 'install' :
-      // Module cannot work without external HTTP requests.
-      if (variable_get('drupal_http_request_fails', TRUE) && !system_check_http_request()) {
-        $requirements['http requests'] = array(
-          'title' => $t('HTTP request status'),
-          'value' => $t('Fails'),
-          'severity' => REQUIREMENT_ERROR,
-          'description' => $t('Your system or network configuration does not allow Drupal to access web pages, resulting in reduced functionality. This could be due to your webserver configuration or PHP settings, and should be resolved in order to download information about available updates, fetch aggregator feeds, sign in via OpenID, or use other network-dependent services.'),
-        );
-      }
-
       // MySQL version with subselect support is required.
       $version = db_version();
       if (in_array($GLOBALS['db_type'], array('mysql', 'mysqli')) && version_compare($version, LINKCHECKER_MINIMUM_MYSQL) < 0) {
@@ -202,6 +201,16 @@ function linkchecker_requirements($phase) {
       break;
 
     case 'runtime':
+      // Module cannot work without external HTTP requests.
+      if (variable_get('drupal_http_request_fails', TRUE) && !system_check_http_request()) {
+        $requirements['http requests'] = array(
+          'title' => $t('HTTP request status'),
+          'value' => $t('Fails'),
+          'severity' => REQUIREMENT_ERROR,
+          'description' => $t('Your system or network configuration does not allow Drupal to access web pages, resulting in reduced functionality. This could be due to your webserver configuration or PHP settings, and should be resolved in order to download information about available updates, fetch aggregator feeds, sign in via OpenID, or use other network-dependent services.'),
+        );
+      }
+
 /*      $requirements['linkchecker_curl'] = array(
         'title' => $t('cURL'),
         'value' => $has_curl ? $t('Enabled') : $t('Not found'),
@@ -352,6 +361,15 @@ function linkchecker_update_6200() {
   $ret = array();
 
   db_change_field($ret, 'linkchecker_links', 'lid', 'lid', array('type' => 'serial', 'not null' => TRUE));
+
+  // Upgrade line break converter from D5 filter/2 to D6 filter/1.
+  $linkchecker_filter_blacklist = variable_get('linkchecker_filter_blacklist', array());
+  if (!empty($linkchecker_filter_blacklist) && $linkchecker_filter_blacklist['filter/2']) {
+    $linkchecker_filter_blacklist['filter/2'] = 0;
+    $linkchecker_filter_blacklist['filter/1'] = 'filter/1';
+    variable_set('linkchecker_filter_blacklist', $linkchecker_filter_blacklist);
+    $ret[] = array('success' => TRUE, 'query' => 'Upgraded the default exclusion of line break converter filter from D5 filter/2 to D6 filter/1.');
+  }
 
   return $ret;
 }
@@ -547,6 +565,67 @@ function linkchecker_update_6212() {
   db_drop_unique_key($ret, 'linkchecker_links', 'token');
   db_change_field($ret, 'linkchecker_links', 'token', 'urlhash', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
   db_add_unique_key($ret, 'linkchecker_links', 'urlhash', array('urlhash'));
+
+  return $ret;
+}
+
+/**
+ * Add RFC documenation domains back if they have been removed.
+ */
+function linkchecker_update_6213() {
+  $ret = array();
+
+  $linkchecker_disable_link_check_for_urls = array_filter(preg_split('/(\r\n?|\n)/', variable_get('linkchecker_disable_link_check_for_urls', LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS)));
+  variable_set('linkchecker_disable_link_check_for_urls', implode("\n", array_unique(array_merge(explode("\n", LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS), $linkchecker_disable_link_check_for_urls))));
+  $ret[] = array('success' => TRUE, 'query' => 'Added RFC documenation domains back if they have been removed.');
+
+  return $ret;
+}
+
+/**
+* #1321378: Improve performance of queries.
+*/
+function linkchecker_update_6214() {
+  $ret = array();
+
+  db_add_index($ret, 'linkchecker_boxes', 'lid', array('lid'));
+  db_add_index($ret, 'linkchecker_comments', 'lid', array('lid'));
+  db_add_index($ret, 'linkchecker_nodes', 'lid', array('lid'));
+
+  return $ret;
+}
+
+/**
+* Add status code 206 to the default list of ignored response codes.
+*/
+function linkchecker_update_6215() {
+  $ret = array();
+
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  if (!in_array('206', $ignore_response_codes)) {
+    $ignore_response_codes[] = '206';
+    sort($ignore_response_codes);
+    variable_set('linkchecker_ignore_response_codes', implode("\n", $ignore_response_codes));
+    $ret[] = array('success' => TRUE, 'query' => 'Added the status code 206 to the list of ignored response codes.');
+  }
+  else {
+    $ret[] = array('success' => TRUE, 'query' => 'No action taken. The status code 206 was already on the list of ignored response codes.');
+  }
+
+  return $ret;
+}
+
+/**
+* #965720: Add indexes to improve performance of views queries.
+*/
+function linkchecker_update_6216() {
+  $ret = array();
+
+  db_add_index($ret, 'linkchecker_links', 'method', array('method'));
+  db_add_index($ret, 'linkchecker_links', 'code', array('code'));
+  db_add_index($ret, 'linkchecker_links', 'fail_count', array('fail_count'));
+  db_add_index($ret, 'linkchecker_links', 'last_checked', array('last_checked'));
+  db_add_index($ret, 'linkchecker_links', 'status', array('status'));
 
   return $ret;
 }

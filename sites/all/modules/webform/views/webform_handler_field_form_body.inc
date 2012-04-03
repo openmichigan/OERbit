@@ -29,7 +29,9 @@ class webform_handler_field_form_body extends views_handler_field {
     $node = node_load($values->{$this->aliases['nid']});
 
     if (node_access('view', $node)) {
-      $form_body = node_view($node, FALSE, FALSE);
+      // Populate $node->content['webform'] by reference.
+      webform_node_view($node, FALSE, FALSE);
+      $form_body = isset($node->content['webform']['#value']) ? $node->content['webform']['#value'] : NULL;
     }
     else {
       return;

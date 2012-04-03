@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_tokens.inc,v 1.3 2010/01/27 06:37:31 rdeboer Exp $
 
 /**
  * @file
@@ -27,6 +26,7 @@ function revisioning_token_list($type = 'all') {
     $tokens = array();
     $tokens['node']['vid'] = t('Node revision ID');
     $tokens['node']['revision-title'] = t('Revision title');
+    $tokens['node']['revision-log'] = t('Revision log message');
     $tokens['node']['revision-author-uid'] = t("Revision author's user id");
     $tokens['node']['revision-author-name'] = t("Revision author's user name");
     $tokens['node']['revision-author-name-raw'] = t("Revision author's user name. WARNING - raw user input.");
@@ -45,6 +45,10 @@ function revisioning_token_values($type, $object = NULL, $options = array()) {
     case 'node':
       $values['vid'] = $object->vid;
       $values['revision-title'] = $object->title;
+      $values['revision-log'] = $object->log;
+      if (empty($object->revision_uid)) { // Can happen in Rules context
+        $object->revision_uid = revisioning_get_revision_uid($object->vid);
+      }
       _set_revision_author_values($object->revision_uid, $values);
       break;
 
@@ -57,6 +61,7 @@ function revisioning_token_values($type, $object = NULL, $options = array()) {
           $revision = node_load($nid, node_tools_get_current_node_revision_id($nid));
           $values['vid'] = $revision->vid;
           $values['revision-title'] = $revision->title;
+          $values['revision-log'] = $revision->log;
           _set_revision_author_values($revision->revision_uid, $values);
       }
       break;

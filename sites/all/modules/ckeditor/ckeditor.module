@@ -1,12 +1,11 @@
 <?php
-// $Id: ckeditor.module,v 1.4.2.31 2010/09/27 12:49:01 dczepierga Exp $
 /**
- * CKEditor - The text editor for Internet - http://ckeditor.com
- * Copyright (c) 2003-2009, CKSource - Frederico Knabben. All rights reserved.
+ * CKEditor - The text editor for the Internet - http://ckeditor.com
+ * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
- * Licensed under the terms of any of the following licenses at your
+ * Licensed under the terms of any of the following licenses of your
  * choice:
  *
  *  - GNU General Public License Version 2 or later (the "GPL")
@@ -25,16 +24,19 @@
  *
  * This module allows Drupal to replace textarea fields with CKEditor.
  *
- * This HTML text editor brings to the web many of the powerful functionalities
- * of known desktop editors like Word. It's really  lightweight and doesn't
- * require any kind of installation on the client computer.
+  * CKEditor is an online rich text editor that can be embedded inside web pages.
+ * It is a WYSIWYG (What You See Is What You Get) editor which means that the
+ * text edited in it looks as similar as possible to the results end users will
+ * see after the document gets published. It brings to the Web popular editing
+ * features found in desktop word processors such as Microsoft Word and
+ * OpenOffice.org Writer. CKEditor is truly lightweight and does not require any
+ * kind of installation on the client computer.
  */
 
 /**
- * The name of simplified toolbar which should be forced
- * Be sure that this toolbar is defined in ckeditor.config.js or fckconfig.js
+ * The name of the simplified toolbar that should be forced.
+ * Make sure that this toolbar is defined in ckeditor.config.js or fckconfig.js.
  */
-define('CKEDITOR_FORCE_SIMPLE_TOOLBAR_NAME', 'DrupalBasic') ;
 define('CKEDITOR_ENTERMODE_P', 1);
 define('CKEDITOR_ENTERMODE_BR', 2);
 define('CKEDITOR_ENTERMODE_DIV', 3);
@@ -44,14 +46,15 @@ global $_ckeditor_ids;
 
 $_ckeditor_configuration = array();
 $_ckeditor_ids = array();
-
 /**
 * Implementation of hook_form_alter()
 */
 function ckeditor_form_alter(&$form, $form_state, $form_id) {
   // [#659278], [#666560], [#666616]
   if (substr($form_id, -10) == '_node_form') {
-    $nodetype = $form['type']['#value'];
+    if (!empty($form['#node']->language)) {
+        $form['body_field']['body']['#scayt_language'] = _ckeditor_scayt_langcode($form['#node']->language);
+    }
     if (!empty($form['body_field']['teaser_js']['#teaser'])) {
       $setting['ckeditor']['teaser'] = $form['body_field']['teaser_js']['#teaser'];
       drupal_add_js($setting, 'setting');
@@ -62,8 +65,8 @@ function ckeditor_form_alter(&$form, $form_state, $form_id) {
 /**
  * Implementation of hook_help().
  *
- * This function delegates execution to ckeditor_help_delegate() in includes/ckeditor.page.inc to
- * lower the amount of code in ckeditor.module
+ * This function delegates the execution to ckeditor_help_delegate() in includes/ckeditor.page.inc to
+ * lower the amount of code in ckeditor.module.
  */
 function ckeditor_help($path, $arg) {
   module_load_include('inc', 'ckeditor', 'includes/ckeditor.page');
@@ -73,8 +76,8 @@ function ckeditor_help($path, $arg) {
 /**
  * Implementation of hook_user().
  *
- * This function delegates execution to ckeditor_user_delegate() in includes/ckeditor.user.inc to
- * lower the amount of code in ckeditor.module
+ * This function delegates the execution to ckeditor_user_delegate() in includes/ckeditor.user.inc to
+ * lower the amount of code in ckeditor.module.
  */
 function ckeditor_user($type, $edit, &$user, $category = NULL) {
   if (($type == 'form' && $category == 'account' && user_access('access ckeditor')) || $type == 'validate') {
@@ -90,7 +93,9 @@ function ckeditor_user($type, $edit, &$user, $category = NULL) {
  */
 function ckeditor_perm() {
   $arr = array('administer ckeditor', 'access ckeditor');
-  if (file_exists(drupal_get_path('module', 'ckeditor') . "/ckfinder")) {
+  $ckfinder_full_path = ckfinder_path();
+  $config_path = $ckfinder_full_path . '/config.php';
+  if (file_exists($config_path)) {
     $arr[] = 'allow CKFinder file uploads';
   }
   return $arr;
@@ -98,7 +103,7 @@ function ckeditor_perm() {
 
 /**
  * Implementation of hook_elements().
- * Replace textarea with CKEditor using callback function (ckeditor_process_textarea)
+ *  Replace the textarea with CKEditor using a callback function (ckeditor_process_textarea)
  */
 function ckeditor_elements() {
   $type = array();
@@ -107,7 +112,7 @@ function ckeditor_elements() {
       'ckeditor_process_input'
     ),
   );
-  // only roles with permission get the ckeditor
+  // only roles with permission get CKEditor
   if (user_access('access ckeditor')) {
     $type['textarea'] = array('#process' => array('ckeditor_process_textarea'));
     $type['form'] = array('#after_build' => array('ckeditor_process_form'));
@@ -190,6 +195,8 @@ function ckeditor_process_form(&$form) {
               $ckeditor_filters[$textarea_id][] = $id ."/". $format;
             }
           }
+          
+          drupal_add_js(array('ckeditor' => array('settings' => array($textarea_id => array('input_format' => $format)))), 'setting');
 
           //No filters assigned, remove xss class
           if (empty($ckeditor_filters[$textarea_id])) {
@@ -233,7 +240,6 @@ function ckeditor_process_form(&$form) {
     }
     drupal_add_js(array('ckeditor' => $arr), 'setting');
   }
-
   return $form;
 }
 
@@ -262,6 +268,16 @@ function ckeditor_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['ckeditor/disable/wysiwyg/%'] = array(
+    'title' => 'Disable WYSIWYG module',
+    'description' => 'Disable the WYSIWYG module.',
+    'page callback' => 'ckeditor_disable_wysiwyg',
+    'page arguments' => array(3),
+    'file' => 'includes/ckeditor.admin.inc',
+    'access arguments' => array('administer ckeditor'),
+    'type' => MENU_CALLBACK,
+  );
+
   $items['admin/settings/ckeditor'] = array(
     'title' => 'CKEditor',
     'description' => 'Configure the rich text editor.',
@@ -272,7 +288,7 @@ function ckeditor_menu() {
   );
 
   $items['admin/settings/ckeditor/add'] = array(
-    'title' => 'Add new CKEditor profile',
+    'title' => 'Add a new CKEditor profile',
     'description' => 'Configure the rich text editor.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ckeditor_admin_profile_form'),
@@ -282,7 +298,7 @@ function ckeditor_menu() {
   );
 
   $items['admin/settings/ckeditor/clone/%ckeditor_profile'] = array(
-    'title' => 'Clone CKEditor profile',
+    'title' => 'Clone the CKEditor profile',
     'description' => 'Configure the rich text editor.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ckeditor_admin_profile_clone_form', 4),
@@ -292,7 +308,7 @@ function ckeditor_menu() {
   );
 
   $items['admin/settings/ckeditor/edit/%ckeditor_profile'] = array(
-    'title' => 'Edit CKEditor profile',
+    'title' => 'Edit the CKEditor profile',
     'description' => 'Configure the rich text editor.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ckeditor_admin_profile_form', 4),
@@ -302,7 +318,7 @@ function ckeditor_menu() {
   );
 
   $items['admin/settings/ckeditor/delete/%ckeditor_profile'] = array(
-    'title' => 'Delete CKEditor profile',
+    'title' => 'Delete the CKEditor profile',
     'description' => 'Configure the rich text editor.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ckeditor_admin_profile_delete_form', 4),
@@ -312,7 +328,7 @@ function ckeditor_menu() {
   );
 
   $items['admin/settings/ckeditor/addg'] = array(
-    'title' => 'Add CKEditor Global profile',
+    'title' => 'Add the CKEditor Global profile',
     'description' => 'Configure the rich text editor.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ckeditor_admin_global_profile_form', 'add'),
@@ -322,12 +338,20 @@ function ckeditor_menu() {
   );
 
   $items['admin/settings/ckeditor/editg'] = array(
-    'title' => 'Edit CKEditor Global profile',
+    'title' => 'Edit the CKEditor Global profile',
     'description' => 'Configure the rich text editor.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ckeditor_admin_global_profile_form', 'edit'),
     'file' => 'includes/ckeditor.admin.inc',
     'access arguments' => array('administer ckeditor'),
+    'type' => MENU_CALLBACK,
+  );
+
+    $items['admin/ckeditor/get_settings'] = array(
+    'title' => 'Get settings for the CKEditor instance',
+    'description' => 'Get settings for the CKEditor instance',
+    'page callback' => 'ckeditor_get_settings',
+    'access arguments' => array('access ckeditor'),
     'type' => MENU_CALLBACK,
   );
 
@@ -339,6 +363,15 @@ function ckeditor_menu() {
  */
 function ckeditor_init() {
   drupal_add_css(drupal_get_path('module', 'ckeditor') .'/ckeditor.css');
+
+  // Added for support [#1288664] Views
+  if (module_exists('views') && preg_match('/admin\/build\/views/', $_GET['q'])) {
+    $module_drupal_path = drupal_get_path('module', 'ckeditor');
+    $editor_local_path  = ckeditor_path(TRUE);
+    drupal_add_js($editor_local_path . '/ckeditor.js', 'module', 'footer', FALSE, TRUE, FALSE);
+    drupal_add_js($module_drupal_path .'/includes/ckeditor.utils.js', 'module', 'footer' );
+    drupal_add_js(array('ckeditor' => array('ajaxToken' => drupal_get_token('ckeditorAjaxCall'), 'default_input_format' => variable_get('filter_default_format', 1), 'settings' => array('edit-footer', 'edit-header'))), 'setting');
+  }
 }
 
 /**
@@ -361,10 +394,15 @@ function ckeditor_file_download($file) {
     $private_dir = preg_quote($private_dir, '#');
     $private_dir = strtr($private_dir, array('%u' => '(\d+)', '%n' => '([\x80-\xF7 \w@.-]+)')); // regex for %n taken from user_validate_name() in user.module
     $private_dir = trim($private_dir, '\/');
-
     $regex = '#^'. preg_quote(file_directory_path() .'/', '#') . $private_dir .'#';
-
-    //If path to the file points to the CKEditor private directory, allow downloading
+    //check if CKEditor's "Enable access to files located in the private folder" option is disabled or enabled
+    $allow_download_private_files = FALSE;
+    if (isset($global_profile->settings['ckeditor_allow_download_private_files']) &&  $global_profile->settings['ckeditor_allow_download_private_files'] === 't') {
+      $allow_download_private_files = TRUE;
+    }
+    //denied access to file if private upload is set and CKEditor's "Enable access to files located in the private folder" option is disabled
+    if ($allow_download_private_files  == FALSE ) return NULL;
+    //check if file can be served by comparing regex and path to file
     if (preg_match($regex, $path)) {
       $ctype = ($info = @getimagesize($path)) ? $info['mime'] : (function_exists('mime_content_type') ? mime_content_type($path) : 'application/x-download');
       return array('Content-Type: '. $ctype);
@@ -379,7 +417,7 @@ function ckeditor_profile_load($name = '', $clear = FALSE) {
   static $profiles = array();
 
   if (empty($profiles) || $clear === TRUE) {
-    $result = db_query("SELECT * FROM {ckeditor_settings}");
+    $result = db_query("SELECT * FROM {ckeditor_settings} ORDER BY name");
     while (($data = db_fetch_object($result))) {
       $data->settings = unserialize($data->settings);
       $data->rids = array();
@@ -398,12 +436,12 @@ function ckeditor_profile_load($name = '', $clear = FALSE) {
 }
 
 /**
- * This function create the HTML objects required for the CKEditor
+ * This function creates the HTML objects required for CKEditor.
  *
  * @param $element
- *   A fully populated form elment to add the editor to
+ *   A fully populated form elment to add the editor to.
  * @return
- *   The same $element with extra CKEditor markup and initialization
+ *   The same $element with extra CKEditor markup and initialization.
  */
 function ckeditor_process_textarea($element) {
   static $is_running = FALSE;
@@ -422,7 +460,6 @@ function ckeditor_process_textarea($element) {
   if (isset($element['#access']) && !$element['#access']) {
     return $element;
   }
-
   //skip this one, surely nobody wants WYSIWYG here
   switch ($element['#id']) {
     case 'edit-log':
@@ -463,7 +500,6 @@ function ckeditor_process_textarea($element) {
       $enabled = ckeditor_is_enabled(empty($global_conf['excl_mode']) ? '0' : $global_conf['excl_mode'], empty($global_conf['excl_regex']) ? '' : $global_conf['excl_regex'], $element['#id'], $_GET['q']);
     }
   }
-
   if ($enabled) {
     $profile = ckeditor_user_get_profile($user, $element['#id']);
     if ($profile) {
@@ -471,7 +507,7 @@ function ckeditor_process_textarea($element) {
       $conf = $profile->settings;
 
       if ($conf['allow_user_conf']=='t') {
-        foreach (array('default', 'show_toggle', 'popup', 'skin', 'toolbar', 'expand', 'width', 'lang', 'auto_lang') as $setting) {
+        foreach (array('default', 'show_toggle', 'popup', 'skin', 'expand', 'width', 'lang', 'auto_lang') as $setting) {
           $conf[$setting] = ckeditor_user_get_setting($user, $profile, $setting);
         }
       }
@@ -495,7 +531,7 @@ function ckeditor_process_textarea($element) {
 
   $themepath = path_to_theme() .'/';
   $host = base_path();
-  if (!isset($element['#rows'])){
+  if (!isset($element['#rows'])) {
     $element['#rows'] = 5;
   }
   // only replace textarea when it has enough rows and it is enabled
@@ -504,7 +540,6 @@ function ckeditor_process_textarea($element) {
     $class = 'ckeditor-mod';
     $_ckeditor_ids[] = $textarea_id;
     $ckeditor_on = ($conf['default']=='t') ? 1 : 0 ;
-
     $xss_check = 0;
     //it's not a problem when adding new content/comment
     if (arg(1) != "add" && arg(1) != "reply") {
@@ -532,7 +567,7 @@ function ckeditor_process_textarea($element) {
         $content .= $element['#value'];
       }
       $wysiwyg_link = '';
-      $wysiwyg_link .= "<a class=\"ckeditor_links\" style=\"display:none\" href=\"javascript:Drupal.ckeditorToggle('{$textarea_id}','". str_replace("'", "\\'", t('Switch to plain text editor')) ."','". str_replace("'", "\\'", t('Switch to rich text editor')) ."',". $xss_check .");\" id=\"switch_{$textarea_id}\">";
+      $wysiwyg_link .= "<a class=\"ckeditor_links\" style=\"display:none\" href=\"javascript:void(0);\" onclick=\"javascript:Drupal.ckeditorToggle('{$textarea_id}','". str_replace("'", "\\'", t('Switch to plain text editor')) ."','". str_replace("'", "\\'", t('Switch to rich text editor')) ."',". $xss_check .");\" id=\"switch_{$textarea_id}\">";
       $wysiwyg_link .= $ckeditor_on ? t('Switch to plain text editor') : t('Switch to rich text editor');
       $wysiwyg_link .= '</a>';
 
@@ -543,14 +578,19 @@ function ckeditor_process_textarea($element) {
     $module_drupal_path = drupal_get_path('module', 'ckeditor');
     $module_full_path   = $host . $module_drupal_path;
     $editor_path        = ckeditor_path(FALSE);
+    $lib_path           = dirname($editor_path);
     $editor_local_path  = ckeditor_path(TRUE);
+    $lib_local_path     = dirname($editor_local_path);
     // get the default drupal files path
     $files_path         = $host . file_directory_path();
+
+    drupal_set_html_head('<script type="text/javascript">window.CKEDITOR_BASEPATH = "' . $editor_path . '/";</script>');
 
     // sensible default for small toolbars
     if (isset($element['#rows'])) {
       $height = intval($element['#rows']) * 14 + 140;
-    } else {
+    }
+    else {
       $height = 400;
     }
     if (!$is_running) {
@@ -558,43 +598,23 @@ function ckeditor_process_textarea($element) {
       /* In D6 drupal_add_js() can't add external JS, in D7 use drupal_add_js(...,'external') */
       if ( $conf['popup'] != 't' ) {
         if (isset($conf['ckeditor_load_method'])) {
-          drupal_set_html_head('<script type="text/javascript" src="'. $editor_path . '/' . $conf['ckeditor_load_method'] . '?I"></script>');
+          drupal_add_js($editor_local_path . '/' . $conf['ckeditor_load_method'], 'module', 'header', FALSE, TRUE, FALSE);
           if ($conf['ckeditor_load_method'] == 'ckeditor_basic.js') {
-            drupal_set_html_head('<script type="text/javascript">CKEDITOR.loadFullCoreTimeout = ' . $conf['ckeditor_load_time_out'] . ';</script>');
+            drupal_add_js('CKEDITOR.loadFullCoreTimeout = ' . $conf['ckeditor_load_time_out'] . ';', 'inline');
             drupal_add_js(array('ckeditor' => array('load_timeout' => TRUE)), 'setting');
           }
         }
         else {
-          drupal_set_html_head('<script type="text/javascript" src="'. $editor_path .'/ckeditor.js?I"></script>');
+          drupal_add_js($editor_local_path . '/ckeditor.js?I', 'module', 'header', FALSE, TRUE, FALSE);
         }
       }
       else {
-        drupal_set_html_head('<script type="text/javascript" src="'. $editor_path .'/ckeditor_basic.js?I"></script>');
+        drupal_add_js($editor_local_path . '/ckeditor_basic.js?I', 'module', 'header', FALSE, TRUE, FALSE);
       }
-      drupal_add_js(array('ckeditor' => array('module_path' => $module_full_path)), 'setting');
-      if ($conf['popup'] == 't') {
-        drupal_add_js(array('ckeditor' => array('editor_path' => $editor_path)), 'setting');
-      }
-      if (module_exists('paging')) {
-        drupal_add_js(array('ckeditor' => array('pagebreak' => TRUE)), 'setting');
-      }
-      if (module_exists('linktocontent_node')) {
-        drupal_add_js(array('ckeditor' => array('linktocontent_node' => TRUE)), 'setting');
-      }
-      if (module_exists('linktocontent_menu')) {
-        drupal_add_js(array('ckeditor' => array('linktocontent_menu' => TRUE)), 'setting');
-      }
-      if (module_exists('pagebreak')) {
-        drupal_add_js(array('ckeditor' => array('pagebreak' => TRUE)), 'setting');
-      }
-      if (function_exists('linktocontent_node_menu')) {
-        if (!empty($global_conf['linktoc']) && $global_conf['linktoc']!='p') {
-          drupal_add_js(array('ckeditor' => array('linktocontent_node_path_filter' => TRUE)), 'setting');
-          if ($global_conf['linktoc'] == 'pn') {
-            drupal_add_js(array('ckeditor' => array('linktocontent_node_select_type' => TRUE)), 'setting');
-          }
-        }
-      }
+      drupal_add_js(array('ckeditor' => array('module_path' => $module_full_path, 'editor_path' => $editor_path)), 'setting');
+      drupal_add_js(array('ckeditor' => array('ajaxToken' => drupal_get_token('ckeditorAjaxCall'))), 'setting');
+      drupal_add_js(array('ckeditor' => array('query' => $_GET['q'])), 'setting');
+      drupal_add_js(array('ckeditor' => array('default_input_format' => variable_get('filter_default_format', 1))), 'setting');
       $is_running = TRUE;
     }
 
@@ -606,7 +626,12 @@ function ckeditor_process_textarea($element) {
       $force_simple_toolbar = ckeditor_is_enabled('1', empty($global_conf['simple_incl_regex']) ? '' : $global_conf['simple_incl_regex'], $element['#id'], $_GET['q']);
     }
     if ($force_simple_toolbar) {
-      $toolbar = CKEDITOR_FORCE_SIMPLE_TOOLBAR_NAME;
+      if (!isset($global_conf['simple_toolbar'])) {
+        $toolbar = "[ [ 'Format', 'Bold', 'Italic', '-', 'NumberedList','BulletedList', '-', 'Link', 'Unlink', 'Image' ] ]";
+      }
+      else {
+        $toolbar = $global_conf['simple_toolbar'];
+      }
     }
 
     if (!empty($conf['theme_config_js']) && $conf['theme_config_js'] == 't' && file_exists($themepath .'ckeditor.config.js')) {
@@ -642,13 +667,25 @@ function ckeditor_process_textarea($element) {
           break;
       }
     }
+    if (isset($conf['loadPlugins'])) {
+      $settings[$textarea_id]['loadPlugins'] = ckeditor_plugins_render($conf['loadPlugins']);
+    }
+    if (isset($conf['html_entities']) && $conf['html_entities'] == 'f') {
+      $settings[$textarea_id]['entities'] = FALSE;
+      $settings[$textarea_id]['entities_greek'] = FALSE;
+      $settings[$textarea_id]['entities_latin'] = FALSE;
+    }
     if (isset($conf['scayt_autoStartup']) && $conf['scayt_autoStartup'] == 't') {
       $settings[$textarea_id]['scayt_autoStartup'] = TRUE;
-    } else {
+    }
+    else {
       $settings[$textarea_id]['scayt_autoStartup'] = FALSE;
     }
     if ($conf['auto_lang']=="f") {
       $settings[$textarea_id]['language'] = $conf['lang'];
+    }
+    if (isset($element['#scayt_language'])) {
+      $settings[$textarea_id]['scayt_sLang'] = $element['#scayt_language'];
     }
     if (isset($conf['forcePasteAsPlainText']) && $conf['forcePasteAsPlainText'] == 't') {
       $settings[$textarea_id]['forcePasteAsPlainText'] = TRUE;
@@ -657,7 +694,8 @@ function ckeditor_process_textarea($element) {
       foreach ($conf['formatting']['custom_formatting_options'] as $k => $v) {
         if ($v === 0) {
           $conf['formatting']['custom_formatting_options'][$k] = FALSE;
-        } else {
+        }
+        else {
           $conf['formatting']['custom_formatting_options'][$k] = TRUE;
         }
       }
@@ -685,6 +723,10 @@ function ckeditor_process_textarea($element) {
       $filebrowser = 'none';
     }
 
+    if ($filebrowser == 'elfinder' && !module_exists('elfinder')) {
+      $filebrowser = 'none';
+    }
+
     if ($filebrowser_image != $filebrowser) {
       if ($filebrowser_image == 'imce' && !module_exists('imce')) {
         $filebrowser_image = $filebrowser;
@@ -696,6 +738,9 @@ function ckeditor_process_textarea($element) {
         $filebrowser_image = $filebrowser;
       }
       if ($filebrowser_image == 'webfm' && !module_exists('webfm_popup')) {
+        $filebrowser_image = $filebrowser;
+      }
+      if ($filebrowser_image == 'elfinder' && !module_exists('elfinder')) {
         $filebrowser_image = $filebrowser;
       }
     }
@@ -713,6 +758,9 @@ function ckeditor_process_textarea($element) {
       if ($filebrowser_flash == 'webfm' && !module_exists('webfm_popup')) {
         $filebrowser_flash = $filebrowser;
       }
+      if ($filebrowser_flash == 'elfinder' && !module_exists('elfinder')) {
+        $filebrowser_flash = $filebrowser;
+      }
     }
 
     if ($filebrowser == 'ckfinder' || $filebrowser_image == 'ckfinder' || $filebrowser_flash == 'ckfinder') {
@@ -720,8 +768,14 @@ function ckeditor_process_textarea($element) {
         if (!empty($profile->settings['UserFilesPath'])) {
           $_SESSION['ckeditor']['UserFilesPath'] = strtr($profile->settings['UserFilesPath'], array("%f" => file_directory_path(), "%u" => $user->uid, "%b" => $host, "%n" => $user->name));
         }
+        else{
+          $_SESSION['ckeditor']['UserFilesPath'] = strtr('%b%f/', array("%f" => file_directory_path(), "%u" => $user->uid, "%b" => $host, "%n" => $user->name));
+        }
         if (!empty($profile->settings['UserFilesAbsolutePath'])) {
           $_SESSION['ckeditor']['UserFilesAbsolutePath'] = strtr($profile->settings['UserFilesAbsolutePath'], array("%f" => file_directory_path(), "%u" => $user->uid, "%b" => base_path(), "%d" => $_SERVER['DOCUMENT_ROOT'], "%n" => $user->name));
+        }
+        else{
+          $_SESSION['ckeditor']['UserFilesAbsolutePath'] = strtr('%d%b%f/', array("%f" => file_directory_path(), "%u" => $user->uid, "%b" => base_path(), "%d" => $_SERVER['DOCUMENT_ROOT'], "%n" => $user->name));
         }
         if (variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE) {
           $private_dir = isset($global_profile->settings['private_dir']) ? trim($global_profile->settings['private_dir'], '\/') : '';
@@ -751,12 +805,13 @@ function ckeditor_process_textarea($element) {
     switch ($filebrowser) {
       case 'ckfinder':
         if (user_access('allow CKFinder file uploads')) {
-          $settings[$textarea_id]['filebrowserBrowseUrl'] = $module_full_path .'/ckfinder/ckfinder.html';
-          $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $module_full_path .'/ckfinder/ckfinder.html?Type=Images';
-          $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $module_full_path .'/ckfinder/ckfinder.html?Type=Flash';
-          $settings[$textarea_id]['filebrowserUploadUrl'] = $module_full_path .'/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files';
-          $settings[$textarea_id]['filebrowserImageUploadUrl'] = $module_full_path .'/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images';
-          $settings[$textarea_id]['filebrowserFlashUploadUrl'] = $module_full_path .'/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash';
+          $ckfinder_full_path = base_path() . ckfinder_path();
+          $settings[$textarea_id]['filebrowserBrowseUrl'] = $ckfinder_full_path .'/ckfinder.html';
+          $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $ckfinder_full_path .'/ckfinder.html?Type=Images';
+          $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $ckfinder_full_path .'/ckfinder.html?Type=Flash';
+          $settings[$textarea_id]['filebrowserUploadUrl'] = $ckfinder_full_path .'/core/connector/php/connector.php?command=QuickUpload&type=Files';
+          $settings[$textarea_id]['filebrowserImageUploadUrl'] = $ckfinder_full_path .'/core/connector/php/connector.php?command=QuickUpload&type=Images';
+          $settings[$textarea_id]['filebrowserFlashUploadUrl'] = $ckfinder_full_path .'/core/connector/php/connector.php?command=QuickUpload&type=Flash';
         }
         break;
       case 'imce':
@@ -764,7 +819,7 @@ function ckeditor_process_textarea($element) {
         break;
       case 'webfm':
         if (user_access('access webfm')) {
-          $settings[$textarea_id]['filebrowserBrowseUrl'] = $host ."index.php?q=webfm_popup";
+          $settings[$textarea_id]['filebrowserBrowseUrl'] = $host ."index.php?q=webfm_popup&caller=ckeditor";
         }
         break;
       case 'ib':
@@ -775,9 +830,12 @@ function ckeditor_process_textarea($element) {
         }
         break;
       case 'tinybrowser':
-        $settings[$textarea_id]['filebrowserBrowseUrl'] = $host . drupal_get_path('module','tinybrowser') . "/tinybrowser/tinybrowser.php?type=file";
+        $settings[$textarea_id]['filebrowserBrowseUrl'] = $host . drupal_get_path('module', 'tinybrowser') . "/tinybrowser/tinybrowser.php?type=file";
         $settings[$textarea_id]['filebrowserWindowWidth'] = (int)$win_size[0] + 15;
         $settings[$textarea_id]['filebrowserWindowHeight'] = (int)$win_size[1] + 15;
+        break;
+      case 'elfinder':
+        $settings[$textarea_id]['filebrowserBrowseUrl'] = $host ."index.php?q=elfinder&app=ckeditor";
         break;
     }
 
@@ -785,8 +843,9 @@ function ckeditor_process_textarea($element) {
       switch ($filebrowser_image) {
         case 'ckfinder':
           if (user_access('allow CKFinder file uploads')) {
-            $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $module_full_path .'/ckfinder/ckfinder.html?Type=Images';
-            $settings[$textarea_id]['filebrowserImageUploadUrl'] = $module_full_path .'/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images';
+            $ckfinder_full_path = base_path() . ckfinder_path();
+            $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $ckfinder_full_path .'/ckfinder.html?Type=Images';
+            $settings[$textarea_id]['filebrowserImageUploadUrl'] = $ckfinder_full_path .'/core/connector/php/connector.php?command=QuickUpload&type=Images';
           }
           break;
         case 'imce':
@@ -794,7 +853,7 @@ function ckeditor_process_textarea($element) {
           break;
         case 'webfm':
           if (user_access('access webfm')) {
-            $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $host ."index.php?q=webfm_popup";
+            $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $host ."index.php?q=webfm_popup&caller=ckeditor";
           }
           break;
         case 'ib':
@@ -805,9 +864,12 @@ function ckeditor_process_textarea($element) {
           }
           break;
         case 'tinybrowser':
-          $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $host . drupal_get_path('module','tinybrowser') . "/tinybrowser/tinybrowser.php?type=image";
+          $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $host . drupal_get_path('module', 'tinybrowser') . "/tinybrowser/tinybrowser.php?type=image";
           $settings[$textarea_id]['filebrowserImageWindowWidth'] = (int)$win_size[0] + 15;
           $settings[$textarea_id]['filebrowserImageWindowHeight'] = (int)$win_size[1] + 15;
+          break;
+        case 'elfinder':
+          $settings[$textarea_id]['filebrowserImageBrowseUrl'] = $host ."index.php?q=elfinder&app=ckeditor";
           break;
       }
     }
@@ -816,8 +878,9 @@ function ckeditor_process_textarea($element) {
       switch ($filebrowser_flash) {
         case 'ckfinder':
           if (user_access('allow CKFinder file uploads')) {
-            $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $module_full_path .'/ckfinder/ckfinder.html?Type=Images';
-            $settings[$textarea_id]['filebrowserFlashUploadUrl'] = $module_full_path .'/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images';
+            $ckfinder_full_path = base_path() . ckfinder_path();
+            $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $ckfinder_full_path .'/ckfinder.html?Type=Images';
+            $settings[$textarea_id]['filebrowserFlashUploadUrl'] = $ckfinder_full_path .'/core/connector/php/connector.php?command=QuickUpload&type=Images';
           }
           break;
         case 'imce':
@@ -825,7 +888,7 @@ function ckeditor_process_textarea($element) {
           break;
         case 'webfm':
           if (user_access('access webfm')) {
-            $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $host ."index.php?q=webfm_popup";
+            $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $host ."index.php?q=webfm_popup&caller=ckeditor";
           }
           break;
         case 'ib':
@@ -836,27 +899,29 @@ function ckeditor_process_textarea($element) {
           }
           break;
         case 'tinybrowser':
-          $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $host . drupal_get_path('module','tinybrowser') . "/tinybrowser/tinybrowser.php?type=media";
+          $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $host . drupal_get_path('module', 'tinybrowser') . "/tinybrowser/tinybrowser.php?type=media";
           $settings[$textarea_id]['filebrowserFlashWindowWidth'] = (int)$win_size[0] + 15;
           $settings[$textarea_id]['filebrowserFlashWindowHeight'] = (int)$win_size[1] + 15;
+          break;
+        case 'elfinder':
+          $settings[$textarea_id]['filebrowserFlashBrowseUrl'] = $host ."index.php?q=elfinder&app=ckeditor";
           break;
       }
     }
 
     if (!empty($conf['js_conf'])) {
-      $lines = preg_split("/[\n\r]+/", $conf['js_conf']);
-      foreach ($lines as $l) {
-        //parsing lines with custom configuration
-        preg_match_all('#(config\.)?(\w+)[ ]*=(.+)[;]?#is', $l, $matches);
-        if (!empty($matches[0])) {
-          $value=trim($matches[3][0], " ;'\"\n\r\t\0\x0B");
+      //parsing lines with custom configuration
+      preg_match_all('#config\.(\w+)[\s]*=[\s]*(.+?);[\s]*(?=config\.|$)#is', preg_replace("/[\n\r]+/", "", $conf['js_conf']), $matches);
+      foreach ($matches[2] as $i => $match) {
+        if (!empty($match)) {
+          $value=trim($match, " ;\n\r\t\0\x0B");
           if ( strcasecmp($value, 'true') == 0 ) {
             $value=TRUE;
           }
           if ( strcasecmp($value, 'false') == 0 ) {
             $value=FALSE;
           }
-          $settings[$textarea_id][$matches[2][0]]=$value;
+          $settings[$textarea_id]["js_conf"][$matches[1][$i]]=$value;
         }
       }
     }
@@ -889,10 +954,10 @@ function ckeditor_process_textarea($element) {
                     if (file_exists($path)) {
                       $css_files[$name] = $host . $path . $query_string;
                       // Grab rtl stylesheets ( will get rtl css files when thay are named with suffix "-rtl.css" (ex: fusion baased themes) )
-                      if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL && substr($path,0,-8) != "-rtl.css") {
-                        $rtl_path = substr($path,0,-4)."-rtl.css";
+                      if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL && substr($path, 0, -8) != "-rtl.css") {
+                        $rtl_path = substr($path, 0, -4) . "-rtl.css";
                         if (file_exists($rtl_path)) {
-                          $css_files[$name."-rtl"] = $host . $rtl_path . $query_string;
+                          $css_files[$name . "-rtl"] = $host . $rtl_path . $query_string;
                         }
                       }
                     }
@@ -905,13 +970,18 @@ function ckeditor_process_textarea($element) {
             foreach ($theme_info->stylesheets as $type => $stylesheets) {
               if ($type != "print") {
                 foreach ($stylesheets as $name => $path) {
+                  // Checks if less module exists...
+                  if (strstr($path, '.less') && module_exists('less')) {
+                    $path = 'sites/default/files/less/' . $path; // append the less file path
+                    $path = str_replace('.less', '', $path); // remove the .less
+                  }
                   if (file_exists($path)) {
                     $css_files[$name] = $host . $path . $query_string;
                     // Grab rtl stylesheets ( will get rtl css files when thay are named with suffix "-rtl.css" (ex: fusion baased themes) )
-                    if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL && substr($path,0,-8) != "-rtl.css") {
-                      $rtl_path = substr($path,0,-4)."-rtl.css";
+                    if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL && substr($path, 0, -8) != "-rtl.css") {
+                      $rtl_path = substr($path, 0, -4) . "-rtl.css";
                       if (file_exists($rtl_path)) {
-                        $css_files[$name."-rtl"] = $host . $rtl_path . $query_string;
+                        $css_files[$name . "-rtl"] = $host . $rtl_path . $query_string;
                       }
                     }
                   }
@@ -946,12 +1016,22 @@ function ckeditor_process_textarea($element) {
             $css_files[] = $host . $themepath .'style.css' . $query_string;
           }
         }
-        $css_files[] = $module_full_path ."/ckeditor.css" . $query_string;
+        if (file_exists($module_drupal_path .'/ckeditor.css')) {
+          $css_files[] = $module_full_path .'/ckeditor.css' . $query_string;
+        }
+        if (file_exists($themepath . 'ckeditor.css')) {
+          $css_files[] = $host . $themepath .'ckeditor.css' . $query_string;
+        }
         break;
 
       case 'self':
         if (file_exists($module_drupal_path .'/ckeditor.css')) {
           $css_files[] = $module_full_path .'/ckeditor.css' . $query_string;
+          if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL) {
+            if (file_exists($module_drupal_path . '/ckeditor-rtl.css')) {
+                $css_files[] = $module_full_path . '/ckeditor-rtl.css' . $query_string;
+            }
+          }
         }
         foreach (explode(',', $conf['css_path']) as $css_path) {
           $css_path = trim(str_replace("%h%t", "%t", $css_path));
@@ -962,11 +1042,16 @@ function ckeditor_process_textarea($element) {
       case 'none':
         if (file_exists($module_drupal_path .'/ckeditor.css')) {
           $css_files[] = $module_full_path .'/ckeditor.css' . $query_string;
+          if (defined('LANGUAGE_RTL') && $language->direction == LANGUAGE_RTL) {
+            if (file_exists($module_drupal_path . '/ckeditor-rtl.css')) {
+                $css_files[] = $module_full_path . '/ckeditor-rtl.css' . $query_string;
+            }
+          }
         }
         $css_files[] = $editor_path .'/contents.css' . $query_string;
         break;
     }
-    if ($conf['ckeditor_load_method'] == 'ckeditor_source.js') {
+    if (isset($conf['ckeditor_load_method']) && $conf['ckeditor_load_method'] == 'ckeditor_source.js') {
       foreach ($css_files as $k => $v) {
         $css_files[$k] = $v . '&t=' . time();
       }
@@ -992,6 +1077,7 @@ function ckeditor_process_textarea($element) {
 
     drupal_add_js(array('ckeditor' => array( 'theme' => $theme )), 'setting');
     if (!empty($settings)) {
+      $_SESSION['cke_get_settings'] = $settings;
       drupal_add_js(array('ckeditor' => array('settings' => $settings)), 'setting');
     }
     if (!empty($autostart)) {
@@ -1027,15 +1113,14 @@ function ckeditor_process_textarea($element) {
     $element['#attributes']['class'] .= ' '. $class;
   }
   //hack with patch jquery-ui dialog
-
   return $element;
 }
 
 /**
- * Read CKEditor path from Global profile
+ * Read the CKEditor path from the Global profile.
  *
  * @return
- *   path to CKEditor folder
+ *   Path to CKEditor folder.
  */
 function ckeditor_path($local = FALSE, $refresh = FALSE) {
   static $cke_path;
@@ -1043,6 +1128,7 @@ function ckeditor_path($local = FALSE, $refresh = FALSE) {
 
   if ($refresh || (!$cke_path)) {
     $mod_path = drupal_get_path('module', 'ckeditor');
+    $lib_path = 'sites/all/libraries';
     $global_profile = ckeditor_profile_load('CKEditor Global Profile', $refresh);
 
     //default: path to ckeditor subdirectory in the ckeditor module directory (starting from the document root)
@@ -1052,13 +1138,12 @@ function ckeditor_path($local = FALSE, $refresh = FALSE) {
     //default: path to ckeditor subdirectory in the ckeditor module directory (relative to index.php)
     //e.g.: sites/all/modules/ckeditor/ckeditor
     $cke_local_path = $mod_path .'/ckeditor';
-
     if ($global_profile) {
       $gs = $global_profile->settings;
 
       if (isset($gs['ckeditor_path'])) {
         $tmp_path = $gs['ckeditor_path'];
-        $tmp_path = strtr($tmp_path, array("%b" => base_path(), "%m" => base_path() . $mod_path));
+        $tmp_path = strtr($tmp_path, array("%b" => base_path(), "%m" => base_path() . $mod_path, "%l" => base_path() . $lib_path));
         $tmp_path   = str_replace('\\', '/', $tmp_path);
         $tmp_path   = str_replace('//', '/', $tmp_path);
         $tmp_path = rtrim($tmp_path, ' \/');
@@ -1074,6 +1159,9 @@ function ckeditor_path($local = FALSE, $refresh = FALSE) {
           }
           if (FALSE !== strpos($gs['ckeditor_path'], "%b")) {
             $gs['ckeditor_local_path'] = strtr($gs['ckeditor_path'], array("%b" => "."));
+          }
+          if (FALSE !== strpos($gs['ckeditor_path'], "%l")) {
+            $gs['ckeditor_local_path'] = strtr($gs['ckeditor_path'], array("%l" => "sites/all/libraries"));
           }
         }
       }
@@ -1100,11 +1188,118 @@ function ckeditor_path($local = FALSE, $refresh = FALSE) {
   }
 }
 
+/**
+ * Read the CKEditor plugins path from the Global profile.
+ *
+ * @return
+ *   Path to CKEditor plugins folder.
+ */
+function ckeditor_plugins_path($local = FALSE, $refresh = FALSE) {
+  static $cke_plugins_path;
+  static $cke_plugins_local_path;
+
+  if ($refresh || (!$cke_plugins_path)) {
+    $mod_path = drupal_get_path('module', 'ckeditor');
+    $lib_path = 'sites/all/libraries';
+    $global_profile = ckeditor_profile_load('CKEditor Global Profile', $refresh);
+
+    //default: path to plugins subdirectory in the ckeditor module directory (starting from the document root)
+    //e.g. for http://example.com/drupal it will be /drupal/sites/all/modules/ckeditor/plugins
+    $cke_plugins_path = base_path() . $mod_path .'/plugins';
+
+    //default: path to plugins subdirectory in the ckeditor module directory (relative to index.php)
+    //e.g.: sites/all/modules/ckeditor/plugins
+    $cke_plugins_local_path = $mod_path .'/plugins';
+
+    if ($global_profile) {
+      $gs = $global_profile->settings;
+
+      if (isset($gs['ckeditor_plugins_path'])) {
+        $tmp_path = $gs['ckeditor_plugins_path'];
+        $tmp_path = strtr($tmp_path, array("%b" => base_path(), "%m" => base_path() . $mod_path, "%l" => base_path() . $lib_path));
+        $tmp_path   = str_replace('\\', '/', $tmp_path);
+        $tmp_path   = str_replace('//', '/', $tmp_path);
+        $tmp_path = rtrim($tmp_path, ' \/');
+        if (substr($tmp_path, 0, 1) != '/') {
+          $tmp_path = '/'. $tmp_path; //starts with '/'
+        }
+        $cke_plugins_path = $tmp_path;
+
+        if (empty($gs['ckeditor_plugins_local_path'])) {
+          //fortunately wildcards are used, we can easily get the right server path
+          if (FALSE !== strpos($gs['ckeditor_plugins_path'], "%m")) {
+            $gs['ckeditor_plugins_local_path'] = strtr($gs['ckeditor_plugins_path'], array("%m" => $mod_path));
+          }
+          if (FALSE !== strpos($gs['ckeditor_plugins_path'], "%b")) {
+            $gs['ckeditor_plugins_local_path'] = strtr($gs['ckeditor_plugins_path'], array("%b" => "."));
+          }
+          if (FALSE !== strpos($gs['ckeditor_plugins_path'], "%l")) {
+            $gs['ckeditor_plugins_local_path'] = strtr($gs['ckeditor_plugins_path'], array("%l" => "sites/all/libraries"));
+          }
+        }
+      }
+
+      //ckeditor_plugins_path is defined, but wildcards are not used, we need to try to find out where is
+      //the document root located and append ckeditor_plugins_path to it.
+      if (!empty($gs['ckeditor_plugins_local_path']) && !is_null($gs['ckeditor_plugins_local_path'])) {
+        $cke_plugins_local_path = $gs['ckeditor_plugins_local_path'];
+      }
+      elseif (!empty($gs['ckeditor_plugins_path'])) {
+        module_load_include('inc', 'ckeditor', 'includes/ckeditor.lib');
+        $local_path = ckeditor_resolve_url( $gs['ckeditor_plugins_path'] ."/" );
+        if (FALSE !== $local_path) {
+          $cke_plugins_local_path = $local_path;
+        }
+      }
+    }
+  }
+
+  if ($local) {
+    return $cke_plugins_local_path;
+  }
+  else {
+    return $cke_plugins_path;
+  }
+}
+
+/**
+ * Read the CKFinder path from the Global profile.
+ *
+ * @return
+ *   Path to CKFinder folder.
+ */
+function ckfinder_path($refresh = FALSE) {
+  static $ckf_path;
+
+  if ($refresh || (!$ckf_path)) {
+    $mod_path = drupal_get_path('module', 'ckeditor');
+    $lib_path = 'sites/all/libraries';
+    $global_profile = ckeditor_profile_load('CKEditor Global Profile', $refresh);
+
+    //default: path to ckeditor subdirectory in the ckeditor module directory (starting from the document root)
+    //e.g. for http://example.com/drupal it will be /drupal/sites/all/modules/ckeditor/ckeditor
+    $ckf_path = $mod_path . '/ckfinder';
+    if ($global_profile) {
+      $gs = $global_profile->settings;
+
+      if (isset($gs['ckfinder_path'])) {
+        $tmp_path = $gs['ckfinder_path'];
+        $tmp_path = strtr($tmp_path, array("%b" => base_path(), "%m" => $mod_path, "%l" => $lib_path));
+        $tmp_path = str_replace('\\', '/', $tmp_path);
+        $tmp_path = str_replace('//', '/', $tmp_path);
+        $ckf_path = $tmp_path;
+      }
+    }
+  }
+
+  return $ckf_path;
+}
+
 function ckeditor_get_nodetype($get_q) {
   static $nodetype;
 
   if (!isset($nodetype)) {
-    $menuitem = menu_get_item();
+    $menuitem = menu_get_item($get_q);
     $nodetype = '*';
     if (!empty($menuitem['page_arguments']) && is_array($menuitem['page_arguments'])) {
       foreach ($menuitem['page_arguments'] as $item) {
@@ -1123,6 +1318,93 @@ function ckeditor_get_nodetype($get_q) {
       }
     }
   }
-
+  $nodetype = str_replace('-', '_', $nodetype);
   return $nodetype;
+}
+
+/**
+ * Implementation of hook_features_api().
+ *
+ * Allow exporting of CKEditor profiles by the Features module.
+ */
+function ckeditor_features_api() {
+  return array(
+    'ckeditor_profile' => array(
+      'name' => t('CKEditor profiles'),
+      'default_hook' => 'ckeditor_profile_defaults',
+      'default_file' => FEATURES_DEFAULTS_INCLUDED,
+      'file' => drupal_get_path('module', 'ckeditor') .'/includes/ckeditor.features.inc',
+    )
+  );
+}
+
+/**
+ * Get the language locale code supported by Scayt for the specified language
+ */
+function _ckeditor_scayt_langcode($lang) {
+  $scayt_langs = array(
+    'en' => 'en_US',
+    'es' => 'es_ES',
+    'fr' => 'fr_FR',
+    'de' => 'de_DE',
+    'it' => 'it_IT',
+    'el' => 'el_EL',
+    'pt' => 'pt_PT',
+    'da' => 'da_DA',
+    'sv' => 'sv_SE',
+    'nl' => 'nl_NL',
+    'nb' => 'no_NO',
+    'fi' => 'fi_FI',
+  );
+  if (array_key_exists($lang, $scayt_langs)) {
+    return $scayt_langs[$lang];
+  }
+
+  $default = language_default('language');
+  if (array_key_exists($default, $scayt_langs)) {
+    return $scayt_langs[$default];
+  }
+
+  return 'en_US';
+}
+/*
+ * Get settings for ckeditor
+ * Added for support [#1288664] Views
+ */
+function ckeditor_get_settings() {
+  global $user;
+  module_load_include('inc', 'ckeditor', 'includes/ckeditor.lib');
+  if (empty($_POST['id']) || !isset($_POST['token']) || !drupal_valid_token($_POST['token'], 'ckeditorAjaxCall')) {
+      echo json_encode(array());
+      die();
+  }
+  unset($_SESSION['cke_get_settings']);
+  $enabled = FALSE;
+
+  $global_profile = ckeditor_profile_load('CKEditor Global Profile');
+  if ($global_profile) {
+    $global_conf = $global_profile->settings;
+    if ($global_conf) {
+      $enabled = ckeditor_is_enabled(empty($global_conf['excl_mode']) ? '0' : $global_conf['excl_mode'], empty($global_conf['excl_regex']) ? '' : $global_conf['excl_regex'], $_POST['id'], $_POST['url']);
+    }
+  }
+  if ($enabled) {
+    $profile = ckeditor_user_get_profile($user, $_POST['#id']);
+    if ($profile) {
+      $conf = array();
+      $conf = $profile->settings;
+      $enabled = ckeditor_is_enabled(empty($conf['excl_mode']) ? '0' : $conf['excl_mode'], empty($conf['excl_regex']) ? '' : $conf['excl_regex'], $_POST['id'], $_POST['url']);
+    }
+    else {
+      $enabled = FALSE;
+    }
+  }
+
+  if (!$enabled) {
+    echo json_encode(array()); die();
+  }
+  $element = ckeditor_process_textarea(array('#id' => $_POST['id']));
+  if (empty($_SESSION['cke_get_settings'][$_POST['id']])) echo  json_encode(array());
+  echo  json_encode($_SESSION['cke_get_settings'][$_POST['id']]);
+  die();
 }

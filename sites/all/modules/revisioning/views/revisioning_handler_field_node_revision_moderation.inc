@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_handler_field_node_revision_moderation.inc,v 1.1 2010/03/22 01:20:34 rdeboer Exp $
 
 /**
  * @file

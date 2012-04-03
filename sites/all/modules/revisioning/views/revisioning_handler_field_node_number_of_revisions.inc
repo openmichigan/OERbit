@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_handler_field_node_number_of_revisions.inc,v 1.1 2010/03/22 01:20:34 rdeboer Exp $
 
 /**
  * @file

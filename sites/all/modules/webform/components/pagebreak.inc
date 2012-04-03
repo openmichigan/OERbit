@@ -14,7 +14,9 @@ function _webform_defaults_pagebreak() {
     'form_key' => NULL,
     'pid' => 0,
     'weight' => 0,
-    'extra' => array(),
+    'extra' => array(
+      'private' => FALSE,
+    ),
   );
 }
 
@@ -25,6 +27,7 @@ function _webform_theme_pagebreak() {
   return array(
     'webform_display_pagebreak' => array(
       'arguments' => array('element' => NULL),
+      'file' => 'components/pagebreak.inc',
     ),
   );
 }
@@ -40,7 +43,6 @@ function _webform_edit_pagebreak($component) {
     '#value' => '0',
   );
 
-  $form['extra']['description'] = array();  // No description.
   $form['display'] = array('#type' => 'markup'); // Hide the display options.
 
   return $form;
@@ -67,7 +69,7 @@ function _webform_display_pagebreak($component, $value = NULL, $format = 'html')
     '#title' => $component['name'],
     '#weight' => $component['weight'],
     '#format' => $format,
-    '#webform_component' => $component,
+    '#translatable' => array('title'),
   );
   return $element;
 }

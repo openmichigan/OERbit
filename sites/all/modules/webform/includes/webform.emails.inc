@@ -404,7 +404,7 @@ function webform_email_edit_form_submit($form, &$form_state) {
   // Merge the e-mail, name, address, and subject options into single values.
   $email = array(
     'eid' => $form_state['values']['eid'],
-    'nid' => $form_state['values']['node']->nid,
+    'nid' => $node->nid,
   );
 
   foreach (array('email', 'from_name', 'from_address', 'subject') as $field) {
@@ -438,7 +438,7 @@ function webform_email_edit_form_submit($form, &$form_state) {
   // We actually maintain an *exclusion* list, so any new components will
   // default to being included in the %email_values token until unchecked.
   $included = array_keys(array_filter((array) $form_state['values']['components']));
-  $excluded = array_diff(array_keys($form_state['values']['node']->webform['components']), $included);
+  $excluded = array_diff(array_keys($node->webform['components']), $included);
   $email['excluded_components'] = $excluded;
 
   if (empty($form_state['values']['eid'])) {
@@ -450,7 +450,12 @@ function webform_email_edit_form_submit($form, &$form_state) {
     webform_email_update($email);
   }
 
-  $form_state['redirect'] = array('node/' . $form_state['values']['node']->nid . '/webform/emails');
+  // Clear the entity cache if Entity Cache module is installed.
+  if (module_exists('entitycache')) {
+    cache_clear_all($node->nid, 'cache_entity_node');
+  }
+
+  $form_state['redirect'] = array('node/' . $node->nid . '/webform/emails');
 }
 
 /**
@@ -494,7 +499,12 @@ function webform_email_delete_form_submit($form, &$form_state) {
   unset($node->webform['emails'][$email['eid']]);
   webform_check_record($node);
 
-  $form_state['redirect'] = 'node/' . $form_state['values']['node']->nid . '/webform/emails';
+  // Clear the entity cache if Entity Cache module is installed.
+  if (module_exists('entitycache')) {
+    cache_clear_all($node->nid, 'cache_entity_node');
+  }
+
+  $form_state['redirect'] = 'node/' . $node->nid . '/webform/emails';
 }
 
 /**

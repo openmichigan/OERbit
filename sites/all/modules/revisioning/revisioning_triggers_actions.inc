@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_triggers_actions.inc,v 1.13 2010/03/22 01:19:24 rdeboer Exp $
 
 /**
  * @file
@@ -70,6 +69,10 @@ function revisioning_revisioning($op, $object = NULL, $args = NULL) {
     else { // assume user object
       $obj = $object ? $object : $user;
     }
+    // Include node in context so we can use node-related tokens in the action [#1035354]
+    if (is_object($object) && $object->nid) {
+      $context['node'] = $object;
+    }
     actions_do($aid, $obj, $context, $args);
   }
 }
@@ -80,18 +83,70 @@ function revisioning_revisioning($op, $object = NULL, $args = NULL) {
  */
 function revisioning_action_info() {
   return array(
+    'revisioning_delete_archived_action' => array(
+      'type' => 'node',
+      'description' => t('Delete archived revisions of the node'),
+      'configurable' => FALSE,
+      'hooks' => array(
+         'nodeapi' => array('update')
+       )
+    ),
+    'revisioning_create_pending_revision_action' => array(
+      'description' => t('Create a new pending revision of a node'),
+      'type' => 'node',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'nodeapi' => array('presave'),
+      )
+    ),
     'revisioning_publish_latest_revision_action' => array(
       'type' => 'node',
       'description' => t('Publish the most recent pending revision'),
       'configurable' => FALSE,
       'hooks' => array(
-        'nodeapi' => array('presave'),
-      ),
+        'nodeapi' => array('presave')
+      )
+    )
    // Don't need 'changes_node_property'; it will generate a superfluous "save
    // post" action; we're alreay making sure db is updated
    // 'behavior' => array('changes_node_property')
-    )
   );
+}
+
+/**
+ * Implementation of delete archived action.
+ */
+function revisioning_delete_archived_action(&$node, $context = array()) {
+  if (empty($node->revision_moderation)) {
+  // return;
+  }
+  $num_archived = revisioning_get_number_of_archived_revisions($node);
+  if ($num_archived > 0) {
+    $type = node_get_types('name', $node->type);
+    watchdog('revisioning',
+      'Executing deleting archived revisions action for @type %title', array('@type' => $type, '%title' => $node->title),
+      WATCHDOG_NOTICE, l(t('view'), "node/$node->nid"));
+    if (revisioning_delete_archived_revisions($node)) {
+      drupal_set_message(format_plural($num_archived, '@type %title: one archived revision deleted.', '@type %title: @count archived revisions deleted.',
+        array('@type' => $type, '%title' => $node->title)));
+    }
+  }
+}
+
+/**
+ * Implementation of create_pending_revision_action.
+ */
+function revisioning_create_pending_revision_action(&$node, $context = array()) {
+  if ($node->is_new || empty($node->nid)) {
+    return;
+  }
+  $type = node_get_types('name', $node->type);
+  watchdog('revisioning',
+    'Executing create_pending_revision_action for @type %title', array('@type' => $type, '%title' => $node->title),
+    WATCHDOG_NOTICE, l(t('view'), "node/$node->nid"));
+  // Create a new revision upon saving and subject it to moderation (pending)
+  $node->revision = TRUE;
+  $node->revision_moderation = TRUE;
 }
 
 /**
@@ -106,6 +161,6 @@ function revisioning_publish_latest_revision_action(&$node, $context = array()) 
     drupal_set_message(t('Revision has been published.'));
   }
   else {
-    drupal_set_message(t('"!title" has no pending revision to be published.', array('!title' => $node->title)), 'warning');
+    drupal_set_message(t('"!title" has no pending revision to be published.', array('!title' => check_plain($node->title))), 'warning');
   }
 }

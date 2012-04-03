@@ -1,5 +1,4 @@
 <?php
-// $Id: revisioning_theme.inc,v 1.31 2010/02/17 06:12:26 rdeboer Exp $
 
 /**
  * @file
@@ -191,7 +190,7 @@ function theme_revisioning_revisions_summary($form) {
     }
     // Term
     if ($show_taxonomy_terms) {
-      $row[] = drupal_render($form['term'][$vid]);
+      $row[] = filter_xss(drupal_render($form['term'][$vid]));
     }
     // Publication status
     $is_current = ($vid == $node->vid);
@@ -299,6 +298,14 @@ function _revisioning_generate_node_links_according_to_permissions($node, $link_
     $link['href'] = "node/$nid/unpublish";
   //$link['localized_options']['query'] = drupal_get_destination();
     $links[] = $link;
+  }
+  if (_revisioning_node_revision_access('delete archived revisions', $node)) {
+    $num_archived = revisioning_get_number_of_archived_revisions($node);
+    if ($num_archived > 0) {
+      $link['title'] = t('Delete archived');
+      $link['href'] = "node/$nid/revisions/delete-archived";
+      $links[] = $link;
+    }
   }
   if (_revisioning_node_revision_access('delete node', $node)) {
     $link['title'] = // avoiding format_plural [#557050]

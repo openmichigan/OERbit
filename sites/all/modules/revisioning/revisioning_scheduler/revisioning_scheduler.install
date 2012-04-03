@@ -1,0 +1,49 @@
+<?php
+/**
+  * @file
+  * Install and uninstall hooks for Revisioning Scheduler module.
+  */
+
+/**
+ * Implementation of hook_install().
+ */
+function revisioning_scheduler_install() {
+  drupal_install_schema('revisioning_scheduler');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function revisioning_scheduler_uninstall() {
+  drupal_uninstall_schema('revisioning_scheduler');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function revisioning_scheduler_schema() {
+  $schema['revisioning_scheduler'] = array(
+    'description' => 'The base table for revisions that are scheduled to be published',
+    'fields' => array(
+      'revision_vid' => array(
+        'description' => 'The identifier for this revision',
+        'type' => 'int',
+        'not null' => TRUE),
+      'revision_nid' => array(
+        'description' => 'The primary identifier for this node',
+        'type' => 'int',
+        'not null' => TRUE),
+      'revision_uid' => array(
+        'description' => 'The user who submitted this revision',
+        'type' => 'int',
+        'not null' => TRUE),
+      'revision_date' => array(
+        'description' => 'The date when this revision should be published',
+        'type' => 'int',
+        'not null' => TRUE),
+      ),
+    'primary key' => array('revision_vid'),
+  );
+
+  return $schema;
+}

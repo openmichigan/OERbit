@@ -108,6 +108,15 @@ function webform_admin_settings() {
     '#description' => t('<a href="http://www.wikipedia.org/wiki/HTTP_cookie">Cookies</a> can be used to help prevent the same user from repeatedly submitting a webform. This feature is not needed for limiting submissions per user, though it can increase accuracy in some situations. Besides cookies, Webform also uses IP addresses and site usernames to prevent repeated submissions.'),
   );
 
+  $form['advanced']['webform_search_index']  = array(
+    '#type' => 'checkbox',
+    '#checked_value' => 1,
+    '#title' => t('Include webform forms in search index'),
+    '#default_value' => variable_get('webform_search_index', 1),
+    '#description' => t('When selected, all Webform nodes will have their form components indexed by the search engine.'),
+    '#access' => module_exists('search'),
+  );
+
   $form['advanced']['webform_email_address_format'] = array(
     '#type' => 'radios',
     '#title' => t('E-mail address format'),
