@@ -1,7 +1,36 @@
-; $Id: CHANGELOG.txt,v 1.1.2.4 2009/11/15 16:48:50 hass Exp $
 
-linkchecker 6.x-dev, nightly
------------------------------
+linkchecker 6.x-2.5, February 15, 2012
+--------------------------------------
+
+* Fix for access bypass vulnerability.
+* #1429284: Don't follow redirects
+* Removed block 'title' for consitency reasons. It's only a title in administration and should not contain URLs
+* Show a recommendation next to blacklisted filter names.
+* #1149596: Links with spaces are not extracted
+* Backported some documentation fixes
+* Batch redirect URL added for blocks
+* #860700: Disable all non-http(s) links for link checking until we have curl implemented
+* #1054118: After batch scan the target url is not pointing to the node view
+* #1075390: Added HTTP range support (Performance)
+* Links disabled for checking (blacklist, never checked) will be counted as as unchecked and the number of unchecked links will therefore never become zero.
+* #1321378: Improve performance of queries
+* #953958: User able to see other user broken links
+* truncate is ***much*** more faster than delete.
+* #725398: variable_get() may not be available in the install.php run
+* First decode, than filter as URLs could theoretically consist of encoded blanks only.
+* #1067160 by somimi: Minor grammar fixes to some of the descriptions in linkchecker.pages.inc
+* Removing translation directories
+* #903318: Internal Links in cck, weblinks and links fields are not extracted.
+* Remove locale module setUp as notices in _linkchecker_add_node_links() has been fixed.
+* Prevent notices if tests run without locale module.
+* #780242 by AlexisWilke: Several E_NOTICE when dealing with the URLs
+* #500090 by hass: Block removal of RFC domains in exclude links
+* #685580 by wheyse: CCK field_name need to be checked with empty() as the value could be empty
+* Upgrade line break converter from D5 filter/2 to D6 filter/1.
+* #661484: Empty URL exclusion list disables link checking
+
+linkchecker 6.x-2.4, November 24, 2009
+--------------------------------------
 
 * #566388 by wimh, hass: Re-check link status on next cron run
 * #632732 by sleepcamel, hass: Add a message to $node->log when saving a new revision

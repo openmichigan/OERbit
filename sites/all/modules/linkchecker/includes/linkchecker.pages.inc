@@ -1,5 +1,4 @@
 <?php
-// $Id: linkchecker.pages.inc,v 1.1.2.20 2009/11/22 14:09:45 hass Exp $
 
 /**
  * @file
@@ -11,7 +10,7 @@
  */
 function linkchecker_admin_report_page() {
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Search for broken links in nodes and comments and blocks of all users.
   // TODO: Try to make subselect result smaller.
@@ -40,7 +39,7 @@ function linkchecker_admin_report_page() {
 function linkchecker_user_report_page($account) {
   drupal_set_title(check_plain($account->name));
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Search for broken links in nodes and comments of the current user.
   if (module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
@@ -90,9 +89,9 @@ function linkchecker_user_report_page($account) {
 
 function _linkchecker_report_page($links_report_sql, $links_report_parameters = NULL, $account = NULL) {
 
-  $links_unchecked = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_links} WHERE last_checked = %d', 0));
+  $links_unchecked = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_links} WHERE last_checked = %d AND status = %d', 0, 1));
   if ($links_unchecked > 0) {
-    $links_all = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_links}'));
+    $links_all = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_links} WHERE status = %d', 1));
     drupal_set_message(format_plural($links_unchecked,
       'There is 1 unchecked link of about @links_all links in the database. Please be patient until all links have been checked via cron.',
       'There are @count unchecked links of about @links_all links in the database. Please be patient until all links have been checked via cron.',
@@ -115,6 +114,21 @@ function _linkchecker_report_page($links_report_sql, $links_report_parameters = 
 
   $rows = array();
   while ($link = db_fetch_object($result)) {
+    // Get the node, block and comment IDs that refer to this broken link and
+    // that the current user has access to.
+    $nids = _linkchecker_link_node_ids($link, $account);
+    $cids = _linkchecker_link_comment_ids($link, $account);
+    $bids = _linkchecker_link_block_ids($link);
+
+    // If the user does not have access to see this link anywhere, do not
+    // display it, for reasons explained in _linkchecker_link_access(). We
+    // still need to fill the table row, though, so as not to throw off the
+    // number of items in the pager.
+    if (empty($nids) && empty($cids) && empty($bids)) {
+      $rows[] = array(array('data' => t('Permission restrictions deny you access to this broken link.'), 'colspan' => count($header)));
+      continue;
+    }
+
     $links = array();
 
     // Show links to link settings.
@@ -123,45 +137,27 @@ function _linkchecker_report_page($links_report_sql, $links_report_parameters = 
     }
 
     // Show link to nodes having this broken link.
-    if (!empty($account)) {
-      $nodes = db_query('SELECT ln.nid
-        FROM {linkchecker_nodes} ln
-        INNER JOIN {node} n ON n.nid = ln.nid
-        INNER JOIN {node_revisions} r ON r.vid = n.vid
-        WHERE ln.lid = %d AND (n.uid = %d OR r.uid = %d)', $link->lid, $account->uid, $account->uid);
-    }
-    else {
-      $nodes = db_query('SELECT nid FROM {linkchecker_nodes} WHERE lid = %d', $link->lid);
-    }
-    while ($node = db_fetch_object($nodes)) {
-      $links[] = l(t('Edit node @node', array('@node' => $node->nid)), 'node/' . $node->nid . '/edit', array('query' => drupal_get_destination()));
+    foreach ($nids as $nid) {
+      $links[] = l(t('Edit node @node', array('@node' => $nid)), 'node/' . $nid . '/edit', array('query' => drupal_get_destination()));
     }
 
     // Show link to comments having this broken link.
-    if (!empty($account) && module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
-      $comments = db_query('SELECT lc.cid
-        FROM {linkchecker_comments} lc
-        INNER JOIN {comments} c ON c.cid = lc.cid
-        WHERE lc.lid = %d AND c.uid = %d', $link->lid, $account->uid);
-    }
-    else {
-      $comments = db_query('SELECT cid FROM {linkchecker_comments} WHERE lid = %d', $link->lid);
-    }
-    while ($comment = db_fetch_object($comments)) {
-      $links[] = l(t('Edit comment @comment', array('@comment' => $comment->cid)), 'comment/edit/' . $comment->cid, array('query' => drupal_get_destination()));
+    if (module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
+      foreach ($cids as $cid) {
+        $links[] = l(t('Edit comment @comment', array('@comment' => $cid)), 'comment/edit/' . $cid, array('query' => drupal_get_destination()));
+      }
     }
 
     // Show link to blocks having this broken link.
     if ($access_administer_blocks) {
-      $boxes = db_query('SELECT bid FROM {linkchecker_boxes} WHERE lid = %d', $link->lid);
-      while ($box = db_fetch_object($boxes)) {
-        $links[] = l(t('Edit block @block', array('@block' => $box->bid)), 'admin/build/block/configure/block/' . $box->bid, array('query' => drupal_get_destination()));
+      foreach ($bids as $bid) {
+        $links[] = l(t('Edit block @block', array('@block' => $bid)), 'admin/build/block/configure/block/' . $bid, array('query' => drupal_get_destination()));
       }
     }
 
     // Show link to redirect this broken internal link.
     if (module_exists('path_redirect') && $access_administer_redirects && _linkchecker_is_internal_url($link)) {
-      $links[] = l(t('Create redirection'), 'admin/build/path-redirect/add', array('query' => array('src' => $link->internal)));
+      $links[] = l(t('Create redirection'), 'admin/build/path-redirect/add', array('query' => array('source' => $link->internal)));
     }
 
     // Create table data for output. Use inline styles to prevent extra CSS file.
@@ -188,7 +184,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#type' => 'fieldset',
     '#title' => t('Settings'),
     '#collapsible' => FALSE,
-    '#description' => t('The link <a href="@url">@url</a> has been checked lastly at @last_checked and failed @fail_count times.', array('@url' => $link['url'], '@fail_count' => $link['fail_count'], '@last_checked' => format_date($link['last_checked'])))
+    '#description' => t('The link <a href="@url">@url</a> was last checked on @last_checked and failed @fail_count times.', array('@url' => $link['url'], '@fail_count' => $link['fail_count'], '@last_checked' => format_date($link['last_checked'])))
   );
 
   $form['settings']['lid'] = array('#type' => 'hidden', '#value' => $link['lid']);
@@ -209,7 +205,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#default_value' => $link['status'],
     '#type' => 'checkbox',
     '#title' => t('Check link status'),
-    '#description' => t("Disable this checkbox if you don't like to get informed any longer about this broken link. Use this setting only as the very last option if there is no other way to solve a failed link check."),
+    '#description' => t("Uncheck if you wish to ignore this link. Use this setting only as a last resort if there is no other way to solve a failed link check."),
   );
 
   $form['maintenance'] = array(
@@ -222,7 +218,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#default_value' => 0,
     '#type' => 'checkbox',
     '#title' => t('Re-check link status on next cron run'),
-    '#description' => t('Enable this checkbox if you need an immediate re-check of the link and cannot wait until the next scheduled check at @date.', array('@date' => format_date($link['last_checked'] + variable_get('linkchecker_check_links_interval', 2419200)))),
+    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link['last_checked'] + variable_get('linkchecker_check_links_interval', 2419200)))),
   );
 
   $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
