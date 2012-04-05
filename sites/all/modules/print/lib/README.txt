@@ -1,4 +1,6 @@
-// $Id: README.txt,v 1.1.4.2 2009/04/27 22:53:50 jcnventura Exp $
+Instead of placing the downloaded external libs (such as TCPDF, dompdf,
+etc.) used by the print module here, you should place them in
+sites/all/libraries.
 
-This directory should be used to place the downloaded external libs used by
-the print module (such as TCPDF, dompdf, etc.).
+This directory is still a valid location for them, however. The Libraries
+API module library path is also valid.

@@ -1,5 +1,4 @@
 <?php
-// $Id: print_mail.module,v 1.1.2.54 2010/08/21 23:11:03 jcnventura Exp $
 
 /**
  * @file
@@ -24,7 +23,7 @@ define('PRINT_MAIL_LINK_USE_ALIAS_DEFAULT', 0);
 define('PRINT_MAIL_BOOK_LINK_DEFAULT', 1);
 define('PRINT_MAIL_HOURLY_THRESHOLD', 3);
 define('PRINT_MAIL_TEASER_DEFAULT_DEFAULT', 1);
-define('PRINT_MAIL_TEASER_CHOICE_DEFAULT', 1);
+define('PRINT_MAIL_TEASER_CHOICE_DEFAULT', 0);
 define('PRINT_MAIL_SEND_OPTION_DEFAULT', 'sendpage');
 define('PRINT_MAIL_JOB_QUEUE_DEFAULT', 0);
 
@@ -32,7 +31,7 @@ define('PRINT_MAIL_JOB_QUEUE_DEFAULT', 0);
  * Implementation of hook_perm().
  */
 function print_mail_perm() {
-  return array('access send to friend');
+  return array('access send by email', 'send unlimited emails');
 }
 
 /**
@@ -57,11 +56,11 @@ function print_mail_menu() {
   $items = array();
 
   $items[PRINTMAIL_PATH] = array(
-    'title' => 'Send page by e-mail',
+    'title' => variable_get('print_mail_text_title', 'Send page by email'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('print_mail_form'),
     'access callback' => '_print_mail_access',
-    'access arguments' => array('access send to friend'),
+    'access arguments' => array('access send by email'),
     'type' => MENU_CALLBACK,
     'file' => 'print_mail.inc',
   );
@@ -69,7 +68,7 @@ function print_mail_menu() {
     'access callback' => FALSE,
   );
   $items['admin/settings/print/email'] = array(
-    'title' => 'e-mail',
+    'title' => 'email',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('print_mail_settings'),
     'access arguments'  => array('administer print'),
@@ -113,7 +112,7 @@ function print_mail_block($op = 'list', $delta = 0, $edit = array()) {
       switch ($delta) {
       case 0:
         $block['subject'] = t('Most emailed');
-        $result = db_query_range("SELECT path FROM {print_mail_page_counter} ORDER BY sentcount DESC", 0, 3);
+        $result = db_query_range("SELECT path FROM {print_mail_page_counter} LEFT JOIN {node} ON path = CONCAT('node/', node.nid) WHERE status != 0 OR status IS NULL ORDER BY sentcount DESC", 0, 3);
         if (db_affected_rows()) {
           $block['content'] = '<div class="item-list"><ul>';
           while ($obj = db_fetch_object($result)) {
@@ -213,14 +212,18 @@ function print_mail_nodeapi(&$node, $op = 'view', $teaser, $page) {
       }
       break;
     case 'load':
-      _print_mail_set_node_fields($node);
+      $res = db_fetch_object(db_query("SELECT link, comments, url_list FROM {print_mail_node_conf} WHERE nid = %d", $node->nid));
+
+      $node->print_mail_display = $res ? intval($res->link) : variable_get('print_mail_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
+      $node->print_mail_display_comment = $res ? intval($res->comments) : variable_get('print_mail_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
+      $node->print_mail_display_urllist = $res ? intval($res->url_list) : variable_get('print_mail_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
       break;
     case 'insert':
     case 'update':
       if (user_access('administer print') || user_access('node-specific print configuration')) {
-        if ($node->print_mail_display === NULL) $node->print_mail_display = variable_get('print_mail_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
-        if ($node->print_mail_display_comment === NULL) $node->print_mail_display_comment = variable_get('print_mail_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
-        if ($node->print_mail_display_urllist === NULL) $node->print_mail_display_urllist = variable_get('print_mail_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
+        if (!isset($node->print_mail_display)) $node->print_mail_display = variable_get('print_mail_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
+        if (!isset($node->print_mail_display_comment)) $node->print_mail_display_comment = variable_get('print_mail_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
+        if (!isset($node->print_mail_display_urllist)) $node->print_mail_display_urllist = variable_get('print_mail_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
 
         _print_mail_node_conf_modify($node->nid, $node->print_mail_display, $node->print_mail_display_comment, $node->print_mail_display_urllist);
       }
@@ -241,7 +244,7 @@ function print_mail_form_alter(&$form, $form_state, $form_id) {
       (isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form_id))) {
     $form['print']['mail_label'] = array(
       '#type' => 'markup',
-      '#value' => '<p><strong>'. t('Send by e-mail') .'</strong></p>',
+      '#value' => '<p><strong>'. t('Send by email') .'</strong></p>',
     );
 
     $form['print']['print_mail_display'] = array(
@@ -276,7 +279,7 @@ function print_mail_form_alter(&$form, $form_state, $form_id) {
  */
 function print_mail_job_queue_functions() {
   $functions['print_mail'] = array(
-   'title' => t('Send to friend'),
+   'title' => t('Send by email'),
   );
   return $functions;
 }
@@ -292,40 +295,31 @@ function print_mail_job_queue_functions() {
 function _print_mail_access($permission) {
   $page_access = TRUE;
   $parts = explode('/', $_GET['q']);
-  if (count($parts) > 1) {
-    unset($parts[0]);
-    $path = implode('/', $parts);
-    if (is_numeric($parts[1])) {
-      $path = 'node/'. $path;
-    }
-    else {
-      $path = drupal_get_normal_path($path);
-    }
-    // If the destination page is not accessible, don't show the form
-    if (!($router_item = menu_get_item($path)) || (!$router_item['access'])) {
-      $page_access = FALSE;
+  if ($parts[0] == PRINTMAIL_PATH) {
+    if (count($parts) > 1) {
+      unset($parts[0]);
+      $path = implode('/', $parts);
+      if (ctype_digit($parts[1])) {
+        if (drupal_lookup_path('source', $path)) {
+          // This is a numeric alias
+          $path = drupal_get_normal_path($path);
+        }
+        else {
+          // normal nid
+          $path = 'node/' . $path;
+        }
+      }
+      else {
+        $path = drupal_get_normal_path($path);
+      }
+      // If the destination page is not accessible, don't show the form
+      if (!($router_item = menu_get_item($path)) || (!$router_item['access'])) {
+        $page_access = FALSE;
+      }
     }
   }
 
   return (user_access($permission) && $page_access);
-}
-
-/**
- * Auxiliary function to assign the per-node settings to the node object fields
- *
- * @param $node
- *   node to be modified
- */
-function _print_mail_set_node_fields(&$node) {
-  if (isset($node->nid)) {
-    $res = db_fetch_object(db_query("SELECT link, comments, url_list FROM {print_mail_node_conf} WHERE nid = %d", $node->nid));
-  }
-  else {
-    $res = FALSE;
-  }
-  $node->print_mail_display = $res ? intval($res->link) : variable_get('print_mail_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
-  $node->print_mail_display_comment = $res ? intval($res->comments) : variable_get('print_mail_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
-  $node->print_mail_display_urllist = $res ? intval($res->url_list) : variable_get('print_mail_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
 }
 
 /**
@@ -349,7 +343,7 @@ function _print_mail_node_conf_modify($nid, $link, $comments, $url_list) {
 }
 
 /**
- * Format the send by e-mail link
+ * Format the send by email link
  *
  * @return
  *   array of formatted attributes
@@ -358,10 +352,10 @@ function _print_mail_node_conf_modify($nid, $link, $comments, $url_list) {
 function theme_print_mail_format_link() {
   $print_mail_link_class  = variable_get('print_mail_link_class', PRINT_MAIL_LINK_CLASS_DEFAULT);
   $print_mail_show_link = variable_get('print_mail_show_link', PRINT_MAIL_SHOW_LINK_DEFAULT);
-  $print_mail_link_text = filter_xss(variable_get('print_mail_link_text', t('Send to friend')));
+  $print_mail_link_text = filter_xss(variable_get('print_mail_link_text', t('Send by email')));
 
   $img = drupal_get_path('module', 'print') .'/icons/mail_icon.gif';
-  $title = t('Send this page by e-mail.');
+  $title = t('Send this page by email.');
   $class = strip_tags($print_mail_link_class);
   $new_window = FALSE;
   $format = _print_format_link_aux($print_mail_show_link, $print_mail_link_text, $img);
@@ -373,7 +367,7 @@ function theme_print_mail_format_link() {
 }
 
 /**
- * Auxiliary function to display a formatted send by e-mail link
+ * Auxiliary function to display a formatted send by email link
  *
  * Function made available so that developers may call this function from
  * their defined pages/blocks.
@@ -436,7 +430,7 @@ function print_mail_insert_link($path = NULL, $node = NULL) {
 }
 
 /**
- * Determine a the link to send by e-mail is allowed depending on all possible settings
+ * Determine a the link to send by email is allowed depending on all possible settings
  *
  * @param $args
  *   array containing the possible parameters:
@@ -448,13 +442,13 @@ function print_mail_insert_link($path = NULL, $node = NULL) {
  */
 function print_mail_link_allowed($args) {
   if ((!empty($args['teaser']) && !variable_get('print_mail_link_teaser', PRINT_MAIL_LINK_TEASER_DEFAULT))
-      || !user_access('access send to friend')) {
+      || !user_access('access send by email')) {
     // If the teaser link is disabled or the user is not allowed
     return FALSE;
   }
   if (!empty($args['path'])) {
     $nid = preg_replace('!^node/!', '', drupal_get_normal_path($args['path']));
-    if (is_numeric($nid)) {
+    if (ctype_digit($nid)) {
       $args['node'] = node_load($nid);
     }
   }
@@ -475,15 +469,19 @@ function print_mail_link_allowed($args) {
     }
     elseif (isset($args['type']) && ($args['type'] == 'comment') && isset($node_type)) {
       // Link is for a comment, return the configured setting
-      $res = db_fetch_object(db_query("SELECT comments FROM {print_mail_node_conf} WHERE nid = %d", $node->nid));
-      $print_display_comment = $res ? intval($res->comments) : variable_get('print_mail_display_comment_'. $node_type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
+      // Cache this statically to avoid duplicate queries for every comment.
+      static $res = array();
+      if (!isset($res[$node->nid])) {
+        $res[$node->nid] = db_fetch_object(db_query("SELECT comments FROM {print_mail_node_conf} WHERE nid = %d", $node->nid));
+      }
+      $print_display_comment = $res ? intval($res[$node->nid]->comments) : variable_get('print_mail_display_comment_'. $node_type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
       if ($print_display_comment) {
         return PRINT_ALLOW_NORMAL_LINK;
       }
     }
     else {
       // Node link
-      if (!$node->print_mail_display) {
+      if (isset($node->print_mail_display) && !$node->print_mail_display) {
         // Link for this node is disabled
         return FALSE;
       }
@@ -513,4 +511,149 @@ function print_mail_link_allowed($args) {
     return _print_page_match($print_mail_sys_link_visibility, $_GET['q'], $print_mail_sys_link_pages);
   }
   return FALSE;
+}
+
+/**
+ * Implementation of hook_nollom_form_list().
+ */
+function print_mail_mollom_form_list() {
+  $forms['print_mail_form'] = array(
+    'title' => t('Send page form'),
+    'entity' => 'print_mail',
+  );
+  return $forms;
+}
+
+/**
+ * Implementation of hook_mollom_form_info().
+ */
+function print_mail_mollom_form_info($form_id) {
+  switch ($form_id) {
+    case 'print_mail_form':
+      $form_info = array(
+        'elements' => array(
+          'fld_from_addr' => t('Sender email'),
+          'fld_from_name' => t('Sender name'),
+          'txt_to_addrs' => t('Recipients'),
+          'fld_subject' => t('Subject'),
+          'fld_title' => t('Page to be sent'),
+          'txt_message' => t('Your message'),
+        ),
+        'mapping' => array(
+          'post_title' => 'fld_title',
+          'author_name' => 'fld_from_name',
+          'author_mail' => 'fld_from_addr',
+        ),
+      );
+      break;
+  }
+  return $form_info;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function print_mail_views_api() {
+  return array(
+    'api' => 2.0,
+    'path' => drupal_get_path('module', 'print_mail'),
+  );
+}
+
+/**
+ * Implements hook_views_data_alter().
+ *
+ * Provide a new option the views sorts for the number of times
+ *  a node has been emailed.
+ */
+function print_mail_views_data_alter(&$data) {
+  $data['node']['print_mail_sentcount'] = array(
+    'title' => t('Number of times emailed'),
+    'help' => t("The total number of times the node has been sent through print module's send by email feature."),
+    'sort' => array(
+      'handler' => 'views_handler_sort_print_mail_sentcount',
+    ),
+  );
+}
+
+/**
+ * Implements hook_rules_action_info().
+ * @ingroup rules
+ */
+function print_mail_rules_action_info() {
+  return array(
+    'print_mail_action_submit' => array(
+      'label' => t('Send node as HTML formated email'),
+      'module' => 'Node',
+      'eval input' => array('to', 'from', 'subject', 'message'),
+      'arguments' => array(
+        'node' => array('type' => 'node', 'label' => t('Content')),
+      ),
+    ),
+  );
+}
+
+function print_mail_action_submit_form($settings, &$form) {
+  $settings += array('from' => '', 'from_name' => '', 'to' => '', 'subject' => '', 'message' => '');
+
+  $form['settings']['from'] = array(
+    '#type' => 'textfield',
+    '#title' => t('From email adress'),
+    '#default_value' => $settings['from'],
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  $form['settings']['from_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('From name'),
+    '#default_value' => $settings['from_name'],
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  $form['settings']['to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send email to'),
+    '#default_value' => $settings['to'],
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  $form['settings']['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $settings['subject'],
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  $form['settings']['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message'),
+    '#default_value' => $settings['message'],
+    '#description' => t('The message that should be displayed.'),
+  );
+}
+
+/**
+ * Action handler for the print_mail_action_submit
+ * @ingroup rules
+ */
+function print_mail_action_submit($node, $settings) {
+  require_once(drupal_get_path('module', 'print_mail') . '/print_mail.inc');
+
+  $form_state['values'] = array(
+    'path' => 'node/' . $node->nid,
+    'cid' => NULL,
+    'title' => $node->title,
+    'fld_from_addr' => $settings['from'],
+    'fld_from_name' => $settings['from_name'],
+    'txt_to_addrs' => $settings['to'],
+    'fld_subject' => $settings['subject'],
+    'txt_message' => $settings['message'],
+    'chk_teaser' => FALSE,
+  );
+
+  print_mail_form_submit(NULL, $form_state);
 }

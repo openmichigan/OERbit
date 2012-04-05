@@ -125,4 +125,3 @@ ACKNOWLEDGMENTS
 The print, pdf and mail icons are copyright Plone Foundation. Thanks for
 letting me use them!
 
-// $Id: README.txt,v 1.7.2.9 2009/02/19 23:39:14 jcnventura Exp $

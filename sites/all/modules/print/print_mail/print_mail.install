@@ -1,5 +1,4 @@
 <?php
-// $Id: print_mail.install,v 1.1.2.18 2010/08/17 23:10:43 jcnventura Exp $
 
 /**
  * @file
@@ -39,11 +38,13 @@ function print_mail_uninstall() {
   variable_del('print_mail_teaser_choice');
   variable_del('print_mail_link_text');
   variable_del('print_mail_link_use_alias');
+  variable_del('print_mail_text_title');
   variable_del('print_mail_text_confirmation');
   variable_del('print_mail_text_message');
   variable_del('print_mail_text_subject');
   variable_del('print_mail_text_content');
   variable_del('print_mail_job_queue');
+  variable_del('print_mail_display_sys_urllist');
   $settings = db_query("SELECT name FROM {variable} WHERE name LIKE 'print\_mail\_display\_%'");
   while ($variable = db_fetch_object($settings)) {
     variable_del($variable->name);
@@ -236,7 +237,7 @@ function print_mail_update_6003() {
   // Delete custom text strings set to the default
   $ret = array();
   $vars = array(
-    'print_mail_link_text' => 'Send to friend',
+    'print_mail_link_text' => 'Send by email',
     'print_mail_text_subject' => '!user has sent you a message from !site',
     'print_mail_text_message' => 'Message from sender',
     'print_mail_text_content' => '',
@@ -259,12 +260,12 @@ function print_mail_update_6003() {
  * Update to version 6.x-1.8
  */
 function print_mail_update_6004() {
-  // add new 'access send to friend' permission to any role which has 'access print'
+  // add new 'access send by email' permission to any role which has 'access print'
   $ret = array();
   $dbret = db_query('SELECT * FROM {permission}');
   while ($role = db_fetch_object($dbret)) {
     if ((strpos($role->perm, 'access print') !== FALSE)) {
-      $role->perm = db_escape_string('access send to friend, '. $role->perm);
+      $role->perm = db_escape_string('access send by email, '. $role->perm);
       $ret[] = update_sql("UPDATE {permission} SET perm = '$role->perm' WHERE rid = $role->rid");
     }
   }
@@ -302,20 +303,7 @@ function print_mail_update_6007() {
     $print_mail_display_comment = variable_get('print_mail_display_comment_'. $value->type, 0);
     $print_mail_display_urllist = variable_get('print_mail_display_urllist_'. $value->type, 1);
 
-    if (!$print_mail_display || $print_mail_display_comment || !$print_mail_display_urllist) {
-      $result = db_query("SELECT n.nid, link, comments, url_list from {node} AS n LEFT JOIN {print_mail_node_conf} AS pnc ON n.nid = pnc.nid WHERE type = '%s'", $value->type);
-      while ($conf = db_fetch_object($result)) {
-        if (($conf->link != NULL) && ($conf->comments != NULL) && ($conf->url_list != NULL)) {
-          $conf->link = !$print_mail_display ? 0 : $conf->link;
-          $conf->comments = $print_mail_display_comment ? 1 : $conf->comments;
-          $conf->url_list = !$print_mail_display_urllist ? 0 : $conf->url_list;
-          $ret[] = update_sql("UPDATE {print_mail_node_conf} SET link = $conf->link, comments = $conf->comments, url_list = $conf->url_list WHERE nid = $conf->nid");
-        }
-        else {
-          $ret[] = update_sql("INSERT INTO {print_mail_node_conf} (nid, link, comments, url_list) VALUES ($conf->nid, $print_mail_display, $print_mail_display_comment, $print_mail_display_urllist)");
-        }
-      }
-    }
+    $ret[] = update_sql("UPDATE {print_mail_node_conf} SET link = (link AND $print_mail_display), comments = (comments OR $print_mail_display_comment), url_list = (url_list AND $print_mail_display_urllist) WHERE nid IN (SELECT nid FROM {node} WHERE type = '$value->type');");
   }
   return $ret;
 }
