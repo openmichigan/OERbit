@@ -1,8 +1,7 @@
 <?php
-// $Id: print.module,v 1.25.2.97 2010/08/21 23:11:03 jcnventura Exp $
 
 /**
- * @defgroup print Printer, e-mail and PDF versions
+ * @defgroup print Printer, email and PDF versions
  *
  * Welcome to the print module developer's documentation. The interesting
  * functions for themers are those that start with 'theme_'.
@@ -13,7 +12,7 @@
  *   - @link print.pages.inc HTML generation @endlink
  *   - @link print.install (Un)Install routines @endlink
  *   - @link print.tpl.php Page generation template @endlink
- * - Send by e-mail
+ * - Send by email
  *   - @link print_mail.module Module main file @endlink
  *   - @link print_mail.admin.inc Settings form @endlink
  *   - @link print_mail.inc Mail form and send mail routine @endlink
@@ -46,6 +45,7 @@ define('PRINT_LOGO_URL_DEFAULT', '');
 define('PRINT_FOOTER_OPTIONS_DEFAULT', 1);
 define('PRINT_FOOTER_USER_DEFAULT', '');
 define('PRINT_CSS_DEFAULT', '');
+define('PRINT_KEEP_THEME_CSS_DEFAULT', 0);
 define('PRINT_URLS_DEFAULT', 1);
 define('PRINT_URLS_ANCHORS_DEFAULT', 0);
 define('PRINT_COMMENTS_DEFAULT', 0);
@@ -76,6 +76,7 @@ define('PRINT_ROBOTS_NOARCHIVE_DEFAULT', 0);
 define('PRINT_TYPE_SHOW_LINK_DEFAULT', 1);
 define('PRINT_TYPE_COMMENT_LINK_DEFAULT', 0);
 define('PRINT_TYPE_URLLIST_DEFAULT', 1);
+define('PRINT_TYPE_SYS_URLLIST_DEFAULT', 0);
 
 define('PRINT_ALLOW_NORMAL_LINK', 1);
 define('PRINT_ALLOW_BOOK_LINK', 2);
@@ -119,9 +120,30 @@ function print_theme_registry_alter(&$theme_registry) {
  * Implementation of hook_preprocess_HOOK().
  */
 function print_preprocess_print_node(&$variables) {
+  static $hooks = NULL;
+  if (!isset($hooks)) {
+    init_theme();
+    $hooks = theme_get_registry();
+  }
+
+  //Stolen from theme() so that ALL preprocess functions are called
+  $info = $hooks['node'];
+  if (isset($info['preprocess functions']) && is_array($info['preprocess functions'])) {
+    // This construct ensures that we can keep a reference through
+    // call_user_func_array.
+    $args = array(&$variables, $hook);
+    foreach ($info['preprocess functions'] as $preprocess_function) {
+      if (function_exists($preprocess_function)) {
+        call_user_func_array($preprocess_function, $args);
+      }
+    }
+  }
+  $variables += $args[0];
+
+  //Include the right template suggestions based on format (print, email) and type.
   $format = $variables['type'];
   $type = $variables['node']->type;
-  template_preprocess_node($variables);
+
   $variables['template_files'][] = "node";
   $variables['template_files'][] = "node-$type";
   $variables['template_files'][] = "print_node";
@@ -133,20 +155,39 @@ function print_preprocess_print_node(&$variables) {
  * Implementation of hook_preprocess_HOOK().
  */
 function print_preprocess_print_page(&$variables) {
+  static $hooks = NULL;
+  if (!isset($hooks)) {
+    init_theme();
+    $hooks = theme_get_registry();
+  }
+
+  $variables['show_blocks'] = FALSE;
+  $variables['show_messages'] = FALSE;
+
+  //Stolen from theme() so that ALL preprocess functions are called
+  $info = $hooks['page'];
+  if (isset($info['preprocess functions']) && is_array($info['preprocess functions'])) {
+    // This construct ensures that we can keep a reference through
+    // call_user_func_array.
+    $args = array(&$variables, $hook);
+    foreach ($info['preprocess functions'] as $preprocess_function) {
+      if (function_exists($preprocess_function)) {
+        call_user_func_array($preprocess_function, $args);
+      }
+    }
+  }
+  $variables += $args[0];
+
   $format = $variables['type'];
-  if (isset($variables['node']->type)) {
-    $type = $variables['node']->type;
-    $variables['show_blocks'] = FALSE;
-    $variables['show_messages'] = FALSE;
-    template_preprocess_page($variables);
-  }
-  else {
-    $type = '';
-  }
+  $type = (isset($variables['node']->type)) ? $variables['node']->type : '';
+  $nid = (isset($variables['node']->nid)) ? $variables['node']->nid : '';
+
   $variables['template_files'][] = "print";
   $variables['template_files'][] = "print.node-$type";
+  $variables['template_files'][] = "print.node-$type-$nid";
   $variables['template_files'][] = "print_$format";
   $variables['template_files'][] = "print_$format.node-$type";
+  $variables['template_files'][] = "print_$format.node-$type-$nid";
 }
 
 /**
@@ -166,7 +207,7 @@ function print_menu() {
     'access callback' => FALSE,
   );
   $items['admin/settings/print'] = array(
-    'title' => 'Printer, e-mail and PDF versions',
+    'title' => 'Printer, email and PDF versions',
     'description' => 'Adds a printer-friendly version link to content and administrative pages.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('print_html_settings'),
@@ -225,7 +266,7 @@ function print_menu() {
 function print_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
     case 'list':
-      $block[0]['info'] = t('Printer, e-mail and PDF versions');
+      $block[0]['info'] = t('Printer, email and PDF versions');
       $block[0]['cache'] = BLOCK_CACHE_PER_PAGE;
       $block[1]['info'] = t('Most printed');
       $block[1]['cache'] = BLOCK_CACHE_GLOBAL;
@@ -237,36 +278,41 @@ function print_block($op = 'list', $delta = 0, $edit = array()) {
       return;
     case 'view':
       switch ($delta) {
-      case 0:
-      $nid = preg_replace('!^node/!', '', $_GET['q']);
-      if (is_numeric($nid)) {
-        $node = node_load($nid);
-      }
-      else {
-        $node = NULL;
-      }
-      $funcs = get_defined_functions();
-      $block['content'] = '';
-      foreach ($funcs['user'] as $func) {
-        if (preg_match('!^print.*?_insert_link$!', $func)) {
-          $link = $func(NULL, $node);
-          if (!empty($link)) {
-            $block['content'] .= $link;
+        case 0:
+          $nid = preg_replace('!^node/!', '', $_GET['q']);
+          if (ctype_digit($nid)) {
+            $node = node_load($nid);
+            if (!node_access('view', $node)) {
+              // If the user doesn't have access to the node, don't show any links
+              $block['content'] == '';
+              return;
+            }
           }
-        }
-      }
-        break;
-      case 1:
-        $block['subject'] = t('Most printed');
-        $result = db_query_range("SELECT path FROM {print_page_counter} ORDER BY totalcount DESC", 0, 3);
-        if (db_affected_rows()) {
-          $block['content'] = '<div class="item-list"><ul>';
-          while ($obj = db_fetch_object($result)) {
-            $block['content'] .= '<li>'. l(_print_get_title($obj->path), $obj->path) .'</li>';
+          else {
+            $node = NULL;
           }
-          $block['content'] .= '</ul></div>';
-        }
-        break;
+          $funcs = get_defined_functions();
+          $block['content'] = '';
+          foreach ($funcs['user'] as $func) {
+            if (preg_match('!^print.*?_insert_link$!', $func)) {
+              $link = $func(NULL, $node);
+              if (!empty($link)) {
+                $block['content'] .= $link;
+              }
+            }
+          }
+          break;
+        case 1:
+          $block['subject'] = t('Most printed');
+          $result = db_query_range("SELECT path FROM {print_page_counter} LEFT JOIN {node} ON path = CONCAT('node/', node.nid) WHERE status != 0 OR status IS NULL ORDER BY totalcount DESC", 0, 3);
+          if (db_affected_rows()) {
+            $block['content'] = '<div class="item-list"><ul>';
+            while ($obj = db_fetch_object($result)) {
+              $block['content'] .= '<li>'. l(_print_get_title($obj->path), $obj->path) .'</li>';
+            }
+            $block['content'] .= '</ul></div>';
+          }
+          break;
       }
       return $block;
       break;
@@ -399,14 +445,18 @@ function print_nodeapi(&$node, $op = 'view', $teaser, $page) {
       }
       break;
     case 'load':
-      _print_set_node_fields($node);
+      $res = db_fetch_object(db_query("SELECT link, comments, url_list FROM {print_node_conf} WHERE nid = %d", $node->nid));
+
+      $node->print_display = $res ? intval($res->link) : variable_get('print_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
+      $node->print_display_comment = $res ? intval($res->comments) : variable_get('print_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
+      $node->print_display_urllist = $res ? intval($res->url_list) : variable_get('print_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
       break;
     case 'insert':
     case 'update':
       if (user_access('administer print') || user_access('node-specific print configuration')) {
-        if ($node->print_display === NULL) $node->print_display = variable_get('print_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
-        if ($node->print_display_comment === NULL) $node->print_display_comment = variable_get('print_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
-        if ($node->print_display_urllist === NULL) $node->print_display_urllist = variable_get('print_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
+        if (!isset($node->print_display)) $node->print_display = variable_get('print_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
+        if (!isset($node->print_display_comment)) $node->print_display_comment = variable_get('print_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
+        if (!isset($node->print_display_urllist)) $node->print_display_urllist = variable_get('print_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
 
         _print_node_conf_modify($node->nid, $node->print_display, $node->print_display_comment, $node->print_display_urllist);
       }
@@ -427,7 +477,7 @@ function print_form_alter(&$form, $form_state, $form_id) {
       (isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form_id))) {
     $form['print'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Printer, e-mail and PDF versions'),
+      '#title' => t('Printer, email and PDF versions'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#weight' => (function_exists('content_extra_field_weight') && isset($form['type'])) ? content_extra_field_weight($form['type']['#value'], 'print') : PRINT_TYPE_FIELDS_WEIGHT,
@@ -471,7 +521,7 @@ function print_form_alter(&$form, $form_state, $form_id) {
  */
 function print_content_extra_fields($type_name) {
   $fields['print'] = array(
-    'label' => t('Printer, e-mail and PDF versions'),
+    'label' => t('Printer, email and PDF versions'),
     'description' => t('Print module form.'),
     'weight' => PRINT_TYPE_FIELDS_WEIGHT,
   );
@@ -496,24 +546,6 @@ function print_content_build_modes() {
 }
 
 /**
- * Auxiliary function to assign the per-node settings to the node object fields
- *
- * @param $node
- *   node to be modified
- */
-function _print_set_node_fields(&$node) {
-  if (isset($node->nid)) {
-    $res = db_fetch_object(db_query("SELECT link, comments, url_list FROM {print_node_conf} WHERE nid = %d", $node->nid));
-  }
-  else {
-    $res = FALSE;
-  }
-  $node->print_display = $res ? intval($res->link) : variable_get('print_display_'. $node->type, PRINT_TYPE_SHOW_LINK_DEFAULT);
-  $node->print_display_comment = $res ? intval($res->comments) : variable_get('print_display_comment_'. $node->type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
-  $node->print_display_urllist = $res ? intval($res->url_list) : variable_get('print_display_urllist_'. $node->type, PRINT_TYPE_URLLIST_DEFAULT);
-}
-
-/**
  * Auxiliary function to discover a given page's title
  *
  * @param $path
@@ -524,7 +556,7 @@ function _print_set_node_fields(&$node) {
 function _print_get_title($path) {
   $path = drupal_get_normal_path($path);
   $nid = preg_replace('!^node/!', '', $path);
-  if (is_numeric($nid)) {
+  if (ctype_digit($nid)) {
     $res = db_fetch_object(db_query("SELECT title FROM {node} WHERE nid = %d", $nid));
     return $res->title;
   }
@@ -768,7 +800,7 @@ function print_link_allowed($args) {
   }
   if (!empty($args['path'])) {
     $nid = preg_replace('!^node/!', '', drupal_get_normal_path($args['path']));
-    if (is_numeric($nid)) {
+    if (ctype_digit($nid)) {
       $args['node'] = node_load($nid);
     }
   }
@@ -789,15 +821,19 @@ function print_link_allowed($args) {
     }
     elseif (isset($args['type']) && ($args['type'] == 'comment') && isset($node_type)) {
       // Link is for a comment, return the configured setting
-      $res = db_fetch_object(db_query("SELECT comments FROM {print_node_conf} WHERE nid = %d", $node->nid));
-      $print_display_comment = $res ? intval($res->comments) : variable_get('print_display_comment_'. $node_type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
+      // Cache this statically to avoid duplicate queries for every comment.
+      static $res = array();
+      if (!isset($res[$node->nid])) {
+        $res[$node->nid] = db_fetch_object(db_query("SELECT comments FROM {print_node_conf} WHERE nid = %d", $node->nid));
+      }
+      $print_display_comment = $res ? intval($res[$node->nid]->comments) : variable_get('print_display_comment_'. $node_type, PRINT_TYPE_COMMENT_LINK_DEFAULT);
       if ($print_display_comment) {
         return PRINT_ALLOW_NORMAL_LINK;
       }
     }
     else {
       // Node link
-      if (!$node->print_display) {
+      if (isset($node->print_display) && !$node->print_display) {
         // Link for this node is disabled
         return FALSE;
       }

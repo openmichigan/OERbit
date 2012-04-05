@@ -1,5 +1,4 @@
 <?php
-// $Id: print_basic.test,v 1.4.2.7 2010/01/11 19:55:52 jcnventura Exp $
 
 /**
  * @file
@@ -19,9 +18,9 @@ class PrintBasicTest extends DrupalWebTestCase {
    */
   function getInfo() {
     return array(
-      'name' => t('Printer, e-mail and PDF versions tests'),
+      'name' => t('Printer, email and PDF versions tests'),
       'description' => t('Unit tests for the print, print_mail and print_pdf modules.'),
-      'group' => t('Printer, e-mail and PDF versions'),
+      'group' => t('Printer, email and PDF versions'),
     );
   }
 

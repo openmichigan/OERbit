@@ -1,5 +1,4 @@
 <?php
-// $Id: print.install,v 1.1.4.26 2010/08/17 23:10:43 jcnventura Exp $
 
 /**
  * @file
@@ -36,6 +35,7 @@ function print_uninstall() {
   variable_del('print_logo_url');
   variable_del('print_logo_options');
   variable_del('print_css');
+  variable_del('print_keep_theme_css');
   variable_del('print_urls');
   variable_del('print_urls_anchors');
   variable_del('print_comments');
@@ -55,6 +55,7 @@ function print_uninstall() {
   variable_del('print_html_new_window');
   variable_del('print_html_sendtoprinter');
   variable_del('print_html_windowclose');
+  variable_del('print_display_sys_urllist');
   variable_del('print_robots_noindex');
   variable_del('print_robots_nofollow');
   variable_del('print_robots_noarchive');
@@ -62,8 +63,6 @@ function print_uninstall() {
   variable_del('print_footer_user');
   variable_del('print_html_link_text');
   variable_del('print_html_link_use_alias');
-  variable_del('print_text_by');
-  variable_del('print_text_created');
   variable_del('print_text_links');
   variable_del('print_text_published');
   variable_del('print_text_retrieved');
@@ -364,19 +363,34 @@ function print_update_6007() {
     $print_display_comment = variable_get('print_display_comment_'. $value->type, 0);
     $print_display_urllist = variable_get('print_display_urllist_'. $value->type, 1);
 
-    if (!$print_display || $print_display_comment || !$print_display_urllist) {
-      $result = db_query("SELECT n.nid, link, comments, url_list from {node} AS n LEFT JOIN {print_node_conf} AS pnc ON n.nid = pnc.nid WHERE type = '%s'", $value->type);
-      while ($conf = db_fetch_object($result)) {
-        if (($conf->link != NULL) && ($conf->comments != NULL) && ($conf->url_list != NULL)) {
-          $conf->link = !$print_display ? 0 : $conf->link;
-          $conf->comments = $print_display_comment ? 1 : $conf->comments;
-          $conf->url_list = !$print_display_urllist ? 0 : $conf->url_list;
-          $ret[] = update_sql("UPDATE {print_node_conf} SET link = $conf->link, comments = $conf->comments, url_list = $conf->url_list WHERE nid = $conf->nid");
-        }
-        else {
-          $ret[] = update_sql("INSERT INTO {print_node_conf} (nid, link, comments, url_list) VALUES ($conf->nid, $print_display, $print_display_comment, $print_display_urllist)");
-        }
-      }
+    $ret[] = update_sql("UPDATE {print_node_conf} SET link = (link AND $print_display), comments = (comments OR $print_display_comment), url_list = (url_list AND $print_display_urllist) WHERE nid IN (SELECT nid FROM {node} WHERE type = '$value->type');");
+  }
+  return $ret;
+}
+
+/**
+ * Update to version 6.x-1.13
+ */
+function print_update_6008() {
+  $ret = array();
+
+  variable_del('print_text_by');
+  variable_del('print_text_created');
+
+  return $ret;
+}
+
+/**
+ * Update permissions to new spellings
+ */
+function print_update_6100() {
+  $ret = array();
+  $result = db_query("SELECT rid, perm FROM {permission} ORDER BY rid");
+  while ($role = db_fetch_object($result)) {
+    $renamed_permission = str_replace('access send to friend', 'access send by email', $role->perm);
+    $renamed_permission = str_replace('send unlimited e-mails', 'send unlimited emails', $renamed_permission);
+    if ($renamed_permission != $role->perm) {
+      $ret[] = update_sql("UPDATE {permission} SET perm = '$renamed_permission' WHERE rid = $role->rid");
     }
   }
   return $ret;

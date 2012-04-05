@@ -1,5 +1,4 @@
 <?php
-// $Id: print_pdf.class.inc,v 1.1.2.3 2009/07/09 12:00:52 jcnventura Exp $
 
 /**
  * @file

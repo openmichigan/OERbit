@@ -1,13 +1,12 @@
-; $Id: print_mail.info,v 1.1.2.2 2008/08/21 22:03:40 jcnventura Exp $
-name = "Send by e-mail"
-description = "Provides the capability to send the web page by e-mail"
+name = "Send by email"
+description = "Provides the capability to send the web page by email"
 dependencies[] = print
 core=6.x
-package = "Printer, e-mail and PDF versions"
+package = "Printer, email and PDF versions"
 
-; Information added by drupal.org packaging script on 2010-08-22
-version = "6.x-1.12"
+; Information added by drupal.org packaging script on 2012-04-04
+version = "6.x-1.15"
 core = "6.x"
 project = "print"
-datestamp = "1282446093"
+datestamp = "1333551070"
 
