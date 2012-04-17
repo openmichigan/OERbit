@@ -11,7 +11,7 @@ function oerbit_core_context_default_contexts() {
   $context->api_version = 3;
   $context->name = 'homepage';
   $context->description = 'The front page of the site';
-  $context->tag = '';
+  $context->tag = 'homepage';
   $context->conditions = array(
     'path' => array(
       'values' => array(
@@ -42,6 +42,7 @@ function oerbit_core_context_default_contexts() {
   // Translatables
   // Included for use with string extractors like potx.
   t('The front page of the site');
+  t('homepage');
   $export['homepage'] = $context;
 
   $context = new stdClass;
@@ -49,7 +50,7 @@ function oerbit_core_context_default_contexts() {
   $context->api_version = 3;
   $context->name = 'sitewide';
   $context->description = 'This context is always active';
-  $context->tag = '';
+  $context->tag = 'sitewide';
   $context->conditions = array(
     'sitewide' => array(
       'values' => array(
@@ -122,6 +123,7 @@ function oerbit_core_context_default_contexts() {
   // Translatables
   // Included for use with string extractors like potx.
   t('This context is always active');
+  t('sitewide');
   $export['sitewide'] = $context;
 
   return $export;

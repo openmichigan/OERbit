@@ -177,26 +177,14 @@ function oerbit_users_user_default_permissions() {
   $permissions['access own webform submissions'] = array(
     'name' => 'access own webform submissions',
     'roles' => array(
-      '0' => 'site administrator',
+      '0' => 'content manager',
+      '1' => 'site administrator',
     ),
   );
 
   // Exported permission: access print
   $permissions['access print'] = array(
     'name' => 'access print',
-    'roles' => array(
-      '0' => 'anonymous user',
-      '1' => 'authenticated user',
-      '2' => 'content manager',
-      '3' => 'resource manager',
-      '4' => 'site administrator',
-      '5' => 'unit manager',
-    ),
-  );
-
-  // Exported permission: access send to friend
-  $permissions['access send to friend'] = array(
-    'name' => 'access send to friend',
     'roles' => array(
       '0' => 'anonymous user',
       '1' => 'authenticated user',
@@ -248,19 +236,13 @@ function oerbit_users_user_default_permissions() {
     ),
   );
 
-  // Exported permission: access webform results
-  $permissions['access webform results'] = array(
-    'name' => 'access webform results',
+  // Exported permission: administer CAPTCHA settings
+  $permissions['administer CAPTCHA settings'] = array(
+    'name' => 'administer CAPTCHA settings',
     'roles' => array(
       '0' => 'content manager',
       '1' => 'site administrator',
     ),
-  );
-
-  // Exported permission: administer CAPTCHA settings
-  $permissions['administer CAPTCHA settings'] = array(
-    'name' => 'administer CAPTCHA settings',
-    'roles' => array(),
   );
 
   // Exported permission: administer actions
@@ -299,7 +281,9 @@ function oerbit_users_user_default_permissions() {
   // Exported permission: administer features
   $permissions['administer features'] = array(
     'name' => 'administer features',
-    'roles' => array(),
+    'roles' => array(
+      '0' => 'site administrator',
+    ),
   );
 
   // Exported permission: administer files
@@ -372,12 +356,6 @@ function oerbit_users_user_default_permissions() {
     'roles' => array(
       '0' => 'site administrator',
     ),
-  );
-
-  // Exported permission: administer menu attributes
-  $permissions['administer menu attributes'] = array(
-    'name' => 'administer menu attributes',
-    'roles' => array(),
   );
 
   // Exported permission: administer news feeds
@@ -515,26 +493,9 @@ function oerbit_users_user_default_permissions() {
     ),
   );
 
-  // Exported permission: clear webform results
-  $permissions['clear webform results'] = array(
-    'name' => 'clear webform results',
-    'roles' => array(
-      '0' => 'content manager',
-      '1' => 'site administrator',
-    ),
-  );
-
   // Exported permission: create url aliases
   $permissions['create url aliases'] = array(
     'name' => 'create url aliases',
-    'roles' => array(
-      '0' => 'site administrator',
-    ),
-  );
-
-  // Exported permission: create webforms
-  $permissions['create webforms'] = array(
-    'name' => 'create webforms',
     'roles' => array(
       '0' => 'site administrator',
     ),
@@ -567,30 +528,6 @@ function oerbit_users_user_default_permissions() {
   // Exported permission: edit own webform submissions
   $permissions['edit own webform submissions'] = array(
     'name' => 'edit own webform submissions',
-    'roles' => array(
-      '0' => 'site administrator',
-    ),
-  );
-
-  // Exported permission: edit own webforms
-  $permissions['edit own webforms'] = array(
-    'name' => 'edit own webforms',
-    'roles' => array(
-      '0' => 'site administrator',
-    ),
-  );
-
-  // Exported permission: edit webform submissions
-  $permissions['edit webform submissions'] = array(
-    'name' => 'edit webform submissions',
-    'roles' => array(
-      '0' => 'site administrator',
-    ),
-  );
-
-  // Exported permission: edit webforms
-  $permissions['edit webforms'] = array(
-    'name' => 'edit webforms',
     'roles' => array(
       '0' => 'site administrator',
     ),
@@ -665,14 +602,6 @@ function oerbit_users_user_default_permissions() {
   // Exported permission: execute Display a message to the user (system_message_action)
   $permissions['execute Display a message to the user (system_message_action)'] = array(
     'name' => 'execute Display a message to the user (system_message_action)',
-    'roles' => array(
-      '0' => 'site administrator',
-    ),
-  );
-
-  // Exported permission: execute Example: Empty rule set working with content (views_bulk_operations_ruleset_action_rules_set_1)
-  $permissions['execute Example: Empty rule set working with content (views_bulk_operations_ruleset_action_rules_set_1)'] = array(
-    'name' => 'execute Example: Empty rule set working with content (views_bulk_operations_ruleset_action_rules_set_1)',
     'roles' => array(
       '0' => 'site administrator',
     ),
@@ -908,7 +837,9 @@ function oerbit_users_user_default_permissions() {
   // Exported permission: manage features
   $permissions['manage features'] = array(
     'name' => 'manage features',
-    'roles' => array(),
+    'roles' => array(
+      '0' => 'site administrator',
+    ),
   );
 
   // Exported permission: node-specific print configuration
@@ -969,14 +900,6 @@ function oerbit_users_user_default_permissions() {
       '1' => 'resource manager',
       '2' => 'site administrator',
       '3' => 'unit manager',
-    ),
-  );
-
-  // Exported permission: use PHP for additional processing
-  $permissions['use PHP for additional processing'] = array(
-    'name' => 'use PHP for additional processing',
-    'roles' => array(
-      '0' => 'site administrator',
     ),
   );
 

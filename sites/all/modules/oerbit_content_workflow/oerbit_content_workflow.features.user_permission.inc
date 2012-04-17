@@ -153,8 +153,7 @@ function oerbit_content_workflow_user_default_permissions() {
     'name' => 'view revisions of any instructor content',
     'roles' => array(
       '0' => 'content manager',
-      '1' => 'resource manager',
-      '2' => 'site administrator',
+      '1' => 'site administrator',
     ),
   );
 
@@ -266,8 +265,9 @@ function oerbit_content_workflow_user_default_permissions() {
     'name' => 'view revisions of own instructor content',
     'roles' => array(
       '0' => 'content manager',
-      '1' => 'site administrator',
-      '2' => 'unit manager',
+      '1' => 'resource manager',
+      '2' => 'site administrator',
+      '3' => 'unit manager',
     ),
   );
 

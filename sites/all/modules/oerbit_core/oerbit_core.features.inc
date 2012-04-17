@@ -77,12 +77,3 @@ function oerbit_core_imagecache_default_presets() {
   );
   return $items;
 }
-
-/**
- * Implementation of hook_views_api().
- */
-function oerbit_core_views_api() {
-  return array(
-    'api' => '2',
-  );
-}

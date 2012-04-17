@@ -10,8 +10,8 @@ function oerbit_acadamic_context_default_contexts() {
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
   $context->name = 'education_section';
-  $context->description = 'Visible within the education path';
-  $context->tag = '';
+  $context->description = 'Visible within the education path, including the /education landing page.';
+  $context->tag = 'education';
   $context->conditions = array(
     'path' => array(
       'values' => array(
@@ -36,7 +36,8 @@ function oerbit_acadamic_context_default_contexts() {
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('Visible within the education path');
+  t('Visible within the education path, including the /education landing page.');
+  t('education');
   $export['education_section'] = $context;
 
   $context = new stdClass;
@@ -44,7 +45,7 @@ function oerbit_acadamic_context_default_contexts() {
   $context->api_version = 3;
   $context->name = 'education_section_nonrecursive';
   $context->description = 'Visible on the education path but not on subpaths';
-  $context->tag = '';
+  $context->tag = 'education';
   $context->conditions = array(
     'path' => array(
       'values' => array(
@@ -61,6 +62,12 @@ function oerbit_acadamic_context_default_contexts() {
           'region' => 'content_bottom',
           'weight' => 0,
         ),
+        'views-find-block_1' => array(
+          'module' => 'views',
+          'delta' => 'find-block_1',
+          'region' => 'content_bottom',
+          'weight' => 1,
+        ),
       ),
     ),
   );
@@ -69,6 +76,7 @@ function oerbit_acadamic_context_default_contexts() {
   // Translatables
   // Included for use with string extractors like potx.
   t('Visible on the education path but not on subpaths');
+  t('education');
   $export['education_section_nonrecursive'] = $context;
 
   $context = new stdClass;
@@ -76,7 +84,7 @@ function oerbit_acadamic_context_default_contexts() {
   $context->api_version = 3;
   $context->name = 'education_section_nonrecursive_roles';
   $context->description = 'Visible on the education path but not on subpaths, only to certain roles';
-  $context->tag = '';
+  $context->tag = 'education';
   $context->conditions = array(
     'path' => array(
       'values' => array(
@@ -90,23 +98,13 @@ function oerbit_acadamic_context_default_contexts() {
       ),
     ),
   );
-  $context->reactions = array(
-    'block' => array(
-      'blocks' => array(
-        'views-find-block_2' => array(
-          'module' => 'views',
-          'delta' => 'find-block_2',
-          'region' => 'content_bottom',
-          'weight' => 0,
-        ),
-      ),
-    ),
-  );
+  $context->reactions = array();
   $context->condition_mode = 1;
 
   // Translatables
   // Included for use with string extractors like potx.
   t('Visible on the education path but not on subpaths, only to certain roles');
+  t('education');
   $export['education_section_nonrecursive_roles'] = $context;
 
   $context = new stdClass;
@@ -114,7 +112,7 @@ function oerbit_acadamic_context_default_contexts() {
   $context->api_version = 3;
   $context->name = 'not_homepage';
   $context->description = 'All pages except the homepage';
-  $context->tag = '';
+  $context->tag = 'homepage';
   $context->conditions = array(
     'path' => array(
       'values' => array(
@@ -154,6 +152,7 @@ function oerbit_acadamic_context_default_contexts() {
   // Translatables
   // Included for use with string extractors like potx.
   t('All pages except the homepage');
+  t('homepage');
   $export['not_homepage'] = $context;
 
   $context = new stdClass;
@@ -161,7 +160,7 @@ function oerbit_acadamic_context_default_contexts() {
   $context->api_version = 3;
   $context->name = 'sitewide_course';
   $context->description = '';
-  $context->tag = '';
+  $context->tag = 'sitewide';
   $context->conditions = array(
     'sitewide' => array(
       'values' => array(
@@ -182,6 +181,10 @@ function oerbit_acadamic_context_default_contexts() {
     ),
   );
   $context->condition_mode = 0;
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('sitewide');
   $export['sitewide_course'] = $context;
 
   $context = new stdClass;
@@ -189,7 +192,7 @@ function oerbit_acadamic_context_default_contexts() {
   $context->api_version = 3;
   $context->name = 'sitewide_course_version';
   $context->description = '';
-  $context->tag = '';
+  $context->tag = 'sitewide';
   $context->conditions = array(
     'sitewide' => array(
       'values' => array(
@@ -210,6 +213,10 @@ function oerbit_acadamic_context_default_contexts() {
     ),
   );
   $context->condition_mode = 0;
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('sitewide');
   $export['sitewide_course_version'] = $context;
 
   return $export;

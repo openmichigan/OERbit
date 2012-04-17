@@ -33,14 +33,14 @@ function oerbit_search_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'apachesolr_failure';
-  $strongarm->value = 'show_no_results';
+  $strongarm->value = 'show_error';
   $export['apachesolr_failure'] = $strongarm;
 
   $strongarm = new stdClass;
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'apachesolr_host';
-  $strongarm->value = 'oer.switchbackcms.com';
+  $strongarm->value = 'localhost';
   $export['apachesolr_host'] = $strongarm;
 
   $strongarm = new stdClass;
@@ -145,12 +145,14 @@ function oerbit_search_strongarm() {
     'name' => '0',
     'nid' => '0',
     'nodeaccess_all' => '0',
-    'nodeaccess_d491c34dd635_all' => '0',
     'path' => '0',
     'path_alias' => '0',
     'promote' => '0',
     'site' => '0',
-    'sm_cck_field_course_level' => '0',
+    'sm_oer_cc' => '0',
+    'sm_oer_creator' => '0',
+    'sm_oer_instructor' => '0',
+    'sm_oer_main' => '0',
     'sm_vid_Keywords' => '0',
     'sname' => '0',
     'sort_name' => '0',
@@ -158,16 +160,18 @@ function oerbit_search_strongarm() {
     'sort_ss_cck_field_course_download_display' => '0',
     'sort_ss_cck_field_course_featured' => '0',
     'sort_ss_cck_field_course_term' => '0',
-    'sort_ss_cck_field_section_title' => '0',
-    'sort_ss_cck_field_unit_type' => '0',
+    'sort_ss_file_node_title' => '0',
+    'sort_ss_file_node_url' => '0',
+    'sort_ss_filemime' => '0',
     'sort_title' => '0',
     'spell' => '0',
     'ss_cck_field_content_type' => '0',
     'ss_cck_field_course_download_display' => '0',
     'ss_cck_field_course_featured' => '0',
     'ss_cck_field_course_term' => '0',
-    'ss_cck_field_section_title' => '0',
-    'ss_cck_field_unit_type' => '0',
+    'ss_file_node_title' => '0',
+    'ss_file_node_url' => '0',
+    'ss_filemime' => '0',
     'status' => '0',
     'sticky' => '0',
     'tags_a' => '0',
@@ -242,7 +246,7 @@ function oerbit_search_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'apachesolr_site_hash';
-  $strongarm->value = 'qmlay5';
+  $strongarm->value = 'nkm84u';
   $export['apachesolr_site_hash'] = $strongarm;
 
   $strongarm = new stdClass;

@@ -1192,9 +1192,9 @@ Summer',
     'granularity' => array(
       'year' => 'year',
     ),
-    'timezone_db' => 'America/Detroit',
+    'timezone_db' => '',
     'tz_handling' => 'none',
-    'todate' => '',
+    'todate' => 'optional',
     'repeat' => 0,
     'repeat_collapsed' => '',
     'default_format' => 'short',
@@ -2358,6 +2358,7 @@ eval|Student Evaluations',
     'title' => 'value',
     'title_value' => 'Visit Website',
     'enable_tokens' => 0,
+    'validate_url' => '',
     'widget' => array(
       'default_value' => array(
         '0' => array(
@@ -4684,6 +4685,7 @@ library|Library',
     'title' => 'value',
     'title_value' => 'Visit Website',
     'enable_tokens' => 0,
+    'validate_url' => '',
     'widget' => array(
       'default_value' => array(
         '0' => array(
