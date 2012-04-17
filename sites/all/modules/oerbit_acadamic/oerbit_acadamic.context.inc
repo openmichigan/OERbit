@@ -56,9 +56,9 @@ function oerbit_acadamic_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'block-21' => array(
+        'block-16' => array(
           'module' => 'block',
-          'delta' => 21,
+          'delta' => 16,
           'region' => 'course_nav',
           'weight' => 0,
         ),
