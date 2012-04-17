@@ -43,6 +43,39 @@ function oerbit_acadamic_context_default_contexts() {
   $context = new stdClass;
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
+  $context->name = 'education_section_course';
+  $context->description = 'Visible within the education path, but does not include the /education landing page.';
+  $context->tag = 'education';
+  $context->conditions = array(
+    'path' => array(
+      'values' => array(
+        'education/*' => 'education/*',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'block-21' => array(
+          'module' => 'block',
+          'delta' => 21,
+          'region' => 'course_nav',
+          'weight' => 0,
+        ),
+      ),
+    ),
+  );
+  $context->condition_mode = 0;
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('Visible within the education path, but does not include the /education landing page.');
+  t('education');
+  $export['education_section_course'] = $context;
+
+  $context = new stdClass;
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
   $context->name = 'education_section_nonrecursive';
   $context->description = 'Visible on the education path but not on subpaths';
   $context->tag = 'education';
@@ -154,6 +187,57 @@ function oerbit_acadamic_context_default_contexts() {
   t('All pages except the homepage');
   t('homepage');
   $export['not_homepage'] = $context;
+
+  $context = new stdClass;
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
+  $context->name = 'not_homepage_roles';
+  $context->description = 'All pages except the homepage, only to content manager and site administrator roles';
+  $context->tag = 'homepage';
+  $context->conditions = array(
+    'path' => array(
+      'values' => array(
+        '~<front>' => '~<front>',
+      ),
+    ),
+    'user' => array(
+      'values' => array(
+        'content manager' => 'content manager',
+        'site administrator' => 'site administrator',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'revisioning-0' => array(
+          'module' => 'revisioning',
+          'delta' => 0,
+          'region' => 'left',
+          'weight' => 0,
+        ),
+        'block-15' => array(
+          'module' => 'block',
+          'delta' => 15,
+          'region' => 'left',
+          'weight' => 1,
+        ),
+        'hierarchical_permissions-hierarchical-permissions' => array(
+          'module' => 'hierarchical_permissions',
+          'delta' => 'hierarchical-permissions',
+          'region' => 'left',
+          'weight' => 2,
+        ),
+      ),
+    ),
+  );
+  $context->condition_mode = 1;
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('All pages except the homepage, only to content manager and site administrator roles');
+  t('homepage');
+  $export['not_homepage_roles'] = $context;
 
   $context = new stdClass;
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
