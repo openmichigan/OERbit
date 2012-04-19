@@ -1,5 +1,4 @@
 <?php
-// $Id: theme.inc,v 1.1.2.3 2010/08/28 23:33:36 kreynen Exp $
 
 /**
  * @file

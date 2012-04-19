@@ -1,5 +1,4 @@
 <?php
-// $Id: creativecommons_views_handler_field_license_uri.inc,v 1.1.2.1 2009/08/17 18:52:56 balleyne Exp $
 
 /**
  * @file

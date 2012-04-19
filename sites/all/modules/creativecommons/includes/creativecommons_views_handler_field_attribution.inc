@@ -1,5 +1,4 @@
 <?php
-// $Id: creativecommons_views_handler_field_attribution.inc,v 1.1.2.2 2010/08/28 23:33:36 kreynen Exp $
 
 /**
  * @file

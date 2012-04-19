@@ -1,4 +1,3 @@
-/* $Id: README.txt,v 1.1.2.5 2009/12/23 13:00:57 balleyne Exp $ */
 
 -- SUMMARY --
 

@@ -1,5 +1,4 @@
 <?php
-// $Id: creativecommons.views.inc,v 1.1.2.3 2009/12/29 03:19:30 balleyne Exp $
 /**
  * @file
  * Provide views data and handler information for creativecommons.module.

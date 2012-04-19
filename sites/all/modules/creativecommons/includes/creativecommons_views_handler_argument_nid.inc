@@ -1,5 +1,4 @@
 <?php
-// $Id: creativecommons_views_handler_argument_nid.inc,v 1.1.2.1 2009/08/17 18:52:56 balleyne Exp $
 /**
  * @file
  * Provide node nid argument handler.

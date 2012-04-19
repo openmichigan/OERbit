@@ -1,5 +1,4 @@
 <?php
-// $Id: creativecommons.actions.inc,v 1.1.2.2 2009/08/25 15:14:09 balleyne Exp $
 /**
  * @file
  * Example Action Implementation.

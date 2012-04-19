@@ -1,5 +1,4 @@
 <?php
-// $Id: creativecommons.class.php,v 1.3.4.49 2010/08/11 16:33:47 kreynen Exp $
 
 /**
  * @file
@@ -54,9 +53,13 @@ class creativecommons_license {
       $this->type = '';
     }
 
-    if (empty($this->metadata)) {
+    if (!is_array($this->metadata)) {
       // ensure metadata is an array
       $this->metadata = array();
+    }
+
+    if (empty($this->metadata['description'])) {
+      $this->metadata['description'] = '';
     }
   }
 
@@ -78,8 +81,9 @@ class creativecommons_license {
       }
       $cc = new creativecommons_license($uri, $metadata);
       $cc->nid = $row->nid;
+      return $cc;
     }
-    return $cc;
+    return;
   }
 
   /**
@@ -88,26 +92,13 @@ class creativecommons_license {
   function fetch() {
     // Load basic data from uri
     $uri_parts = explode('/', $this->uri);
+    $this->license_class = $uri_parts[3] == 'licenses' ? 'standard' : $uri_parts[3];
     $this->type = $uri_parts[4];
     $this->version = $uri_parts[5];
     $this->jurisdiction = $uri_parts[6];
 
-    // TODO: Is PD really standard? Does it matter?
-    $this->license_class = 'standard';
-
-    // Special Case: CC0
-    if ($this->type == 'zero') {
-      $this->name = t('CC0 1.0 Universal');
-      $this->license_class = 'publicdomain';
-      $this->permissions = array();
-      $this->permissions['permits'][] = 'http://creativecommons.org/ns#Reproduction';
-      $this->permissions['permits'][] = 'http://creativecommons.org/ns#Distribution';
-      $this->permissions['permits'][] = 'http://creativecommons.org/ns#DerivativeWorks';
-      return;
-    }
-
     // Get license xml from API
-    $xml = creativecommons_return_xml('/details?license-uri='. urlencode($this->uri));
+    $xml = creativecommons_get_xml('/details?license-uri='. urlencode($this->uri));
 
     // Parse XML
     $parser = xml_parser_create();
@@ -187,7 +178,7 @@ class creativecommons_license {
   function get_name($style = 'full') {
     if ($this->is_valid()) {
       // CCO
-      $prefix = ($this->type && $this->type != 'zero') ? t('Creative Commons') .' ' : '';
+      $prefix = ($this->type && $this->license_class != 'publicdomain') ? t('Creative Commons') .' ' : '';
 
       switch ($style) {
         case 'full':
@@ -201,6 +192,9 @@ class creativecommons_license {
           switch ($this->type) {
             case 'zero':
               $name = t('CC0');
+              break;
+            case 'mark':
+              $name = t('PDM');
               break;
             case 'publicdomain';
               $name = 'PD';
@@ -225,6 +219,7 @@ class creativecommons_license {
    * @param $style -- either button_large, button_small, icons or tiny_icons
    */
   function get_image($style) {
+
     if (empty($this->type)) {
       $this->type = 'all-rights-reserved';
     }
@@ -232,7 +227,7 @@ class creativecommons_license {
     $img = array();
     $img_dir = base_path() . drupal_get_path('module', 'creativecommons') .'/images';
     $nc = variable_get('creativecommons_nc_img', '');
- 
+
     switch ($style) {
       case 'button_large':
         //TODO: missing jp large buttons... not on creativecommons.org
@@ -257,22 +252,29 @@ class creativecommons_license {
           'sa' => t('Share Alike'),
           'nd' => t('No Derivatives'),
           'pd' => t('Public Domain'),
+          'mark' => t('Public Domain Mark'),
           'zero' => t('Zero'),
         );
         if (!isset($px)) {
           $px = '32';
         }
         
+        //explode to add euro or yen icons
         foreach (explode('-', $this->type) as $filename) {
+          
           // NC options
           if ($filename == 'nc' && $nc) {
             $filename .= '-'. $nc;
           }
+          
           if($filename == 'rights') {
             $filename = $this->type;
           }
-
-          $img[] = '<img src="'. $img_dir .'/icons/'. $filename .'.png" style="border-width: 0pt; width: '. $px .'px; height: '. $px .'px;" alt="'. $name[$filename] .'"/>';
+          
+          //quick fix for #957584... this entire function needs love
+          if ($filename != 'all' && $filename != 'reserved') {
+            $img[] = '<img src="'. $img_dir .'/icons/'. $filename .'.png" style="border-width: 0pt; width: '. $px .'px; height: '. $px .'px;" alt="'. $name[$filename] .'"/>';
+          }
         }
         break;
     }
@@ -396,7 +398,7 @@ class creativecommons_license {
               "\n\tclass=\"creativecommons\">\n\t\t";
 
     // Image
-    
+
     $img = $this->get_image(variable_get('creativecommons_image_style', 'button_large'));
     if ($img) {
       $attributes['rel'] = 'license';
@@ -425,30 +427,34 @@ class creativecommons_license {
     else if ($site && (!$this->metadata['attributionName'] || !creativecommons_metadata_is_available('attributionName'))) {
       // CC0
       if ($this->type == 'zero') {
-        //$html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, have been waived, although certain works referenced herein may be separately licensed.', $args);
-        // switchback case #2426 i(bdr #2733 also!) - remove link to user profile from attribution
-        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName have been waived, although certain works referenced herein may be separately licensed.', $args);
+        $html .= t('To the extent possible under law, the person who associated CC0 with this work, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, has waived all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, although certain works referenced herein may be separately licensed.', $args);
+      }
+      // PD Mark
+      else if ($this->type == 'mark') {
+        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, is free of known copyright restrictions.', $args);
       }
       // Rest
       else {
-        //$html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, is licensed under a <a rel="license" href="@license-uri">@license-name license</a>, although certain works referenced herein may be separately licensed.', $args);
-        // switchback case #2426 (bdr #2733 also!) - remove link to user profile from attribution
-        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName is licensed under a <a rel="license" href="@license-uri">@license-name license</a>, although certain works referenced herein may be separately licensed', $args);
+        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <a rel="cc:attributionURL" href="@cc:attributionURL" property="dc:title">@dc:title</a>, is licensed under a <a rel="license" href="@license-uri">@license-name license</a>, although certain works referenced herein may be separately licensed.', $args);
       }
     }
     // Otherwise
     else {
       // CC0
       if ($this->type == 'zero') {
-        $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName have been waived.', $args);
+        $html .= t('To the extent possible under law, <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> has waived all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>.', $args);
+      }
+      // PD Mark
+      else if ($this->type == 'mark') {
+        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a>, is free of known copyright restrictions.', $args);
       }
       // All Rights Reserved
-      if ($this->type == 'all-rights-reserved') {
+      else if ($this->type == 'all-rights-reserved') {
         $html .= t('To the extent possible under law, all copyright and related or neighboring rights to this <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName are Reserved.', $args);
       }
       // Rest
       else {
-        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by @cc:attributionName is licensed under a <a rel="license" href="@license-uri">@license-name license</a>.', $args);
+        $html .= t('This <span rel="dc:type" href="@dc:type-uri">@dc:type-name</span>, <span property="dc:title">@dc:title</span>, by <a rel="cc:attributionURL" href="@cc:attributionURL" property="cc:attributionName">@cc:attributionName</a> is licensed under a <a rel="license" href="@license-uri">@license-name license</a>.', $args);
       }
     }
 
@@ -493,7 +499,7 @@ class creativecommons_license {
       return;
 
     // Sanitize metadata
-    //$this->check_metadata();
+    $this->check_metadata();
 
     if ($this->rdf) {
       $a = '';
