@@ -266,8 +266,10 @@ function creativecommons_settings() {
     '#title' => t('Custom Message'),
     '#rows' => 10,
     '#default_value' => variable_get('creativecommons_user_message', ''),
-    '#description' => t('Customize the message displayed to users when adding a license.  HTML allowed.  This message overrides both the main message and the public domain message when public domain is enabled'),
+    '#description' => t('Customize the message displayed to users when adding a license.  This message overrides both the main message and the public domain message when public domain is enabled'),
   );
+   
+  $form['creativecommons_user_message_format'] =  filter_form(variable_get('creativecommons_user_message_format', 2), NULL, array('creativecommons_user_message_format'));
 
   return system_settings_form($form);
 
@@ -1870,7 +1872,7 @@ function creativecommons_node_form($node, $form_state) {
 
   if (variable_get('creativecommons_user_message', '')) {
     // Custom Creative Commons license description
-    $description = variable_get('creativecommons_user_message', '');
+     $description = check_markup(variable_get('creativecommons_user_message', ''), variable_get('creativecommons_user_message_format', 2));
   }
   else {
 
