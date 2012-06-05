@@ -2965,20 +2965,6 @@ function openmichigan_views_views_default_views() {
       'field' => 'type',
       'relationship' => 'none',
     ),
-    'status_extra' => array(
-      'operator' => '=',
-      'value' => '',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status_extra',
-      'table' => 'node',
-      'field' => 'status_extra',
-      'relationship' => 'none',
-    ),
     'field_material_type_value_many_to_one' => array(
       'operator' => 'or',
       'value' => array(
@@ -3857,6 +3843,7 @@ function openmichigan_views_views_default_views() {
     'field_material_type_value_many_to_one' => array(
       'operator' => 'or',
       'value' => array(
+        'schedules' => 'schedules',
         'lectures' => 'lectures',
         'assign' => 'assign',
         'exams' => 'exams',
@@ -3867,6 +3854,7 @@ function openmichigan_views_views_default_views() {
         'handouts' => 'handouts',
         'cases' => 'cases',
         'supp-readings' => 'supp-readings',
+        'studentnotes' => 'studentnotes',
         'projects' => 'projects',
         'papers' => 'papers',
         'present' => 'present',
@@ -4583,20 +4571,6 @@ function openmichigan_views_views_default_views() {
       'id' => 'type',
       'table' => 'node',
       'field' => 'type',
-      'relationship' => 'none',
-    ),
-    'status_extra' => array(
-      'operator' => '=',
-      'value' => '',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status_extra',
-      'table' => 'node',
-      'field' => 'status_extra',
       'relationship' => 'none',
     ),
     'field_material_type_value_many_to_one' => array(
@@ -6548,20 +6522,6 @@ function openmichigan_views_views_default_views() {
       'field' => 'type',
       'relationship' => 'none',
     ),
-    'status_extra' => array(
-      'operator' => '=',
-      'value' => '',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status_extra',
-      'table' => 'node',
-      'field' => 'status_extra',
-      'relationship' => 'none',
-    ),
   ));
   $handler->override_option('access', array(
     'type' => 'none',
@@ -6836,20 +6796,6 @@ function openmichigan_views_views_default_views() {
       'id' => 'type',
       'table' => 'node',
       'field' => 'type',
-      'relationship' => 'none',
-    ),
-    'status_extra' => array(
-      'operator' => '=',
-      'value' => '',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status_extra',
-      'table' => 'node',
-      'field' => 'status_extra',
       'relationship' => 'none',
     ),
   ));
