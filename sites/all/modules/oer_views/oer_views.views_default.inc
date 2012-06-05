@@ -4249,20 +4249,6 @@ function oer_views_views_default_views() {
     ),
   ));
   $handler->override_option('filters', array(
-    'status_extra' => array(
-      'operator' => '=',
-      'value' => '',
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'status_extra',
-      'table' => 'node',
-      'field' => 'status_extra',
-      'relationship' => 'none',
-    ),
     'type' => array(
       'operator' => 'in',
       'value' => array(
