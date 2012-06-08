@@ -1836,12 +1836,14 @@ Summer',
     'active' => '1',
     'text_processing' => '0',
     'max_length' => '',
-    'allowed_values' => 'syllabus|Syllabus
+    'allowed_values' => 'creators|About the Creators
+instructions|Instructions
 objectives|Learning Objectives
 outcomes|Learning Outcomes
-schedule|Schedule
 reading|Reading List
-instructions|Instructions
+schedule|Schedule
+syllabus|Syllabus
+wikiarticles|Wikipedia Articles
 eval|Student Evaluations',
     'allowed_values_php' => '',
     'widget' => array(
@@ -2846,10 +2848,12 @@ exams|Exams
 labs|Labs
 demos|Demos
 data|Data
+schedules|Schedules
 images|Image Collection
 handouts|Handouts
 cases|Case Studies
 supp-readings|Supplemental Readings
+studentnotes|Student Notes
 projects|Student Projects
 papers|Student Papers
 present|Student Presentations
