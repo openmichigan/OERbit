@@ -1838,6 +1838,7 @@ Summer',
     'max_length' => '',
     'allowed_values' => 'creators|About the Creators
 instructions|Instructions
+lo|What is a Learning Object?
 objectives|Learning Objectives
 outcomes|Learning Outcomes
 reading|Reading List
@@ -2851,6 +2852,7 @@ data|Data
 schedules|Schedules
 images|Image Collection
 handouts|Handouts
+learning|Learning Objects
 cases|Case Studies
 supp-readings|Supplemental Readings
 studentnotes|Student Notes
