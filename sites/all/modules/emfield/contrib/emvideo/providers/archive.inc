@@ -138,7 +138,7 @@ function emvideo_archive_extract($parse = '') {
     // one expression, such as '@archive\.com/[watch|embed]/([^"\?]+)@i'.
     // However, many other providers have more complex requirements, so
     // we split them up for this demonstration.
-    '@archive\.org/download/([^/]+)=@i',
+    '@archive\.org/download/(.*)@i',
   );
 }
 
@@ -168,63 +168,52 @@ function emvideo_archive_data($field, $item, $error_field = '') {
   // In any case, you should account for the version if you increment it.
   $data['emvideo_archive_version'] = $data['emvideo_data_version'] = EMVIDEO_ARCHIVE_DATA_VERSION;
 
-  // Add the thumbnail data.
-  $data['thumbnail'] = 'http://www.archive.org/download/'. $item['value'] .'/format=Thumbnail?.jpg';
+  // Construct a base item url
+  $item_url = "http://www.archive.org/details/". $item['value'];
+  $download_url = "http://www.archive.org/download/". $item['value'];
 
-  // Get the path to media files and XML files.
-  // This is real kludgy, but without a real API there's no other way.
-  // First we need to get the user facing HTML page.
-  $html_page = drupal_http_request('http://www.archive.org/details/'. $item['value']);
-  if ($html_page->error || $html_page->code != 200) {
-    form_set_error($error_field, 'The HTML page for the item at archive.org could not be retrieved: ', $html_page->code .': '. $html_page->error);
-    return $data;
-  }
-
-  // Scrape this page and find the path to the data directory.
-  // A regex expert would be able to do all this with a single regex statement, but that stuff is dark arts.
-  $html_chunks = explode('All Files: ', $html_page->data);
-  $html_chunks = explode('HTTP', $html_chunks[1]);
-  $html_chunks = explode('href=', $html_chunks[0]);
-  preg_match("/http:\/\/(.*)\"/", array_pop($html_chunks), $matches);
-  if (empty($matches)) {
-    form_set_error($error_field, 'The data directory for the item at archive.org could not be retrieved.');
-    return $data;
-  }
-  $data_url = rtrim($matches[0], '"');
-
-  // In this directory should be two XML files, one for the list of files, one for metadata.
-  $xml_files_url = $data_url .'/'. $item['value'] . '_files.xml';
-  $xml_meta_url = $data_url .'/'. $item['value'] . '_meta.xml';
-
-  // Retreive the XML files.
-  $xml_files = emfield_request_xml('archive', $xml_files_url, array(), TRUE, TRUE, $item['value'] . '_files');
-  $xml_meta = emfield_request_xml('archive', $xml_meta_url, array(), TRUE, TRUE, $item['value'] . '_meta');
+  // We will leverage the JSON archive.org api to get details about this item
+  // See http://www.archive.org/help/json.php
+  $xml_meta_url = $item_url .'&output=json';
+  $xml_meta = media_archive_request_xml('archive', $xml_meta_url, array(), TRUE, TRUE, $item['value'] .'_meta', FALSE, TRUE);
   if ($xml_meta['stat'] == 'error' || empty($xml_meta)) {
-    drupal_set_message('Additional information about the item at archive.org could not be retrieved.  The video can still be displayed.');
+    drupal_set_message('This item\'s details cannot be retrieved.  The video can not be displayed.');
+    return $data;
   }
   else {
-    $data['metadata'] = $xml_meta['METADATA'];
+    $data['details'] = $xml_meta;
+    $server_url = $data['details']['server'] . $data['details']['dir'];
   }
-  if ($xml_files['stat'] == 'error' || empty($xml_files)) {
+
+  $item_files = $data['details']['files'];
+
+  if (!$item_files) {
     form_set_error($error_field, 'The list of files for the item at archive.org could not be retrieved.  The video can not be displayed.');
     return $data;
   }
 
-  // There are a tonne of useless thumbnails in this list that we don't want.
-  // We also need to sort through the available derivitives and choose the best one.
-  $derivative_files = array('mp4' => '', 'ogv' => '', 'mov' => '');
-  foreach($xml_files as $file_name => $file_data) {
-    $extension = substr($file_name, -3);
-    if (array_key_exists($extension, $derivative_files)) {
-      $derivative_files[$extension] = $file_name;
-    }
+  //Putting the $key (which is actually the file name) as an element of the 
+  //array too for convenience later.
+  foreach ($item_files as $key => $value) {
+    $item_files[$key]['name'] = $key;
   }
-  foreach($derivative_files as $file_name) {
-    if ($file_name) {
-      $data['url'] = 'http://www.archive.org/download/'. $item['value'] .'/'. $file_name;
-      break;
-    }
+
+  //Get only .mp4 files
+  $files_play = array_filter($item_files, "_archive_video_toplay");
+
+  //If there is no playlist then fail
+  if (is_null($files_play)) {
+    form_set_error($error_field, 'This archive.org item does not appear to have files to play.');
+    return $data;
   }
+
+  //Create a playlist suitable for feeding to player
+  foreach ($files_play as $file => $file_data) {
+    $data['playlist'][] = $download_url . $file;
+  }
+
+  // Add the thumbnail data.
+  $data['thumbnail'] = 'http://www.archive.org/download/'. $item['value'] .'/format=Thumbnail?.jpg';
 
   return $data;
 }
@@ -422,4 +411,91 @@ function emvideo_archive_content_generate() {
     'http://www.archive.org/details/drupal_song_dcamp_pune_09',
     'http://www.archive.org/details/Drupal.Peru_DrupalSong20090718',
   );
+}
+
+
+/**
+ * Custom version of emfield_request_xml that returns JSON as an associative array.
+ * TODO: Remove this when emfield_request_xml is fixed
+ * see issue - http://drupal.org/node/984786
+ *
+ * When an include file requires to read an xml to receive information, such as for thumbnails,
+ * this script can be used to request the xml and return it as an array.
+ *   @param $provider
+ *     the string of the third party provider, such as 'youtube', 'flikr', or 'google'
+ *   @param $url
+ *     the url for the xml request
+ *   @param $args
+ *     an array of args to pass to the xml url
+ *   @param $cached
+ *     optional; if TRUE, the result of this xml request will be cached. good to play nice w/
+ *     the third party folks so they don't stop providing service to your site...
+ *   @param $return_errors
+ *     optional; if TRUE and an error is encountered, a descriptive error array will be returned with elements for
+ *     code, message and stat => 'error'
+ *   @param $hash_extra
+ *     optional; The key for caching is created from the arguments.  If your provider does not use arguments
+ *     (or uses the same arguments for each media item, you must pass a unique string as $hash_extra.  Currently
+ *     this is only used by bliptv and archive.org
+ *   @param $serialized
+ *     optional; Most uses of this function are expecting an XML file to be returned.  However some providers (Flickr)
+ *     can instead return a serialized PHP array.  In this case set $serialized to TRUE.
+ *  @param $json
+ *    If TRUE, then the result will be a json encoded string.
+ *   @return
+ *     the xml results returned as an array
+ */
+function media_archive_request_xml($provider, $url, $args = array(), $cached = TRUE, $return_errors = FALSE, $hash_extra = FALSE, $serialized = FALSE, $json = FALSE) {
+  ksort($args);
+
+  // Build an argument hash that we'll use for the cache id and api signing.
+  $arghash = $provider .':';
+  foreach ($args as $k => $v) {
+    $arghash .= $k . $v;
+  }
+
+  // Build the url.
+  foreach ( $args as $k => $v) {
+    $encoded_params[] = urlencode($k) .'='. urlencode($v);
+  }
+  if (!empty($encoded_params)) {
+    $url .= '?'. implode('&', $encoded_params);
+  }
+
+  // some providers, such as bliptv, actually change the url, and not just the queries.
+  // we provide an extra section for a unique identifier in that case
+  if (isset($hash_extra)) {
+    $arghash .= ':'. $hash_extra;
+  }
+
+  // if it's a cachable request, try to load a cached value
+  if ($cached && $cache = cache_get($arghash, 'cache')) {
+    return $cache->data;
+  }
+
+  // connect and fetch a value
+  $result = drupal_http_request($url);
+
+  if (!empty($result->error)) {
+    if ($return_errors) {
+      return array(
+        'stat' => 'error',
+        'code' => $result->code,
+        'message' => 'HTTP Error: '. $result->error,
+      );
+    }
+    emfield_set_error(t("Could not connect to @provider, HTTP error @error", array('@error' => $result->code, '@provider' => $provider)));
+
+    return array();
+  }
+
+  if ($json) {
+    $response = json_decode($result->data, TRUE);
+  }
+
+  if ($cached) {
+    cache_set($arghash, $response, 'cache', time() + variable_get('emfield_cache_duration', 3600));
+  }
+
+  return $response;
 }

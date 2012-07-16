@@ -2613,7 +2613,7 @@ function openmichigan_views_views_default_views() {
     'field_video_embed' => array(
       'label' => '',
       'alter' => array(
-        'alter_text' => 1,
+        'alter_text' => 0,
         'text' => '<a href="[field_video_embed]" target="_blank" class="youtube"><img src="/sites/all/themes/oer/images/icon_youtube.gif" alt="YouTube button" /></a>',
         'make_link' => 0,
         'path' => '',
@@ -4255,7 +4255,7 @@ function openmichigan_views_views_default_views() {
     'field_video_embed' => array(
       'label' => '',
       'alter' => array(
-        'alter_text' => 1,
+        'alter_text' => 0,
         'text' => ' <a href="[field_video_embed]" target="_blank" class="youtube"><img src="/sites/all/themes/oer/images/icon_youtube.gif" alt="YouTube button" /></a>',
         'make_link' => 0,
         'path' => '',

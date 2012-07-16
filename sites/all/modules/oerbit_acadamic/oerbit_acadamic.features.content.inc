@@ -3056,7 +3056,7 @@ video|Video',
     'widget_active' => '1',
     'type' => 'emvideo',
     'required' => '0',
-    'multiple' => '0',
+    'multiple' => '1',
     'module' => 'emvideo',
     'active' => '1',
     'widget' => array(
