@@ -219,6 +219,18 @@ function emvideo_archive_data($field, $item, $error_field = '') {
 }
 
 /**
+ * Is this a 512Kb MPEG4 file?
+ */
+function _archive_video_toplay($file) {
+  if ($file['format'] == "512Kb MPEG4") {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * hook emvideo_PROVIDER_duration($item)
  * Returns the duration of the video in seconds.
  *  @param $item
