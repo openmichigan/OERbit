@@ -325,6 +325,8 @@ function emvideo_youtube_extract($code = '') {
   $playlist_regex = array(
     '@youtube\.com/p/([^"\& ]+)@i', // A playlist
     '@youtube\.com/view_play_list\?p=([^"\& ]+)@i', // A playlist
+    '@youtube\.com/playlist\?list=([^"\& ]+)@i', // A playlist.
+    '@youtu\.be/([^"\& ]+)@i', // A playlist.
   );
   foreach ($playlist_regex as $regex) {
     if (preg_match($regex, trim($code), $matches)) {
