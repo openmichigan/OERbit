@@ -1700,7 +1700,7 @@ ul.tabs li.active a:hover
 .view-materials-embed .views-field-field-file-fid a[href$='.gzip'], 
 .view-materials-embed .views-field-field-file-fid a[href$='.bzip'], 
 .view-materials-embed .views-field-field-file-fid a[href$='.ace'] {
-	background: transparent url(images/icon_archive.gif) no-repeat !important;
+	background: transparent url(images/icon_archivefile.gif) no-repeat !important;
 }
 
 .view-materials .views-field-field-file-fid a[href$='.ical'],
