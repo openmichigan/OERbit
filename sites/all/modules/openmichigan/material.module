@@ -76,7 +76,7 @@ function material_link_display($type, $view, $field, $row) {
         //log_to_apache("key: {$key}, provider: {$provider}, embed: {$url}");
 	if ($provider === NULL || $provider === '') {
 	    //log_to_apache("No provider, returning: empty string");
-	    return '';
+	    continue;
 	}
         switch ($provider) {
           case 'archive':
