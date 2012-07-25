@@ -74,6 +74,10 @@ function material_link_display($type, $view, $field, $row) {
         $url = $values['embed'];
         $pname = '';
         //log_to_apache("key: {$key}, provider: {$provider}, embed: {$url}");
+	if ($provider === NULL || $provider === '') {
+	    //log_to_apache("No provider, returning: empty string");
+	    return '';
+	}
         switch ($provider) {
           case 'archive':
           case 'bliptv':
@@ -98,13 +102,15 @@ function material_link_display($type, $view, $field, $row) {
         $output .= '<a href="'.$url.'" target="_blank" class="external"><img src="/sites/all/themes/oer/images/icon_'.$pname.'.gif" alt="'.$pname.' icon" /></a>';
       }
     } else {
-      return NULL;
+      //log_to_apache("No values, returning: empty string");
+      return '';
     }
     break;
   case 'audio':
     $output .= '<a href="'.$url.'" target="_blank" class="external"><img src="/sites/all/themes/oer/images/icon_audio.gif" alt="generic audio icon" /></a>';
     break;
   }
+  //log_to_apache("Returning: \"${output}\"");
   return $output;
 }
 
