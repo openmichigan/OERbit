@@ -2620,7 +2620,7 @@ function oer_views_views_default_views() {
     'field_link_url' => array(
       'label' => '',
       'alter' => array(
-        'alter_text' => 1,
+        'alter_text' => 0,
         'text' => '<a href="[field_link_url] " target="_blank" class="external"><img src="/sites/all/themes/oer/images/icon-external.png" alt="External Link - [field_link_url]" /></a>',
         'make_link' => 0,
         'path' => '',
@@ -3280,7 +3280,7 @@ function oer_views_views_default_views() {
     'field_link_url' => array(
       'label' => '',
       'alter' => array(
-        'alter_text' => 1,
+        'alter_text' => 0,
         'text' => '<a href="[field_link_url] " target="_blank" class="external"><img src="/sites/all/themes/oer/images/icon-external.png" alt="External Link - [field_link_url]" /></a>',
         'make_link' => 0,
         'path' => '',
@@ -4183,7 +4183,7 @@ function oer_views_views_default_views() {
     'field_link_url' => array(
       'label' => '',
       'alter' => array(
-        'alter_text' => 1,
+        'alter_text' => 0,
         'text' => ' <a href="[field_link_url]" target="_blank" class="external"><img src="/sites/all/themes/oer/images/icon-external.png" alt="External Link - [field_link_url]" /></a>',
         'make_link' => 0,
         'path' => '',

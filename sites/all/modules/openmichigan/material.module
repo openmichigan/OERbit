@@ -63,7 +63,7 @@ function material_form_views_bulk_operations_form__1_alter(&$form, &$form_state)
  * Used for theming the icons for externally linked video, audio, etc. of a material
  */
 function material_link_display($type, $view, $field, $row) {
-  //log_to_apache($type . " --------------------------");
+  //log_to_apache("--------------- type: " . $type . " ---------------");
   //log_to_apache("The view name is: " . $view->name);
   switch ($type) {
   case 'video':
@@ -74,10 +74,10 @@ function material_link_display($type, $view, $field, $row) {
         $url = $values['embed'];
         $pname = '';
         //log_to_apache("key: {$key}, provider: {$provider}, embed: {$url}");
-	if ($provider === NULL || $provider === '') {
-	    //log_to_apache("No provider, returning: empty string");
-	    continue;
-	}
+	      if ($provider === NULL || $provider === '') {
+	        //log_to_apache("No provider, returning: empty string");
+	        continue;
+	      }
         switch ($provider) {
           case 'archive':
           case 'bliptv':
@@ -90,9 +90,13 @@ function material_link_display($type, $view, $field, $row) {
             $pname = $provider;
             break;
           default:
+	          // Special cases for "generic" locations without a provider
             if (stristr($url, "slideshare.net/") !== FALSE) {
-              // A special-case check for Slideshare
               $pname = 'slideshare';
+            } else if (stristr($url, "deepblue.lib.umich.edu/") != FALSE) {
+              $pname = 'deepblue';
+            } else if (stristr($url, "flickr.com/") != FALSE) {
+              $pname = 'flickr';
             } else {
               $pname = 'video';
             }
@@ -108,6 +112,22 @@ function material_link_display($type, $view, $field, $row) {
     break;
   case 'audio':
     $output .= '<a href="'.$url.'" target="_blank" class="external"><img src="/sites/all/themes/oer/images/icon_audio.gif" alt="generic audio icon" /></a>';
+    break;
+  case 'link':
+    $output = '';
+    $url = $row->{$field->field_alias};
+    if ($url === null || $url === '') {
+      return $output;
+    }
+    //log_to_apache("(link) url is ${url}");
+    if (stristr($url, "deepblue.lib.umich.edu/") != FALSE) {
+      $pname = 'deepblue';
+    } else if (stristr($url, "flickr.com/") != FALSE) {
+      $pname = 'flickr';
+    } else {
+      $pname = 'external_link';
+    }
+    $output .= '<a href="'.$url.'" target="_blank" class="external"><img src="/sites/all/themes/oer/images/icon_'.$pname.'.gif" alt="'.$pname.' icon" /></a>';
     break;
   }
   //log_to_apache("Returning: \"${output}\"");
