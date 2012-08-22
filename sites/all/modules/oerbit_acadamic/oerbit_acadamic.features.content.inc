@@ -2856,6 +2856,7 @@ learning|Learning Objects
 cases|Case Studies
 supp-readings|Supplemental Readings
 studentnotes|Student Notes
+studentlecturenotes|Student Lecture Notes
 projects|Student Projects
 papers|Student Papers
 present|Student Presentations
