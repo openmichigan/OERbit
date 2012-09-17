@@ -2860,6 +2860,7 @@ studentlecturenotes|Student Lecture Notes
 projects|Student Projects
 papers|Student Papers
 present|Student Presentations
+posters|Posters
 exercises|Exercises
 software|Software Applications
 misc|Miscellaneous
