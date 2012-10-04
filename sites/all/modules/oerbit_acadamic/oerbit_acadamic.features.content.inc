@@ -2857,10 +2857,12 @@ cases|Case Studies
 supp-readings|Supplemental Readings
 studentnotes|Student Notes
 studentlecturenotes|Student Lecture Notes
+texts|Texts
 projects|Student Projects
 papers|Student Papers
 present|Student Presentations
 posters|Posters
+publications|Publications
 exercises|Exercises
 software|Software Applications
 misc|Miscellaneous
