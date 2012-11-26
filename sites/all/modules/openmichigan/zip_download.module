@@ -265,10 +265,19 @@ function zip_download_file_transfer($source, $download_name) {
 
 	// Transfer file in 1024 byte chunks to save memory usage.
 	if ($fd = fopen($source, 'rb')) {
+		// Prevent user from aborting script
+		$old_abort = ignore_user_abort(true);
 		while (!feof($fd)) {
+			if (connection_aborted() || connection_status() != 0) {
+				log_to_apache("zip_download: aborted or timed out (should be cleaning up tmp file: {$source})");
+				$_SESSION['zip_download_status'] = "Client aborted or timed out...";
+				break;
+			}
 			$_SESSION['zip_download_progress'] += $progress_increment;
 			print fread($fd, 1024);
 		}
+		// Restore previous value
+		ignore_user_abort($old_abort);
 		fclose($fd);
 		return true;
 	}
