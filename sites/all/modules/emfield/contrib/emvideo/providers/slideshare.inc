@@ -6,7 +6,7 @@
  * Implementation of Embedded Media Field hooks.
  */
 define('EMVIDEO_SLIDESHARE_MAIN_URL', 'http://slideshare.net/');
-define('EMVIDEO_SLIDESHARE_XML', 'http://www.slideshare.net/api/2/');
+define('EMVIDEO_SLIDESHARE_XML', 'https://www.slideshare.net/api/2/');
 define('EMVIDEO_SLIDESHARE_DOMAIN_DEFAULT', 'net');
 
 /**
