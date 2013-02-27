@@ -4328,14 +4328,6 @@ function oer_views_views_default_views() {
     ),
   ));
   $handler->override_option('sorts', array(
-    'field_material_type_value' => array(
-      'order' => 'ASC',
-      'delta' => -1,
-      'id' => 'field_material_type_value',
-      'table' => 'node_data_field_material_type',
-      'field' => 'field_material_type_value',
-      'relationship' => 'none',
-    ),
     'weight' => array(
       'order' => 'ASC',
       'id' => 'weight',
@@ -4348,6 +4340,14 @@ function oer_views_views_default_views() {
       'id' => 'title',
       'table' => 'node',
       'field' => 'title',
+      'relationship' => 'none',
+    ),
+    'field_material_type_value' => array(
+      'order' => 'ASC',
+      'delta' => -1,
+      'id' => 'field_material_type_value',
+      'table' => 'node_data_field_material_type',
+      'field' => 'field_material_type_value',
       'relationship' => 'none',
     ),
   ));
