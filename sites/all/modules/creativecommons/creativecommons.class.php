@@ -389,7 +389,9 @@ class creativecommons_license {
       $user = user_load($node->uid);
       $default_title = $node->title;
       $default_name = $user->name;
-      $default_attributionURL = url('user/'. $user->uid, array('absolute' => TRUE));
+      // Change default to point back at this page, rather than the user that created it
+      //$default_attributionURL = url('user/'. $user->uid, array('absolute' => TRUE));
+      $default_attributionURL = url('node/'. $this->nid, array('absolute' => TRUE));
     }
 
     $html = "\n<div about=\"". url(($site ? '<front>' : 'node/'. $this->nid), array('absolute' => TRUE)) ."\" instanceof=\"cc:Work\"".
