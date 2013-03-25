@@ -1,0 +1,190 @@
+<?php
+// $Id: site_verify.module,v 1.10.2.1 2011/02/20 22:38:43 davereid Exp $
+
+/**
+ * Implements hook_menu().
+ */
+function site_verify_menu() {
+  $items['admin/build/site-verify'] = array(
+    'title' => 'Site verifications',
+    'description' => 'Add, change or remove verifications for your site.',
+    'page callback' => 'site_verify_list',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'site_verify.admin.inc',
+  );
+  $items['admin/build/site-verify/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/build/site-verify/add'] = array(
+    'title' => 'Add verification',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('site_verify_edit_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'site_verify.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/build/site-verify/add/%site_verify_engine'] = array(
+    'title' => 'Add',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('site_verify_edit_form', array(), 4),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'site_verify.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/build/site-verify/%site_verify/edit'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('site_verify_edit_form', 3),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'site_verify.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/build/site-verify/%site_verify/delete'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('site_verify_delete_form', 3),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'site_verify.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // Add the verification paths.
+  $query = db_query("SELECT svid, file FROM {site_verify} WHERE file <> ''");
+  while ($engine = db_fetch_object($query)) {
+    $items[$engine->file] = array(
+      'page callback' => 'site_verify_output',
+      'page arguments' => array((string) $engine->svid),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    );
+  }
+
+  return $items;
+}
+
+/**
+ * Implements hook_init().
+ */
+function site_verify_init() {
+  // Add the verification meta tags to the front page.
+  if (drupal_is_front_page()) {
+    $query = db_query("SELECT meta FROM {site_verify} WHERE meta <> ''");
+    while ($meta = db_result($query)) {
+      drupal_set_html_head($meta);
+    }
+  }
+}
+
+/**
+ * Menu load callback; loads a site verification record.
+ *
+ * This also loads the engine details if the record was found.
+ *
+ * @param $svid
+ *   A site verification ID.
+ * @return
+ *   An array of the site verification record, or FALSE if not found.
+ */
+function site_verify_load($svid) {
+  $record = db_fetch_array(db_query("SELECT svid, engine, file, file_contents, meta FROM {site_verify} WHERE svid = %d", $svid));
+  if ($record) {
+    $record['engine'] = site_verify_engine_load($record['engine']);
+  }
+  return $record;
+}
+
+/**
+ * Menu load callback; loads engine details.
+ *
+ * @param $engine
+ *   A string with the engine shortname.
+ * @return
+ *   An arary of the engine details, or FALSE if not found.
+ */
+function site_verify_engine_load($engine) {
+  $engines = site_verify_get_engines();
+  return isset($engines[$engine]) ? $engines[$engine] : FALSE;
+}
+
+/**
+ * Implements hook_site_verify_engine_info().
+ */
+function site_verify_site_verify_engine_info() {
+  $engines['google'] = array(
+    'name' => t('Google'),
+    'file' => TRUE,
+    'file_contents' => TRUE,
+    'file_example' => 'google1234567890abcdef.html',
+    'meta' => TRUE,
+    'meta_example' => '<meta name="google-site-verification" content="NbwaW3WIDp_SPsSsfl78Ive7F34-znm9lxLJXjuWNGE" />',
+  );
+  $engines['yahoo'] = array(
+    'name' => t('Yahoo!'),
+    'file' => TRUE,
+    'file_contents' => TRUE,
+    'meta' => TRUE,
+  );
+  $engines['bing'] = array(
+    'name' => t('Bing'),
+    'file' => TRUE,
+    'file_contents' => TRUE,
+    'meta' => TRUE,
+  );
+  $engines['yandex'] = array(
+    'name' => t('Yandex'),
+    'file' => TRUE,
+    'file_example' => 'yandex_b5741169901f6c20.txt',
+    'meta' => TRUE,
+    'meta_example' => '<meta name="yandex-verification" content="b5741169901f6c20" />',
+  );
+  $engines['custom'] = array(
+    'name' => t('Custom verification'),
+    'file' => TRUE,
+    'file_contents' => TRUE,
+    'meta' => TRUE,
+  );
+  return $engines;
+}
+
+/**
+ * Fetch an array of supported search engines.
+ */
+function site_verify_get_engines() {
+  static $engines;
+
+  if (!isset($engines)) {
+    // Fetch the list of engines and allow other modules to alter it.
+    $engines = module_invoke_all('site_verify_engine_info');
+    drupal_alter('site_verify_engine', $engines);
+
+    // Merge the default values for each engine entry.
+    foreach ($engines as $key => $engine) {
+      $engines[$key] += array(
+        'key' => $key,
+        //'name' => drupal_ucfirst($engine),
+        'file' => FALSE,
+        'file_example' => FALSE,
+        'file_validate' => array(),
+        'file_contents' => FALSE,
+        'file_contents_example' => FALSE,
+        'file_contents_validate' => array(),
+        'meta' => FALSE,
+        'meta_example' => FALSE,
+        'meta_validate' => array(),
+      );
+    }
+  }
+
+  return $engines;
+}
+
+function site_verify_output($svid) {
+  $verification = site_verify_load($svid);
+  if ($verification['file_contents'] && $verification['engine']['file_contents']) {
+    echo $verification['file_contents'];
+  }
+  else {
+    drupal_set_title(t('Verification page'));
+    return t('This is a verification page for the !title search engine.', array('!title' => $verification['engine']['name']));
+  }
+}

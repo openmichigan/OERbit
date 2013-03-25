@@ -1,12 +1,11 @@
-; $Id: nodewords_basic.info,v 1.1.2.2 2009/11/07 13:09:02 kiam Exp $
-name = Nodewords - basic meta tags
-description = Allows users to add basic meta tags to Drupal pages.
+name = "Nodewords basic meta tags"
+description = "Add the 'abstract', 'canonical', 'copyright', 'description', 'keywords', 'logo', 'original-source', 'revisit-after', 'robots', 'standout' and 'syndication-source' meta tags, and the 'title' HTML tag."
 dependencies[] = nodewords
 package = Meta tags
 core = 6.x
-; Information added by drupal.org packaging script on 2009-12-31
-version = "6.x-1.11"
+; Information added by drupal.org packaging script on 2012-12-05
+version = "6.x-1.14"
 core = "6.x"
 project = "nodewords"
-datestamp = "1262270443"
+datestamp = "1354723721"
 

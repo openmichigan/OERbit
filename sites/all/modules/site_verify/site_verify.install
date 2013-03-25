@@ -1,0 +1,123 @@
+<?php
+// $Id: site_verify.install,v 1.10.2.1 2010/02/04 04:50:37 davereid Exp $
+
+/**
+ * @file
+ * Install, update and uninstall functions for the site_verify module.
+ */
+
+/**
+ * Implements hook_scheam().
+ */
+function site_verify_schema() {
+  $schema['site_verify'] = array(
+    'description' => '',
+    'fields' => array(
+      'svid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique site verification ID.',
+      ),
+      'engine' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => '',
+      ),
+      'file' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => '',
+        'description' => '',
+      ),
+      'file_contents' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+        'description' => '',
+      ),
+      'meta' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'description' => '',
+      ),
+    ),
+    'primary key' => array('svid'),
+    'indexes' => array(
+      'engine' => array('engine'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function site_verify_install() {
+  // Add tables.
+  drupal_install_schema('site_verify');
+
+  // Import data from deprecated modules.
+  $ret = array();
+  site_verify_import_xmlsitemap($ret);
+  site_verify_import_ghs($ret);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function site_verify_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('site_verify');
+}
+
+function site_verify_update_1() {
+  $ret = array();
+  db_drop_unique_key($ret, 'site_verify', 'file');
+  return $ret;
+}
+
+function site_verify_update_2() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {site_verify} SET engine = 'bing' WHERE engine = 'live_search'");
+  return $ret;
+}
+
+function site_verify_update_3() {
+  $ret = array();
+  site_verify_import_xmlsitemap($ret);
+  site_verify_import_ghs($ret);
+  return $ret;
+}
+
+/**
+ * Import data from XML sitemap engines.
+ */
+function site_verify_import_xmlsitemap(&$ret) {
+  $engines = array('google', 'bing', 'yahoo');
+  foreach ($engines as $engine) {
+    if ($file = db_escape_string(variable_get('xmlsitemap_engines_' . $engine . '_verify', ''))) {
+      if (!db_result(db_query("SELECT 1 FROM {site_verify} WHERE engine = '%s' AND file <> '$file'", $engine))) {
+        $file_content = db_escape_string(variable_get('xmlsitemap_engines_' . $engine . '_verify_string', ''));
+        $ret[] = update_sql("INSERT INTO {site_verify} (engine, file, file_contents, meta) VALUES ('$engine', '$file', '$file_content', '')");
+      }
+    }
+    variable_del('xmlsitemap_engines_' . $engine . '_verify');
+    variable_del('xmlsitemap_engines_' . $engine . '_verify_string');
+  }
+}
+
+/**
+ * Import data from Google Apps Verification.
+ */
+function site_verify_import_ghs(&$ret) {
+  if (!db_result(db_query("SELECT 1 FROM {site_verify} WHERE engine = 'google' AND file <> 'googlehostedservice.html'"))) {
+    if ($google_content = db_escape_string(variable_get('ghs_string_verify', ''))) {
+      $ret[] = update_sql("INSERT INTO {site_verify} (engine, file, file_contents, meta) VALUES ('google', 'googlehostedservice.html', '$google_content', '')");
+    }
+  }
+  variable_del('ghs_string_verify');
+}

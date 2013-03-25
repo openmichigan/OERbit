@@ -1,9 +1,7 @@
 <?php
-// $Id: nodewords_extra.install,v 1.1.2.11 2009/12/25 03:09:13 kiam Exp $
-
 /**
  * @file
- * Installation file for Nodewords - extra meta tags.
+ * Installation file for nodewords_extra.module.
  */
 
 /**
@@ -18,19 +16,49 @@ function nodewords_extra_install() {
  */
 
 /**
+ * Implements hook_update_N().
+ */
+function nodewords_extra_update_6106() {
+  $ret = array();
+
+  if (db_table_exists('nodewords')) {
+    $ret[] = update_sql("DELETE FROM {nodewords} WHERE name IN ('pics-label')");
+
+    $ret[] = array(
+      'success' => TRUE,
+      'query' => 'Removed support for the defunct FOSI ICRA meta tag.',
+    );
+  }
+
+  variable_del('nodewords_icra_validation_content');
+
+  return $ret;
+}
+
+/**
+ * Converts the legacy "dc." meta tags to "dcterms." metatags.
+ */
+function nodewords_extra_update_6107() {
+  $ret = array();
+
+  $ret[] = update_sql("UPDATE {nodewords} SET name=REPLACE(name, 'dc.', 'dcterms.') WHERE name LIKE 'dc.%'");
+
+  return $ret;
+}
+
+/**
  * Implements hook_uninstall().
  */
 function nodewords_extra_uninstall() {
   if (db_table_exists('nodewords')) {
     $metatags = array(
-      'dc.contributor',
-      'dc.creator',
-      'dc.date',
-      'dc.publisher',
-      'dc.title',
+      'dcterms.contributor',
+      'dcterms.creator',
+      'dcterms.date',
+      'dcterms.publisher',
+      'dcterms.title',
       'geourl',
       'location',
-      'pics-label',
     );
 
     db_query("DELETE FROM {nodewords} WHERE name IN (". db_placeholders($metatags, 'varchar') .")", $metatags);
