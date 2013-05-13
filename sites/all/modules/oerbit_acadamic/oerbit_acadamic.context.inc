@@ -68,6 +68,12 @@ function oerbit_acadamic_context_default_contexts() {
            'region' => 'course_nav',
            'weight' => 1,
         ),
+        'oer_analytics-oer-analytics' => array(
+          'module' => 'oer_analytics',
+          'delta' => 'oer-analytics',
+          'region' => 'course_nav',
+          'weight' => 2,
+        ),
       ),
     ),
   );

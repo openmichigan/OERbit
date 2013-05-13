@@ -1,0 +1,29 @@
+<?php
+/**
+ * @file
+ * Installation file for Google Analytics Reports module.
+ */
+
+/**
+ * Implements hook_requirements().
+ *
+ * This is duplicated from google_analytics_api_requirements(), because the
+ * Drupal 6 installer has a bug that installs the modules in the wrong order.
+ * @see http://drupal.org/node/833192
+ */
+function google_analytics_reports_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  if ($phase == 'install') {
+    include_once drupal_get_path('module', 'autoload') . '/autoload.module';
+    if (!function_exists('autoload_registry_rebuild')) {
+      $requirements['autoload_version'] = array(
+        'title' => $t('Autoload version'),
+        'description' => $t('Your version of Autoload appears to be out of date.  Version 2.x is required.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+  return $requirements;
+}
