@@ -178,6 +178,7 @@ function webform_menu() {
     'page arguments' => array('webform_component_edit_form', 1, 4, FALSE),
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
+    'file' => 'includes/webform.components.inc',
     'type' => MENU_LOCAL_TASK,
   );
   $items['node/%webform_menu/webform/components/%webform_menu_component/clone'] = array(
@@ -186,6 +187,7 @@ function webform_menu() {
     'page arguments' => array('webform_component_edit_form', 1, 4, TRUE),
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
+    'file' => 'includes/webform.components.inc',
     'type' => MENU_LOCAL_TASK,
   );
   $items['node/%webform_menu/webform/components/%webform_menu_component/delete'] = array(
@@ -194,6 +196,7 @@ function webform_menu() {
     'page arguments' => array('webform_component_delete_form', 1, 4),
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
+    'file' => 'includes/webform.components.inc',
     'type' => MENU_LOCAL_TASK,
   );
 
@@ -884,6 +887,32 @@ function webform_webform_submission_actions($node, $submission) {
 }
 
 /**
+ * Implements hook_webform_submission_render_alter().
+ */
+function webform_webform_submission_render_alter(&$renderable) {
+  // If displaying a submission to end-users who are viewing their own
+  // submissions (and not through an e-mail), do not show hidden values.
+  // This needs to be implemented at the level of the entire submission, since
+  // individual components do not get contextual information about where they
+  // are being displayed.
+  $node = $renderable['#node'];
+  $is_admin = webform_results_access($node);
+  if (empty($renderable['#email']) && !$is_admin) {
+    // Find and hide the display of all hidden components.
+    foreach ($node->webform['components'] as $cid => $component) {
+      if ($component['type'] == 'hidden') {
+        $parents = webform_component_parent_keys($node, $component);
+        $element = &$renderable;
+        foreach ($parents as $pid) {
+          $element = &$element[$pid];
+        }
+        $element['#access'] = FALSE;
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_file_download().
  *
  * Only allow users with view webform submissions to download files.
@@ -1303,6 +1332,15 @@ function webform_node_view(&$node, $teaser, $page) {
   $closed = FALSE;
   $allowed_roles = array();
 
+  // Let webform form know if the node is displayed as teaser or not.
+  $node->webform['is_teaser'] = $teaser;
+
+  // If a teaser, tell the form to load subsequent pages on the node page.
+  if ($teaser && !isset($node->webform['action'])) {
+    $query = array_diff_key($_GET, array('q' => ''));
+    $node->webform['action'] = url('node/' . $node->nid, array('query' => $query));
+  }
+
   // When logging in using a form on the same page as a webform node, suppress
   // output messages so that they don't show up after the user has logged in.
   // See http://drupal.org/node/239343.
@@ -1603,6 +1641,15 @@ function webform_block_view($delta = '') {
   // Use the node title for the block title.
   $subject = $node->title;
 
+  // If not displaying pages in the block, set the #action property on the form.
+  if ($settings['pages_block']) {
+    $node->webform['action'] = FALSE;
+  }
+  else {
+    $query = array_diff_key($_GET, array('q' => ''));
+    $node->webform['action'] = url('node/' . $node->nid, array('query' => $query));
+  }
+
   // Generate the content of the block based on display settings.
   if ($settings['display'] == 'form') {
     webform_node_view($node, FALSE, TRUE, FALSE);
@@ -1723,21 +1770,10 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
   // Set the encoding type (necessary for file uploads).
   $form['#attributes']['enctype'] = 'multipart/form-data';
 
-  // If this is a webform block, load the block-specific configuration settings.
-  $pages_in_node = TRUE;
-  if (isset($node->webform_block)) {
-    $webform_blocks = variable_get('webform_blocks', array());
-    $delta = 'client-block-' . $node->nid;
-    $block_settings = isset($webform_blocks[$delta]) ? $webform_blocks[$delta] : array();
-    $pages_in_node = empty($block_settings['pages_block']);
-  }
-
-  // Set the form action to the node ID in case this is being displayed on the
-  // teaser or in a block, subsequent pages should be on the node page directly.
-  if ($pages_in_node && empty($submission)) {
-    $query = $_GET;
-    unset($query['q']);
-    $form['#action'] = url('node/' . $node->nid, array('query' => $query));
+  // Sometimes when displaying a webform as a teaser or block, a custom action
+  // property is set to direct the user to the node page.
+  if (!empty($node->webform['action'])) {
+    $form['#action'] = $node->webform['action'];
   }
 
   $form['#submit'] = array('webform_client_form_pages', 'webform_client_form_submit');
@@ -1770,10 +1806,20 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
     $page_count = $form_state['webform']['page_count'];
     $page_num = $form_state['webform']['page_num'];
 
-    // Recursively add components to the form.
+    if ($page_count > 1) {
+      $next_page_labels = array();
+      $prev_page_labels = array();
+    }
+
+    // Recursively add components to the form. The unfiltered version of the
+    // form (typically used in Form Builder), includes all components.
     foreach ($component_tree['children'] as $cid => $component) {
       $component_value = isset($form_state['values']['submitted'][$cid]) ? $form_state['values']['submitted'][$cid] : NULL;
-      if (_webform_client_form_rule_check($node, $component, $page_num, $form_state)) {
+      if ($filter == FALSE || _webform_client_form_rule_check($node, $component, $page_num, $form_state)) {
+        if ($component['type'] == 'pagebreak') {
+          $next_page_labels[$component['page_num'] - 1] = !empty($component['extra']['next_page_label']) ? $component['extra']['next_page_label'] : t('Next Page >');
+          $prev_page_labels[$component['page_num']] = !empty($component['extra']['prev_page_label']) ? $component['extra']['prev_page_label'] : t('< Previous Page');
+        }
         _webform_client_form_add_component($node, $component, $component_value, $form['submitted'], $form, $form_state, $submission, 'form', $page_num, $filter);
       }
     }
@@ -1824,14 +1870,11 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
     }
 
     if ($page_count > 1) {
-      $next_page = t('Next Page >');
-      $prev_page = t('< Previous Page');
-
       // Add the submit button(s).
       if ($page_num > 1) {
         $form['actions']['previous'] = array(
           '#type' => 'submit',
-          '#value' => $prev_page,
+          '#value' => $prev_page_labels[$page_num],
           '#weight' => 5,
           '#validate' => array(),
           '#attributes' => array('formnovalidate' => 'formnovalidate'),
@@ -1847,7 +1890,7 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
       elseif ($page_num < $page_count) {
         $form['actions']['next'] = array(
           '#type' => 'submit',
-          '#value' => $next_page,
+          '#value' => $next_page_labels[$page_num],
           '#weight' => 10,
         );
       }
@@ -2001,12 +2044,20 @@ function _webform_client_form_add_component($node, $component, $component_value,
       $parent_fieldset[$component['form_key']] = $display_element;
     }
   }
-  elseif ($component['page_num'] == $page_num) {
+  // Show the component only on its form page, or if building an unfiltered
+  // version of the form (such as for Form Builder).
+  elseif ($component['page_num'] == $page_num || $filter == FALSE) {
     // Add this user-defined field to the form (with all the values that are always available).
     $data = isset($submission->data[$cid]['value']) ? $submission->data[$cid]['value'] : NULL;
     if ($element = webform_component_invoke($component['type'], 'render', $component, $data, $filter)) {
       // Ensure the component is added as a property.
       $element['#webform_component'] = $component;
+
+      // The 'private' option is in most components, but it's not a real
+      // property. Add it for Form Builder compatibility.
+      if (webform_component_feature($component['type'], 'private')) {
+        $element['#webform_private'] = $component['extra']['private'];
+      }
 
       // Allow modules to modify a webform component that is going to be render in a form.
       drupal_alter('webform_component_render', $element, $component);
@@ -2162,6 +2213,11 @@ function _webform_client_form_validate($elements, &$form_state, $first_run = TRU
 function webform_client_form_pages($form, &$form_state) {
   $node = node_load($form_state['values']['details']['nid']);
 
+  // Multistep forms may not have any components on the first page.
+  if (!isset($form_state['values']['submitted'])) {
+    $form_state['values']['submitted'] = array();
+  }
+
   // Move special settings to storage.
   if (isset($form_state['webform']['component_tree'])) {
     $form_state['storage']['component_tree'] = $form_state['webform']['component_tree'];
@@ -2183,9 +2239,6 @@ function webform_client_form_pages($form, &$form_state) {
   $submit_op = !empty($form['actions']['submit']['#value']) ? $form['actions']['submit']['#value'] : t('Submit');
   $draft_op = !empty($form['actions']['draft']['#value']) ? $form['actions']['draft']['#value'] : t('Save Draft');
   if (!in_array($form_state['values']['op'], array($submit_op, $draft_op))) {
-    // Checkboxes need post-processing to maintain their values.
-    _webform_client_form_submit_process($node, $form_state['values']['submitted'], array('select', 'grid'));
-
     // Store values from the current page in the form state storage.
     if (is_array($form_state['values']['submitted'])) {
       foreach ($form_state['values']['submitted'] as $key => $val) {
@@ -2568,7 +2621,7 @@ function theme_webform_element_wrapper($element, $content) {
     $type = 'display';
   }
   else {
-    $type = (isset($element['#type']) && !in_array($element['#type'], array('markup', 'textfield'))) ? $element['#type'] : $element['#webform_component']['type'];
+    $type = (isset($element['#type']) && !in_array($element['#type'], array('markup', 'textfield', 'webform_email', 'webform_number'))) ? $element['#type'] : $element['#webform_component']['type'];
   }
 
   // Convert the parents array into a string, excluding the "submitted" wrapper.
@@ -3181,6 +3234,7 @@ function webform_format_email_subject($subject, $node = NULL, $submission = NULL
       if (function_exists($display_function)) {
         $display = $display_function($component, $value, 'text');
         $display['#theme_wrappers'] = array();
+        $display['#webform_component'] = $component;
         $subject = str_replace("\n", ' ', drupal_render($display));
       }
       else {
@@ -3507,9 +3561,11 @@ function webform_date_format($size = 'medium') {
  * Return a date in the desired format taking into consideration user timezones.
  */
 function webform_strtodate($format, $string, $timezone_name = NULL) {
+  global $user;
+
   // Adjust the time based on the user or site timezone.
   // The "timezone_name" variable is provided by DateAPI in Drupal 6.
-  if (variable_get('configurable_timezones', 1) && $timezone_name == 'user') {
+  if (variable_get('configurable_timezones', 1) && $timezone_name == 'user' && $user->uid) {
     $timezone_name = isset($GLOBALS['user']->timezone_name) ? $GLOBALS['user']->timezone_name : NULL;
   }
   // If the timezone is still empty or not set, use the site timezone.

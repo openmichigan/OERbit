@@ -124,7 +124,7 @@ function _webform_edit_file($component) {
       '#type' => 'textfield',
       '#title' => t('Additional extensions'),
       '#default_value' => $component['extra']['filtering']['addextensions'],
-      '#description' => t('Enter a list of additional file extensions for this upload field, seperated by commas.<br /> Entered extensions will be appended to checked items above.'),
+      '#description' => t('Enter a list of additional file extensions for this upload field, separated by commas.<br /> Entered extensions will be appended to checked items above.'),
       '#size' => 20,
       '#weight' => 3,
     );
@@ -599,7 +599,17 @@ function webform_file_name($filepath) {
 function webform_file_url($filepath) {
   if (!empty($filepath)) {
     $info = pathinfo($filepath);
-    $file_url = file_create_url($info['dirname'] . '/' . rawurlencode($info['basename']));
+    switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
+      case FILE_DOWNLOADS_PUBLIC:
+        $path = $info['dirname'] . '/' . rawurlencode($info['basename']);
+        break;
+      case FILE_DOWNLOADS_PRIVATE:
+        // Private file paths must not be encoded as they are run through url()
+        // which performs the file encoding.
+        $path = $info['dirname'] . '/' . $info['basename'];
+        break;
+    }
+    $file_url = file_create_url($path);
   }
   return isset($file_url) ? $file_url : '';
 }
