@@ -2866,6 +2866,7 @@ publications|Publications
 exercises|Exercises
 software|Software Applications
 misc|Miscellaneous
+workshops|Workshops
 unknown|Unknown',
     'allowed_values_php' => '',
     'widget' => array(
