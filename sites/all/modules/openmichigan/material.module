@@ -126,6 +126,8 @@ function material_link_display($type, $view, $field, $row) {
       $pname = 'flickr';
     } else if (stristr($url, "hathitrust.org/") != FALSE) {
       $pname = 'hathitrust';
+    } else if (stristr($url, "amara.org/") != FALSE) {
+      $pname = 'amara';
     } else {
       $pname = 'external_link';
     }
