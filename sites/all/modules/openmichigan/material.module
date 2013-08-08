@@ -87,6 +87,10 @@ function material_link_display($type, $view, $field, $row) {
           case 'vimeo':
           case 'yahoo':
           case 'youtube':
+          case 'slideshare':
+          case 'deepblue':
+          case 'flickr':
+          case 'amara':
             $pname = $provider;
             break;
           default:
@@ -97,6 +101,8 @@ function material_link_display($type, $view, $field, $row) {
               $pname = 'deepblue';
             } else if (stristr($url, "flickr.com/") != FALSE) {
               $pname = 'flickr';
+            } else if (stristr($url, "amara.org/") != FALSE) {
+              $pname = 'amara';
             } else {
               $pname = 'video';
             }
