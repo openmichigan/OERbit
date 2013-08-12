@@ -774,6 +774,10 @@ function comment_save($edit) {
       // Clear the cache so an anonymous user can see his comment being added.
       cache_clear_all();
 
+      // Ignore slave server temporarily to give time for the
+      // saved comment to be propagated to the slave.
+      db_ignore_slave();
+
       // Explain the approval queue if necessary, and then
       // redirect the user to the node he's commenting on.
       if ($edit['status'] == COMMENT_NOT_PUBLISHED) {
@@ -1201,7 +1205,7 @@ function comment_validate($edit) {
     $node = node_load($edit['nid']);
     if (variable_get('comment_anonymous_'. $node->type, COMMENT_ANONYMOUS_MAYNOT_CONTACT) > COMMENT_ANONYMOUS_MAYNOT_CONTACT) {
       if ($edit['name']) {
-        $taken = db_result(db_query("SELECT COUNT(uid) FROM {users} WHERE LOWER(name) = '%s'", $edit['name']));
+        $taken = db_result(db_query("SELECT COUNT(uid) FROM {users} WHERE name = '%s'", $edit['name']));
 
         if ($taken != 0) {
           form_set_error('name', t('The name you used belongs to a registered user.'));
