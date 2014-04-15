@@ -27,12 +27,12 @@ function print_main_settings() {
 
   $form['settings'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Common Settings'),
+    '#title' => t('Common settings'),
   );
 
   $form['settings']['print_css'] = array(
     '#type' => 'textfield',
-    '#title' => t('Custom Stylesheet'),
+    '#title' => t('Custom stylesheet'),
     '#default_value' => $print_css,
     '#size' => 60,
     '#maxlength' => 250,
@@ -202,8 +202,8 @@ function print_html_settings() {
   $form['settings']['print_html_link_pos'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Printer-friendly page link'),
-    '#default_value' => variable_get('print_html_link_pos', array(PRINT_HTML_LINK_POS_DEFAULT => PRINT_HTML_LINK_POS_DEFAULT)),
-    '#options' => array('link' => t('Links area'), 'corner' => t('Content corner')),
+    '#default_value' => variable_get('print_html_link_pos', unserialize(PRINT_HTML_LINK_POS_DEFAULT)),
+    '#options' => array('link' => t('Links area'), 'corner' => t('Content corner'), 'block' => t('Block'), 'help' => t('Help area')),
     '#description' => t('Choose the location of the link(s) to the printer-friendly page. The Links area is usually below the node content, whereas the Content corner is placed in the upper-right corner of the node content. Unselect all options to disable the link. Even if the link is disabled, you can still view the print version of a node by going to !path/nid where nid is the numeric id of the node.', array('!path' => PRINT_PATH)),
   );
 
@@ -364,7 +364,7 @@ function print_html_settings() {
 }
 
 /**
- * Menu callback for the Printer-friendly pages module text strings settings form.
+ * Menu callback for the common print module text strings settings form
  *
  * @ingroup forms
  */
@@ -397,7 +397,7 @@ function print_main_strings_settings() {
 }
 
 /**
- * Menu callback for the Printer-friendly pages module text strings settings form.
+ * Menu callback for the printer-friendly version text strings settings form
  *
  * @ingroup forms
  */

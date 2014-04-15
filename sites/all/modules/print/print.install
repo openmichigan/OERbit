@@ -18,7 +18,7 @@ function print_install() {
 
   $t = get_t();
   drupal_set_message($t('Printer-friendly Page settings are available under !link',
-    array( '!link' => l($t('Administer > Site configuration > Printer-friendly Pages'),  'admin/settings/print' ) )
+    array('!link' => l($t('Administer > Site configuration > Printer-friendly Pages'), 'admin/settings/print'))
   ));
 }
 
@@ -346,7 +346,7 @@ function print_update_6006() {
     variable_set('print_css', $matches[1]);
   }
   elseif (!empty($print_css)) {
-    drupal_set_message($t('Please review your custom stylesheet path in the <a href="!url">print module settings</a>, as the path must now be relative to the base path of the site.', array('!url' => url('admin/settings/print/common'))));
+    drupal_set_message($t('Please review your custom stylesheet path in the !url, as the path must now be relative to the base path of the site.', array('!url' => l($t('print module settings'), 'admin/settings/print/common'))));
   }
 
   return $ret;
@@ -381,17 +381,15 @@ function print_update_6008() {
 }
 
 /**
- * Update permissions to new spellings
+ * Enable block and help area links
  */
-function print_update_6100() {
+function print_update_6118() {
   $ret = array();
-  $result = db_query("SELECT rid, perm FROM {permission} ORDER BY rid");
-  while ($role = db_fetch_object($result)) {
-    $renamed_permission = str_replace('access send to friend', 'access send by email', $role->perm);
-    $renamed_permission = str_replace('send unlimited e-mails', 'send unlimited emails', $renamed_permission);
-    if ($renamed_permission != $role->perm) {
-      $ret[] = update_sql("UPDATE {permission} SET perm = '$renamed_permission' WHERE rid = $role->rid");
-    }
-  }
+
+  $link_pos = variable_get('print_html_link_pos', array('link' => 'link', 'block' => 'block', 'help' => 'help'));
+  $link_pos['block'] = 'block';
+  $link_pos['help'] = 'help';
+  variable_set('print_html_link_pos', $link_pos);
+
   return $ret;
 }

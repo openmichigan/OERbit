@@ -12,12 +12,17 @@
 class PrintTCPDF extends TCPDF {
   public $footer;
 
-  //Page footer data
-  public function SetFooterData($arg = '') {
+  // Display invisible link at the bottom of all pages.
+  public function setTcpdfLink($tcpdflink) {
+    $this->tcpdflink = $tcpdflink;
+  }
+
+  // Page footer data
+  public function setFooterContent($arg = '') {
     $this->footer = $arg;
   }
 
-  //Page footer
+  // Page footer
   public function Footer() {
     theme('print_pdf_tcpdf_footer2', $this);
   }

@@ -36,8 +36,8 @@ function print_pdf_settings() {
     $form['settings']['print_pdf_link_pos'] = array(
       '#type' => 'checkboxes',
       '#title' => t('PDF version link'),
-      '#default_value' => variable_get('print_pdf_link_pos', array(PRINT_PDF_LINK_POS_DEFAULT => PRINT_PDF_LINK_POS_DEFAULT)),
-      '#options' => array('link' => t('Links area'), 'corner' => t('Content corner')),
+      '#default_value' => variable_get('print_pdf_link_pos', unserialize(PRINT_PDF_LINK_POS_DEFAULT)),
+      '#options' => array('link' => t('Links area'), 'corner' => t('Content corner'), 'block' => t('Block'), 'help' => t('Help area')),
       '#description' => t('Choose the location of the link(s) to the PDF version. The Links area is usually below the node content, whereas the Content corner is placed in the upper-right corner of the node content. Unselect all options to disable the link. Even if the link is disabled, you can still view the PDF version of a node by going to !path/nid where nid is the numeric id of the node.', array('!path' => PRINTPDF_PATH)),
     );
 
@@ -189,7 +189,7 @@ function print_pdf_settings() {
     );
     $form['settings']['print_pdf_font_family'] = array(
       '#type' => 'textfield',
-      '#title' => t('Font Family'),
+      '#title' => t('Font family'),
       '#default_value' => variable_get('print_pdf_font_family', PRINT_PDF_FONT_FAMILY_DEFAULT),
       '#size' => 60,
       '#maxlength' => 250,
@@ -198,7 +198,7 @@ function print_pdf_settings() {
     );
     $form['settings']['print_pdf_font_size'] = array(
       '#type' => 'textfield',
-      '#title' => t('Font Size'),
+      '#title' => t('Font size'),
       '#default_value' => variable_get('print_pdf_font_size', PRINT_PDF_FONT_SIZE_DEFAULT),
       '#size' => 2,
       '#maxlength' => 3,
@@ -228,13 +228,13 @@ function print_pdf_settings() {
     if (module_exists('token')) {
       $form['settings']['print_pdf_filename'] = array(
         '#type' => 'textfield',
-        '#title' => t('PDF File Name'),
+        '#title' => t('PDF filename'),
         '#default_value' => variable_get('print_pdf_filename', PRINT_PDF_FILENAME_DEFAULT),
         '#description' => t("If left empty the generated filename defaults to the node's path. Tokens may be used to build the filename (see following list). The .pdf extension will be appended automatically."),
       );
       $form['settings']['print_pdf_filename_patterns'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Replacement Patterns'),
+        '#title' => t('Replacement patterns'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
@@ -256,7 +256,7 @@ function print_pdf_settings() {
   else {
     $form['settings'] = array(
       '#type' => 'markup',
-      '#value' => '<p>'. t("No PDF generation tool found! Please dowload a supported PHP PDF generation tool. Check this module's INSTALL.txt for more details.") .'</p>',
+      '#value' => '<p>'. t("No PDF generation tool found! Please download a supported PHP PDF generation tool. Check this module's INSTALL.txt for more details.") .'</p>',
     );
   }
 

@@ -4,9 +4,9 @@ dependencies[] = print
 core=6.x
 package = "Printer, email and PDF versions"
 
-; Information added by drupal.org packaging script on 2012-04-04
-version = "6.x-1.15"
+; Information added by Drupal.org packaging script on 2014-04-02
+version = "6.x-1.19"
 core = "6.x"
 project = "print"
-datestamp = "1333551070"
+datestamp = "1396426748"
 

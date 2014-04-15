@@ -34,6 +34,7 @@ function print_mail_uninstall() {
   variable_del('print_mail_sys_link_pages');
   variable_del('print_mail_book_link');
   variable_del('print_mail_hourly_threshold');
+  variable_del('print_mail_use_reply_to');
   variable_del('print_mail_teaser_default');
   variable_del('print_mail_teaser_choice');
   variable_del('print_mail_link_text');
@@ -305,5 +306,36 @@ function print_mail_update_6007() {
 
     $ret[] = update_sql("UPDATE {print_mail_node_conf} SET link = (link AND $print_mail_display), comments = (comments OR $print_mail_display_comment), url_list = (url_list AND $print_mail_display_urllist) WHERE nid IN (SELECT nid FROM {node} WHERE type = '$value->type');");
   }
+  return $ret;
+}
+
+/**
+ * Update permissions to new spellings
+ */
+function print_mail_update_6100() {
+  $ret = array();
+  $result = db_query("SELECT rid, perm FROM {permission} ORDER BY rid");
+  while ($role = db_fetch_object($result)) {
+    $renamed_permission = str_replace('access send to friend', 'access send by email', $role->perm);
+    $renamed_permission = str_replace('send unlimited e-mails', 'send unlimited emails', $renamed_permission);
+    $renamed_permission = db_escape_string($renamed_permission);
+    if ($renamed_permission != $role->perm) {
+      $ret[] = update_sql("UPDATE {permission} SET perm = '$renamed_permission' WHERE rid = $role->rid");
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Enable block and help area links
+ */
+function print_mail_update_6118() {
+  $ret = array();
+
+  $link_pos = variable_get('print_mail_link_pos', array('link' => 'link', 'block' => 'block', 'help' => 'help'));
+  $link_pos['block'] = 'block';
+  $link_pos['help'] = 'help';
+  variable_set('print_mail_link_pos', $link_pos);
+
   return $ret;
 }

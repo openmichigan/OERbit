@@ -110,7 +110,8 @@ function print_mail_form($form_state) {
     '#required' => TRUE,
   );
   if (!empty($title)) {
-    if (drupal_substr($path, 0, 5) == 'node/') {
+    // To prevent useless translation strings, try to translate only non-node titles
+    if (drupal_substr($path, 0, 5) != 'node/') {
       $title = t($title);
     }
 
@@ -144,10 +145,6 @@ function print_mail_form($form_state) {
     '#name' => 'submit',
     '#type' => 'submit',
     '#value' => t('Send email'),
-  );
-  $form['btn_clear'] = array(
-    '#type' => 'markup',
-    '#value' => '<input type="reset" name="clear" id="edit-btn-clear" value="'. t('Clear form') .'" class="form-submit" />',
   );
   $form['btn_cancel'] = array(
     '#name' => 'cancel',
@@ -265,22 +262,11 @@ function print_mail_form_validate($form, &$form_state) {
  */
 function print_mail_form_submit($form, &$form_state) {
   if (!array_key_exists('cancel', $form_state['values'])) {
-    if (!empty($form_state['values']['fld_from_name'])) {
-      $from = '"'. mime_header_encode($form_state['values']['fld_from_name']) .'" <'. $form_state['values']['fld_from_addr'] .'>';
-    }
-    else {
-      $from = $form_state['values']['fld_from_addr'];
-    }
     $cid = isset($form_state['values']['cid']) ? $form_state['values']['cid'] : NULL;
-
     $print_mail_text_message = filter_xss_admin(variable_get('print_mail_text_message', t('Message from sender')));
     $sender_message = $print_mail_text_message .':<br /><br /><em>'. nl2br(check_plain($form_state['values']['txt_message'])) .'</em>';
 
     $print = print_controller($form_state['values']['path'], $cid, PRINT_MAIL_FORMAT, $form_state['values']['chk_teaser'], $sender_message);
-
-    // Spaces in img URLs must be replaced with %20
-    $pattern = '!<(img\s[^>]*?)>!is';
-    $print['content'] = preg_replace_callback($pattern, '_print_mail_encode_urls', $print['content']);
 
     if ($print !== FALSE) {
       $print_mail_send_option_default = variable_get('print_mail_send_option_default', PRINT_MAIL_SEND_OPTION_DEFAULT);
@@ -291,9 +277,35 @@ function print_mail_form_submit($form, &$form_state) {
       $params['link'] = $print['url'];
       $params['title'] = $form_state['values']['title'];
 
+      // If a name is provided, make From: in the format Common Name <address>
+      if (!empty($form_state['values']['fld_from_name'])) {
+        $from = '"' . mime_header_encode($form_state['values']['fld_from_name']) . '" <' . $form_state['values']['fld_from_addr'] . '>';
+      }
+      else {
+        $from = $form_state['values']['fld_from_addr'];
+      }
+
+      // If using reply-to, move the From: info to the params array, so that it is passed to hook_mail later
+      if (variable_get('print_mail_use_reply_to', PRINT_MAIL_USE_REPLY_TO)) {
+        $params['from'] = $from;
+        $from = NULL;
+      }
+
+      // Spaces in img URLs must be replaced with %20
+      $pattern = '!<(img\s[^>]*?)>!is';
+      $print['content'] = preg_replace_callback($pattern, '_print_replace_spaces', $print['content']);
+
       $node = $print['node'];
       $params['body'] = theme('print_page', $print, PRINT_MAIL_FORMAT, $node);
       $params['body'] = drupal_final_markup($params['body']);
+
+      // Img elements must be set to absolute
+      $pattern = '!<(img\s[^>]*?)>!is';
+      $params['body'] = preg_replace_callback($pattern, '_print_rewrite_urls', $params['body']);
+
+      // Convert the a href elements, to make sure no relative links remain
+      $pattern = '!<(a\s[^>]*?)>!is';
+      $params['body'] = preg_replace_callback($pattern, '_print_rewrite_urls', $params['body']);
 
       $ok = FALSE;
       if (function_exists('job_queue_add') && variable_get('print_mail_job_queue', PRINT_MAIL_JOB_QUEUE_DEFAULT)) {
@@ -349,6 +361,10 @@ function print_mail_form_submit($form, &$form_state) {
 function print_mail_mail($key, &$message, $params) {
   $message['subject'] = $params['subject'];
 
+  if (isset($params['from'])) {
+    $message['headers']['Reply-To'] = $params['from'];
+  }
+
   switch ($key) {
     case 'sendpage':
       $message['body'] = module_exists('mailsystem') ? check_plain($params['body']) : $params['body'];
@@ -371,6 +387,8 @@ function print_mail_mail($key, &$message, $params) {
       // Configure new MIME object
       $mime = new Mail_mime("\n");
       $mime_params['html_encoding'] = '7bit';
+      $mime_params['html_charset'] = 'utf-8';
+      $mime_params['text_charset'] = 'utf-8';
 
       // Pass message contents into MIME object
       switch ($key) {
@@ -405,40 +423,4 @@ function print_mail_mail($key, &$message, $params) {
  */
 function print_mail_form_cancel($form, &$form_state) {
   $form_state['redirect'] = preg_replace('!^book/export/html/!', 'node/', $form_state['values']['path']);
-}
-
-/**
- * Callback function for the preg_replace_callback replacing spaces with %20
- *
- * Replace spaces in URLs with %20
- *
- * @param $matches
- *   array with the matched tag patterns, usually <a...>+text+</a>
- * @return
- *   tag with re-written URL
- */
-function _print_mail_encode_urls($matches) {
-  // first, split the html into the different tag attributes
-  $pattern = '!\s*(\w+\s*=\s*"(?:\\\"|[^"])*")\s*|\s*(\w+\s*=\s*\'(?:\\\\\'|[^\'])*\')\s*|\s*(\w+\s*=\s*\w+)\s*|\s+!';
-  $attribs = preg_split($pattern, $matches[1], -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-  foreach ($attribs as $key => $value) {
-    $attribs[$key] = preg_replace('!(\w)\s*=\s*(.*)!', '$1=$2', $value);
-  }
-
-  $size = count($attribs);
-  for ($i=1; $i < $size; $i++) {
-    // If the attribute is href or src, we may need to rewrite the URL in the value
-    if (preg_match('!^(?:href|src)\s*?=(.*)!i', $attribs[$i], $urls) > 0) {
-      $url = trim($urls[1], " \t\n\r\0\x0B\"'");
-      $new_url = str_replace(' ', '%20', $url);
-      $matches[1] = str_replace($url, $new_url, $matches[1]);
-    }
-  }
-
-  $ret = '<'. $matches[1] .'>';
-  if (count($matches) == 4) {
-    $ret .= $matches[2] . $matches[3];
-  }
-
-  return $ret;
 }
