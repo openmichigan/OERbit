@@ -5,9 +5,9 @@ dependencies[] = mimemail
 dependencies[] = trigger
 core = 6.x
 
-; Information added by drupal.org packaging script on 2012-08-08
-version = "6.x-1.1"
+; Information added by Drupal.org packaging script on 2014-03-05
+version = "6.x-1.4"
 core = "6.x"
 project = "mimemail"
-datestamp = "1344445343"
+datestamp = "1394018342"
 

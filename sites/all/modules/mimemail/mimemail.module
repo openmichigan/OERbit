@@ -115,17 +115,20 @@ function mimemail_mail($key, &$message, $params) {
     }
   }
 
-  // We also handle CC and BCC if it's set.
-  $params['cc'] = empty($params['cc']) ? array() : explode(',', $params['cc']);
-  $params['bcc'] = empty($params['bcc']) ? array() : explode(',', $params['bcc']);
-
-  if (!empty($params['cc'])) foreach ($params['cc'] as $key => $address) {
-    $params['cc'][$key] = str_replace(array("\r", "\n"), '', trim($address));
-    $message['headers']['Cc'] = implode(',', $params['cc']);
-  }
-  if (!empty($params['bcc'])) foreach ($params['bcc'] as $key => $address) {
-    $params['bcc'][$key] = str_replace(array("\r", "\n"), '', trim($address));
-    $message['headers']['Bcc'] = implode(',', $params['bcc']);
+  // We handle different address headers if set.
+  $address_headers = array(
+    'cc' => 'Cc',
+    'bcc' => 'Bcc',
+    'reply_to' => 'Reply-to',
+  );
+  foreach ($address_headers as $param_key => $address_header) {
+    $params[$param_key] = empty($params[$param_key]) ? array() : explode(',', $params[$param_key]);
+    if (!empty($params[$param_key])) {
+      foreach ($params[$param_key] as $key => $address) {
+        $params[$param_key][$key] = strtr(str_replace(array("\r", "\n"), '', trim($address)), $variables);
+      }
+      $message['headers'][$address_header] = implode(',', $params[$param_key]);
+    }
   }
 
   $message['to'] = strtr($message['to'], $variables);
@@ -378,7 +381,7 @@ function mimemail_mailengine($op, $message = array()) {
         $subject = $message['subject'];
         $body = $message['body'];
         $headers = mimemail_rfc_headers($message['headers']);
-        if (isset($return_path)) {
+        if (isset($return_path) && !empty($return_path)) {
           if (isset($_SERVER['WINDIR']) || strpos($_SERVER['SERVER_SOFTWARE'], 'Win32') !== FALSE) {
             // On Windows, PHP will use the value of sendmail_from for the
             // Return-Path header.

@@ -64,7 +64,7 @@ function mimemail_headers($headers, $from = NULL) {
     }
     // This may not work. The MTA may rewrite the Return-Path.
     if (!isset($headers['Return-Path']) || $headers['Return-Path'] == $default_from) {
-      preg_match('/[a-z0-9\-\.\+_]+@{1}[a-z0-9\-\.]+/i', $from, $matches);
+      preg_match('/[a-z\d\-\.\+_]+@(?:[a-z\d\-]+\.)+[a-z\d]{2,4}/i', $from, $matches);
       $headers['Return-Path'] = "<$matches[0]>";
     }
   }
@@ -99,7 +99,7 @@ function mimemail_extract_files($html) {
   $content = preg_replace_callback($pattern, '_mimemail_replace_files', $html);
 
   $encoding = '8Bit';
-  $body = split("\n", $content);
+  $body = explode("\n", $content);
   foreach ($body as $line) {
     if (strlen($line) > 998) {
       $encoding = 'base64';
@@ -137,11 +137,11 @@ function _mimemail_replace_files($matches) {
  *   The actual file content.
  *
  * @return
- *   The Content-ID and/or an array of the files on success or the URL on failure. 
+ *   The Content-ID and/or an array of the files on success or the URL on failure.
  */
-function _mimemail_file($url = NULL, $content = NULL, $name = '', $type = '', $disposition = 'related') {
+function _mimemail_file($url = NULL, $content = NULL, $name = '', $type = '', $disposition = 'inline') {
   static $files = array();
-  static $filenames = array();
+  static $ids = array();
 
   if ($url) {
     // The file exists on the server as-is. Allows for non-web-accessible files.
@@ -151,7 +151,7 @@ function _mimemail_file($url = NULL, $content = NULL, $name = '', $type = '', $d
     else {
       $url = _mimemail_url($url, 'TRUE');
       // If the url is absolute, we're done here.
-      if (strpos($url, '://') !== FALSE || preg_match('!mailto:!', $url)) {
+      if (strpos($url, '://') !== FALSE || preg_match('!(mailto|callto|tel)\:!', $url)) {
         return $url;
       }
       // The url is a relative file path, continue processing.
@@ -161,7 +161,7 @@ function _mimemail_file($url = NULL, $content = NULL, $name = '', $type = '', $d
             _mimemail_imagecache($url);
         }
         // Download method is private, and the URL needs conversion.
-        if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE && strpos($url, 'system/files/') !== FALSE) {
+        if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE && strpos($url, 'system/files/') !== 0) {
           $file = file_create_path(drupal_substr($url, (strpos($url, 'system/files/') + drupal_strlen('system/files/'))));
         }
         // Download method is public.
@@ -179,7 +179,7 @@ function _mimemail_file($url = NULL, $content = NULL, $name = '', $type = '', $d
   if (isset($file) && (@is_file($file) || $content)) {
     $public_path = file_directory_path();
     $no_access = !user_access('send arbitrary files - Warning: has security implications!');
-    $not_in_public_path = strpos(realpath($file), $public_path) === FALSE;
+    $not_in_public_path = strpos(realpath($file), realpath($public_path)) === FALSE;
     if (@is_file($file) && $not_in_public_path && $no_access) {
       return $url;
     }
@@ -187,22 +187,25 @@ function _mimemail_file($url = NULL, $content = NULL, $name = '', $type = '', $d
     if (!$name) $name = (@is_file($file)) ? basename($file) : 'attachment.dat';
     if (!$type) $type = ($name) ? file_get_mimetype($name) : file_get_mimetype($file);
 
+    $id = md5($file) .'@'. $_SERVER['HTTP_HOST'];
+
     // Prevent duplicate items.
-    if (isset($filenames[$name])) return 'cid:'. $filenames[$name];
-    $content_id = md5($name) .'@'. $_SERVER['HTTP_HOST'];
+    if (isset($ids[$id])) {
+      return 'cid:'. $ids[$id];
+    }
 
     $new_file = array(
       'name' => $name,
       'file' => $file,
-      'Content-ID' => $content_id,
+      'Content-ID' => $id,
       'Content-Disposition' => $disposition,
       'Content-Type' => $type,
     );
 
     $files[] = $new_file;
-    $filenames[$name] = $content_id;
+    $ids[$id] = $id;
 
-    return 'cid:'. $content_id;
+    return 'cid:'. $id;
   }
   // The file does not exist and no content, return the URL if possible.
   elseif ($url) {
@@ -211,7 +214,7 @@ function _mimemail_file($url = NULL, $content = NULL, $name = '', $type = '', $d
 
   $ret = $files;
   $files = array();
-  $filenames = array();
+  $ids = array();
   return $ret;
 }
 
@@ -264,7 +267,10 @@ function _mimemail_imagecache($url) {
  *   - body: A string containing the mime encoded multipart body of a mail.
  */
 function mimemail_multipart_body($parts, $content_type = 'multipart/mixed; charset=utf-8', $sub_part = FALSE) {
-  $boundary = md5(uniqid(time()));
+  // Control variable to avoid boundary collision.
+  static $part_num = 0;
+
+  $boundary = sha1(uniqid(time(), TRUE)) . $part_num++;
   $body = '';
 
   $headers = array(
@@ -427,7 +433,7 @@ function mimemail_html_body($body, $subject, $plaintext = FALSE, $text = NULL, $
 }
 
 /*
- * Parse an incoming message. 
+ * Parse an incoming message.
  */
 function mimemail_parse($message) {
   // Provides a "headers", "content-type" and "body" element.
@@ -592,7 +598,7 @@ function _mimemail_url($url, $embed_file = FALSE) {
   $url = urldecode($url);
 
   // If the URL is absolute or a mailto, return it as-is.
-  if (strpos($url, '://') !== FALSE || preg_match('!mailto:!', $url)) {
+  if (strpos($url, '://') !== FALSE || preg_match('!(mailto|callto|tel)\:!', $url)) {
     $url = str_replace(' ', '%20', $url);
     return $url;
   }
@@ -617,7 +623,7 @@ function _mimemail_url($url, $embed_file = FALSE) {
   @list($path, $query) = explode('?', $url, 2);
 
   // If we're dealing with an intra-document reference, return it.
-  if (empty($path) && !empty($fragment)) {
+  if (empty($path)) {
     return '#'. $fragment;
   }
 

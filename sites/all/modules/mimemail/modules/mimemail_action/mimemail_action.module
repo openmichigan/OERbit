@@ -30,6 +30,8 @@ function mimemail_action_info() {
 function mimemail_send_mail_action(&$object, $context = array()) {
   global $user;
 
+  $key = !empty($context['key']) ? $context['key'] : 'action_send_mail';
+
   switch ($context['hook']) {
     case 'nodeapi':
       // Because this is not an action of type 'node' (it's an action
@@ -81,7 +83,7 @@ function mimemail_send_mail_action(&$object, $context = array()) {
     $params['node'] = $node;
   }
 
-  $message = drupal_mail('mimemail', 'action_send_mail', $to, user_preferred_language($account), $params, NULL, FALSE);
+  $message = drupal_mail('mimemail', $key, $to, user_preferred_language($account), $params, NULL, FALSE);
 
   $message = mimemail(
     $message['from'],
@@ -109,8 +111,26 @@ function mimemail_send_mail_action(&$object, $context = array()) {
  * Form for configurable Drupal action to send an HTML mail.
  */
 function mimemail_send_mail_action_form($context) {
-  $context += array('to' => '', 'cc' => '', 'bcc' => '', 'subject' => '', 'message_html' => '', 'message_html_filter' => FILTER_FORMAT_DEFAULT, 'message_plaintext' => '', 'attachments' => '');
+  $context += array(
+    'key' => '',
+    'to' => '',
+    'cc' => '',
+    'bcc' => '',
+    'reply_to' => '',
+    'subject' => '',
+    'message_html' => '',
+    'message_html_filter' => FILTER_FORMAT_DEFAULT,
+    'message_plaintext' => '',
+    'attachments' => ''
+  );
 
+  $form['key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Key'),
+    '#default_value' => $context['key'],
+    '#description' => t("An identifier for the message."),
+    '#required' => TRUE,
+  );
   $form['to'] = array(
     '#type' => 'textfield',
     '#title' => t('Recipient'),
@@ -131,6 +151,13 @@ function mimemail_send_mail_action_form($context) {
     '#title' => t('BCC Recipient'),
     '#default_value' => $context['bcc'],
     '#description' => t("The mail's blind carbon copy address. You may separate multiple addresses with comma."),
+    '#required' => FALSE,
+  );
+  $form['reply_to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Reply e-mail address'),
+    '#default_value' => $context['reply_to'],
+    '#description' => t("The address to reply to. Leave it empty to use the sender's address."),
     '#required' => FALSE,
   );
   $form['subject'] = array(
@@ -190,6 +217,10 @@ function mimemail_send_mail_action_validate($form, $form_state) {
       form_set_error('bcc', t('Please enter a valid e-mail address or %author.', array('%author' => '%author')));
     }
   }
+  $reply_to = trim($form_state['values']['reply_to']);
+  if (!empty($reply_to) && !valid_email_address($reply_to) && $reply_to != '%author') {
+    form_set_error('reply_to', t('Please enter a valid e-mail address or %author.', array('%author' => '%author')));
+  }
 }
 
 /**
@@ -199,9 +230,11 @@ function mimemail_send_mail_action_submit($form, $form_state) {
   $form_values = $form_state['values'];
 
   $params = array(
+    'key' => $form_values['key'],
     'to' => $form_values['to'],
     'cc' => $form_values['cc'],
     'bcc' => $form_values['bcc'],
+    'reply_to' => $form_values['reply_to'],
     'subject' => $form_values['subject'],
     'message_html' => $form_values['message_html'],
     'message_html_filter' => $form_values['format'],

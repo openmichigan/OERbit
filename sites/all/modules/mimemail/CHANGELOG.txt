@@ -1,6 +1,29 @@
 Mime Mail 6.x-1.x, xxxx-xx-xx
 -----------------------
 
+Mime Mail 6.x-1.4, 2014-03-05
+-----------------------
+- Public files test incorrect if similar path is not below root.
+
+Mime Mail 6.x-1.3, 2014-02-26
+-----------------------
+- Stronger authentication for incoming messages.
+- #1852694 by clemens.tolboom | Pixelstyle: Convert float to align for images.
+- #2119613 by sgabe, david_garcia_garcia: Further improve boundary collision avoidance.
+
+Mime Mail 6.x-1.2, 2013-10-07
+-----------------------
+- #2050907 by nick_schuch: No attachment if 'public files' directory is a symlink.
+- #2045699 by sgabe | Punk_UnDeaD: Boundaries are not unique on Windows.
+- #1798324 by sgabe, kienan | ShaneOnABike: Return-Path is incorrectly using sender name.
+- #1979776 by sgabe | cswolf: Hash mark link gets replaced with site URL.
+- #1963412 by sgabe | djg_tram: Content-Disposition should default to 'inline'.
+- #1719256 by lirantal, sgabe: Handle different files with the same file name.
+- #1922530 by berliner: Callto links in mail body wrongly replaced.
+- #1813348 by sgabe | jdhildeb: Sendmail invoked with empty Return-Path.
+- #1469022 by sgabe, das-peter | MI: Add 'Reply-to' field to Rules and system actions.
+- #962226 by sgabe | rchuber: Allow custom mailkeys for system and Rules action messages.
+- #1722188 by sgabe | christian death: Split has been deprecated.
 
 Mime Mail 6.x-1.1, 2012-08-08
 -----------------------

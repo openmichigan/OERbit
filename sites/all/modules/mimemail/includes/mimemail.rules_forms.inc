@@ -12,8 +12,25 @@
  * Action "Send an HTML mail to a user" configuration form.
  */
 function mimemail_rules_action_mail_to_user_form($settings = array(), &$form) {
-  $settings += array('sender' => '', 'from' => '', 'subject' => '', 'message_html' => '', 'message_html_filter' => FILTER_FORMAT_DEFAULT, 'message_plaintext' => '', 'attachments' => '');
+  $settings += array(
+    'key' => '',
+    'sender' => '',
+    'from' => '',
+    'reply_to' => '',
+    'subject' => '',
+    'message_html' => '',
+    'message_html_filter' => FILTER_FORMAT_DEFAULT,
+    'message_plaintext' => '',
+    'attachments' => ''
+  );
 
+  $form['settings']['key'] = array(
+     '#type' => 'textfield',
+    '#title' => t('Key'),
+    '#default_value' => $settings['key'],
+    '#description' => t("An identifier for the message."),
+    '#required' => TRUE,
+  );
   $form['settings']['sender'] = array(
      '#type' => 'textfield',
     '#title' => t('Sender name'),
@@ -25,6 +42,12 @@ function mimemail_rules_action_mail_to_user_form($settings = array(), &$form) {
     '#title' => t('Sender e-mail address'),
     '#default_value' => $settings['from'],
     '#description' => t("The sender's address. Leave it empty to use the site-wide configured address."),
+  );
+  $form['settings']['reply_to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Reply e-mail address'),
+    '#default_value' => $settings['reply_to'],
+    '#description' => t("The address to reply to. Leave it empty to use the sender's address."),
   );
   $form['settings']['subject'] = array(
     '#type' => 'textfield',

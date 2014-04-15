@@ -6,6 +6,27 @@
  */
 
 /**
+ * Implements hook_requirements().
+ */
+function mimemail_requirements($phase) {
+  $requirements = array();
+  // Ensure translations don't break at install time
+  $t = get_t();
+
+  // Report Drupal version
+  if (!function_exists('drupal_random_key')) {
+    $requirements['drupal'] = array(
+      'title' => $t('Drupal'),
+      'value' => VERSION,
+      'description' => $t('Mime Mail requires Drupal version 6.29 or higher.'),
+      'severity' => REQUIREMENT_ERROR
+    );
+  }
+
+  return $requirements;
+}
+
+/**
  * Implements hook_install().
  */
 function mimemail_install() {
@@ -54,6 +75,19 @@ function mimemail_update_6100(&$sandbox) {
   $perm = implode(', ', array_merge($perm, array('access profile settings')));
   $record = array('rid' => DRUPAL_AUTHENTICATED_RID, 'perm' => $perm);
   drupal_write_record('permission', $record, 'rid');
+
+  return $ret;
+}
+
+/**
+ * Generate new key for authenticating incoming messages.
+ */
+function mimemail_update_6101() {
+  $ret = array();
+
+  if (function_exists('drupal_random_key')) {
+    variable_set('mimemail_key', drupal_random_key());
+  }
 
   return $ret;
 }
