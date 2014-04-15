@@ -1,5 +1,4 @@
 <?php
-// $Id: custom_search_taxonomy.install,v 1.1.2.3 2010/06/01 10:39:37 jdanthinne Exp $
 
 /**
  * @file
@@ -20,18 +19,23 @@ function custom_search_taxonomy_uninstall() {
   $vocabularies = taxonomy_get_vocabularies();
   foreach ($vocabularies as $voc) {
     variable_del('custom_search_voc' . $voc->vid . '_selector');
+    variable_del('custom_search_voc' . $voc->vid . '_selector_depth');
     variable_del('custom_search_voc' . $voc->vid . '_selector_label_visibility');
     variable_del('custom_search_voc' . $voc->vid . '_selector_label');
     variable_del('custom_search_voc' . $voc->vid . '_selector_all');
     variable_del('custom_search_taxonomy' . $voc->vid . '_weight');
+    variable_del('custom_search_taxonomy' . $voc->vid . '_region');
     if (module_exists('custom_search_blocks')) {
       $blocks = variable_get('custom_search_blocks_number', 1);
       for ($delta=1 ; $delta<=$blocks ; $delta++) {
         variable_del('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector');
+        variable_del('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_depth');
         variable_del('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label_visibility');
         variable_del('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label');
         variable_del('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_all');
         variable_del('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_weight');
+        variable_del('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_region');
+        variable_del('custom_search_blocks_' . $delta . '_paths_terms_separator');
       }
     }
   }

@@ -1,5 +1,4 @@
 <?php
-// $Id: custom_search_blocks.admin.inc,v 1.1.2.3 2010/05/02 14:55:31 jdanthinne Exp $
 
 /**
  * @file
@@ -12,7 +11,7 @@
 function custom_search_blocks_help($path, $arg) {
   switch ($path) {
     case 'admin/settings/custom_search/blocks':
-      $output = t('If you want additional blocks by content type, enable them here. Then go to the <a href="@link">block page</a> to place them in a region.', array('@link' => url('admin/build/block')));
+      $output = t('If you want custom search blocks, enable them here. Then go to the <a href="@link">block page</a> to place them in a region.', array('@link' => url('admin/build/block')));
     break;
   }
   return $output;

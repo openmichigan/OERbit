@@ -1,5 +1,4 @@
 <?php
-// $Id: custom_search_taxonomy.module,v 1.1.2.6 2010/05/31 13:54:05 jdanthinne Exp $
 
 /**
  * @file
@@ -28,34 +27,33 @@ function custom_search_taxonomy_menu() {
  * Implementation of hook_form_alter().
  */
 function custom_search_taxonomy_form_alter(&$form, $form_state, $form_id) {
-  if (user_access('use custom search')) {
-    switch ($form_id) {
 
-      case 'search_form':
+  // Filter the form_id value to identify all the custom blocks
+  $form_id_processed = $form_id;
+  $delta = '';
+  for ($a = 1 ; $a <= variable_get('custom_search_blocks_number', 1) ; $a++) {
+    if ($form_id == 'custom_search_blocks_form_' . $a) {
+      $form_id_processed = 'custom_search_blocks_form';
+      $delta = 'blocks_' . $a . '_';
+    }
+  }
 
-        // Apply Custom Search settings to the advanced search form.
-        $vocabularies = taxonomy_get_vocabularies();
-        foreach ($vocabularies as $voc) {
-          if (!variable_get('custom_search_advanced_voc' . $voc->vid . '_display', TRUE)) unset($form['advanced']['category']['#options'][$voc->name]);
-        }
-        if (!count($form['advanced']['category']['#options'])) unset($form['advanced']['category']);
+  switch ($form_id_processed) {
 
-      break;
+    case 'search_theme_form':
+    case 'search_block_form':
+    case 'custom_search_blocks_form':
 
-      case 'search_theme_form':
-      case 'search_block_form':
-      case 'custom_search_blocks_form':
-
-        $delta = ($form_id == 'custom_search_blocks_form') ? 'blocks_' . $form['delta']['#value'] . '_' : '';
-
+      if (user_access('use custom search')) {
         $vocabularies = taxonomy_get_vocabularies();
         foreach ($vocabularies as $voc) {
           if (variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector', 'disabled') != 'disabled') {
             $options = array();
             $options['c-all'] = variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT);
-            $terms = taxonomy_get_tree($voc->vid);
+            $vocabulary_depth = (!variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector_depth', 0)) ? NULL : variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector_depth', 0);
+            $terms = taxonomy_get_tree($voc->vid, 0, -1, $vocabulary_depth);
             foreach ($terms as $term) {
-              $options['c-' . $term->tid] = (drupal_substr(variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector', 'disabled'), 0, 6) == 'select') ? str_repeat('- ', $term->depth) . $term->name : $term->name ;
+              $options['c-' . $term->tid] = (drupal_substr(variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector', 'disabled'), 0, 6) == 'select') ? str_repeat('-', $term->depth) . ' ' . $term->name : $term->name ;
             }
             $selector_type = variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector', 'select');
             if ($selector_type == 'selectmultiple') {
@@ -68,120 +66,176 @@ function custom_search_taxonomy_form_alter(&$form, $form_state, $form_id) {
               '#multiple'       => $multiple,
               '#title'          => variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector_label', $voc->name),
               '#options'        => $options,
-              '#default_value'  => ((variable_get('custom_search' . $delta . '_voc' . $voc->vid . '_selector', 'select') == 'checkboxes') ? array('c-all') : 'c-all'),
-              '#attributes'     => array('class' => 'custom-search-selector custom-search-vocabulary'),
+              '#default_value'  => ($selector_type == 'checkboxes') ? array('c-all') : 'c-all',
+              '#attributes'     => ($selector_type != 'radios' && $selector_type != 'checkboxes') ? array('class' => 'custom-search-selector custom-search-vocabulary custom-search-vocabulary-' . $voc->vid) : array(),
+              '#prefix'         => ($selector_type == 'radios' || $selector_type == 'checkboxes') ? '<div class="custom-search-selector custom-search-vocabulary custom-search-vocabulary-' . $voc->vid . '">' : '',
+              '#suffix'         => ($selector_type == 'radios' || $selector_type == 'checkboxes') ? '</div>' : '',
               '#weight'         => variable_get('custom_search_' . $delta . 'taxonomy' . $voc->vid . '_weight', 2),
             );
+
+            if ($selector_type == "hierarchical_select") {
+              $form['custom_search_vocabulary_' . $voc->vid]['#config'] = array (
+                'module'  => 'hs_taxonomy',
+                'params'  => array('vid' => $voc->vid),
+              );
+              unset($form['custom_search_vocabulary_' . $voc->vid]['#options']);
+              $form['#after_build'][] = 'hierarchical_select_after_build';
+            }
+
+            if (variable_get('custom_search_' . $delta . 'taxonomy' . $voc->vid . '_region', 'block') == 'popup') {
+              $form['popup']['custom_search_vocabulary_' . $voc->vid] = $form['custom_search_vocabulary_' . $voc->vid];
+              unset($form['custom_search_vocabulary_' . $voc->vid]);
+            }
             if (!variable_get('custom_search_' . $delta . 'voc' . $voc->vid . '_selector_label_visibility', TRUE)) $form['custom_search_vocabulary_' . $voc->vid]['#post_render'] = array('_custom_search_hide_label');
           }
         }
 
-      break;
+        // Custom paths
+        if (variable_get('custom_search_' . $delta . 'paths', '') != '') {
+          $form['custom_search_paths_terms_separator'] = array(
+            '#type'           => 'hidden',
+            '#default_value'  => variable_get('custom_search_' . $delta . 'paths_terms_separator', CUSTOM_SEARCH_PATHS_TERMS_SEPARATOR_DEFAULT),
+          );
+        }
+      }
 
-      case 'block_admin_configure':
-        if ($form['module']['#value'] == 'custom_search_blocks') {
+    break;
 
-          $delta = $form['delta']['#value'];
+    case 'block_admin_configure':
+      if (isset($form['module']) && $form['module']['#value'] == 'custom_search_blocks') {
 
-          $vocabularies = taxonomy_get_vocabularies();
-          if (count($vocabularies)) {
-            $form['block_settings']['taxonomy'] = array(
-              '#type'         => 'fieldset',
-              '#title'        => t('Taxonomy'),
-              '#description'  => t('Select the vocabularies to present as search options in the search block. If none is selected, no selector will be displayed.'),
-              '#collapsible'  => TRUE,
-            );
-            $w = 1;
-            $collapsed = TRUE;
-            foreach ($vocabularies as $voc) {
-              // Selectors
-              if (variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector', 'disabled') != 'disabled') {
-                $collapsed = FALSE;
-                $voc_collapsed = FALSE;
-              }
-              else $voc_collapsed = TRUE;
-              $form['block_settings']['taxonomy'][$voc->name] = array(
-                '#type'         => 'fieldset',
-                '#title'        => $voc->name,
-                '#collapsible'  => TRUE,
-                '#collapsed'    => $voc_collapsed,
-              );
-              $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector'] = array(
-                '#type'           => 'select',
-                '#title'          => t('Selector type'),
-                '#options'        => array(
-                  'disabled'        => t('Disabled'),
-                  'select'          => t('Drop-down list'),
-                  'selectmultiple'  => t('Drop-down list with multiple choices'),
-                  'radios'          => t('Radio buttons'),
-                  'checkboxes'      => t('Checkboxes'),
-                ),
-                '#description'    => t('Choose which selector type to use.'),
-                '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector', 'disabled'),
-              );
-              $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label_visibility'] = array(
-                '#type'           => 'checkbox',
-                '#title'          => t('Display label'),
-                '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label_visibility', TRUE),
-              );
-              $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label'] = array(
-                '#type'           => 'textfield',
-                '#title'          => t('Label text'),
-                '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label', $voc->name),
-                '#description'    => t('Enter the label text for the selector. The default value is "!default".', array('!default' => $voc->name)),
-              );
-              $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_all'] = array(
-                '#type'           => 'textfield',
-                '#title'          => t('-Any- text'),
-                '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT),
-                '#required'       => TRUE,
-                '#description'    => t('Enter the text for "any term" choice. The default value is "!default".', array('!default' => CUSTOM_SEARCH_ALL_TEXT_DEFAULT)),
-              );
-              // Ordering
-              $form['block_settings']['order']['custom_search_blocks_order']['taxonomy' . $voc->vid] = array(
-                '#title'  => t('Taxonomy') . ': ' . $voc->name,
-                'sort'    => array('#type' => 'weight', '#default_value' => variable_get('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_weight', $w)),
-                '#weight' => variable_get('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_weight', $w),
-              );
-              $w++;
+        $delta = $form['delta']['#value'];
+
+        $vocabularies = taxonomy_get_vocabularies();
+        if (count($vocabularies)) {
+          $form['block_settings']['taxonomy'] = array(
+            '#type'         => 'fieldset',
+            '#title'        => t('Taxonomy'),
+            '#description'  => t('Select the vocabularies to present as search options in the search block. If none is selected, no selector will be displayed.'),
+            '#collapsible'  => TRUE,
+          );
+          $w = 1;
+          $collapsed = TRUE;
+          foreach ($vocabularies as $voc) {
+            // Selectors
+            if (variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector', 'disabled') != 'disabled') {
+              $collapsed = FALSE;
+              $voc_collapsed = FALSE;
             }
-            $form['block_settings']['taxonomy']['#collapsed'] = $collapsed;
+            else $voc_collapsed = TRUE;
+            $form['block_settings']['taxonomy'][$voc->name] = array(
+              '#type'         => 'fieldset',
+              '#title'        => $voc->name,
+              '#collapsible'  => TRUE,
+              '#collapsed'    => $voc_collapsed,
+            );
+            $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector'] = array(
+              '#type'           => 'select',
+              '#title'          => t('Selector type'),
+              '#options'        => array(
+                'disabled'        => t('Disabled'),
+                'select'          => t('Drop-down list'),
+                'selectmultiple'  => t('Drop-down list with multiple choices'),
+                'radios'          => t('Radio buttons'),
+                'checkboxes'      => t('Checkboxes'),
+              ),
+              '#description'    => t('Choose which selector type to use.'),
+              '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector', 'disabled'),
+            );
+            $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_depth'] = array(
+              '#type'           => 'textfield',
+              '#title'          => t('Depth'),
+              '#size'           => 2,
+              '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_depth', 0),
+              '#description'    => t('Define the maximum depth of terms being displayed. The default value is "0" which disables the limit.'),
+            );
+            $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label_visibility'] = array(
+              '#type'           => 'checkbox',
+              '#title'          => t('Display label'),
+              '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label_visibility', TRUE),
+            );
+            $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label'] = array(
+              '#type'           => 'textfield',
+              '#title'          => t('Label text'),
+              '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label', $voc->name),
+              '#description'    => t('Enter the label text for the selector. The default value is "!default".', array('!default' => $voc->name)),
+            );
+            $form['block_settings']['taxonomy'][$voc->name]['custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_all'] = array(
+              '#type'           => 'textfield',
+              '#title'          => t('-Any- text'),
+              '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_all', CUSTOM_SEARCH_ALL_TEXT_DEFAULT),
+              '#required'       => TRUE,
+              '#description'    => t('Enter the text for "any term" choice. The default value is "!default".', array('!default' => CUSTOM_SEARCH_ALL_TEXT_DEFAULT)),
+            );
+            // Ordering
+            $form['block_settings']['order']['custom_search_blocks_' . $delta . '_order']['taxonomy' . $voc->vid] = array(
+              '#title'  => t('Taxonomy') . ': ' . $voc->name,
+              '#weight' => variable_get('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_weight', $w),
+            );
+            $form['block_settings']['order']['custom_search_blocks_' . $delta . '_order']['taxonomy' . $voc->vid]['sort'] = array(
+              '#type'           => 'weight',
+              '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_weight', $w),
+              '#attributes'     => array('class' => 'sort-select sort-select-' . variable_get('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_region', 'block')),
+            );
+            $form['block_settings']['order']['custom_search_blocks_' . $delta . '_order']['taxonomy' . $voc->vid]['region'] = array(
+              '#type'           => 'select',
+              '#options'        => array(
+                'block' => t('Block'),
+                'popup' => t('Popup')
+              ),
+              '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_region', 'block'),
+              '#attributes'     => array('class' => 'region-select region-select-' . variable_get('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_region', 'block')),
+            );
+            $w++;
           }
+          $form['block_settings']['taxonomy']['#collapsed'] = $collapsed;
         }
 
-      break;
-
-      case 'custom_search_admin':
-        $vocabularies = taxonomy_get_vocabularies();
-        $w = 1;
-        foreach ($vocabularies as $voc) {
-          $form['order']['custom_search_order']['taxonomy' . $voc->vid] = array(
-            '#title'  => t('Taxonomy') . ': ' . $voc->name,
-            'sort'    => array('#type' => 'weight', '#default_value' => variable_get('custom_search_taxonomy' . $voc->vid . '_weight', $w)),
-            '#weight' => variable_get('custom_search_taxonomy' . $voc->vid . '_weight', $w),
-          );
-          $w++;
-        }
-      break;
-
-      case 'custom_search_results_admin':
-        $form['search_form']['advanced']['taxonomy'] = array(
-          '#type'         => 'fieldset',
-          '#title'        => t('Taxonomy'),
-          '#description'  => t('Select the vocabularies to display on the advanced search form.'),
-          '#collapsible'  => TRUE,
-          '#collapsed'    => TRUE,
+        $form['block_settings']['custom_search_paths_admin']['custom_search_blocks_' . $delta . '_paths']['#description'] = t('If you want to use custom search paths, enter them here in the form <em>path</em>|<em>label</em>, one per line (if only one path is specified, the selector will be hidden). The [key] token will be replaced by what is entered in the search box, and the [terms] token will be replaced by the selected taxonomy term id(s). Ie: mysearch/[key]/[terms]|My custom search label.');
+        $form['block_settings']['custom_search_paths_admin']['custom_search_blocks_' . $delta . '_paths_terms_separator'] = array(
+          '#type'           => 'textfield',
+          '#title'          => t('Taxonomy terms separator'),
+          '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_paths_terms_separator', CUSTOM_SEARCH_PATHS_TERMS_SEPARATOR_DEFAULT),
+          '#size'           => 2
         );
-        $vocabularies = taxonomy_get_vocabularies();
-        foreach ($vocabularies as $voc) {
-          $form['search_form']['advanced']['taxonomy']['custom_search_advanced_voc' . $voc->vid . '_display'] = array(
-            '#type'           => 'checkbox',
-            '#title'          => $voc->name,
-            '#default_value'  => variable_get('custom_search_advanced_voc' . $voc->vid . '_display', TRUE),
-          );
-        }
-      break;
 
-    }
+      }
+
+    break;
+
+    case 'custom_search_admin':
+      $vocabularies = taxonomy_get_vocabularies();
+      $w = 1;
+      foreach ($vocabularies as $voc) {
+        $form['order']['custom_search_order']['taxonomy' . $voc->vid] = array(
+          '#title'  => t('Taxonomy') . ': ' . $voc->name,
+          '#weight' => variable_get('custom_search_taxonomy' . $voc->vid . '_weight', $w),
+        );
+        $form['order']['custom_search_order']['taxonomy' . $voc->vid]['sort'] = array(
+          '#type'           => 'weight',
+          '#default_value'  => variable_get('custom_search_taxonomy' . $voc->vid . '_weight', $w),
+          '#attributes'     => array('class' => 'sort-select sort-select-' . variable_get('custom_search_taxonomy' . $voc->vid . '_region', 'block')),
+        );
+        $form['order']['custom_search_order']['taxonomy' . $voc->vid]['region'] = array(
+          '#type'           => 'select',
+          '#options'        => array(
+            'block' => t('Block'),
+            'popup' => t('Popup')
+          ),
+          '#default_value'  => variable_get('custom_search_taxonomy' . $voc->vid . '_region', 'block'),
+          '#attributes'     => array('class' => 'region-select region-select-' . variable_get('custom_search_taxonomy' . $voc->vid . '_region', 'block')),
+        );
+        $w++;
+      }
+      $form['custom_search_paths_admin']['custom_search_paths']['#description'] = t('If you want to use custom search paths, enter them here in the form <em>path</em>|<em>label</em>, one per line (if only one path is specified, the selector will be hidden). The [key] token will be replaced by what is entered in the search box, and the [terms] token will be replaced by the selected taxonomy term id(s). Ie: mysearch/[key]/[terms]|My custom search label.');
+      $form['custom_search_paths_admin']['custom_search_paths_terms_separator'] = array(
+        '#type'           => 'textfield',
+        '#title'          => t('Taxonomy terms separator'),
+        '#default_value'  => variable_get('custom_search_paths_terms_separator', CUSTOM_SEARCH_PATHS_TERMS_SEPARATOR_DEFAULT),
+        '#size'           => 2
+      );
+    break;
+
   }
+
 }

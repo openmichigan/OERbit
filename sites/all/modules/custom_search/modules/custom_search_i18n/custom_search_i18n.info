@@ -1,13 +1,12 @@
-; $Id: custom_search_i18n.info,v 1.1.2.2 2010/05/04 17:04:48 jdanthinne Exp $
 name = Custom Search Internationalization
 description = Provides Internationalization to Custom Search.
 core = 6.x
 package = Custom Search
 dependencies[] = custom_search
 dependencies[] = i18nstrings
-; Information added by drupal.org packaging script on 2010-06-07
-version = "6.x-1.4"
+; Information added by Drupal.org packaging script on 2014-04-02
+version = "6.x-1.12"
 core = "6.x"
 project = "custom_search"
-datestamp = "1275894013"
+datestamp = "1396449571"
 

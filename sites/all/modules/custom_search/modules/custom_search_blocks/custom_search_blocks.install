@@ -1,5 +1,4 @@
 <?php
-// $Id: custom_search_blocks.install,v 1.1.2.4 2010/06/01 10:39:37 jdanthinne Exp $
 
 /**
  * @file
@@ -21,11 +20,27 @@ function custom_search_blocks_uninstall() {
   for ($delta=1 ; $delta<=$blocks ; $delta++) {
     variable_del('custom_search_blocks_' . $delta . '_label_visibility');
     variable_del('custom_search_blocks_' . $delta . '_label');
+    variable_del('custom_search_blocks_' . $delta . '_text');
+    variable_del('custom_search_blocks_' . $delta . '_size');
+    variable_del('custom_search_blocks_' . $delta . '_max_length');
+    variable_del('custom_search_blocks_' . $delta . '_submit_text');
+    variable_del('custom_search_blocks_' . $delta . '_image_path');
+    variable_del('custom_search_blocks_' . $delta . '_criteria_or_display');
+    variable_del('custom_search_blocks_' . $delta . '_criteria_or_label');
+    variable_del('custom_search_blocks_' . $delta . '_criteria_phrase_display');
+    variable_del('custom_search_blocks_' . $delta . '_criteria_phrase_label');
+    variable_del('custom_search_blocks_' . $delta . '_criteria_negative_display');
+    variable_del('custom_search_blocks_' . $delta . '_criteria_negative_label');
     variable_del('custom_search_blocks_' . $delta . '_search_box_weight');
     variable_del('custom_search_blocks_' . $delta . '_content_types_weight');
     variable_del('custom_search_blocks_' . $delta . '_custom_paths_weight');
     variable_del('custom_search_blocks_' . $delta . '_submit_button_weight');
+    variable_del('custom_search_blocks_' . $delta . '_search_box_region');
+    variable_del('custom_search_blocks_' . $delta . '_content_types_region');
+    variable_del('custom_search_blocks_' . $delta . '_custom_paths_region');
+    variable_del('custom_search_blocks_' . $delta . '_submit_button_region');
     variable_del('custom_search_blocks_' . $delta . '_node_types');
+    variable_del('custom_search_blocks_' . $delta . '_node_types_excluded');
     variable_del('custom_search_blocks_' . $delta . '_other');
     variable_del('custom_search_blocks_' . $delta . '_type_selector');
     variable_del('custom_search_blocks_' . $delta . '_type_selector_label_visibility');
@@ -33,6 +48,9 @@ function custom_search_blocks_uninstall() {
     variable_del('custom_search_blocks_' . $delta . '_type_selector_all');
     variable_del('custom_search_blocks_' . $delta . '_any_restricts');
     variable_del('custom_search_blocks_' . $delta . '_paths');
+    variable_del('custom_search_blocks_' . $delta . '_paths_selector');
+    variable_del('custom_search_blocks_' . $delta . '_paths_selector_label');
+    variable_del('custom_search_blocks_' . $delta . '_paths_selector_label_visibility');
     if (module_exists('custom_search_taxonomy')) {
       $vocabularies = taxonomy_get_vocabularies();
       foreach ($vocabularies as $voc) {
@@ -41,8 +59,26 @@ function custom_search_blocks_uninstall() {
         variable_del('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_label');
         variable_del('custom_search_blocks_' . $delta . '_voc' . $voc->vid . '_selector_all');
         variable_del('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_weight');
+        variable_del('custom_search_blocks_' . $delta . '_taxonomy' . $voc->vid . '_region');
       }
+      variable_del('custom_search_blocks_' . $delta . '_paths_terms_separator');
     }
   }
   variable_del('custom_search_blocks_number');
+}
+
+function custom_search_blocks_update_6100() {
+  $ret = array();
+  $blocks = variable_get('custom_search_blocks_number', 1);
+  for ($delta=1 ; $delta<=$blocks ; $delta++) {
+    variable_set('custom_search_blocks_' . $delta . '_submit_text', variable_get('custom_search_submit_text', CUSTOM_SEARCH_SUBMIT_TEXT_DEFAULT));
+    variable_set('custom_search_blocks_' . $delta . '_image_path', variable_get('custom_search_image_path', ''));
+    variable_set('custom_search_blocks_' . $delta . '_criteria_or_display', variable_get('custom_search_criteria_or_display', FALSE));
+    variable_set('custom_search_blocks_' . $delta . '_criteria_or_label', variable_get('custom_search_criteria_or_label', CUSTOM_SEARCH_CRITERIA_OR_LABEL_DEFAULT));
+    variable_set('custom_search_blocks_' . $delta . '_criteria_phrase_display', variable_get('custom_search_criteria_phrase_display', FALSE));
+    variable_set('custom_search_blocks_' . $delta . '_criteria_phrase_label', variable_get('custom_search_criteria_phrase_label', CUSTOM_SEARCH_CRITERIA_PHRASE_LABEL_DEFAULT));
+    variable_set('custom_search_blocks_' . $delta . '_criteria_negative_display', variable_get('custom_search_criteria_negative_display', FALSE));
+    variable_set('custom_search_blocks_' . $delta . '_criteria_negative_label', variable_get('custom_search_criteria_negative_label', CUSTOM_SEARCH_CRITERIA_NEGATIVE_LABEL_DEFAULT));
+  }
+  return $ret;
 }
