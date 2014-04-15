@@ -20,6 +20,7 @@ function _webform_defaults_number() {
       'type' => 'textfield',
       'field_prefix' => '',
       'field_suffix' => '',
+      'disabled' => 0,
       'unique' => 0,
       'title_display' => 0,
       'description' => '',
@@ -98,6 +99,15 @@ function _webform_edit_number($component) {
     '#maxlength' => 127,
     '#weight' => 1.2,
     '#parents' => array('extra', 'field_suffix'),
+  );
+  $form['display']['disabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Disabled'),
+    '#return_value' => 1,
+    '#description' => t('Make this field non-editable. Useful for setting an unchangeable default value.'),
+    '#weight' => 11,
+    '#default_value' => $component['extra']['disabled'],
+    '#parents' => array('extra', 'disabled'),
   );
   $form['display']['decimals'] = array(
     '#type' => 'select',
@@ -327,6 +337,16 @@ function _webform_render_number($component, $value = NULL, $filter = TRUE) {
     $element['#element_validate'][] = 'webform_validate_unique';
   }
 
+  // Set readonly if disabled.
+  if ($component['extra']['disabled']) {
+    if ($filter) {
+      $element['#attributes']['readonly'] = 'readonly';
+    }
+    else {
+      $element['#disabled'] = TRUE;
+    }
+  }
+
   return $element;
 }
 
@@ -445,6 +465,11 @@ function _webform_analysis_number($component, $sids = array(), $single = FALSE) 
     }
     else {
       $stddev = sqrt($stddev);
+    }
+
+    // Skip the rest of the distribution rows if standard deviation is 0.
+    if (empty($stddev)) {
+      return $rows;
     }
 
     // Build normal distribution table rows.
@@ -580,7 +605,7 @@ function _webform_validate_number($element, &$form_state) {
 
       // Step test.
       $starting_number = $element['#min'] ? $element['#min'] : 0;
-      if ($element['#step'] != 0 && fmod($element['#value'] - $starting_number, $element['#step']) != 0) {
+      if ($element['#step'] != 0 && webform_modulo($element['#value'] - $starting_number, $element['#step']) != 0) {
         $samples = array(
           $starting_number,
           $starting_number + ($element['#step'] * 1),
@@ -727,4 +752,13 @@ function _webform_number_format($component, $value) {
   }
 
   return number_format($value, $decimals, $component['extra']['point'], $component['extra']['separator']);
+}
+
+/**
+ * Custom modulo function that properly handles float division.
+ *
+ * See https://drupal.org/node/1601968.
+ */
+function webform_modulo($a, $b) {
+  return $a - $b * (($b < 0) ? ceil($a / $b) : floor($a / $b));
 }

@@ -257,7 +257,7 @@ function theme_webform_admin_content($nodes) {
   $header = array(
     t('Title'),
     array('data' => t('View'), 'colspan' => '4'),
-    array('data' => t('Operations'), 'colspan' => '2')
+    array('data' => t('Operations'), 'colspan' => '3')
   );
 
   $rows = array();
@@ -269,6 +269,7 @@ function theme_webform_admin_content($nodes) {
       l(t('Table'), 'node/' . $node->nid . '/webform-results/table'),
       l(t('Download'), 'node/' . $node->nid . '/webform-results/download'),
       node_access('update', $node) ? l(t('Edit'), 'node/' . $node->nid . '/edit') : '',
+      node_access('update', $node) ? l(t('Components'), 'node/' . $node->nid . '/webform') : '',
       user_access('delete all webform submissions') ? l(t('Clear'), 'node/' . $node->nid . '/webform-results/clear') : '',
     );
   }

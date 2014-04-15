@@ -448,7 +448,6 @@ function webform_submission_resend($form_state, $node, $submission) {
 
     $form['actions'] = array(
       '#type' => 'markup',
-      '#tree' => FALSE,
     );
     $form['actions']['resend'] = array(
       '#type' => 'submit',

@@ -61,10 +61,6 @@ function webform_help($section = 'admin/help#webform', $arg = NULL) {
       <p>Help on adding and configuring the components will be shown after you add your first component.</p>
       ", array('!webform-types-message' => $types_message, '!create-content' => url('node/add'), '!types' => $types));
       break;
-    case 'node/%/webform/components':
-      $output .= '<p>' . t('This page displays all the components currently configured for this webform node. You may add any number of components to the form, even multiple of the same type. To add a new component, fill in a name and select a type from the fields at the bottom of the table. Submit the form to create the new component or update any changed form values.') . '</p>';
-      $output .= '<p>' . t('Click on any existing component\'s name to edit its settings.') . '</p>';
-      break;
     case 'node/%/submission/%/resend':
       $output .= '<p>' . t('This form may be used to resend e-mails configured for this webform. Check the e-mails that need to be sent and click <em>Resend e-mails</em> to send these e-mails again.') . '</p>';
       break;
@@ -160,7 +156,7 @@ function webform_menu() {
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
     'file' => 'includes/webform.emails.inc',
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_TASK,
   );
   $items['node/%webform_menu/webform/emails/%webform_menu_email/delete'] = array(
     'title' => 'Delete e-mail settings',
@@ -168,7 +164,7 @@ function webform_menu() {
     'page arguments' => array('webform_email_delete_form', 1, 4),
     'access callback' => 'node_access',
     'access arguments' => array('update', 1),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_TASK,
   );
 
   // Node component forms.
@@ -1510,6 +1506,7 @@ function theme_webform_view_messages($node, $teaser, $page, $submission_count, $
     else {
       // The user must be some other role to submit.
       $message = t('You do not have permission to view this form.');
+      $type = 'error';
     }
   }
 
@@ -1817,8 +1814,8 @@ function webform_client_form(&$form_state, $node, $submission, $is_draft = FALSE
       $component_value = isset($form_state['values']['submitted'][$cid]) ? $form_state['values']['submitted'][$cid] : NULL;
       if ($filter == FALSE || _webform_client_form_rule_check($node, $component, $page_num, $form_state)) {
         if ($component['type'] == 'pagebreak') {
-          $next_page_labels[$component['page_num'] - 1] = !empty($component['extra']['next_page_label']) ? $component['extra']['next_page_label'] : t('Next Page >');
-          $prev_page_labels[$component['page_num']] = !empty($component['extra']['prev_page_label']) ? $component['extra']['prev_page_label'] : t('< Previous Page');
+          $next_page_labels[$component['page_num'] - 1] = !empty($component['extra']['next_page_label']) ? t($component['extra']['next_page_label']) : t('Next Page >');
+          $prev_page_labels[$component['page_num']] = !empty($component['extra']['prev_page_label']) ? t($component['extra']['prev_page_label']) : t('< Previous Page');
         }
         _webform_client_form_add_component($node, $component, $component_value, $form['submitted'], $form, $form_state, $submission, 'form', $page_num, $filter);
       }
@@ -2675,10 +2672,8 @@ function theme_webform_element_text($element, $value) {
     $value = implode("\n", $lines);
   }
 
-  // Add the value to the output.
-  if ($value) {
-    $output .= (strpos($value, "\n") === FALSE ? ' ' : "\n") . $value;
-  }
+  // Add the value to the output. Add a newline before the response if needed.
+  $output .= (strpos($value, "\n") === FALSE ? ' ' : "\n") . $value;
 
   // Indent fieldsets.
   if ($is_group) {
@@ -2785,7 +2780,7 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
   $format = isset($email['html']) && $email['html'] ? 'html' : 'text';
 
   // Submission replacements.
-  if (isset($submission) && !isset($replacements['email'][$format])) {
+  if (isset($submission) && (!isset($replacements['email'][$format]) || (isset($replacements['unsafe']['%sid']) && $replacements['unsafe']['%sid'] != $submission->sid))) {
     module_load_include('inc', 'webform', 'includes/webform.components');
 
     // Set the submission ID.
@@ -2841,7 +2836,7 @@ function _webform_filter_values($string, $node = NULL, $submission = NULL, $emai
       '%post' => $_POST,
     ),
     'unsafe' => array(
-      '%cookie' => $_COOKIE,
+      '%cookie' => isset($_COOKIE) ? $_COOKIE : array(),
       '%session' => isset($_SESSION) ? $_SESSION : array(),
       '%request' => $_REQUEST,
       '%server' => $_SERVER,
@@ -3658,7 +3653,7 @@ function webform_mollom_form_list() {
   }
 
   $placeholders = db_placeholders($webform_types, 'varchar');
-  $result = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {node} n WHERE n.type IN ($placeholders)", 'n', 'nid', $webform_types), $webform_types);
+  $result = db_query("SELECT n.title, n.nid FROM {webform} w LEFT JOIN {node} n ON w.nid = n.nid WHERE n.type IN ($placeholders)", $placeholders);
 
   while ($node = db_fetch_object($result)) {
     $form_id = 'webform_client_form_' . $node->nid;

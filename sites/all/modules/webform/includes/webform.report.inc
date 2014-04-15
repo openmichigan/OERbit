@@ -724,6 +724,9 @@ function webform_results_export($node, $format = 'delimited', $options = array()
         $header[0] = array_merge($header[0], (array) $component_header[0]);
         $header[1] = array_merge($header[1], (array) $component_header[1]);
         $header[2] = array_merge($header[2], (array) $component_header[2]);
+
+        // Allow modules to modify the CSV header.
+        drupal_alter('webform_csv_header', $component_header, $component);
       }
     }
   }
@@ -742,6 +745,7 @@ function webform_results_export($node, $format = 'delimited', $options = array()
 
   // Generate a row for each submission.
   $row_count = 0;
+  $sid = 0;
   foreach ($submissions as $sid => $submission) {
     $row_count++;
 
@@ -775,6 +779,10 @@ function webform_results_export($node, $format = 'delimited', $options = array()
         $raw_data = isset($submission->data[$cid]['value']) ? $submission->data[$cid]['value'] : NULL;
         if (webform_component_feature($component['type'], 'csv')) {
           $data = webform_component_invoke($component['type'], 'csv_data', $component, $options, $raw_data);
+
+          // Allow modules to modify the CSV data.
+          drupal_alter('webform_csv_data', $data, $component, $submission);
+
           if (is_array($data)) {
             $row = array_merge($row, array_values($data));
           }

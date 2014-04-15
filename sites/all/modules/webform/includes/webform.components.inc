@@ -287,7 +287,7 @@ function webform_components_form_validate($form, &$form_state) {
     $items = array();
     foreach ($duplicates as $form_key => $cids) {
       foreach ($cids as $cid) {
-        $items[] = $form['#node']->webform['components'][$cid]['name'];
+        $items[] = _webform_filter_xss($form['#node']->webform['components'][$cid]['name']);
       }
     }
 
@@ -597,6 +597,13 @@ function webform_component_edit_form(&$form_state, $node, $component, $clone = F
     '#value' => t('Save component'),
     '#weight' => 50,
   );
+
+  // Remove fieldsets without any child form controls.
+  foreach ($form as $group_key => $group) {
+    if (isset($group['#type']) && $group['#type'] === 'fieldset' && !element_children($group)) {
+      unset($form[$group_key]);
+    }
+  }
 
   return $form;
 }
@@ -999,7 +1006,9 @@ function webform_component_parent_keys($node, $component) {
  * Populate a component with the defaults for that type.
  */
 function webform_component_defaults(&$component) {
-  if ($defaults = webform_component_invoke($component['type'], 'defaults')) {
+  $defaults = webform_component_invoke($component['type'], 'defaults');
+  drupal_alter('webform_component_defaults', $defaults, $component['type']);
+  if (!empty($defaults)) {
     foreach ($defaults as $key => $default) {
       if (!isset($component[$key])) {
         $component[$key] = $default;

@@ -442,6 +442,7 @@ function webform_uninstall() {
   // Unset webform variables.
   variable_del('webform_node_types');
   variable_del('webform_node_types_primary');
+  variable_del('webform_disabled_components');
   variable_del('webform_use_cookies');
   variable_del('webform_default_from_address');
   variable_del('webform_default_from_name');
@@ -451,6 +452,11 @@ function webform_uninstall() {
   variable_del('webform_csv_delimiter');
   variable_del('webform_allowed_tags');
   variable_del('webform_blocks');
+  variable_del('webform_search_index');
+  variable_del('webform_email_address_format');
+  variable_del('webform_export_format');
+  variable_del('webform_submission_access_control');
+  variable_del('webform_update_batch_size');
 
   $component_list = array();
   $path = drupal_get_path('module', 'webform') . '/components';
@@ -1185,8 +1191,19 @@ function webform_update_6313() {
     db_query("UPDATE {webform_component} SET extra = '%s' WHERE nid = %d AND cid = %d", serialize($extra), $row->nid, $row->cid);
 
     // Convert the option values into keys if new ones were created.
-    foreach ($new_keys as $delta => $new_key) {
-      db_query("UPDATE {webform_submitted_data} SET data = '%s' WHERE nid = %d AND cid = %d AND data = '%s'", $new_key, $row->nid, $row->cid, $values[$delta]);
+    if (!empty($new_keys)) {
+      $args = array();
+      $sql = "UPDATE {webform_submitted_data} SET data = CASE data";
+      foreach ($new_keys as $delta => $new_key) {
+        $sql .= " WHEN '%s' THEN '%s'";
+        $args[] = $values[$delta];
+        $args[] = $new_key;
+      }
+
+      $sql .= " ELSE data END WHERE nid = %d AND cid = %d";
+      $args[] = $row->nid;
+      $args[] = $row->cid;
+      db_query($sql, $args);
     }
 
     // Note: Converting the question values into keys is not necessary because
