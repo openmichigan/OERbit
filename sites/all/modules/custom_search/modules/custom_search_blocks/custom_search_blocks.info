@@ -1,11 +1,34 @@
+; $Id: custom_search_blocks.info,v 1.1.2.6 2010/05/04 17:04:48 jdanthinne Exp $
 name = Custom Search Blocks
 description = Provides additional search blocks.
 core = 6.x
 package = Custom Search
 dependencies[] = custom_search
-; Information added by Drupal.org packaging script on 2014-04-02
-version = "6.x-1.12"
+
+; Information added by drupal.org packaging script on 2010-04-30
+version = "6.x-1.x-dev"
 core = "6.x"
 project = "custom_search"
-datestamp = "1396449571"
+datestamp = "1272629076"
+
+
+; Information added by drupal.org packaging script on 2010-05-02
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "custom_search"
+datestamp = "1272758640"
+
+
+; Information added by drupal.org packaging script on 2010-05-03
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "custom_search"
+datestamp = "1272845023"
+
+
+; Information added by drupal.org packaging script on 2010-06-07
+version = "6.x-1.4"
+core = "6.x"
+project = "custom_search"
+datestamp = "1275894013"
 

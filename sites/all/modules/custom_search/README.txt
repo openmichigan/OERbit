@@ -1,3 +1,4 @@
+$Id: README.txt,v 1.1.2.1 2010/03/26 16:05:47 jdanthinne Exp $
 
 Custom search 6.x-1.x
 --------------------------

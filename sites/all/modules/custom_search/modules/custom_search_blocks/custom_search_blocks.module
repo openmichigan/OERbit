@@ -1,4 +1,5 @@
 <?php
+// $Id: custom_search_blocks.module,v 1.1.2.7 2010/05/25 12:01:15 jdanthinne Exp $
 
 /**
  * @file
@@ -31,37 +32,70 @@ function custom_search_blocks_perm() {
 }
 
 /**
- * Implementation of hook_form_alter().
- */
-function custom_search_blocks_form_alter(&$form, $form_state, $form_id) {
-  if ($form_id == 'block_admin_configure' && $form['module']['#value'] == 'custom_search_blocks') {
-    // Needed to upload of file.
-    $form['#attributes'] = array('enctype' => 'multipart/form-data');
-  }
-}
-
-/**
  * Implementation of hook_block() to provide additional blocks.
  */
 function custom_search_blocks_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
 
     case 'configure':
-      // Basic settings.
-      $form = _custom_search_default_admin_form($delta);
+      $form['custom_search_blocks_' . $delta . '_label_visibility'] = array(
+        '#type'           => 'checkbox',
+        '#title'          => t('Display label'),
+        '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_label_visibility', TRUE),
+      );
+      $form['custom_search_blocks_' . $delta . '_label'] = array(
+        '#type'           => 'textfield',
+        '#title'          => t('Label text'),
+        '#default_value'  => variable_get('custom_search_blocks_' . $delta . '_label', CUSTOM_SEARCH_LABEL_DEFAULT),
+        '#description'    => t('Enter the label text for the search box. The default value is "!default".', array('!default' => CUSTOM_SEARCH_LABEL_DEFAULT)),
+      );
       // Content.
       $form['content'] = array(
         '#type'         => 'fieldset',
         '#title'        => t('Content'),
+        '#description'  => t('Select the search types to present as search options in the search block. If none is selected, no selector will be displayed. <strong>Note</strong>: if there\'s only one type checked, the selector won\'t be displayed BUT only this type will be searched.'),
         '#collapsible'  => TRUE,
         '#collapsed'    => TRUE,
       );
-      $form['content'] = array_merge($form['content'], _custom_search_content_admin_form($delta));
+      $form['content'] = array_merge($form['content'], custom_search_content_admin_form($delta));
       // Custom search paths
-      $form = array_merge($form, _custom_search_custom_paths_admin_form($delta));
-      // Ordering
-      $form = array_merge($form, _custom_search_ordering_admin_form($delta));
-      $form['order']['#weight'] = 50;
+      $form['custom_search_paths'] = array(
+        '#type'         => 'fieldset',
+        '#title'        => t('Custom search paths'),
+        '#collapsible'  => TRUE,
+        '#collapsed'    => TRUE,
+      );
+      $form['custom_search_paths'] = array_merge($form['custom_search_paths'], custom_search_custom_paths_admin_form($delta));
+      // Ordering.
+      $form['order'] = array(
+        '#type'         => 'fieldset',
+        '#title'        => t('Elements ordering'),
+        '#weight'       => 50
+      );
+      $form['order']['custom_search_blocks_order'] = array(
+        '#tree'   => TRUE,
+        '#theme'  => 'custom_search_blocks_sort_form',
+      );
+      $form['order']['custom_search_blocks_order']['search_box'] = array(
+        '#title'  => t('Search Box'),
+        'sort'    => array('#type' => 'weight', '#default_value' => variable_get('custom_search_blocks_' . $delta . '_search_box_weight', -1)),
+        '#weight' => variable_get('custom_search_blocks_' . $delta . '_search_box_weight', -1),
+      );
+      $form['order']['custom_search_blocks_order']['content_types'] = array(
+        '#title'  => t('Content Types'),
+        'sort'    => array('#type' => 'weight', '#default_value' => variable_get('custom_search_blocks_' . $delta . '_content_types_weight', 0)),
+        '#weight' => variable_get('custom_search_blocks_' . $delta . '_content_types_weight', 0),
+      );
+      $form['order']['custom_search_blocks_order']['custom_paths'] = array(
+        '#title'  => t('Custom search paths'),
+        'sort'    => array('#type' => 'weight', '#default_value' => variable_get('custom_search_blocks_' . $delta . '_custom_paths_weight', 9)),
+        '#weight' => variable_get('custom_search_blocks_' . $delta . '_custom_paths_weight', 9),
+      );
+      $form['order']['custom_search_blocks_order']['submit_button'] = array(
+        '#title'  => t('Submit button'),
+        'sort'    => array('#type' => 'weight', '#default_value' => variable_get('custom_search_blocks_' . $delta . '_submit_button_weight', 10)),
+        '#weight' => variable_get('custom_search_blocks_' . $delta . '_submit_button_weight', 10),
+      );
 
       return $form;
     break;
@@ -70,18 +104,8 @@ function custom_search_blocks_block($op = 'list', $delta = 0, $edit = array()) {
       foreach ($edit as $key => $value) {
         if (drupal_substr($key, 0, 20) == 'custom_search_blocks') variable_set($key, $value);
       }
-      foreach ($edit['custom_search_blocks_' . $delta . '_order'] as $key => $data) {
+      foreach ($edit['custom_search_blocks_order'] as $key => $data) {
         variable_set('custom_search_blocks_' . $delta . '_' . $key . '_weight', $data['sort']);
-        variable_set('custom_search_blocks_' . $delta . '_' . $key . '_region', $data['region']);
-      }
-      // Submit image?
-      $directory_path = file_directory_path() . '/custom_search';
-      file_check_directory($directory_path, FILE_CREATE_DIRECTORY);
-      // Check for a new uploaded image.
-      if ($file = file_save_upload('custom_search_image', array('file_validate_is_image' => array()))) {
-        if (file_copy($file, $directory_path)) {
-          variable_set('custom_search_blocks_' . $delta . '_image_path', $file->filepath);
-        }
       }
     break;
 
@@ -96,7 +120,7 @@ function custom_search_blocks_block($op = 'list', $delta = 0, $edit = array()) {
 
     case 'view':
       if (user_access('use custom search blocks')) {
-        $block['content'] = drupal_get_form('custom_search_blocks_form_' . $delta, $delta);
+        $block['content'] = drupal_get_form('custom_search_blocks_form', $delta);
         $block['subject'] = "Custom Search $delta";
         return $block;
       }
@@ -106,42 +130,52 @@ function custom_search_blocks_block($op = 'list', $delta = 0, $edit = array()) {
 }
 
 /**
- * Implementation of hook_forms() to generate a unique form_id with the same form builder function
+ * Theme the re-ordering form.
  */
-function custom_search_blocks_forms($form_id, $args) {
-  for ($a = 1 ; $a <= variable_get('custom_search_blocks_number', 1) ; $a++) {
-    $forms['custom_search_blocks_form_' . $a] = array(
-      'callback'            => 'custom_search_blocks_form',
-      'callback arguments'  => array($a),
-    );
+function theme_custom_search_blocks_sort_form($form) {
+  drupal_add_tabledrag('custom-search-sort', 'order', 'sibling', 'sort');
+  $header = array(t('Elements'), 'sort');
+  foreach (element_children($form) as $key) {
+    // Add class to group weight fields for drag and drop.
+    $form[$key]['sort']['#attributes']['class'] = 'sort';
+    $row = array();
+    $row[] = $form[$key]['#title'];
+    $row[] = drupal_render($form[$key]['sort']);
+    $rows[] = array('data' => $row, 'class' => 'draggable');
   }
-  return $forms;
+  $output = theme('table', $header, $rows, array('id' => 'custom-search-sort'));
+  $output .= drupal_render($form);
+  return $output;
 }
 
 /**
  * Form builder; Output a search form for the additional search blocks.
  */
 function custom_search_blocks_form(&$form_state, $delta) {
-  $form['custom_search_blocks_form_' . $delta] = array(
+  $form['custom_search_blocks_form'] = array(
+    '#title'          => variable_get('custom_search_blocks_' . $delta . '_label', CUSTOM_SEARCH_LABEL_DEFAULT),
     '#type'           => 'textfield',
     '#size'           => 15,
     '#default_value'  => '',
     '#attributes'     => array('title' => t('Enter the terms you wish to search for.')),
   );
+  if (!variable_get('custom_search_blocks_' . $delta . '_label_visibility', TRUE)) $form['custom_search_blocks_form']['#post_render'] = array('_custom_search_hide_label');
 
   $form['delta'] = array('#type' => 'hidden', '#value' => $delta);
   $form['submit'] = array('#type' => 'submit', '#value' => t('Search'));
   $form['#submit'][] = 'search_box_form_submit';
 
-  if (function_exists('apachesolr_autocomplete_variable_get_widget')) {
-    // support for apachesolr_autocomplete module
-    if (apachesolr_autocomplete_variable_get_widget() == 'custom') {
-      $form['custom_search_blocks_form_' . $delta]['#attributes']['class'] = 'apachesolr-autocomplete unprocessed';
-    }
-    else {
-      $form['custom_search_blocks_form_' . $delta]['#autocomplete_path'] = 'apachesolr_autocomplete';
-    }
-  }
-
   return $form;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function custom_search_blocks_theme() {
+  if (user_access('use custom search blocks')) {
+    return array(
+      'custom_search_blocks_sort_form'   => array('arguments' => array('form' => NULL)),
+    );
+  }
+  else return array();
 }
