@@ -129,6 +129,7 @@ function hierarchical_permissions_block($op = 'list', $delta = 0, $edit = array(
  * Generates a list of users with permissions to modify this node.
  */
 function _hierarchical_permissions_block($nid) {
+  return; // XXX Don't do this for now until we figure out how to do this more efficiently!
   $users = array();
   if (!empty($nid)) {
     if (db_result(db_query('SELECT * FROM {hierarchical_permissions} WHERE nid=%d', $nid))) {
