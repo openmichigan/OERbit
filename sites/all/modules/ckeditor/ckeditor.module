@@ -1,7 +1,7 @@
 <?php
 /**
  * CKEditor - The text editor for the Internet - http://ckeditor.com
- * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
+ * Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
@@ -102,6 +102,42 @@ function ckeditor_perm() {
 }
 
 /**
+ * Check CKEditor version
+ */
+function ckeditor_get_version($main_version = FALSE) {
+  static $ckeditor_version = FALSE;
+
+  if ($ckeditor_version !== FALSE) {
+    if (!$main_version) {
+      return $ckeditor_version;
+    }
+    $version = explode('.', $ckeditor_version);
+    return trim($version[0]);
+  }
+
+  $editor_path = ckeditor_path(TRUE, TRUE);
+  $jspath = $editor_path . '/ckeditor.js';
+
+  $configcontents = @file_get_contents($jspath);
+  if (!$configcontents) {
+    return $ckeditor_version = NULL;
+  }
+  $matches = array();
+  if (preg_match('#,version:[\'\"]{1}(.*?)[\'\"]{1},#', $configcontents, $matches)) {
+    $ckeditor_version = $matches[1];
+    if ($ckeditor_version == '%VERSION%') {
+      $ckeditor_version = '4.0.0';
+    }
+    if (!$main_version) {
+      return $ckeditor_version;
+    }
+    $version = explode('.', $ckeditor_version);
+    return trim($version[0]);
+  }
+  return $ckeditor_version = NULL;
+}
+
+/**
  * Implementation of hook_elements().
  *  Replace the textarea with CKEditor using a callback function (ckeditor_process_textarea)
  */
@@ -195,7 +231,7 @@ function ckeditor_process_form(&$form) {
               $ckeditor_filters[$textarea_id][] = $id ."/". $format;
             }
           }
-          
+
           drupal_add_js(array('ckeditor' => array('settings' => array($textarea_id => array('input_format' => $format)))), 'setting');
 
           //No filters assigned, remove xss class
@@ -287,6 +323,15 @@ function ckeditor_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+  $items['admin/settings/ckeditor/skinframe'] = array(
+    'title' => 'Change skin of CKEditor',
+    'description' => 'Configure skin for CKEditor.',
+    'page callback' => 'ckeditor_skinframe',
+    'file' => 'includes/ckeditor.admin.inc',
+    'access arguments' => array('administer ckeditor'),
+    'type' => MENU_CALLBACK,
+  );
+
   $items['admin/settings/ckeditor/add'] = array(
     'title' => 'Add a new CKEditor profile',
     'description' => 'Configure the rich text editor.',
@@ -370,7 +415,7 @@ function ckeditor_init() {
     $editor_local_path  = ckeditor_path(TRUE);
     drupal_add_js($editor_local_path . '/ckeditor.js', 'module', 'footer', FALSE, TRUE, FALSE);
     drupal_add_js($module_drupal_path .'/includes/ckeditor.utils.js', 'module', 'footer' );
-    drupal_add_js(array('ckeditor' => array('ajaxToken' => drupal_get_token('ckeditorAjaxCall'), 'default_input_format' => variable_get('filter_default_format', 1), 'settings' => array('edit-footer', 'edit-header'))), 'setting');
+    drupal_add_js(array('ckeditor' => array('ajaxToken' => drupal_get_token('ckeditorAjaxCall'), 'xss_url' => url('ckeditor/xss'), 'default_input_format' => variable_get('filter_default_format', 1), 'settings' => array('edit-footer', 'edit-header'))), 'setting');
   }
 }
 
@@ -507,7 +552,7 @@ function ckeditor_process_textarea($element) {
       $conf = $profile->settings;
 
       if ($conf['allow_user_conf']=='t') {
-        foreach (array('default', 'show_toggle', 'popup', 'skin', 'expand', 'width', 'lang', 'auto_lang') as $setting) {
+        foreach (array('default', 'show_toggle', 'popup', 'width', 'lang', 'auto_lang') as $setting) {
           $conf[$setting] = ckeditor_user_get_setting($user, $profile, $setting);
         }
       }
@@ -594,25 +639,34 @@ function ckeditor_process_textarea($element) {
       $height = 400;
     }
     if (!$is_running) {
+      $preprocess = FALSE;
+      if (isset($global_profile->settings['ckeditor_aggregate']) && $global_profile->settings['ckeditor_aggregate'] == 't') {
+        $preprocess = TRUE;
+      }
       drupal_add_js($module_drupal_path .'/includes/ckeditor.utils.js', 'module', variable_get('preprocess_js', FALSE) ? 'header' : 'footer');
       /* In D6 drupal_add_js() can't add external JS, in D7 use drupal_add_js(...,'external') */
       if ( $conf['popup'] != 't' ) {
-        if (isset($conf['ckeditor_load_method'])) {
-          drupal_add_js($editor_local_path . '/' . $conf['ckeditor_load_method'], 'module', 'header', FALSE, TRUE, FALSE);
+        if (isset($conf['ckeditor_load_method']) && file_exists($editor_local_path . '/' . $conf['ckeditor_load_method'])) {
+          drupal_add_js($editor_local_path . '/' . $conf['ckeditor_load_method'], 'module', 'header', FALSE, TRUE, $preprocess);
           if ($conf['ckeditor_load_method'] == 'ckeditor_basic.js') {
             drupal_add_js('CKEDITOR.loadFullCoreTimeout = ' . $conf['ckeditor_load_time_out'] . ';', 'inline');
             drupal_add_js(array('ckeditor' => array('load_timeout' => TRUE)), 'setting');
           }
         }
         else {
-          drupal_add_js($editor_local_path . '/ckeditor.js?I', 'module', 'header', FALSE, TRUE, FALSE);
+          drupal_add_js($editor_local_path . '/ckeditor.js', 'module', 'header', FALSE, TRUE, $preprocess);
         }
       }
       else {
-        drupal_add_js($editor_local_path . '/ckeditor_basic.js?I', 'module', 'header', FALSE, TRUE, FALSE);
+        if (file_exists($editor_local_path . '/ckeditor_basic.js')) {
+          drupal_add_js($editor_local_path . '/ckeditor_basic.js', 'module', 'header', FALSE, TRUE, $preprocess);
+        }
+        else {
+          drupal_add_js($editor_local_path . '/ckeditor.js', 'module', 'header', FALSE, TRUE, $preprocess);
+        }
       }
       drupal_add_js(array('ckeditor' => array('module_path' => $module_full_path, 'editor_path' => $editor_path)), 'setting');
-      drupal_add_js(array('ckeditor' => array('ajaxToken' => drupal_get_token('ckeditorAjaxCall'))), 'setting');
+      drupal_add_js(array('ckeditor' => array('ajaxToken' => drupal_get_token('ckeditorAjaxCall'), 'xss_url' => url('ckeditor/xss'))), 'setting');
       drupal_add_js(array('ckeditor' => array('query' => $_GET['q'])), 'setting');
       drupal_add_js(array('ckeditor' => array('default_input_format' => variable_get('filter_default_format', 1))), 'setting');
       $is_running = TRUE;
@@ -650,8 +704,20 @@ function ckeditor_process_textarea($element) {
     $settings[$textarea_id]['customConfig'] = $ckeditor_config_path;
     $settings[$textarea_id]['width'] = $conf['width'];
     $settings[$textarea_id]['height'] = $height;
-    $settings[$textarea_id]['skin'] = $conf['skin'];
+    //check if skin exists, if not select default one
+    if (file_exists($editor_local_path . '/skins/' . $conf['skin'])) {
+      $settings[$textarea_id]['skin'] = $conf['skin'];
+    }
+    else {
+      $settings[$textarea_id]['skin'] = ckeditor_default_skin();
+    }
     $settings[$textarea_id]['format_tags'] = $conf['font_format'];
+    if (!empty($conf['allowed_content']) && $conf['allowed_content'] === 'f') {
+      $settings[$textarea_id]['allowedContent'] = true;
+    }
+    if (!empty($conf['extraAllowedContent'])) {
+      $settings[$textarea_id]['extraAllowedContent'] = $conf['extraAllowedContent'];
+    }
     if (isset($conf['language_direction'])) {
       switch ($conf['language_direction']) {
         case 'default':
@@ -670,6 +736,15 @@ function ckeditor_process_textarea($element) {
     if (isset($conf['loadPlugins'])) {
       $settings[$textarea_id]['loadPlugins'] = ckeditor_plugins_render($conf['loadPlugins']);
     }
+    else {
+      $settings[$textarea_id]['loadPlugins'] = array();
+    }
+
+    //add support for divarea plugin from CKE4
+    if (isset($conf['use_divarea']) && $conf['use_divarea'] == 't' && file_exists($editor_local_path . '/plugins/divarea/plugin.js')) {
+      $settings[$textarea_id]['loadPlugins']['divarea'] = array('name' => 'divarea', 'path' => $editor_path . '/plugins/divarea/', 'buttons' => FALSE, 'default' => 'f');
+    }
+
     if (isset($conf['html_entities']) && $conf['html_entities'] == 'f') {
       $settings[$textarea_id]['entities'] = FALSE;
       $settings[$textarea_id]['entities_greek'] = FALSE;
@@ -1331,6 +1406,7 @@ function ckeditor_features_api() {
   return array(
     'ckeditor_profile' => array(
       'name' => t('CKEditor profiles'),
+      'feature_source' => TRUE,
       'default_hook' => 'ckeditor_profile_defaults',
       'default_file' => FEATURES_DEFAULTS_INCLUDED,
       'file' => drupal_get_path('module', 'ckeditor') .'/includes/ckeditor.features.inc',
@@ -1408,3 +1484,4 @@ function ckeditor_get_settings() {
   echo  json_encode($_SESSION['cke_get_settings'][$_POST['id']]);
   die();
 }
+

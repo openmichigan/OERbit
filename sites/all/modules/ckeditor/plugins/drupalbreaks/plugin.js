@@ -1,19 +1,29 @@
 /*
-Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
+Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
 
 /**
  * @file Plugin for inserting Drupal teaser and page breaks.
  */
+var pluginRequires = [ 'fakeobjects' ];
+if (Drupal.ckeditor_ver == 3) {
+  pluginRequires = [ 'fakeobjects', 'htmldataprocessor' ];
+}
+
 CKEDITOR.plugins.add( 'drupalbreaks',
 {
-	requires  : [ 'fakeobjects', 'htmldataprocessor' ],
+	requires  : pluginRequires,
 
 	init : function( editor )
 	{
+    var addCssObj = CKEDITOR;
+
+    if (Drupal.ckeditor_ver == 3) {
+      addCssObj = editor;
+    }
 		// Add the styles that renders our fake objects.
-		editor.addCss(
+		addCssObj.addCss(
 			'img.cke_drupal_pagebreak,img.cke_drupal_break' +
 			'{' +
 				'background-image: url(' + CKEDITOR.getUrl( this.path + 'images/pagebreak.gif' ) + ');' +
@@ -125,7 +135,7 @@ CKEDITOR.plugins.add( 'drupalbreaks',
 
 			// Insert the fake element into the document.
 			range.insertNode( fakeElement );
-			
+
 			// Now, we move the selection to the best possible place following
 			// our fake element.
 			var next = fakeElement;
@@ -148,7 +158,7 @@ CKEDITOR.plugins.add( 'drupalbreaks',
            				CKEDITOR.htmlParser.comment.prototype.getAttribute = function() { return ''; };
            				CKEDITOR.htmlParser.comment.prototype.attributes = { align : '' };
           			}
-				
+
 					if ( value == 'break' || value == 'pagebreak' )
 						return editor.createFakeParserElement( new CKEDITOR.htmlParser.comment( value ), 'cke_drupal_' + value, 'hr' );
 

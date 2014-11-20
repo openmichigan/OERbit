@@ -1,66 +1,47 @@
 /*
-Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
+Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
 $(document).ready(function() {
-  if ($('#edit-uicolor-textarea').length) {
-    if (typeof(CKEDITOR) == "undefined")
-        return;
+  if (typeof(CKEDITOR) == "undefined")
+      return;
 
-    CKEDITOR.on( 'dialogDefinition', function( ev )
-    {
-        var dialogName = ev.data.name;
-        var dialogDefinition = ev.data.definition;
+  $('#edit-uicolor-textarea').show();
 
-        if ( dialogName == 'uicolor' )
-        {
-        // Get a reference to the configBox and hide it (cannot be removed).
-        var configBox = dialogDefinition.getContents( 'tab1' ).get( 'configBox' );
-        configBox.style = 'display:none';
-        }
-    });
-    $('#edit-uicolor-textarea').show();
+  Drupal.ckeditor_ver = Drupal.settings.ckeditor_version.split('.')[0];
 
-    Drupal.ckeditorUiColorOnChange = function() {
-        var color = CKEDITOR.instances["edit-uicolor-textarea"].getUiColor();
-        $("#edit-uicolor").val("custom");
-        if (typeof(color) != "undefined") {
-        if (color == "default"){
-            $("#edit-uicolor").val("default");
-        }
-        $('#edit-uicolor-user').val(color);
-        }
-    };
+  Drupal.editSkinEditorInit = function() {
+    var skinframe_src = $('#skinframe').attr('src');
+    skinframe_src = skinframe_src.replace(/skin=[^&]+/, 'skin='+$("#edit-skin").val());
+    if ($('#edit-uicolor').val() == 'custom') {
+      skinframe_src = skinframe_src.replace(/uicolor=[^&]+/, 'uicolor='+$('input[name$="uicolor_user"]').val().replace('#', '') || 'D3D3D3');
+    }
+    else {
+      skinframe_src = skinframe_src.replace(/uicolor=[^&]+/, 'uicolor=D3D3D3');
+    }
+    $('#skinframe').attr('src', skinframe_src);
 
-    CKEDITOR.replace("edit-uicolor-textarea",
-    {
-        extraPlugins : 'uicolor',
-        height: 60,
-        uiColor: $('#edit-uicolor-user').val() || '#D3D3D3',
-        width: 400,
-        toolbar : [[ 'Bold', 'Italic', '-', 'NumberedList', 'BulletedList'],[ 'UIColor' ]],
-        on:
-        {
-        focus : Drupal.ckeditorUiColorOnChange,
-        blur : Drupal.ckeditorUiColorOnChange
-        }
-    });
+    if (Drupal.ckeditor_ver == 3) {
+      if ($("#edit-skin").val() == "kama") {
+        $("#edit-uicolor").removeAttr('disabled');
+        $("#edit-uicolor").parent().removeClass('form-disabled');
+      }
+      else {
+        $("#edit-uicolor").attr('disabled', 'disabled');
+        $("#edit-uicolor").parent().addClass('form-disabled');
+      }
+    }
+    else {
+      $("#edit-uicolor").removeAttr('disabled');
+      $("#edit-uicolor").parent().removeClass('form-disabled');
+    }
+  };
+  Drupal.editSkinEditorInit();
 
-    $("#edit-uicolor").bind("change", function() {
-        if (typeof(Drupal.settings.ckeditor_uicolor) != "undefined") {
-        CKEDITOR.instances["edit-uicolor-textarea"].setUiColor(Drupal.settings.ckeditor_uicolor[$(this).val()]);
-        }
-        if ($(this).val() != "custom") {
-        $('#edit-uicolor-user').val("");
-        }
-        else {
-        var color = CKEDITOR.instances["edit-uicolor-textarea"].getUiColor();
-        if (typeof(color) != "undefined") {
-            $('#edit-uicolor-user').val(color);
-        }
-        }
-    });
-  }
+  $("#edit-skin, #edit-uicolor").bind("change", function() {
+    Drupal.editSkinEditorInit();
+  });
+
   $(".cke_load_toolbar").click(function() {
     var buttons = eval('Drupal.settings.'+$(this).attr("id"));
     var text = "[\n";

@@ -1,20 +1,68 @@
+6.x-1.x dev
+
+[#1971566] by wwalc: Mediaembed throws JS error with ACF enabled
+[#1971502] by wwalc: Mediaembed plugin should define allowedContent for ACF
+[#1950498] by wwalc: Advanced Content Filter introduced in CKEditor 4.1 is now configurable in CKEditor profile.
+
+-----------------------------
+ 2013-04-12
+ New stable release: 6.x-1.14
+-----------------------------
+
+[#1908980] by wwalc: Moono should be set as the default skin on install.
+[#1961596] by jcisio: Added 'feature_source()' option so that ckeditor_profile() component is visible in drush.
+[#1959754] by wwalc: CKFinder is not installed correctly - improve information in the status report
+[#1898642] by Elaman, bahaik: Fixed warning: file_get_contents()(./sites/all/libraries/ckeditor/ckeditor.js?I) [function.file-get-contents]: failed to open stream
+[#1829574] by bdlangton: Fixed Notice: Trying to get property of non-object in ckeditor_user_delegate().
+[#1885952] by michal_cksource: Fix HTML validation for iframe in profile configuration.
+[#1885940] by michal_cksource: Disable div based editor on default
+
+-----------------------------
+ 2012-12-22
+ New stable release: 6.x-1.13
+-----------------------------
+
+Bug fixes:
+[#1870288] by dczepierga: Disable plugins which not exists and are stored in ckeditor profiles
+[#1866704] by dczepierga: Remove "Skin" and "Toolbar state on startup" options from user profile
+[#1866708] by dczepierga: Set default theme if selected not exists
+
+-----------------------------
+ 2012-12-12
+ New stable release: 6.x-1.12
+-----------------------------
+
+New features:
+[#1858882] by dczepierga: Add option to enable/disable aggregate ckeditor.js script
+[#1851606] by dczepierga: Add support for CKEditor v4
+[#1514376] by dczepierga: Change ckeditor xss url to be passed through url()
+
+Bug fixes:
+[#1862820] by ceng: CKEditor features are not reverted or applied from the command line
+[#1857920] by dczepierga: Using extraPlugins config option in Custom JavaScript (Advanced options) does not work
+[#1663462] by dczepierga: Destroys existing instance when trying to replace it
+[#1216096] by michal_cksource: Fix description to "Custom JavaScript configuration" option
+[#1594382] by kmcnamee: Wrong instructions for configuring CKFinder
+[#1397812] by dczepierga: External plugins not working in ckeditor_basic.js loading method
+[#1398910] by dczepierga: Trying to get property of non-object when editing user with no access or profile
+
 -----------------------------
  2012-03-30
  New stable release: 6.x-1.11
 -----------------------------
 
 New features:
-[#1489366] by dczepierga: Add support for stylesheetparser plugin
+[#1489366] by dczepierga: Add support for the Stylesheet Parser plugin
 
 Bug fixes:
-[#1436432] by dczepierga: Simplified toolbar configuration in Global profile
+[#1436432] by dczepierga: Problems with the simplified toolbar configuration in the Global profile
 [#1497184] by dczepierga: Style changes lost after saving
-[#1507362] by kevin.dutra: Path to CKFinder can be badly constructed
-[#1506080] by dczepierga: Refactor code with titles and descriptions for translate function
-[#1496162] by michal_cksource: Buttons are to high during Drag & Drop in Firefox
+[#1507362] by kevin.dutra: Path to CKFinder can be constructed improperly
+[#1506080] by dczepierga: Refactor code with titles and descriptions now available for translation
+[#1496162] by michal_cksource: Buttons are too high when using the drag & drop feature in Firefox
 [#1491884] by dczepierga: Portuguese language missing
-[#1482874] by dczepierga: body field is blank
-[#1491462] by kevin.dutra: All filters applied in ckeditor_filter_xss()
+[#1482874] by dczepierga: Body field is blank
+[#1491462] by kevin.dutra: All filters applied in ckeditor_filter_xss() instead of just selected ones
 
 -----------------------------
  2012-03-15
@@ -22,7 +70,7 @@ Bug fixes:
 -----------------------------
 
 Bug fixes:
-[#1483508] by dczepierga: CKFinder requirement check needs fixed
+[#1483508] by dczepierga: CKFinder requirement check needs fixing
 
 -----------------------------
  2012-03-14
@@ -30,28 +78,28 @@ Bug fixes:
 -----------------------------
 
 New features:
-[#1347994] by dczepierga: Add option to disable Toolbar wizard
-[#1349332] by dczepierga: Add configuration option to set CKFinder library path
+[#1347994] by dczepierga: Add an option to disable the toolbar wizard
+[#1349332] by dczepierga: Add a configuration option to set the CKFinder library path
 
 Bug fixes:
-[#1345742] by michal_cksource: Included js files to toolbar drag & drop should be minified.
-[#1376276] by dczepierga: CKEditor blank if reopened in pop-up window
-[#1363224] by michal_cksource: CKEditor appears despite global exclude on field
-[#1365510] by jlea9378: CKFinder requirement check needs fixed
-[#1361894] by dczepierga: Double scrollbar on menu dropdowns in IE
-[#1357050] by dczepierga: Invalid attribute disc-type in ckeditor.css
-[#1350474] by dczepierga: CKEditor plugins added with hook_ckeditor_plugin button not appearing in the toolbar
+[#1345742] by michal_cksource: Included JavaScript files for the toolbar drag & drop wizard should be minified
+[#1376276] by dczepierga: CKEditor is blank if reopened in a pop-up window
+[#1363224] by michal_cksource: CKEditor appears despite a global exclude on the field
+[#1365510] by jlea9378: CKFinder requirement check needs fixing
+[#1361894] by dczepierga: Double scrollbar on drop-down menus in IE
+[#1357050] by dczepierga: Invalid attribute "disc-type" in ckeditor.css
+[#1350474] by dczepierga: CKEditor plugins added with the "hook_ckeditor_plugin" button do not appear in the toolbar
 [#1350386] by michal_cksource: Improve regex pattern to find plugins for CKEditor
-[#1349308] by michal_cksource: Change description in CKEditor's help page
+[#1349308] by michal_cksource: Change description in CKEditor help page
 [#1343314] by michal_cksource: Change settings for private download
-[#1348194] by michal_cksource: Change for default path for CKFinder settings
-[#1346820] by michal_cksource: Change for Full toolbar buttons
-[#1345788] by michal_cksource: Remove unnecessary Drupal Page Break button if there is no module to support this feature
-[#1345660] by michal_cksource: Enable Drupal Breaks plugin on default
-[#1341988] by michal_cksource: Css rule to hide toolbar can hide more than expected
-[#1334518] by michal_cksource: Fix to cannot hide CKEditor on views edit pages generally by path
-[#1333882] by michal_cksource: Cannot Select Any Toolbars
-[#1334064] by dczepierga: Changes in ckeditor_load_plugins function
+[#1348194] by michal_cksource: Change of the default path for CKFinder settings
+[#1346820] by michal_cksource: Change of Full toolbar buttons
+[#1345788] by michal_cksource: Remove redundant Drupal Page Break button if there is no module to support this feature
+[#1345660] by michal_cksource: Enable the Drupal Breaks plugin by default
+[#1341988] by michal_cksource: CSS rule to hide the toolbar can hide more than is expected
+[#1334518] by michal_cksource: Unable to hide CKEditor on views edit pages by defining a path
+[#1333882] by michal_cksource: Cannot select any toolbars
+[#1334064] by dczepierga: Changes in the "ckeditor_load_plugins" function
 
 -----------------------------
  2011-11-04

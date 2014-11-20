@@ -1,7 +1,7 @@
 <?php
 /**
  * CKEditor - The text editor for the Internet - http://ckeditor.com
- * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
+ * Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
@@ -253,7 +253,7 @@ function ckeditor_help_delegate($path, $arg) {
       '<li>' .
       t('By using !ckfinder (commercial), an advanced Ajax file manager.',
         array(
-          '!ckfinder' => l(t('CKFinder'), 'http://ckfinder.com'),
+          '!ckfinder' => l(t('CKFinder'), 'http://cksource.com/ckfinder'),
         )
       ) .
       '</li>' .
@@ -281,10 +281,11 @@ function ckeditor_help_delegate($path, $arg) {
  */
 function ckeditor_filter_xss() {
   global $user, $theme;
+  header('Content-Type: text/plain; charset=utf-8');
 
   $GLOBALS['devel_shutdown'] = FALSE;
 
-  if (!isset($_POST['text']) || !is_string($_POST['text']) || !isset($_POST['textarea_id']) || !is_string($_POST['textarea_id']) || !isset($_POST['query']) || !is_string($_POST['query']) || !isset($_POST['theme']) || !is_string($_POST['theme']) || !isset($_POST['input_format']) || !isset($_POST['token']) || !drupal_valid_token($_POST['token'], 'ckeditorAjaxCall', TRUE)) {
+  if (!isset($_POST['text']) || !is_string($_POST['text']) || !isset($_POST['textarea_id']) || !is_string($_POST['textarea_id']) || !isset($_POST['query']) || !is_string($_POST['query']) || !isset($_POST['theme']) || !is_string($_POST['theme']) || !isset($_POST['input_format']) || !isset($_POST['token']) || !drupal_valid_token($_POST['token'], 'ckeditorAjaxCall', FALSE)) {
     exit;
   }
   $filter_format_id = filter_resolve_format((int) $_POST['input_format']);
@@ -323,11 +324,41 @@ function ckeditor_filter_xss() {
   }
 
   foreach ($filters as $filter) {
-    //built-in filter module, a special case where we would like to strip XSS and nothing more
+    // Built-in filter module, a special case where we would like to strip XSS and nothing more
     if ($filter->module == 'filter' && $filter->delta == 0) {
       preg_match_all("|</?([a-z][a-z0-9]*)(?:\b[^>]*)>|i", $text, $matches);
       if ($matches[1]) {
-        $tags = array_unique($matches[1]);
+
+        // Sources of inspiration:
+        // http://www.w3.org/TR/html4/index/elements.html
+        // http://www.w3.org/TR/html-markup/elements.html
+        // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+
+        $base_allowed_tags = array('a','abbr','acronym','address','area','article','aside','audio','b','base','basefont',
+          'bdi','bdo','big','blockquote','body','br','button','canvas','caption','center','cite','code','col','colgroup',
+          'command','datalist','dd','del','details','dfn','dialog','dir','div','dl','dt','em','fieldset','figcaption',
+          'figure','font','footer','form','h1','h2','h3','h4','h5','h6','head','header','hgroup','hr','html','i','img',
+          'input','ins','isindex','kbd','keygen','label','legend','li','main','map','mark','menu','menuitem','meter',
+          'nav','noframes','noscript','ol','optgroup','option','output','p','param','pre','progress','q','rp','rt',
+          'ruby','s','samp','section','select','small','source','span','strike','strong','sub','summary','sup','table',
+          'tbody','td','textarea','tfoot','th','thead','time','title','tr','track','tt','u','ul','var','video','wbr',
+        );
+
+        // Get tags allowed in filter settings
+        $filter_allowed_tags = preg_split('/\s+|<|>/', variable_get("allowed_html_$filter_format_id", ''), -1, PREG_SPLIT_NO_EMPTY);
+
+        // Combine allowed tags
+        $tags = array_merge($base_allowed_tags, $filter_allowed_tags);
+
+        // Tags provided by hook
+        $hooks_allowed_tags = module_invoke_all('ckeditor_filter_xss_allowed_tags');
+        if ( !empty($hooks_allowed_tags) && is_array($hooks_allowed_tags) ){
+          foreach($hooks_allowed_tags as $tag ){
+            if ( !empty($tag) && is_string($tag) && !in_array($tag,$tags) ){
+              array_push($tags,$tag);
+            }
+          }
+        }
         $text = filter_xss($text, $tags);
       }
     }

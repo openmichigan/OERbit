@@ -126,7 +126,7 @@ function ckeditor_install() {
       $arr['default'] = "t";
       $arr['show_toggle'] = "t";
       $arr['popup'] = variable_get('ckeditor_popup', 0) ? "t" : "f";
-      $arr['skin'] = "kama";
+      $arr['skin'] = "moono";
       $arr['toolbar'] = "
 [
     [ 'Format', 'Bold', 'Italic', '-', 'NumberedList','BulletedList', '-', 'Link', 'Unlink', 'Image' ]
@@ -327,12 +327,17 @@ function ckeditor_requirements($phase) {
         }
       }
     }
-    if ((($installed_version = _ckeditor_requirements_getinstalledversion()) !== NULL) && (-1==version_compare($installed_version, '3.1 SVN'))) {
+    if ((($installed_version = _ckeditor_requirements_getinstalledversion()) !== NULL) && (-1==version_compare($installed_version, '3.1 SVN')) && $installed_version != '%VERSION%') {
       $requirements['ckeditor']['description'] = t('Some features are disabled because you are using an older version of CKEditor. Please upgrade the editor to CKEditor 3.1 (or higher).');
       $requirements['ckeditor']['severity'] = REQUIREMENT_INFO;
     }
     if (!empty($installed_version)) {
-      $requirements['ckeditor']['value'] = $installed_version;
+      if ($installed_version == '%VERSION%') {
+        $requirements['ckeditor']['value'] = 'GIT version';
+      }
+      else {
+        $requirements['ckeditor']['value'] = $installed_version;
+      }
     }
   }
 
@@ -356,14 +361,14 @@ function ckeditor_requirements($phase) {
 function _ckeditor_requirements_getinstalledversion() {
   module_load_include('module', 'ckeditor');
   $editor_path = ckeditor_path(TRUE, TRUE);
-  $jspath = $editor_path .'/ckeditor_basic.js';
+  $jspath = $editor_path .'/ckeditor.js';
 
   $configcontents = @file_get_contents($jspath);
   if (!$configcontents) {
     return NULL;
   }
   $matches = array();
-  if (preg_match('#,version:\'(.*?)\',#', $configcontents, $matches)) {
+  if (preg_match('#,version:[\'\"]{1}(.*?)[\'\"]{1},#', $configcontents, $matches)) {
     return $matches[1];
   }
   return NULL;
@@ -381,9 +386,10 @@ function _ckeditor_requirements_ckfinder_config_check($profile_name) {
   $config_path = $ckfinder_full_path . '/config.php';
 
   if (!file_exists($config_path)) {
-    return t('!ckfinder is not installed correctly: <code>!config</code> not found. Make sure that you uploaded all files and did not accidentally remove the configuration file.', array(
+    return t('!ckfinder is not installed correctly: <code>!config</code> not found. Make sure that you uploaded all files and did not accidentally remove the configuration file. If you installed CKFinder in other location (e.g. in the libraries folder), make sure to update the path to CKFinder in !global.', array(
       '!config' => $config_path,
-      '!ckfinder' => '<a href="http://ckfinder.com">CKFinder</a>'
+      '!ckfinder' => '<a href="http://cksource.com/ckfinder">CKFinder</a>',
+      '!global' => l(t('CKEditor Global Profile'), 'admin/settings/ckeditor/editg')
     ));
   }
 

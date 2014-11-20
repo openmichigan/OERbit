@@ -3,6 +3,7 @@ Copyright (c) 2003-2011, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
 Drupal.ckeditor = (typeof(CKEDITOR) != 'undefined');
+Drupal.ckeditor_ver = false;
 // this object will store teaser information
 Drupal.ckeditorTeaser = {
   lookup: {},
@@ -41,31 +42,39 @@ Drupal.ckeditorInit = function(textarea_id) {
   {
     configLoaded  : function(ev)
     {
-      ev.editor.addCss(ev.editor.config.extraCss);
+      Drupal.ckeditor_ver = CKEDITOR.version.split('.')[0];
+      if (Drupal.ckeditor_ver == 3) {
+        ev.editor.addCss(ev.editor.config.extraCss);
+      }
+      else {
+        CKEDITOR.addCss(ev.editor.config.extraCss);
+      }
     },
     instanceReady : function(ev)
     {
       var body = $(ev.editor.document.$.body);
       // Don't enter line breaks after paragraph so we can be friendly to drupal's line break filter.
-      ev.editor.dataProcessor.writer.setRules('p', {
-        breakAfterOpen: false
-      });
-      if (typeof(textarea_settings.custom_formatting) != 'undefined') {
-        var dtd = CKEDITOR.dtd;
-        for ( var e in CKEDITOR.tools.extend( {}, dtd.$block, dtd.$listItem, dtd.$tableContent ) ) {
-          ev.editor.dataProcessor.writer.setRules( e, textarea_settings.custom_formatting);
-    }
-        ev.editor.dataProcessor.writer.setRules( 'pre',
-        {
-          indent: textarea_settings.output_pre_indent
+      if (typeof(ev.editor.dataProcessor.writer.setRules) != 'undefined') {
+        ev.editor.dataProcessor.writer.setRules('p', {
+          breakAfterOpen: false
         });
+        if (typeof(textarea_settings.custom_formatting) != 'undefined') {
+          var dtd = CKEDITOR.dtd;
+          for ( var e in CKEDITOR.tools.extend( {}, dtd.$block, dtd.$listItem, dtd.$tableContent ) ) {
+            ev.editor.dataProcessor.writer.setRules( e, textarea_settings.custom_formatting);
+          }
+          ev.editor.dataProcessor.writer.setRules( 'pre',
+          {
+            indent: textarea_settings.output_pre_indent
+          });
+        }
       }
 
       if (ev.editor.config.bodyClass)
         body.addClass(ev.editor.config.bodyClass);
       if (ev.editor.config.bodyId)
         body.attr('id', ev.editor.config.bodyId);
-      if (typeof(Drupal.smileysAttach) != 'undefined')
+      if (typeof(Drupal.smileysAttach) != 'undefined' && typeof(ev.editor.dataProcessor.writer) != 'undefined')
         ev.editor.dataProcessor.writer.indentationChars = '    ';
     },
     focus : function(ev)
@@ -81,15 +90,23 @@ Drupal.ckeditorInit = function(textarea_id) {
       }
   }
 
-  textarea_settings.extraPlugins = '';
-  if (typeof CKEDITOR.plugins != 'undefined'){
-    for (var plugin in textarea_settings['loadPlugins']){
-      textarea_settings.extraPlugins += (textarea_settings.extraPlugins) ? ',' + textarea_settings['loadPlugins'][plugin]['name'] : textarea_settings['loadPlugins'][plugin]['name'];
-      CKEDITOR.plugins.addExternal(textarea_settings['loadPlugins'][plugin]['name'], textarea_settings['loadPlugins'][plugin]['path']);
-    }
+  if (CKEDITOR.loadFullCore) {
+    CKEDITOR.on('loaded', function() {
+      textarea_settings = Drupal.ckeditorLoadPlugins(textarea_settings);
+      if (CKEDITOR.instances[textarea_id]) {
+        CKEDITOR.instances[textarea_id].destroy(true);
+      }
+      Drupal.ckeditorInstance = CKEDITOR.replace(textarea_id, textarea_settings);
+    });
+    CKEDITOR.loadFullCore();
   }
-
-  Drupal.ckeditorInstance = CKEDITOR.replace(textarea_id, textarea_settings);
+  else {
+    textarea_settings = Drupal.ckeditorLoadPlugins(textarea_settings);
+    if (CKEDITOR.instances[textarea_id]) {
+      CKEDITOR.instances[textarea_id].destroy(true);
+    }
+    Drupal.ckeditorInstance = CKEDITOR.replace(textarea_id, textarea_settings);
+  }
 };
 
 Drupal.ckeditorOn = function(textarea_id) {
@@ -106,7 +123,7 @@ Drupal.ckeditorOn = function(textarea_id) {
   if (teaser) {
     var ch_checked = teaser.checkbox.attr('checked');
     var tv = teaser.textarea.val();
-    if (!teaser.textarea.attr("disabled")) {
+    if (teaser.textarea.attr("disabled") !== true && teaser.textarea.attr("disabled") !== 'disabled') {
       $("#" + textarea_id).val(tv + '\n<!--break-->\n' + $("#" + textarea_id).val());
       teaser.textarea.val('');
     }
@@ -134,7 +151,7 @@ Drupal.ckeditorOn = function(textarea_id) {
     else if (typeof Drupal.settings.ckeditor.settings[textarea_id].input_format == 'object') {
         Drupal.settings.ckeditor.settings[textarea_id].input_format = Drupal.settings.ckeditor.settings[textarea_id].input_format.pop();
     }
-    $.post(Drupal.settings.basePath + 'index.php?q=ckeditor/xss', {
+    $.post(Drupal.settings.ckeditor.xss_url, {
       'text': $('#' + textarea_id).val(),
       'token': Drupal.settings.ckeditor.ajaxToken,
       'textarea_id': textarea_id,
@@ -206,6 +223,26 @@ Drupal.ckeditorOff = function(textarea_id) {
   $("#" + textarea_id).next(".grippie").css("display", "block");
   $("#" + textarea_id).removeClass("ckeditor-processed");
 };
+
+/**
+ * Loading selected CKEditor plugins
+ *
+ * @param object textarea_settings
+ */
+Drupal.ckeditorLoadPlugins = function(textarea_settings) {
+  if (typeof(textarea_settings.extraPlugins) == 'undefined') {
+    textarea_settings.extraPlugins = '';
+  }
+  if (typeof CKEDITOR.plugins != 'undefined') {
+    for (var plugin in textarea_settings['loadPlugins']) {
+      if (typeof(textarea_settings['loadPlugins'][plugin]['active']) == 'undefined' || textarea_settings['loadPlugins'][plugin]['active'] == 1) {
+        textarea_settings.extraPlugins += (textarea_settings.extraPlugins) ? ',' + textarea_settings['loadPlugins'][plugin]['name'] : textarea_settings['loadPlugins'][plugin]['name'];
+        CKEDITOR.plugins.addExternal(textarea_settings['loadPlugins'][plugin]['name'], textarea_settings['loadPlugins'][plugin]['path']);
+      }
+    }
+  }
+  return textarea_settings;
+}
 
 /**
  * CKEditor popup mode function
@@ -520,3 +557,4 @@ if (Drupal.tableDrag) {
       );
     };
 }
+

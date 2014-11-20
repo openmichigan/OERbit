@@ -96,7 +96,7 @@ function get_element_id(){
         else if (typeof Drupal.settings.ckeditor.settings[textarea_id].input_format == 'object') {
           Drupal.settings.ckeditor.settings[textarea_id].input_format = Drupal.settings.ckeditor.settings[textarea_id].input_format.pop();
         }
-        $.post(Drupal.settings.basePath + 'index.php?q=ckeditor/xss', {
+        $.post(Drupal.settings.ckeditor.xss_url, {
           'text': $('#' + textarea_id).val(),
           'token': Drupal.settings.ckeditor.ajaxToken,
           'textarea_id': textarea_id,
