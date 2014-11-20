@@ -1,7 +1,7 @@
 <?php
 /**
  * CKEditor - The text editor for the Internet - http://ckeditor.com
- * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
+ * Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
@@ -35,15 +35,19 @@
  */
 
 function ckeditor_user_delegate($type, $edit, &$user, $category = NULL) {
-  if ($type == 'form' && $category == 'account' && user_access('access ckeditor')) {
+  if ($type == 'form' && $category == 'account' && user_access('access ckeditor', $user)) {
     module_load_include('inc', 'ckeditor', 'includes/ckeditor.lib');
 
     $profile = ckeditor_user_get_profile($user);
-    $skin_options = ckeditor_load_skin_options();
+    if (!$profile) {
+      // No profile has been assigned.
+      return NULL;
+    }
+
     $lang_options = ckeditor_load_lang_options();
 
     // because the settings are saved as strings we need to test for the string 'true'
-    if ($profile->settings['allow_user_conf'] == 't') {
+    if (isset($profile->settings['allow_user_conf']) && $profile->settings['allow_user_conf'] == 't') {
       $form['ckeditor'] = array(
         '#type' => 'fieldset',
         '#title' => t('Rich text editor settings'),
@@ -95,25 +99,6 @@ function ckeditor_user_delegate($type, $edit, &$user, $category = NULL) {
           't' => t('Yes')
         ),
         '#description' => t('If this option is enabled, a link to a popup window will be used instead of a textarea replace.'),
-      );
-
-      $form['ckeditor']['ckeditor_skin'] = array(
-        '#type' => 'select',
-        '#title' => t('Skin'),
-        '#default_value' => isset($user->ckeditor_skin) ? $user->ckeditor_skin : (isset($profile->settings['skin']) ? $profile->settings['skin'] : 'default'),
-        '#options' => $skin_options,
-        '#description' => t('Choose a CKEditor skin.'),
-      );
-
-      $form['ckeditor']['ckeditor_expand'] = array(
-        '#type' => 'select',
-        '#title' => t('Toolbar state on startup'),
-        '#default_value' => isset($user->ckeditor_expand) ? $user->ckeditor_expand : (isset($profile->settings['expand']) ? $profile->settings['expand'] : 't'),
-        '#options' => array(
-          't' => t('Expanded'),
-          'f' => t('Collapsed')
-        ),
-        '#description' => t('The toolbar will start in an expanded or collapsed state.'),
       );
 
       $form['ckeditor']['ckeditor_width'] = array(

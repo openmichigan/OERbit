@@ -1,7 +1,7 @@
 <?php
 /**
  * CKEditor - The text editor for the Internet - http://ckeditor.com
- * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
+ * Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
@@ -96,23 +96,24 @@ function ckeditor_profile_features_export_render($module_name, $data) {
  * Implementation of hook_features_revert()
  */
 function ckeditor_profile_features_revert($module) {
-  $data = module_invoke($module, 'ckeditor_profile_defaults');
-  $roles = user_roles();
-  foreach ($data as $name => $profile) {
-    // Restore the profile settings
-    db_query("DELETE FROM {ckeditor_settings} WHERE name = '%s'", $name);
-    db_query("INSERT INTO {ckeditor_settings} (name, settings) VALUES('%s', '%s')", $name, serialize($profile['settings']));
+  if ($data = features_get_default('ckeditor_profile', $module)) {
+    $roles = user_roles();
+    foreach ($data as $name => $profile) {
+      // Restore the profile settings
+      db_query("DELETE FROM {ckeditor_settings} WHERE name = '%s'", $name);
+      db_query("INSERT INTO {ckeditor_settings} (name, settings) VALUES('%s', '%s')", $name, serialize($profile['settings']));
 
-    // Restore the profile roles
-    foreach ($roles as $rid => $role_name) {
-      if (in_array($role_name, (array) $profile['roles'])) {
-        if (!db_result(db_query("SELECT rid FROM {ckeditor_role} WHERE rid = %d AND name = '%s'", $rid, $name))) {
-          db_query("INSERT INTO {ckeditor_role} (rid, name) VALUES(%d, '%s')", $rid, $name);
+      // Restore the profile roles
+      foreach ($roles as $rid => $role_name) {
+        if (in_array($role_name, (array) $profile['roles'])) {
+          if (!db_result(db_query("SELECT rid FROM {ckeditor_role} WHERE rid = %d AND name = '%s'", $rid, $name))) {
+            db_query("INSERT INTO {ckeditor_role} (rid, name) VALUES(%d, '%s')", $rid, $name);
+          }
         }
-      }
-      else {
-        // Make sure they don't have access
-        db_query("DELETE FROM {ckeditor_role} WHERE rid = %d AND name = '%s'", $rid, $name);
+        else {
+          // Make sure they don't have access
+          db_query("DELETE FROM {ckeditor_role} WHERE rid = %d AND name = '%s'", $rid, $name);
+        }
       }
     }
   }

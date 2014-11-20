@@ -1,7 +1,7 @@
 <?php
 /**
  * CKEditor - The text editor for the Internet - http://ckeditor.com
- * Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
+ * Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
  *
  * == BEGIN LICENSE ==
  *
@@ -54,4 +54,12 @@ function hook_ckeditor_plugin() {
     )
   );
 }
-?>
+
+/**
+ * Hook to extend CKEditor security allowed tags list.
+ *
+ * This hook is invoked from ckeditor_filter_xss() where text is filtered from potentially insecure tags.
+ */
+function hook_ckeditor_filter_xss_allowed_tags() {
+  // Return an array of additional allowed tags
+}
