@@ -895,6 +895,7 @@ function webform_webform_submission_render_alter(&$renderable) {
   $is_admin = webform_results_access($node);
   if (empty($renderable['#email']) && !$is_admin) {
     // Find and hide the display of all hidden components.
+    module_load_include('inc', 'webform', 'includes/webform.components');
     foreach ($node->webform['components'] as $cid => $component) {
       if ($component['type'] == 'hidden') {
         $parents = webform_component_parent_keys($node, $component);
@@ -1314,7 +1315,7 @@ function webform_node_view(&$node, $teaser, $page) {
   }
 
   // Do not include the form in the search index if indexing is disabled.
-  if (module_exists('search') && $node->build_mode == NODE_BUILD_SEARCH_INDEX && !variable_get('webform_search_index', 1)) {
+  if (module_exists('search') && isset($node->build_mode) && $node->build_mode == NODE_BUILD_SEARCH_INDEX && !variable_get('webform_search_index', 1)) {
     return;
   }
 
@@ -1413,12 +1414,12 @@ function webform_node_view(&$node, $teaser, $page) {
   $output = theme('webform_view', $node, $teaser, $page, $form, $enabled);
 
   // Remove the surrounding <form> tag if this is a preview.
-  if ($node->build_mode == NODE_BUILD_PREVIEW) {
+  if (isset($node->build_mode) && $node->build_mode == NODE_BUILD_PREVIEW) {
     $output = preg_replace('/<\/?form[^>]*>/', '', $output);
   }
 
   // Print out messages for the webform.
-  if ($node->build_mode != NODE_BUILD_PREVIEW && !isset($node->webform_block) && !$logging_in) {
+  if ((!isset($node->build_mode) || $node->build_mode != NODE_BUILD_PREVIEW) && !isset($node->webform_block) && !$logging_in) {
     theme('webform_view_messages', $node, $teaser, $page, $submission_count, $user_limit_exceeded, $total_limit_exceeded, $allowed_roles, $closed, $cached);
   }
 
@@ -1635,9 +1636,6 @@ function webform_block_view($delta = '') {
   // This is a webform node block.
   $node->webform_block = TRUE;
 
-  // Use the node title for the block title.
-  $subject = $node->title;
-
   // If not displaying pages in the block, set the #action property on the form.
   if ($settings['pages_block']) {
     $node->webform['action'] = FALSE;
@@ -1657,9 +1655,9 @@ function webform_block_view($delta = '') {
     $content = node_view($node, $teaser, TRUE, FALSE);
   }
 
-  // Create the block.
+  // Create the block, using the node title for the block title.
   $block = array(
-    'subject' => $subject,
+    'subject' => check_plain($node->title),
     'content' => $content,
   );
   return $block;
@@ -1974,11 +1972,6 @@ function _webform_client_form_rule_check($node, $component, $page_num, $form_sta
     }
   }
 
-  // Private component?
-  if ($component['extra']['private']) {
-    $show_component = webform_results_access($node);
-  }
-
   return $show_component;
 }
 
@@ -2014,12 +2007,16 @@ function _webform_client_form_rule_check($node, $component, $page_num, $form_sta
  */
 function _webform_client_form_add_component($node, $component, $component_value, &$parent_fieldset, &$form, $form_state, $submission, $format = 'form', $page_num = 0, $filter = TRUE) {
   $cid = $component['cid'];
+  $component_access = empty($component['extra']['private']) || webform_results_access($node);
 
   // Load with submission information if necessary.
   if ($format != 'form') {
     // This component is display only.
     $data = empty($submission->data[$cid]['value']) ? NULL : $submission->data[$cid]['value'];
     if ($display_element = webform_component_invoke($component['type'], 'display', $component, $data, $format)) {
+      // Set access based on the private property.
+      $element['#access'] = $component_access;
+
       // Ensure the component is added as a property.
       $display_element['#webform_component'] = $component;
 
@@ -2047,6 +2044,9 @@ function _webform_client_form_add_component($node, $component, $component_value,
     // Add this user-defined field to the form (with all the values that are always available).
     $data = isset($submission->data[$cid]['value']) ? $submission->data[$cid]['value'] : NULL;
     if ($element = webform_component_invoke($component['type'], 'render', $component, $data, $filter)) {
+      // Set access based on the private property.
+      $element['#access'] = $component_access;
+
       // Ensure the component is added as a property.
       $element['#webform_component'] = $component;
 
@@ -3205,6 +3205,7 @@ function webform_format_email_address($address, $name, $node = NULL, $submission
     if ($encode) {
       $name = mime_header_encode($name);
     }
+    $name = trim($name);
     return '"' . $name . '" <' . $address . '>';
   }
   else {
@@ -3653,7 +3654,7 @@ function webform_mollom_form_list() {
   }
 
   $placeholders = db_placeholders($webform_types, 'varchar');
-  $result = db_query("SELECT n.title, n.nid FROM {webform} w LEFT JOIN {node} n ON w.nid = n.nid WHERE n.type IN ($placeholders)", $placeholders);
+  $result = db_query("SELECT n.title, n.nid FROM {webform} w LEFT JOIN {node} n ON w.nid = n.nid WHERE n.type IN ($placeholders)", $webform_types);
 
   while ($node = db_fetch_object($result)) {
     $form_id = 'webform_client_form_' . $node->nid;

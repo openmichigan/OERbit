@@ -587,8 +587,8 @@ function variable_init($conf = array(), $regenerate = FALSE, $recursion_depth = 
       // Wait for another request that is already doing this work.
       lock_wait('variable_cache_regenerate');
 
-      // Run the function again. Try a limited number of times to avoid
-      // infinite recursion if the database connection is invalid for
+      // Run the function again. Try a limited number of times to avoid 
+      // infinite recursion if the database connection is invalid for  
       // some reason, e.g., mysqld restart, loss of network, etc.
       $recursion_depth++;
       if ($recursion_depth < 50) {
@@ -660,7 +660,7 @@ function variable_set($name, $value) {
   if (is_string($db_prefix) && strpos($db_prefix, 'simpletest') === 0) {
     cache_clear_all('variables', 'cache');
   }
-
+  
   variable_cache_rebuild();
 }
 
@@ -689,7 +689,7 @@ function variable_del($name) {
   if (is_string($db_prefix) && strpos($db_prefix, 'simpletest') === 0) {
     cache_clear_all('variables', 'cache');
   }
-
+  
   variable_cache_rebuild();
 }
 
@@ -812,7 +812,7 @@ function drupal_set_header($name = NULL, $value = NULL, $append = FALSE) {
   if (!isset($name)) {
     return $headers;
   }
-
+  
   // Support the Drupal 6 header API
   if (!isset($value)) {
     if (strpos($name, ':') !== FALSE) {
@@ -1430,7 +1430,7 @@ function drupal_bootstrap($phase = NULL) {
       _drupal_bootstrap($current_phase);
     }
   }
-
+  
   return $phase_index;
 }
 
@@ -1490,7 +1490,7 @@ function _drupal_bootstrap($phase) {
       // those using APC or memcached.
       require_once variable_get('lock_inc', './includes/lock.inc');
       lock_init();
-
+      
       // Detect if an installation is present.
       detect_installation_or_run_installer();
 
@@ -1513,6 +1513,34 @@ function _drupal_bootstrap($phase) {
     case DRUPAL_BOOTSTRAP_LATE_PAGE_CACHE:
       // Initialize configuration variables, using values from settings.php if available.
       $conf = variable_init(isset($conf) ? $conf : array());
+
+      // Sanitize the destination parameter (which is often used for redirects)
+      // to prevent open redirect attacks leading to other domains. Sanitize
+      // both $_GET['destination'] and $_REQUEST['destination'] to protect code
+      // that relies on either, but do not sanitize $_POST to avoid interfering
+      // with unrelated form submissions. $_REQUEST['edit']['destination'] is
+      // also sanitized since drupal_goto() will sometimes rely on it, and
+      // other code might therefore use it too. The sanitization happens here
+      // because menu_path_is_external() requires the variable system to be
+      // available.
+      if (isset($_GET['destination']) || isset($_REQUEST['destination']) || isset($_REQUEST['edit']['destination'])) {
+        require_once './includes/menu.inc';
+        drupal_load('module', 'filter');
+        // If the destination is an external URL, remove it.
+        if (isset($_GET['destination']) && menu_path_is_external($_GET['destination'])) {
+          unset($_GET['destination']);
+          unset($_REQUEST['destination']);
+        }
+        // If there's still something in $_REQUEST['destination'] that didn't
+        // come from $_GET, check it too.
+        if (isset($_REQUEST['destination']) && (!isset($_GET['destination']) || $_REQUEST['destination'] != $_GET['destination']) && menu_path_is_external($_REQUEST['destination'])) {
+          unset($_REQUEST['destination']);
+        }
+        // Check $_REQUEST['edit']['destination'] separately.
+        if (isset($_REQUEST['edit']['destination']) && menu_path_is_external($_REQUEST['edit']['destination'])) {
+          unset($_REQUEST['edit']['destination']);
+        }
+      }
 
       $cache_mode = variable_get('cache', CACHE_DISABLED);
       // Get the page from the cache, unless the cache is disabled or external.
@@ -1541,11 +1569,11 @@ function _drupal_bootstrap($phase) {
         // We are done.
         exit;
       }
-
+  
       if (!$cache && drupal_page_is_cacheable() && $cache_mode != CACHE_EXTERNAL) {
         header('X-Drupal-Cache: MISS');
       }
-
+      
       // If using an external cache and the page is cacheable, set headers.
       if ($cache_mode == CACHE_EXTERNAL && drupal_page_is_cacheable()) {
         drupal_page_cache_header_external();
@@ -1686,17 +1714,17 @@ function ip_address() {
 
   if (!isset($ip_address)) {
     $ip_address = $_SERVER['REMOTE_ADDR'];
-
+    
     // Only use parts of the X-Forwarded-For (XFF) header that have followed a trusted route.
     // Specifically, identify the leftmost IP address in the XFF header that is not one of ours.
     // An XFF header is: X-Forwarded-For: client1, proxy1, proxy2
     if (isset($_SERVER['HTTP_' . variable_get('x_forwarded_for_header', 'X_FORWARDED_FOR')]) && variable_get('reverse_proxy', 0)) {
       // Load trusted reverse proxy server IPs.
       $reverse_proxy_addresses = variable_get('reverse_proxy_addresses', array());
-
+      
       // Turn XFF header into an array.
       $forwarded = explode(',', $_SERVER['HTTP_' . variable_get('x_forwarded_for_header', 'X_FORWARDED_FOR')]);
-
+      
       // Trim the forwarded IPs; they may have been delimited by commas and spaces.
       $forwarded = array_map('trim', $forwarded);
 
@@ -1705,7 +1733,7 @@ function ip_address() {
 
       // Eliminate all trusted IPs.
       $untrusted = array_diff($forwarded, $reverse_proxy_addresses);
-
+      
       // The right-most IP is the most specific we can trust.
       $ip_address = array_pop($untrusted);
     }
@@ -1719,9 +1747,9 @@ function ip_address() {
  */
 function drupal_session_initialize() {
   global $user;
-
+   
   session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy_sid', 'sess_gc');
-
+ 
   // Use !empty() in the following check to ensure that blank session IDs
   // are not valid.
   if (!empty($_COOKIE[session_name()])) {
@@ -1785,7 +1813,7 @@ function drupal_session_commit() {
 
 /**
  * Return whether a session has been started.
- */
+ */  
 function drupal_session_started($set = NULL) {
   static $session_started = FALSE;
   if (isset($set)) {
@@ -1895,7 +1923,7 @@ function drupal_generate_test_ua($prefix) {
     // check the HMAC before the database is initialized. filectime()
     // and fileinode() are not easily determined from remote.
 //    $filepath = DRUPAL_ROOT . '/includes/bootstrap.inc';
-    $filepath = './includes/bootstrap.inc';
+    $filepath = './includes/bootstrap.inc';                
 //    $key = sha1(serialize($databases) . filectime($filepath) . fileinode($filepath), TRUE);
     $key = sha1(serialize($db_url) . filectime($filepath) . fileinode($filepath), TRUE);
   }
@@ -2035,4 +2063,50 @@ function drupal_random_bytes($count) {
   $output = substr($bytes, 0, $count);
   $bytes = substr($bytes, $count);
   return $output;
+}
+
+/**
+ * Calculates a hexadecimal encoded sha-1 hmac.
+ *
+ * @param string $data
+ *   String to be validated with the hmac.
+ * @param string $key
+ *   A secret string key.
+ *
+ * See RFC2104 (http://www.ietf.org/rfc/rfc2104.txt). Note, the result of this
+ * must be identical to using hash_hmac('sha1', $data, $key);  We don't use
+ * that function since PHP can be missing it if it was compiled with the
+ * --disable-hash switch.
+ *
+ * @return string
+ *   A hexadecimal encoded sha-1 hmac.
+ */
+function drupal_hash_hmac_sha1($data, $key) {
+  // Keys longer than the 64 byte block size must be hashed first.
+  if (strlen($key) > 64) {
+    $key = pack("H*", sha1($key));
+  }
+  return sha1((str_pad($key, 64, chr(0x00)) ^ (str_repeat(chr(0x5c), 64))) . pack("H*", sha1((str_pad($key, 64, chr(0x00)) ^ (str_repeat(chr(0x36), 64))) . $data)));
+}
+
+/**
+ * Calculates a base-64 encoded, URL-safe sha-1 hmac.
+ *
+ * @param string $data
+ *   String to be validated with the hmac.
+ * @param string $key
+ *   A secret string key.
+ *
+ * @return string
+ *   A base-64 encoded sha-1 hmac, with + replaced with -, / with _ and
+ *   any = padding characters removed.
+ */
+function drupal_hmac_base64($data, $key) {
+  // Casting $data and $key to strings here is necessary to avoid empty string
+  // results of the hash function if they are not scalar values. As this
+  // function is used in security-critical contexts like token validation it is
+  // important that it never returns an empty string.
+  $hmac = base64_encode(pack("H*", drupal_hash_hmac_sha1((string) $data, (string) $key)));
+  // Modify the hmac so it's safe to use in URLs.
+  return strtr($hmac, array('+' => '-', '/' => '_', '=' => ''));
 }
