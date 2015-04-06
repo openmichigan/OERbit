@@ -186,6 +186,7 @@ function webform_views_data_alter(&$data) {
     'relationship' => array(
       'base' => 'webform_submissions',
       'base field' => 'nid',
+      'relationship field' => 'nid',
       'handler' => 'views_handler_relationship',
       'label' => t('Webform Submission'),
     ),
@@ -215,6 +216,7 @@ function webform_views_data_alter(&$data) {
     'relationship' => array(
       'base' => 'webform_submissions',
       'base field' => 'uid',
+      'relationship field' => 'uid',
       'handler' => 'views_handler_relationship',
       'label' => t('Webform Submission'),
     ),

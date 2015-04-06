@@ -47,7 +47,7 @@ Drupal.webform.selectOptionsLoad = function(result) {
       $('#' + result.elementId).val(result.options).attr('readonly', 'readonly');
     }
     else {
-      $('#' + result.elementId).attr('readonly', '');
+      $('#' + result.elementId).removeAttr('readonly');
     }
   }
 }
