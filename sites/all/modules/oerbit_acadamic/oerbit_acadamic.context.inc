@@ -23,12 +23,6 @@ function oerbit_acadamic_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'course-course-feed' => array(
-          'module' => 'course',
-          'delta' => 'course-feed',
-          'region' => 'content_top',
-          'weight' => 0,
-        ),
       ),
     ),
   );
@@ -182,12 +176,6 @@ function oerbit_acadamic_context_default_contexts() {
           'delta' => 12,
           'region' => 'content_top',
           'weight' => 0,
-        ),
-        'print-0' => array(
-          'module' => 'print',
-          'delta' => 0,
-          'region' => 'content_top',
-          'weight' => 1,
         ),
       ),
     ),
