@@ -1,0 +1,3 @@
+<?php
+
+include_once('openmichigan_content_types.features.inc');
